@@ -7,10 +7,54 @@ final componentList = [
   CRow(),
 ];
 
+class Parameters{
+  static final paddingParameter=ChoiceParameter(
+    name: 'padding',
+    options: [
+      SimpleParameter(
+          name: 'all',
+          nullable: false,
+          paramType: ParamType.double,
+          evaluate: (param) => EdgeInsets.all(param.value)),
+      ComplexParameter(
+          name: 'only',
+          params: [
+            SimpleParameter(
+              name: 'top',
+              nullable: false,
+              paramType: ParamType.double,
+            ),
+            SimpleParameter(
+              name: 'left',
+              nullable: false,
+              paramType: ParamType.double,
+            ),
+            SimpleParameter(
+              name: 'bottom',
+              nullable: false,
+              paramType: ParamType.double,
+            ),
+            SimpleParameter(
+              name: 'right',
+              nullable: false,
+              paramType: ParamType.double,
+            )
+          ],
+          evaluate: (List<Parameter> params) {
+            return EdgeInsets.only(
+                top: params[0].value,
+                left: params[1].value,
+                bottom: params[2].value,
+                right: params[3].value);
+          }),
+    ],
+  );
+  static final colorParameter=SimpleParameter(name: 'color', paramType: ParamType.string, nullable: false);
+}
 class CRow extends Component {
   CRow()
       : super('Row', [
-          ChoiceParameter(name: 'mainAxisAlignment', options: {
+          ChoiceValueParameter(name: 'mainAxisAlignment', options: {
             'start': MainAxisAlignment.start,
             'center': MainAxisAlignment.center,
             'end': MainAxisAlignment.end,
@@ -18,14 +62,14 @@ class CRow extends Component {
             'spaceAround': MainAxisAlignment.spaceAround,
             'spaceEvenly': MainAxisAlignment.spaceEvenly,
           }),
-          ChoiceParameter(name: 'crossAxisAlignment', options: {
+          ChoiceValueParameter(name: 'crossAxisAlignment', options: {
             'start': CrossAxisAlignment.start,
             'center': CrossAxisAlignment.center,
             'end': CrossAxisAlignment.end,
             'stretch': CrossAxisAlignment.stretch,
             'baseline': CrossAxisAlignment.baseline,
           }),
-          ChoiceParameter(name: 'mainAxisSize', options: {
+          ChoiceValueParameter(name: 'mainAxisSize', options: {
             'max': MainAxisSize.max,
             'min': MainAxisSize.min,
           }),
@@ -40,9 +84,9 @@ class CRow extends Component {
   @override
   Widget create() {
     throw Row(
-      mainAxisAlignment: (parameters[0] as ChoiceParameter).value,
-      crossAxisAlignment: (parameters[1] as ChoiceParameter).value,
-      mainAxisSize: (parameters[2] as ChoiceParameter).value,
+      mainAxisAlignment: (parameters[0] as ChoiceValueParameter).value,
+      crossAxisAlignment: (parameters[1] as ChoiceValueParameter).value,
+      mainAxisSize: (parameters[2] as ChoiceValueParameter).value,
       children: (parameters[3] as MultiComponentParameter)
               .components
               ?.map((e) => e.create())
@@ -55,47 +99,40 @@ class CRow extends Component {
 class CPadding extends Component {
   CPadding()
       : super('Padding', [
-          ChoiceParameter(name: 'padding', options: {
-            'all': SimpleParameter(
-              name: 'all',
-              nullable: false,
-              paramType: ParamType.double,
-            ),
-            'only': ComplexParameter('only', [
-              SimpleParameter(
-                name: 'top',
-                nullable: false,
-                paramType: ParamType.double,
-              ),
-              SimpleParameter(
-                name: 'left',
-                nullable: false,
-                paramType: ParamType.double,
-              ),
-              SimpleParameter(
-                name: 'bottom',
-                nullable: false,
-                paramType: ParamType.double,
-              ),
-              SimpleParameter(
-                name: 'right',
-                nullable: false,
-                paramType: ParamType.double,
-              ),
-            ])
-          })
+         Parameters.paddingParameter
         ]);
 
   @override
   String code() {
-    return Padding(
-      padding: parameters[0],
-    );
+    return '';
   }
 
   @override
   Widget create() {
-    // TODO: implement create
-    throw UnimplementedError();
+   return Padding(
+     padding: parameters[0].value,
+   );
   }
+}
+
+class CContainer extends Component {
+  CContainer() : super('Container', [
+    Parameters.colorParameter,
+    Parameters.paddingParameter,
+
+
+  ]);
+
+  @override
+  String code() {
+    return '';
+  }
+
+  @override
+  Widget create() {
+    return Container(
+
+    );
+  }
+
 }

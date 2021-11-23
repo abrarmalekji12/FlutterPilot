@@ -25,13 +25,34 @@ class SimpleParameter extends Parameter {
   final ParamType paramType;
   final bool nullable;
 
+  late final dynamic Function(Parameter) evaluate;
+
   SimpleParameter(
-      {required String name, required this.paramType, required this.nullable})
-      : super(name);
+      {required String name,
+      required this.paramType,
+      required this.nullable,
+      dynamic Function(Parameter)? evaluate})
+      : super(name){
+    if(evaluate!=null){
+      this.evaluate=evaluate;
+    }
+    else{
+      this.evaluate=(param)=>param.value;
+    }
+  }
+}
+
+class ChoiceValueParameter extends Parameter {
+  final Map<String, dynamic> options;
+
+  ChoiceValueParameter({
+    required String name,
+    required this.options,
+  }) : super(name);
 }
 
 class ChoiceParameter extends Parameter {
-  final Map<String, dynamic> options;
+  final List<Parameter> options;
 
   ChoiceParameter({
     required String name,
@@ -42,11 +63,24 @@ class ChoiceParameter extends Parameter {
 class MultiComponentParameter extends Parameter {
   List<Component>? components;
 
-  MultiComponentParameter({required String name}) : super(name);
+  MultiComponentParameter({
+    required String name,
+  }) : super(name);
 }
+class SingleComponentParameter extends Parameter {
+  Component? component;
 
+  SingleComponentParameter({
+    required String name,
+  }) : super(name);
+}
 class ComplexParameter extends Parameter {
   final List<Parameter> params;
+  final dynamic Function(List<Parameter>) evaluate;
 
-  ComplexParameter(String name, this.params) : super(name);
+  ComplexParameter({
+    required this.params,
+    required String name,
+    required this.evaluate,
+  }) : super(name);
 }
