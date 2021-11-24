@@ -12,10 +12,10 @@ class _ComponentSelectionState extends State<ComponentSelection> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: componentList
+      children: componentList.keys
           .map(
             (e) => InkWell(
-              child: Text(e.name),
+              child: Text(e),
             ),
           )
           .toList(),
