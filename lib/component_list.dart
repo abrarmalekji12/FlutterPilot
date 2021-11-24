@@ -5,10 +5,13 @@ import 'package:flutter_builder/data_type.dart';
 
 final componentList = [
   CRow(),
+  CColumn(),
+  CFlex(),
+  CPadding(),
 ];
 
-class Parameters{
-  static final paddingParameter=ChoiceParameter(
+class Parameters {
+  static final paddingParameter = ChoiceParameter(
     name: 'padding',
     options: [
       SimpleParameter(
@@ -47,33 +50,73 @@ class Parameters{
                 bottom: params[2].value,
                 right: params[3].value);
           }),
+      ComplexParameter(
+        name: 'symmetric',
+        params: [
+          SimpleParameter(
+            name: 'horizontal',
+            nullable: true,
+            paramType: ParamType.double,
+          ),
+          SimpleParameter(
+            name: 'vertical',
+            nullable: true,
+            paramType: ParamType.double,
+          ),
+        ],
+        evaluate: (List<Parameter> params) {
+          return EdgeInsets.only(
+              top: params[0].value,
+              left: params[1].value,
+              bottom: params[2].value,
+              right: params[3].value);
+        },
+      ),
     ],
   );
-  static final colorParameter=SimpleParameter(name: 'color', paramType: ParamType.string, nullable: false);
+  static final colorParameter = SimpleParameter(
+      name: 'color', paramType: ParamType.string, nullable: false);
+  static final mainAxisAlignmentParameter =
+      ChoiceValueParameter(name: 'mainAxisAlignment', options: {
+    'start': MainAxisAlignment.start,
+    'center': MainAxisAlignment.center,
+    'end': MainAxisAlignment.end,
+    'spaceBetween': MainAxisAlignment.spaceBetween,
+    'spaceAround': MainAxisAlignment.spaceAround,
+    'spaceEvenly': MainAxisAlignment.spaceEvenly,
+  });
+  static final crossAxisAlignmentParameter =
+      ChoiceValueParameter(name: 'crossAxisAlignment', options: {
+    'start': CrossAxisAlignment.start,
+    'center': CrossAxisAlignment.center,
+    'end': CrossAxisAlignment.end,
+    'stretch': CrossAxisAlignment.stretch,
+    'baseline': CrossAxisAlignment.baseline,
+  });
+  static final mainAxisSizeParameter =
+      ChoiceValueParameter(name: 'mainAxisSize', options: {
+    'max': MainAxisSize.max,
+    'min': MainAxisSize.min,
+  });
+  static final axisParameter = ChoiceValueParameter(
+      name: 'direction',
+      options: {'vertical': Axis.vertical, 'horizontal': Axis.horizontal});
+  static final borderRadiusParameter = ChoiceValueParameter(
+      name: 'borderRadius',
+      options: {
+        'circular': SimpleParameter(paramType: ParamType.double, name: 'radius', nullable: false,evaluate: (param){
+          return BorderRadius.circular(param.value);
+        }),
+        ''
+      });
 }
-class CRow extends Component {
+
+class CRow extends MultiHolder {
   CRow()
       : super('Row', [
-          ChoiceValueParameter(name: 'mainAxisAlignment', options: {
-            'start': MainAxisAlignment.start,
-            'center': MainAxisAlignment.center,
-            'end': MainAxisAlignment.end,
-            'spaceBetween': MainAxisAlignment.spaceBetween,
-            'spaceAround': MainAxisAlignment.spaceAround,
-            'spaceEvenly': MainAxisAlignment.spaceEvenly,
-          }),
-          ChoiceValueParameter(name: 'crossAxisAlignment', options: {
-            'start': CrossAxisAlignment.start,
-            'center': CrossAxisAlignment.center,
-            'end': CrossAxisAlignment.end,
-            'stretch': CrossAxisAlignment.stretch,
-            'baseline': CrossAxisAlignment.baseline,
-          }),
-          ChoiceValueParameter(name: 'mainAxisSize', options: {
-            'max': MainAxisSize.max,
-            'min': MainAxisSize.min,
-          }),
-          MultiComponentParameter(name: 'children'),
+          Parameters.mainAxisAlignmentParameter,
+          Parameters.crossAxisAlignmentParameter,
+          Parameters.mainAxisSizeParameter
         ]);
 
   @override
@@ -87,19 +130,17 @@ class CRow extends Component {
       mainAxisAlignment: (parameters[0] as ChoiceValueParameter).value,
       crossAxisAlignment: (parameters[1] as ChoiceValueParameter).value,
       mainAxisSize: (parameters[2] as ChoiceValueParameter).value,
-      children: (parameters[3] as MultiComponentParameter)
-              .components
-              ?.map((e) => e.create())
-              .toList() ??
-          [],
+      children: children.map((e) => e.create()).toList(),
     );
   }
 }
 
-class CPadding extends Component {
-  CPadding()
-      : super('Padding', [
-         Parameters.paddingParameter
+class CColumn extends MultiHolder {
+  CColumn()
+      : super('Column', [
+          Parameters.mainAxisAlignmentParameter,
+          Parameters.crossAxisAlignmentParameter,
+          Parameters.mainAxisSizeParameter
         ]);
 
   @override
@@ -109,19 +150,64 @@ class CPadding extends Component {
 
   @override
   Widget create() {
-   return Padding(
-     padding: parameters[0].value,
-   );
+    throw Column(
+      mainAxisAlignment: (parameters[0] as ChoiceValueParameter).value,
+      crossAxisAlignment: (parameters[1] as ChoiceValueParameter).value,
+      mainAxisSize: (parameters[2] as ChoiceValueParameter).value,
+      children: children.map((e) => e.create()).toList(),
+    );
   }
 }
 
-class CContainer extends Component {
-  CContainer() : super('Container', [
-    Parameters.colorParameter,
-    Parameters.paddingParameter,
+class CFlex extends MultiHolder {
+  CFlex()
+      : super('Flex', [
+          Parameters.mainAxisAlignmentParameter,
+          Parameters.crossAxisAlignmentParameter,
+          Parameters.mainAxisSizeParameter,
+          Parameters.axisParameter
+        ]);
 
+  @override
+  String code() {
+    return '';
+  }
 
-  ]);
+  @override
+  Widget create() {
+    throw Flex(
+      mainAxisAlignment: (parameters[0] as ChoiceValueParameter).value,
+      crossAxisAlignment: (parameters[1] as ChoiceValueParameter).value,
+      mainAxisSize: (parameters[2] as ChoiceValueParameter).value,
+      children: children.map((e) => e.create()).toList(),
+      direction: (parameters[3] as ChoiceValueParameter).value,
+    );
+  }
+}
+
+class CPadding extends Holder {
+  CPadding() : super('Padding', [Parameters.paddingParameter]);
+
+  @override
+  String code() {
+    return '';
+  }
+
+  @override
+  Widget create() {
+    return Padding(
+      padding: parameters[0].value,
+      child: child?.create(),
+    );
+  }
+}
+
+class CContainer extends Holder {
+  CContainer()
+      : super('Container', [
+          Parameters.colorParameter,
+          Parameters.paddingParameter,
+        ]);
 
   @override
   String code() {
@@ -131,8 +217,11 @@ class CContainer extends Component {
   @override
   Widget create() {
     return Container(
-
+      child: child?.create(),
+      padding: parameters[1].value,
+      decoration: BoxDecoration(
+        color: parameters[0].value,
+      ),
     );
   }
-
 }

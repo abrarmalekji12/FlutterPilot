@@ -12,32 +12,47 @@ abstract class Component {
   String code();
 }
 
+abstract class MultiHolder extends Component {
+  List<Component> children = [];
+
+  MultiHolder(String name, List<Parameter> parameters)
+      : super(name, parameters);
+}
+
+abstract class Holder extends Component {
+  Component? child;
+
+  Holder(String name, List<Parameter> parameters)
+      : super(name, parameters);
+}
+
 abstract class Parameter {
   final String name;
-  dynamic value;
+  dynamic val;
 
   Parameter(this.name);
 
-  get getValue => value;
+  get value => val;
 }
 
 class SimpleParameter extends Parameter {
   final ParamType paramType;
   final bool nullable;
+  final dynamic defaultValue;
 
   late final dynamic Function(Parameter) evaluate;
 
-  SimpleParameter(
-      {required String name,
-      required this.paramType,
-      required this.nullable,
-      dynamic Function(Parameter)? evaluate})
-      : super(name){
-    if(evaluate!=null){
-      this.evaluate=evaluate;
+  SimpleParameter({required String name,
+    required this.paramType,
+    required this.nullable,
+    this.defaultValue,
+    dynamic Function(Parameter)? evaluate})
+      : super(name) {
+    if (evaluate != null) {
+      this.evaluate = evaluate;
     }
-    else{
-      this.evaluate=(param)=>param.value;
+    else {
+      this.evaluate = (param) => param.value;
     }
   }
 }
@@ -60,20 +75,8 @@ class ChoiceParameter extends Parameter {
   }) : super(name);
 }
 
-class MultiComponentParameter extends Parameter {
-  List<Component>? components;
 
-  MultiComponentParameter({
-    required String name,
-  }) : super(name);
-}
-class SingleComponentParameter extends Parameter {
-  Component? component;
 
-  SingleComponentParameter({
-    required String name,
-  }) : super(name);
-}
 class ComplexParameter extends Parameter {
   final List<Parameter> params;
   final dynamic Function(List<Parameter>) evaluate;
