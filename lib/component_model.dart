@@ -34,27 +34,34 @@ abstract class Parameter {
   get rawValue;
 }
 
-class SimpleParameter extends Parameter {
+class SimpleParameter<T> extends Parameter {
   final ParamType paramType;
-  dynamic val;
-  final bool nullable;
-  final dynamic defaultValue;
+  T? val;
+  final T? defaultValue;
 
   @override
-  get value => evaluate(val ?? defaultValue);
-  late final dynamic Function(Parameter) evaluate;
+  dynamic get value {
+
+    if(val!=null){
+      return evaluate(val!);
+    }else if(defaultValue!=null){
+      return evaluate(defaultValue!);
+    }
+    return null;
+
+  }
+  late final dynamic Function(T) evaluate;
 
   SimpleParameter(
       {required String name,
       required this.paramType,
-      required this.nullable,
       this.defaultValue,
-      dynamic Function(Parameter)? evaluate})
+      dynamic Function(T)? evaluate})
       : super(name) {
     if (evaluate != null) {
       this.evaluate = evaluate;
     } else {
-      this.evaluate = (param) => param.value;
+      this.evaluate = (param) => value;
     }
   }
 
@@ -96,8 +103,7 @@ class ChoiceParameter extends Parameter {
   get value => val?.value ?? options[defaultValue].value;
 
   @override
-  // TODO: implement rawValue
-  get rawValue => throw UnimplementedError();
+  Parameter get rawValue => val??options[defaultValue];
 }
 
 class ComplexParameter extends Parameter {

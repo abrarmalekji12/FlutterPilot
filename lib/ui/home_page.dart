@@ -21,20 +21,24 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildLeftSide(),
+    return Scaffold(
+      body: Material(
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildLeftSide(),
+            ),
+            SizedBox(
+              width: 150,
+              child: ComponentSelection(),
+            ),
+            SizedBox(
+              width: 200,
+              child: _buildPropertySelection(),
+            ),
+          ],
         ),
-        SizedBox(
-          width: 150,
-          child: _buildComponentSelection(),
-        ),
-        SizedBox(
-          width: 150,
-          child: _buildPropertySelection(),
-        ),
-      ],
+      ),
     );
   }
 
@@ -45,17 +49,16 @@ class _HomePageState extends State<HomePage> {
         child: Container(
           width: screenConfig.width,
           height: screenConfig.height,
-          color: Colors.white,
           child: root.create(),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: Colors.white,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildComponentSelection() {
-    return ComponentSelection();
-  }
 
   Widget _buildPropertySelection() {
     return Column(
@@ -84,13 +87,14 @@ class _HomePageState extends State<HomePage> {
         children: [
           Text(
             parameter.name,
-            style: const TextStyle(fontSize: 18, color: Colors.black),
+            style: const TextStyle(fontSize: 13, color: Colors.black,fontWeight: FontWeight.w500),
           ),
           const SizedBox(
             width: 10,
           ),
           Expanded(
             child: TextField(
+              controller: TextEditingController(text: parameter.val),
               onChanged: (value) {
                 if (parameter.paramType == ParamType.string) {
                   parameter.val = value;
@@ -110,32 +114,58 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildChoiceParameter(ChoiceParameter param) {
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final subParam in param.options)
-          Row(
-            children: [
-              Radio<Parameter>(
-                  value: param.value,
-                  groupValue: subParam,
-                  onChanged: (value) {
-                    param.val = subParam;
-                    setState(() {});
-                  }),
-              const SizedBox(
-                width: 10,
-              ),
-              _buildParameter(subParam),
-            ],
-          )
+        Text(param.name,style: const TextStyle(fontSize: 14,color: Colors.black,fontWeight: FontWeight.bold),),
+        Column(
+          children: [
+            for (final subParam in param.options)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    child: Row(
+                      children: [
+                        Radio<Parameter>(
+                            value: param.rawValue,
+                            groupValue: subParam,
+                            onChanged: (value) {
+                              param.val = subParam;
+                              setState(() {});
+                            }),
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        Text(subParam.name,style: const TextStyle(fontSize: 14,color: Colors.black),),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(child: _buildParameter(subParam)),
+                ],
+              )
+          ],
+        ),
       ],
     );
   }
 
   Widget _buildComplexParameter(ComplexParameter param) {
-    return Column(
+    return Row(
+
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final subParam in param.params) _buildParameter(subParam)
+        Text(param.name,style: const TextStyle(fontSize: 14,color: Colors.black,fontWeight: FontWeight.bold),),
+        Column(
+          children: [
+            for (final subParam in param.params)
+              _buildParameter(subParam)
+          ],
+        ),
       ],
     );
   }

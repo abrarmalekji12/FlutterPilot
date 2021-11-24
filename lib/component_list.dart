@@ -16,33 +16,28 @@ class Parameters {
   static final paddingParameter = ChoiceParameter(
     name: 'padding',
     options: [
-      SimpleParameter(
+      SimpleParameter<double>(
           name: 'all',
-          nullable: false,
           defaultValue: 0,
           paramType: ParamType.double,
-          evaluate: (param) => EdgeInsets.all(param.rawValue)),
+          evaluate: (value) => EdgeInsets.all(value)),
       ComplexParameter(
           name: 'only',
           params: [
             SimpleParameter(
               name: 'top',
-              nullable: false,
               paramType: ParamType.double,
             ),
             SimpleParameter(
               name: 'left',
-              nullable: false,
               paramType: ParamType.double,
             ),
             SimpleParameter(
               name: 'bottom',
-              nullable: false,
               paramType: ParamType.double,
             ),
             SimpleParameter(
               name: 'right',
-              nullable: false,
               paramType: ParamType.double,
             )
           ],
@@ -58,12 +53,10 @@ class Parameters {
         params: [
           SimpleParameter(
             name: 'horizontal',
-            nullable: true,
             paramType: ParamType.double,
           ),
           SimpleParameter(
             name: 'vertical',
-            nullable: true,
             paramType: ParamType.double,
           ),
         ],
@@ -77,11 +70,10 @@ class Parameters {
       ),
     ], defaultValue: 0,
   );
-  static final colorParameter = SimpleParameter(
+  static final colorParameter = SimpleParameter<String>(
       name: 'color',
       paramType: ParamType.string,
-      nullable: false,
-      defaultValue: '0xffffffff',evaluate: (param)=>Color(param.value));
+      defaultValue: '#ffffff',evaluate: (value)=>hexToColor(value));
   static final mainAxisAlignmentParameter = ChoiceValueParameter(
       name: 'mainAxisAlignment',
       options: {
@@ -117,29 +109,28 @@ class Parameters {
   static final borderRadiusParameter = ChoiceParameter(
       name: 'borderRadius',
       options: [
-        SimpleParameter(
+        SimpleParameter<double>(
             paramType: ParamType.double,
             name: 'circular',
-            nullable: false,
-            evaluate: (param) {
-              return BorderRadius.all(param.value);
+            evaluate: (value) {
+              return BorderRadius.circular(value);
             }),
         ComplexParameter(
             params: [
               SimpleParameter(
-                  paramType: ParamType.double, name: 'topLeft', nullable: true),
+                  paramType: ParamType.double, name: 'topLeft',),
               SimpleParameter(
                   paramType: ParamType.double,
                   name: 'bottomLeft',
-                  nullable: true),
+                  ),
               SimpleParameter(
                   paramType: ParamType.double,
                   name: 'topRight',
-                  nullable: true),
+                 ),
               SimpleParameter(
                   paramType: ParamType.double,
                   name: 'bottomRight',
-                  nullable: true),
+                  ),
             ],
             evaluate: (List<Parameter> params) {
               return BorderRadius.only(
@@ -151,9 +142,13 @@ class Parameters {
             name: 'only')
       ], defaultValue: 0,);
   static final widthParameter = SimpleParameter(
-      name: 'width', paramType: ParamType.double, nullable: true);
+      name: 'width', paramType: ParamType.double);
   static final heightParameter = SimpleParameter(
-      name: 'height', paramType: ParamType.double, nullable: true);
+      name: 'height', paramType: ParamType.double);
+}
+
+Color hexToColor(String code) {
+  return Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);
 }
 
 class CRow extends MultiHolder {
