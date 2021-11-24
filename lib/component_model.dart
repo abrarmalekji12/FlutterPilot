@@ -41,11 +41,13 @@ class SimpleParameter<T> extends Parameter {
 
   @override
   dynamic get value {
-
     if(val!=null){
       return evaluate(val!);
     }else if(defaultValue!=null){
       return evaluate(defaultValue!);
+    }
+    else if(paramType ==  ParamType.double||paramType ==  ParamType.int){
+      return evaluate(0 as T);
     }
     return null;
 
@@ -61,12 +63,22 @@ class SimpleParameter<T> extends Parameter {
     if (evaluate != null) {
       this.evaluate = evaluate;
     } else {
-      this.evaluate = (param) => value;
+      this.evaluate = (value) => value;
     }
   }
 
   @override
-  get rawValue => val??defaultValue;
+  get rawValue {
+
+    if(val!=null){
+      return val!;
+    }else if(defaultValue!=null){
+      return defaultValue!;
+    }
+    if(paramType ==  ParamType.double||paramType ==  ParamType.int){
+      return 0;
+    }
+  }
 }
 
 class ChoiceValueParameter extends Parameter {

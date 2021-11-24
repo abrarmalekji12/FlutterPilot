@@ -18,30 +18,30 @@ class Parameters {
     options: [
       SimpleParameter<double>(
           name: 'all',
-          defaultValue: 0,
           paramType: ParamType.double,
           evaluate: (value) => EdgeInsets.all(value)),
       ComplexParameter(
           name: 'only',
           params: [
-            SimpleParameter(
+            SimpleParameter<double>(
               name: 'top',
               paramType: ParamType.double,
             ),
-            SimpleParameter(
+            SimpleParameter<double>(
               name: 'left',
               paramType: ParamType.double,
             ),
-            SimpleParameter(
+            SimpleParameter<double>(
               name: 'bottom',
               paramType: ParamType.double,
             ),
-            SimpleParameter(
+            SimpleParameter<double>(
               name: 'right',
               paramType: ParamType.double,
             )
           ],
           evaluate: (List<Parameter> params) {
+            print('pading ${params[0].value}');
             return EdgeInsets.only(
                 top: params[0].value,
                 left: params[1].value,
@@ -51,29 +51,30 @@ class Parameters {
       ComplexParameter(
         name: 'symmetric',
         params: [
-          SimpleParameter(
+          SimpleParameter<double>(
             name: 'horizontal',
             paramType: ParamType.double,
           ),
-          SimpleParameter(
+          SimpleParameter<double>(
             name: 'vertical',
             paramType: ParamType.double,
           ),
         ],
         evaluate: (List<Parameter> params) {
-          return EdgeInsets.only(
-              top: params[0].value,
-              left: params[1].value,
-              bottom: params[2].value,
-              right: params[3].value);
+          return EdgeInsets.symmetric(
+            horizontal: params[0].value,
+            vertical: params[1].value,
+          );
         },
       ),
-    ], defaultValue: 0,
+    ],
+    defaultValue: 0,
   );
-  static final colorParameter = SimpleParameter<String>(
+  static final colorParameter = SimpleParameter(
       name: 'color',
       paramType: ParamType.string,
-      defaultValue: '#ffffff',evaluate: (value)=>hexToColor(value));
+      defaultValue: '#ffffff',
+      evaluate: (value) => hexToColor(value));
   static final mainAxisAlignmentParameter = ChoiceValueParameter(
       name: 'mainAxisAlignment',
       options: {
@@ -107,48 +108,56 @@ class Parameters {
       options: {'vertical': Axis.vertical, 'horizontal': Axis.horizontal},
       defaultValue: 'vertical');
   static final borderRadiusParameter = ChoiceParameter(
-      name: 'borderRadius',
-      options: [
-        SimpleParameter<double>(
-            paramType: ParamType.double,
-            name: 'circular',
-            evaluate: (value) {
-              return BorderRadius.circular(value);
-            }),
-        ComplexParameter(
-            params: [
-              SimpleParameter(
-                  paramType: ParamType.double, name: 'topLeft',),
-              SimpleParameter(
-                  paramType: ParamType.double,
-                  name: 'bottomLeft',
-                  ),
-              SimpleParameter(
-                  paramType: ParamType.double,
-                  name: 'topRight',
-                 ),
-              SimpleParameter(
-                  paramType: ParamType.double,
-                  name: 'bottomRight',
-                  ),
-            ],
-            evaluate: (List<Parameter> params) {
-              return BorderRadius.only(
-                  topLeft: params[0].value,
-                  bottomLeft: params[1].value,
-                  topRight: params[2].value,
-                  bottomRight: params[3].value);
-            },
-            name: 'only')
-      ], defaultValue: 0,);
-  static final widthParameter = SimpleParameter(
-      name: 'width', paramType: ParamType.double);
-  static final heightParameter = SimpleParameter(
-      name: 'height', paramType: ParamType.double);
+    name: 'borderRadius',
+    options: [
+      SimpleParameter<double>(
+          paramType: ParamType.double,
+          name: 'circular',
+          evaluate: (value) {
+            return BorderRadius.circular(value);
+          }),
+      ComplexParameter(
+          params: [
+            SimpleParameter<double>(
+              paramType: ParamType.double,
+              name: 'topLeft',
+            ),
+            SimpleParameter<double>(
+              paramType: ParamType.double,
+              name: 'bottomLeft',
+            ),
+            SimpleParameter<double>(
+              paramType: ParamType.double,
+              name: 'topRight',
+            ),
+            SimpleParameter<double>(
+              paramType: ParamType.double,
+              name: 'bottomRight',
+            ),
+          ],
+          evaluate: (List<Parameter> params) {
+            return BorderRadius.only(
+                topLeft: params[0].value,
+                bottomLeft: params[1].value,
+                topRight: params[2].value,
+                bottomRight: params[3].value);
+          },
+          name: 'only')
+    ],
+    defaultValue: 0,
+  );
+  static final widthParameter =
+      SimpleParameter<double>(name: 'width', paramType: ParamType.double);
+  static final heightParameter =
+      SimpleParameter<double>(name: 'height', paramType: ParamType.double);
 }
 
 Color hexToColor(String code) {
-  return Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);
+  if (code.length == 7) {
+    return Color(
+        (int.tryParse(code.substring(1, 7), radix: 16) ?? 0) + 0xFF000000);
+  }
+  return Colors.white;
 }
 
 class CRow extends MultiHolder {
@@ -278,7 +287,7 @@ class CContainer extends Holder {
   Widget create() {
     return Container(
       child: child?.create(),
-      padding: parameters[1].value,
+      margin: parameters[1].value,
       width: parameters[3].value,
       height: parameters[4].value,
       decoration: BoxDecoration(

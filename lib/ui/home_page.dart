@@ -33,7 +33,7 @@ class _HomePageState extends State<HomePage> {
               child: ComponentSelection(),
             ),
             SizedBox(
-              width: 200,
+              width: 300,
               child: _buildPropertySelection(),
             ),
           ],
@@ -49,9 +49,12 @@ class _HomePageState extends State<HomePage> {
         child: Container(
           width: screenConfig.width,
           height: screenConfig.height,
-          child: root.create(),
+          child: Align(
+              alignment: Alignment.topLeft,
+              child: root.create()),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey,width: 2),
             color: Colors.white,
           ),
         ),
@@ -59,19 +62,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
   Widget _buildPropertySelection() {
-    return Column(
-      children: [for (final param in root.parameters) _buildParameter(param)],
+    return ListView(
+      children: [
+        for (final param in root.parameters) _buildParameter(param),
+      ],
     );
   }
 
   Widget _buildParameter(Parameter? param) {
+
     if (param == null) return Container();
+    if(param is SimpleParameter<double>||param is SimpleParameter<int>||param is SimpleParameter<String>){
+      print('paramm ${param.name} ${param.runtimeType}');
+      return _buildSimpleParameter(param as SimpleParameter);
+    }
     switch (param.runtimeType) {
-      case SimpleParameter:
-        return _buildSimpleParameter(param as SimpleParameter);
-      case ChoiceParameter:
+       case ChoiceParameter:
         return _buildChoiceParameter(param as ChoiceParameter);
       case ComplexParameter:
         return _buildComplexParameter(param as ComplexParameter);
@@ -81,20 +88,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSimpleParameter(SimpleParameter parameter) {
+    // print('Simple param ${parameter.name}');
     return SizedBox(
       height: 50,
       child: Row(
         children: [
           Text(
             parameter.name,
-            style: const TextStyle(fontSize: 13, color: Colors.black,fontWeight: FontWeight.w500),
+            style: const TextStyle(
+                fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
           ),
           const SizedBox(
             width: 10,
           ),
           Expanded(
             child: TextField(
-              controller: TextEditingController(text: parameter.val),
               onChanged: (value) {
                 if (parameter.paramType == ParamType.string) {
                   parameter.val = value;
@@ -117,38 +125,48 @@ class _HomePageState extends State<HomePage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(param.name,style: const TextStyle(fontSize: 14,color: Colors.black,fontWeight: FontWeight.bold),),
-        Column(
-          children: [
-            for (final subParam in param.options)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: 40,
-                    child: Row(
-                      children: [
-                        Radio<Parameter>(
-                            value: param.rawValue,
-                            groupValue: subParam,
-                            onChanged: (value) {
-                              param.val = subParam;
-                              setState(() {});
-                            }),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        Text(subParam.name,style: const TextStyle(fontSize: 14,color: Colors.black),),
-                      ],
+        Text(
+          param.name,
+          style: const TextStyle(
+              fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        Expanded(
+          child: Column(
+            children: [
+              for (final subParam in param.options)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 40,
+                      child: Row(
+                        children: [
+                          Radio<Parameter>(
+                              value: param.rawValue,
+                              groupValue: subParam,
+                              onChanged: (value) {
+                                param.val = subParam;
+                                setState(() {});
+                              }),
+                          const SizedBox(
+                            width: 5,
+                          ),
+                          Text(
+                            subParam.name,
+                            style: const TextStyle(
+                                fontSize: 14, color: Colors.black),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(
-                    width: 5,
-                  ),
-                  Expanded(child: _buildParameter(subParam)),
-                ],
-              )
-          ],
+                    const SizedBox(
+                      width: 5,
+                    ),
+                    Expanded(child: _buildParameter(subParam),),
+                  ],
+                )
+            ],
+          ),
         ),
       ],
     );
@@ -156,15 +174,19 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildComplexParameter(ComplexParameter param) {
     return Row(
-
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(param.name,style: const TextStyle(fontSize: 14,color: Colors.black,fontWeight: FontWeight.bold),),
-        Column(
-          children: [
-            for (final subParam in param.params)
-              _buildParameter(subParam)
-          ],
+        Text(
+          param.name,
+          style: const TextStyle(
+              fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        Expanded(
+          child: Column(
+            children: [
+              for (final subParam in param.params) _buildParameter(subParam)
+            ],
+          ),
         ),
       ],
     );
