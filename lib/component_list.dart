@@ -10,71 +10,89 @@ final componentList = {
   'Padding': () => CPadding(),
   'ClipRRect': () => CClipRRect(),
   'Container': () => CContainer(),
+  'Text': () => CText(),
 };
 
 class Parameters {
-  static final paddingParameter = ChoiceParameter(
-    name: 'padding',
-    options: [
-      SimpleParameter<double>(
-          name: 'all',
-          paramType: ParamType.double,
-          evaluate: (value) => EdgeInsets.all(value)),
-      ComplexParameter(
-          name: 'only',
-          params: [
-            SimpleParameter<double>(
-              name: 'top',
-              paramType: ParamType.double,
-            ),
-            SimpleParameter<double>(
-              name: 'left',
-              paramType: ParamType.double,
-            ),
-            SimpleParameter<double>(
-              name: 'bottom',
-              paramType: ParamType.double,
-            ),
-            SimpleParameter<double>(
-              name: 'right',
-              paramType: ParamType.double,
-            )
-          ],
-          evaluate: (List<Parameter> params) {
-            return EdgeInsets.only(
-                top: params[0].value,
-                left: params[1].value,
-                bottom: params[2].value,
-                right: params[3].value);
-          }),
-      ComplexParameter(
-        name: 'symmetric',
-        params: [
+  static paddingParameter() => ChoiceParameter(
+        name: 'padding',
+        options: [
           SimpleParameter<double>(
-            name: 'horizontal',
-            paramType: ParamType.double,
-          ),
-          SimpleParameter<double>(
-            name: 'vertical',
-            paramType: ParamType.double,
+              name: 'all',
+              paramType: ParamType.double,
+              evaluate: (value) => EdgeInsets.all(value)),
+          ComplexParameter(
+              name: 'only',
+              params: [
+                SimpleParameter<double>(
+                  name: 'top',
+                  paramType: ParamType.double,
+                ),
+                SimpleParameter<double>(
+                  name: 'left',
+                  paramType: ParamType.double,
+                ),
+                SimpleParameter<double>(
+                  name: 'bottom',
+                  paramType: ParamType.double,
+                ),
+                SimpleParameter<double>(
+                  name: 'right',
+                  paramType: ParamType.double,
+                )
+              ],
+              evaluate: (List<Parameter> params) {
+                return EdgeInsets.only(
+                    top: params[0].value,
+                    left: params[1].value,
+                    bottom: params[2].value,
+                    right: params[3].value);
+              }),
+          ComplexParameter(
+            name: 'symmetric',
+            params: [
+              SimpleParameter<double>(
+                name: 'horizontal',
+                paramType: ParamType.double,
+              ),
+              SimpleParameter<double>(
+                name: 'vertical',
+                paramType: ParamType.double,
+              ),
+            ],
+            evaluate: (List<Parameter> params) {
+              return EdgeInsets.symmetric(
+                horizontal: params[0].value,
+                vertical: params[1].value,
+              );
+            },
           ),
         ],
-        evaluate: (List<Parameter> params) {
-          return EdgeInsets.symmetric(
-            horizontal: params[0].value,
-            vertical: params[1].value,
-          );
-        },
-      ),
-    ],
-    defaultValue: 0,
-  );
-  static final colorParameter = SimpleParameter<String>(
+        defaultValue: 0,
+      );
+
+  static alignmentParameter() => ChoiceValueParameter(
+      name: 'alignment',
+      options: {
+        'centerLeft': Alignment.centerLeft,
+        'center': Alignment.center,
+        'centerRight': Alignment.centerRight,
+        'topLeft': Alignment.topLeft,
+        'topRight': Alignment.topRight,
+        'bottomLeft': Alignment.bottomLeft,
+        'bottomRight': Alignment.bottomRight,
+      },
+      defaultValue: 'center');
+
+  static marginParameter() => paddingParameter().copyWith('margin');
+
+  static colorParameter() => SimpleParameter<String>(
       name: 'color',
       paramType: ParamType.string,
-      defaultValue: '#ffffff',
+      defaultValue: '#000000',
       evaluate: (value) => hexToColor(value));
-  static final mainAxisAlignmentParameter = ChoiceValueParameter(
+
+  static mainAxisAlignmentParameter() => ChoiceValueParameter(
       name: 'mainAxisAlignment',
       options: {
         'start': MainAxisAlignment.start,
@@ -85,7 +103,8 @@ class Parameters {
         'spaceEvenly': MainAxisAlignment.spaceEvenly,
       },
       defaultValue: 'start');
-  static final crossAxisAlignmentParameter = ChoiceValueParameter(
+
+  static crossAxisAlignmentParameter() => ChoiceValueParameter(
       name: 'crossAxisAlignment',
       options: {
         'start': CrossAxisAlignment.start,
@@ -95,60 +114,66 @@ class Parameters {
         'baseline': CrossAxisAlignment.baseline,
       },
       defaultValue: 'start');
-  static final mainAxisSizeParameter = ChoiceValueParameter(
+
+  static mainAxisSizeParameter() => ChoiceValueParameter(
       name: 'mainAxisSize',
       options: {
         'max': MainAxisSize.max,
         'min': MainAxisSize.min,
       },
       defaultValue: 'max');
-  static final axisParameter = ChoiceValueParameter(
+
+  static axisParameter() => ChoiceValueParameter(
       name: 'direction',
       options: {'vertical': Axis.vertical, 'horizontal': Axis.horizontal},
       defaultValue: 'vertical');
-  static final borderRadiusParameter = ChoiceParameter(
-    name: 'borderRadius',
-    options: [
-      SimpleParameter<double>(
-          paramType: ParamType.double,
-          name: 'circular',
-          evaluate: (value) {
-            return BorderRadius.circular(value);
-          }),
-      ComplexParameter(
-          params: [
-            SimpleParameter<double>(
+
+  static borderRadiusParameter() => ChoiceParameter(
+        name: 'borderRadius',
+        options: [
+          SimpleParameter<double>(
               paramType: ParamType.double,
-              name: 'topLeft',
-            ),
-            SimpleParameter<double>(
-              paramType: ParamType.double,
-              name: 'bottomLeft',
-            ),
-            SimpleParameter<double>(
-              paramType: ParamType.double,
-              name: 'topRight',
-            ),
-            SimpleParameter<double>(
-              paramType: ParamType.double,
-              name: 'bottomRight',
-            ),
-          ],
-          evaluate: (List<Parameter> params) {
-            return BorderRadius.only(
-                topLeft: params[0].value,
-                bottomLeft: params[1].value,
-                topRight: params[2].value,
-                bottomRight: params[3].value);
-          },
-          name: 'only')
-    ],
-    defaultValue: 0,
-  );
-  static final widthParameter =
-      SimpleParameter<double>(name: 'width', paramType: ParamType.double,defaultValue: 100);
-  static final heightParameter =
-      SimpleParameter<double>(name: 'height', paramType: ParamType.double,defaultValue: 100);
+              name: 'circular',
+              evaluate: (value) {
+                return BorderRadius.circular(value);
+              }),
+          ComplexParameter(
+              params: [
+                SimpleParameter<double>(
+                  paramType: ParamType.double,
+                  name: 'topLeft',
+                ),
+                SimpleParameter<double>(
+                  paramType: ParamType.double,
+                  name: 'bottomLeft',
+                ),
+                SimpleParameter<double>(
+                  paramType: ParamType.double,
+                  name: 'topRight',
+                ),
+                SimpleParameter<double>(
+                  paramType: ParamType.double,
+                  name: 'bottomRight',
+                ),
+              ],
+              evaluate: (List<Parameter> params) {
+                return BorderRadius.only(
+                  topLeft: Radius.circular(params[0].value),
+                  bottomLeft: Radius.circular(params[1].value),
+                  topRight: Radius.circular(params[2].value),
+                  bottomRight: Radius.circular(params[3].value),
+                );
+              },
+              name: 'only')
+        ],
+        defaultValue: 0,
+      );
+
+  static widthParameter() => SimpleParameter<double>(
+      name: 'width', paramType: ParamType.double, defaultValue: 100);
+
+  static heightParameter() => SimpleParameter<double>(
+      name: 'height', paramType: ParamType.double, defaultValue: 100);
 }
 
 Color hexToColor(String code) {
@@ -162,9 +187,9 @@ Color hexToColor(String code) {
 class CRow extends MultiHolder {
   CRow()
       : super('Row', [
-          Parameters.mainAxisAlignmentParameter,
-          Parameters.crossAxisAlignmentParameter,
-          Parameters.mainAxisSizeParameter
+          Parameters.mainAxisAlignmentParameter(),
+          Parameters.crossAxisAlignmentParameter(),
+          Parameters.mainAxisSizeParameter()
         ]);
 
   @override
@@ -176,7 +201,7 @@ class CRow extends MultiHolder {
   Widget create() {
     return Row(
       mainAxisAlignment: parameters[0].value,
-      crossAxisAlignment:parameters[1].value,
+      crossAxisAlignment: parameters[1].value,
       mainAxisSize: parameters[2].value,
       children: children.map((e) => e.create()).toList(),
     );
@@ -186,9 +211,9 @@ class CRow extends MultiHolder {
 class CColumn extends MultiHolder {
   CColumn()
       : super('Column', [
-          Parameters.mainAxisAlignmentParameter,
-          Parameters.crossAxisAlignmentParameter,
-          Parameters.mainAxisSizeParameter
+          Parameters.mainAxisAlignmentParameter(),
+          Parameters.crossAxisAlignmentParameter(),
+          Parameters.mainAxisSizeParameter()
         ]);
 
   @override
@@ -210,10 +235,10 @@ class CColumn extends MultiHolder {
 class CFlex extends MultiHolder {
   CFlex()
       : super('Flex', [
-          Parameters.mainAxisAlignmentParameter,
-          Parameters.crossAxisAlignmentParameter,
-          Parameters.mainAxisSizeParameter,
-          Parameters.axisParameter
+          Parameters.mainAxisAlignmentParameter(),
+          Parameters.crossAxisAlignmentParameter(),
+          Parameters.mainAxisSizeParameter(),
+          Parameters.axisParameter()
         ]);
 
   @override
@@ -234,7 +259,7 @@ class CFlex extends MultiHolder {
 }
 
 class CPadding extends Holder {
-  CPadding() : super('Padding', [Parameters.paddingParameter]);
+  CPadding() : super('Padding', [Parameters.paddingParameter()]);
 
   @override
   String code() {
@@ -251,7 +276,7 @@ class CPadding extends Holder {
 }
 
 class CClipRRect extends Holder {
-  CClipRRect() : super('ClipRRect', [Parameters.borderRadiusParameter]);
+  CClipRRect() : super('ClipRRect', [Parameters.borderRadiusParameter()]);
 
   @override
   String code() {
@@ -270,11 +295,13 @@ class CClipRRect extends Holder {
 class CContainer extends Holder {
   CContainer()
       : super('Container', [
-          Parameters.colorParameter,
-          Parameters.paddingParameter,
-          Parameters.borderRadiusParameter,
-          Parameters.widthParameter,
-          Parameters.heightParameter,
+          Parameters.colorParameter(),
+          Parameters.paddingParameter(),
+          Parameters.borderRadiusParameter(),
+          Parameters.widthParameter(),
+          Parameters.heightParameter(),
+          Parameters.marginParameter(),
+          Parameters.alignmentParameter(),
         ]);
 
   @override
@@ -286,13 +313,62 @@ class CContainer extends Holder {
   Widget create() {
     return Container(
       child: child?.create(),
-      margin: parameters[1].value,
+      padding: parameters[1].value,
       width: parameters[3].value,
       height: parameters[4].value,
+      margin: parameters[5].value,
+      alignment: parameters[6].value,
       decoration: BoxDecoration(
         color: parameters[0].value,
         borderRadius: parameters[2].value,
       ),
+    );
+  }
+}
+
+class CText extends Component {
+  CText()
+      : super('Text', [
+          SimpleParameter<String>(
+              name: 'text', paramType: ParamType.string, defaultValue: ''),
+          ComplexParameter(
+              params: [
+                SimpleParameter<double>(
+                    name: 'font-size',
+                    paramType: ParamType.double,
+                    defaultValue: 13),
+                Parameters.colorParameter(),
+                ChoiceValueParameter(options: {
+                  'w200': FontWeight.w200,
+                  'w300': FontWeight.w300,
+                  'w400': FontWeight.w400,
+                  'w500': FontWeight.w500,
+                  'normal': FontWeight.normal,
+                  'w600': FontWeight.w600,
+                  'w700': FontWeight.w700,
+                  'w800': FontWeight.w800,
+                  'w900': FontWeight.w900,
+                }, defaultValue: 'normal', name: 'font-weight'),
+              ],
+              name: 'Style',
+              evaluate: (params) {
+                return TextStyle(
+                    fontSize: params[0].value,
+                    color: params[1].value,
+                    fontWeight: params[2].value);
+              })
+        ]);
+
+  @override
+  String code() {
+    return '';
+  }
+
+  @override
+  Widget create() {
+    return Text(
+      parameters[0].value,
+      style: parameters[1].value,
     );
   }
 }
