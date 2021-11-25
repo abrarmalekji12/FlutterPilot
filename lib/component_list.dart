@@ -41,7 +41,6 @@ class Parameters {
             )
           ],
           evaluate: (List<Parameter> params) {
-            print('pading ${params[0].value}');
             return EdgeInsets.only(
                 top: params[0].value,
                 left: params[1].value,
@@ -70,7 +69,7 @@ class Parameters {
     ],
     defaultValue: 0,
   );
-  static final colorParameter = SimpleParameter(
+  static final colorParameter = SimpleParameter<String>(
       name: 'color',
       paramType: ParamType.string,
       defaultValue: '#ffffff',
@@ -147,9 +146,9 @@ class Parameters {
     defaultValue: 0,
   );
   static final widthParameter =
-      SimpleParameter<double>(name: 'width', paramType: ParamType.double);
+      SimpleParameter<double>(name: 'width', paramType: ParamType.double,defaultValue: 100);
   static final heightParameter =
-      SimpleParameter<double>(name: 'height', paramType: ParamType.double);
+      SimpleParameter<double>(name: 'height', paramType: ParamType.double,defaultValue: 100);
 }
 
 Color hexToColor(String code) {
@@ -175,10 +174,10 @@ class CRow extends MultiHolder {
 
   @override
   Widget create() {
-    throw Row(
-      mainAxisAlignment: (parameters[0] as ChoiceValueParameter).value,
-      crossAxisAlignment: (parameters[1] as ChoiceValueParameter).value,
-      mainAxisSize: (parameters[2] as ChoiceValueParameter).value,
+    return Row(
+      mainAxisAlignment: parameters[0].value,
+      crossAxisAlignment:parameters[1].value,
+      mainAxisSize: parameters[2].value,
       children: children.map((e) => e.create()).toList(),
     );
   }
@@ -199,7 +198,7 @@ class CColumn extends MultiHolder {
 
   @override
   Widget create() {
-    throw Column(
+    return Column(
       mainAxisAlignment: (parameters[0] as ChoiceValueParameter).value,
       crossAxisAlignment: (parameters[1] as ChoiceValueParameter).value,
       mainAxisSize: (parameters[2] as ChoiceValueParameter).value,
@@ -224,7 +223,7 @@ class CFlex extends MultiHolder {
 
   @override
   Widget create() {
-    throw Flex(
+    return Flex(
       mainAxisAlignment: (parameters[0] as ChoiceValueParameter).value,
       crossAxisAlignment: (parameters[1] as ChoiceValueParameter).value,
       mainAxisSize: (parameters[2] as ChoiceValueParameter).value,

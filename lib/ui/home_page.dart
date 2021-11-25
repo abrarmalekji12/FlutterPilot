@@ -30,7 +30,12 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(
               width: 150,
-              child: ComponentSelection(),
+              child: ComponentSelection(
+                onSelected: (comp) {
+                  root = comp;
+                  setState(() {});
+                },
+              ),
             ),
             SizedBox(
               width: 300,
@@ -49,12 +54,10 @@ class _HomePageState extends State<HomePage> {
         child: Container(
           width: screenConfig.width,
           height: screenConfig.height,
-          child: Align(
-              alignment: Alignment.topLeft,
-              child: root.create()),
+          child: Align(alignment: Alignment.topLeft, child: root.create()),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey,width: 2),
+            border: Border.all(color: Colors.grey, width: 2),
             color: Colors.white,
           ),
         ),
@@ -71,17 +74,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildParameter(Parameter? param) {
-
     if (param == null) return Container();
-    if(param is SimpleParameter<double>||param is SimpleParameter<int>||param is SimpleParameter<String>){
+    if (param is SimpleParameter<double> ||
+        param is SimpleParameter<int> ||
+        param is SimpleParameter<String>) {
       print('paramm ${param.name} ${param.runtimeType}');
       return _buildSimpleParameter(param as SimpleParameter);
     }
     switch (param.runtimeType) {
-       case ChoiceParameter:
+      case ChoiceParameter:
         return _buildChoiceParameter(param as ChoiceParameter);
       case ComplexParameter:
         return _buildComplexParameter(param as ComplexParameter);
+      case ChoiceValueParameter:
+        return _buildChoiceValueParameter(param as ChoiceValueParameter);
       default:
         return Container();
     }
@@ -103,6 +109,7 @@ class _HomePageState extends State<HomePage> {
           ),
           Expanded(
             child: TextField(
+              // controller: ,
               onChanged: (value) {
                 if (parameter.paramType == ParamType.string) {
                   parameter.val = value;
@@ -162,7 +169,9 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(
                       width: 5,
                     ),
-                    Expanded(child: _buildParameter(subParam),),
+                    Expanded(
+                      child: _buildParameter(subParam),
+                    ),
                   ],
                 )
             ],
@@ -188,6 +197,40 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildChoiceValueParameter(ChoiceValueParameter param) {
+    return Column(
+      children: [
+        Text(
+          param.name,
+          style: const TextStyle(
+              fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        for (final option in param.options.keys)
+          SizedBox(
+            height: 30,
+            child: Row(
+              children: [
+                Radio<String>(
+                    value: option,
+                    groupValue: param.rawValue,
+                    onChanged: (value) {
+                      param.val = option;
+                      setState(() {});
+                    }),
+                const SizedBox(
+                  width: 5,
+                ),
+                Text(
+                  option,
+                  style: const TextStyle(fontSize: 14, color: Colors.black),
+                ),
+              ],
+            ),
+          )
       ],
     );
   }

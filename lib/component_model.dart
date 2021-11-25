@@ -32,6 +32,7 @@ abstract class Parameter {
 
   get value;
   get rawValue;
+
 }
 
 class SimpleParameter<T> extends Parameter {
@@ -87,7 +88,15 @@ class ChoiceValueParameter extends Parameter {
   dynamic val;
 
   @override
-  get value => val ?? options[defaultValue];
+  get value {
+    if(val!=null){
+      return options[val];
+    }
+    else if(defaultValue!=null){
+      return options[defaultValue];
+    }
+    return null;
+  }
 
   ChoiceValueParameter({
     required String name,
@@ -96,8 +105,9 @@ class ChoiceValueParameter extends Parameter {
   }) : super(name);
 
   @override
-  // TODO: implement rawValue
-  get rawValue => throw UnimplementedError();
+  get rawValue {
+    return val??defaultValue;
+  }
 }
 
 class ChoiceParameter extends Parameter {

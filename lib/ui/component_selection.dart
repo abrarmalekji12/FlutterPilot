@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/component_list.dart';
+import 'package:flutter_builder/component_model.dart';
 
 class ComponentSelection extends StatefulWidget {
-  const ComponentSelection({Key? key}) : super(key: key);
+  final void Function(Component) onSelected;
+  const ComponentSelection({Key? key, required this.onSelected}) : super(key: key);
 
   @override
   _ComponentSelectionState createState() => _ComponentSelectionState();
@@ -18,7 +20,7 @@ class _ComponentSelectionState extends State<ComponentSelection> {
             .map(
               (e) => InkWell(
                 onTap: (){
-
+                  widget.onSelected(componentList[e]!());
                 },
                 child: Container(
                   width: 130,
