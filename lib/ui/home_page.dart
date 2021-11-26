@@ -8,6 +8,7 @@ import 'package:flutter_builder/cubit/component_selection/component_selection_cu
 import 'package:flutter_builder/data_type.dart';
 import 'package:flutter_builder/screen_model.dart';
 import 'package:flutter_builder/ui/component_selection.dart';
+import 'package:flutter_builder/ui/parameter_ui.dart';
 
 import '../component_list.dart';
 import '../component_model.dart';
@@ -24,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   ScreenConfig screenConfig = screenConfigs[0];
   final componentPropertyCubit = ComponentPropertyCubit();
   final componentOperationCubit =
-      ComponentOperationCubit((componentList['Row']!() as MultiHolder));
+      ComponentOperationCubit((componentList['Container']!() as Holder));
   /*
   * ..addChildren([
         componentList['Container']!(),
@@ -35,7 +36,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     componentSelectionCubit = ComponentSelectionCubit(
         currentSelected: componentOperationCubit.rootComponent);
@@ -69,7 +69,18 @@ class _HomePageState extends State<HomePage> {
               ),
               SizedBox(
                 width: 300,
-                child: _buildPropertySelection(),
+                child: BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
+                  builder: (context, state) {
+                    print('BUILDING');
+                    return ListView(
+                      children: [
+                        for (final param
+                        in componentSelectionCubit.currentSelected.parameters)
+                          ParameterWidget(parameter: param,),
+                      ],
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -93,6 +104,7 @@ class _HomePageState extends State<HomePage> {
                 return BlocBuilder<ComponentPropertyCubit,
                     ComponentPropertyState>(
                   builder: (context, state) {
+                    print(componentOperationCubit.rootComponent.code());
                     return componentOperationCubit.rootComponent.create();
                   },
                 );
@@ -109,187 +121,5 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPropertySelection() {
-    return BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
-      builder: (context, state) {
-        return ListView(
-          children: [
-            for (final param
-                in componentSelectionCubit.currentSelected.parameters)
-              _buildParameter(param),
-          ],
-        );
-      },
-    );
-  }
 
-  Widget _buildParameter(Parameter? param) {
-    if (param == null) return Container();
-    if (param is SimpleParameter<double> ||
-        param is SimpleParameter<int> ||
-        param is SimpleParameter<String>) {
-      // print('paramm ${param.name} ${param.runtimeType}');
-      return _buildSimpleParameter(param as SimpleParameter);
-    }
-    switch (param.runtimeType) {
-      case ChoiceParameter:
-        return _buildChoiceParameter(param as ChoiceParameter);
-      case ComplexParameter:
-        return _buildComplexParameter(param as ComplexParameter);
-      case ChoiceValueParameter:
-        return _buildChoiceValueParameter(param as ChoiceValueParameter);
-      default:
-        return Container();
-    }
-  }
-
-  Widget _buildSimpleParameter(SimpleParameter parameter) {
-    // print('Simple param ${parameter.name}');
-    return SizedBox(
-      height: 50,
-      child: Row(
-        children: [
-          Text(
-            parameter.name,
-            style: AppFontStyle.roboto(13,
-                color: Colors.black, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(
-            width: 10,
-          ),
-          SizedBox(
-            width: 50,
-            child: TextField(
-              controller: TextEditingController.fromValue(
-                  TextEditingValue(text: '${parameter.rawValue}')),
-              onChanged: (value) {
-                if (parameter.paramType == ParamType.string) {
-                  parameter.val = value;
-                } else if (parameter.paramType == ParamType.double) {
-                  parameter.val = double.tryParse(value);
-                } else if (parameter.paramType == ParamType.int) {
-                  parameter.val = int.tryParse(value);
-                }
-                componentPropertyCubit.changedProperty();
-              },
-              decoration: const InputDecoration(),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChoiceParameter(ChoiceParameter param) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          param.name,
-          style: const TextStyle(
-              fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        Expanded(
-          child: StatefulBuilder(builder: (context, setStateForChoiceChange) {
-            return Column(
-              children: [
-                for (final subParam in param.options)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Radio<Parameter>(
-                          value: param.rawValue,
-                          groupValue: subParam,
-                          onChanged: (value) {
-                            param.val = subParam;
-                            setStateForChoiceChange(() {});
-                            componentPropertyCubit.changedProperty();
-                          }),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      Expanded(
-                        child: _buildParameter(subParam),
-                      ),
-                    ],
-                  )
-              ],
-            );
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildComplexParameter(ComplexParameter param) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          param.name,
-          style: const TextStyle(
-              fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        Expanded(
-          child: Column(
-            children: [
-              for (final subParam in param.params) _buildParameter(subParam)
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChoiceValueParameter(ChoiceValueParameter param) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          param.name,
-          style: const TextStyle(
-              fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        StatefulBuilder(builder: (context, setStateForSelectionChange) {
-          return SizedBox(
-            height: 45,
-            child: CustomDropdownButton<String>(
-              value: param.rawValue,
-              hint: Text(
-                'select ${param.name}',
-                style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-              ),
-              style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-              selectedItemBuilder: (BuildContext, key) {
-                return Text(
-                  key,
-                  style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-                );
-              },
-              items: param.options.keys
-                  .map(
-                    (e) => CustomDropdownMenuItem<String>(
-                      value: e,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          e,
-                          style: AppFontStyle.roboto(14,
-                              fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (key) {
-                param.val = key;
-                setStateForSelectionChange(() {});
-                componentPropertyCubit.changedProperty();
-              },
-            ),
-          );
-        })
-      ],
-    );
-  }
 }

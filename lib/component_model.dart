@@ -4,6 +4,7 @@ import 'package:flutter_builder/data_type.dart';
 abstract class Component {
   final List<Parameter> parameters;
   final String name;
+  Component? parent;
 
   Component(this.name, this.parameters);
 
@@ -11,7 +12,9 @@ abstract class Component {
 
   String code();
 
-
+  void setParent(Component? component) {
+    parent = component;
+  }
 }
 
 abstract class MultiHolder extends Component {
@@ -20,11 +23,21 @@ abstract class MultiHolder extends Component {
   MultiHolder(String name, List<Parameter> parameters)
       : super(name, parameters);
 
-  void addChild(Component component){
+  void addChild(Component component) {
     children.add(component);
+    component.setParent(this);
   }
-  void addChildren(List<Component> components){
+  void removeChild(Component component) {
+
+    component.setParent(null);
+    children.remove(component);
+  }
+
+  void addChildren(List<Component> components) {
     children.addAll(components);
+    for(final comp in components){
+      comp.setParent(this);
+    }
   }
 }
 
@@ -33,8 +46,11 @@ abstract class Holder extends Component {
 
   Holder(String name, List<Parameter> parameters) : super(name, parameters);
 
-  void updateChild(Component child){
-    this.child=child;
+  void updateChild(Component? child) {
+    this.child = child;
+    if(child!=null){
+      child.setParent(this);
+    }
   }
 }
 
@@ -46,6 +62,8 @@ abstract class Parameter {
   get value;
 
   get rawValue;
+
+  get code;
 
   void removeParametersWithName(List<String> parameterNames);
 
@@ -70,18 +88,25 @@ class SimpleParameter<T> extends Parameter {
   }
 
   late final dynamic Function(T) evaluate;
+  late final String Function(T?) generateCode;
 
   SimpleParameter(
       {required String name,
       required this.paramType,
       this.defaultValue,
-        this.val,
-      dynamic Function(T)? evaluate})
+      this.val,
+      dynamic Function(T)? evaluate,String Function(T?)? generateCode})
       : super(name) {
     if (evaluate != null) {
       this.evaluate = evaluate;
     } else {
       this.evaluate = (value) => value;
+    }
+
+    if (generateCode != null) {
+      this.generateCode = generateCode;
+    } else {
+      this.generateCode = (value) => '$name:${paramType==ParamType.string&&value!=null?'\'$value\',\n':'$value,\n'}';
     }
   }
 
@@ -105,8 +130,17 @@ class SimpleParameter<T> extends Parameter {
 
   @override
   Parameter copyWith(String name) {
-    return SimpleParameter(name: name, paramType: paramType,defaultValue: defaultValue,evaluate: evaluate,val: val);
+    return SimpleParameter(
+        name: name,
+        paramType: paramType,
+        defaultValue: defaultValue,
+        evaluate: evaluate,
+        val: val);
   }
+
+  @override
+  // TODO: implement code
+  get code => generateCode(rawValue);
 }
 
 class ChoiceValueParameter extends Parameter {
@@ -124,12 +158,12 @@ class ChoiceValueParameter extends Parameter {
     return null;
   }
 
-  ChoiceValueParameter({
-    required String name,
-    required this.options,
-    required this.defaultValue,
-    this.val
-  }) : super(name);
+  ChoiceValueParameter(
+      {required String name,
+      required this.options,
+      required this.defaultValue,
+      this.val})
+      : super(name);
 
   @override
   get rawValue {
@@ -144,8 +178,15 @@ class ChoiceValueParameter extends Parameter {
 
   @override
   Parameter copyWith(String name) {
-    return ChoiceValueParameter(name: name, options: options.map((key, value) => MapEntry(key, value)), defaultValue: defaultValue,val: val);
+    return ChoiceValueParameter(
+        name: name,
+        options: options.map((key, value) => MapEntry(key, value)),
+        defaultValue: defaultValue,
+        val: val,);
   }
+
+  @override
+  get code => '$name:${value.toString()}';
 }
 
 class ChoiceParameter extends Parameter {
@@ -153,12 +194,12 @@ class ChoiceParameter extends Parameter {
   final int defaultValue;
   Parameter? val;
 
-  ChoiceParameter({
-    required String name,
-    required this.options,
-    required this.defaultValue,
-    this.val
-  }) : super(name);
+  ChoiceParameter(
+      {required String name,
+      required this.options,
+      required this.defaultValue,
+      this.val})
+      : super(name);
 
   @override
   get value => val?.value ?? options[defaultValue].value;
@@ -168,7 +209,7 @@ class ChoiceParameter extends Parameter {
 
   @override
   void removeParametersWithName(List<String> parameterNames) {
-    List<Parameter> removeList=[];
+    List<Parameter> removeList = [];
     for (final param in parameterNames) {
       for (final optionValue in options) {
         if (optionValue.name == param) {
@@ -176,7 +217,7 @@ class ChoiceParameter extends Parameter {
         }
       }
     }
-    for(final value in removeList){
+    for (final value in removeList) {
       options.remove(value);
     }
     removeList.clear();
@@ -184,19 +225,28 @@ class ChoiceParameter extends Parameter {
 
   @override
   Parameter copyWith(String name) {
-    return ChoiceParameter(name: name, options: options.map((e) => e.copyWith(e.name)).toList(), defaultValue: defaultValue,val: val);
+    return ChoiceParameter(
+        name: name,
+        options: options.map((e) => e.copyWith(e.name)).toList(),
+        defaultValue: defaultValue,
+        val: val);
   }
+
+  @override
+  // TODO: implement code
+  get code => rawValue.code;
 }
 
 class ComplexParameter extends Parameter {
   final List<Parameter> params;
-
+  final String Function(String) generateCode;
   final dynamic Function(List<Parameter>) evaluate;
 
-  ComplexParameter({
+  ComplexParameter( {
     required this.params,
     required String name,
     required this.evaluate,
+    required this.generateCode,
   }) : super(name);
 
   @override
@@ -208,7 +258,7 @@ class ComplexParameter extends Parameter {
 
   @override
   void removeParametersWithName(List<String> parameterNames) {
-    List<Parameter> removeList=[];
+    List<Parameter> removeList = [];
     for (final param in parameterNames) {
       for (final optionValue in params) {
         if (optionValue.name == param) {
@@ -216,7 +266,7 @@ class ComplexParameter extends Parameter {
         }
       }
     }
-    for(final value in removeList){
+    for (final value in removeList) {
       params.remove(value);
     }
     removeList.clear();
@@ -224,6 +274,19 @@ class ComplexParameter extends Parameter {
 
   @override
   Parameter copyWith(String name) {
-    return ComplexParameter(name: name, params: params.map((e) => e.copyWith(e.name)).toList(), evaluate: evaluate);
+    return ComplexParameter(
+        name: name,
+        params: params.map((e) => e.copyWith(e.name)).toList(),
+        evaluate: evaluate, generateCode: generateCode);
+  }
+
+  @override
+  // TODO: implement code
+  get code {
+  String middle='';
+  for(final para in params){
+    middle+='${para.code},';
+  }
+  return generateCode(middle);
   }
 }

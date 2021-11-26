@@ -7,10 +7,14 @@ part 'component_selection_state.dart';
 
 class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
   Component currentSelected;
-  ComponentSelectionCubit({required this.currentSelected}) : super(ComponentSelectionInitial());
 
-  void changeComponentSelection(Component component){
-    currentSelected=component;
-    emit(ComponentSelectionChange());
+  ComponentSelectionCubit({required this.currentSelected})
+      : super(ComponentSelectionInitial());
+
+  void changeComponentSelection(Component component) {
+    if (currentSelected != component) {
+      currentSelected = component;
+      emit(ComponentSelectionChange());
+    }
   }
 }

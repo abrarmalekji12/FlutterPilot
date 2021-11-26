@@ -22,32 +22,36 @@ class Parameters {
               paramType: ParamType.double,
               evaluate: (value) => EdgeInsets.all(value)),
           ComplexParameter(
-              name: 'only',
-              params: [
-                SimpleParameter<double>(
-                  name: 'top',
-                  paramType: ParamType.double,
-                ),
-                SimpleParameter<double>(
-                  name: 'left',
-                  paramType: ParamType.double,
-                ),
-                SimpleParameter<double>(
-                  name: 'bottom',
-                  paramType: ParamType.double,
-                ),
-                SimpleParameter<double>(
-                  name: 'right',
-                  paramType: ParamType.double,
-                )
-              ],
-              evaluate: (List<Parameter> params) {
-                return EdgeInsets.only(
-                    top: params[0].value,
-                    left: params[1].value,
-                    bottom: params[2].value,
-                    right: params[3].value);
-              }),
+            name: 'only',
+            params: [
+              SimpleParameter<double>(
+                name: 'top',
+                paramType: ParamType.double,
+              ),
+              SimpleParameter<double>(
+                name: 'left',
+                paramType: ParamType.double,
+              ),
+              SimpleParameter<double>(
+                name: 'bottom',
+                paramType: ParamType.double,
+              ),
+              SimpleParameter<double>(
+                name: 'right',
+                paramType: ParamType.double,
+              )
+            ],
+            evaluate: (List<Parameter> params) {
+              return EdgeInsets.only(
+                top: params[0].value,
+                left: params[1].value,
+                bottom: params[2].value,
+                right: params[3].value,
+              );
+            }, generateCode: (String middle) {
+              return 'EdgeInsets.only($middle)';
+          },
+          ),
           ComplexParameter(
             name: 'symmetric',
             params: [
@@ -65,7 +69,9 @@ class Parameters {
                 horizontal: params[0].value,
                 vertical: params[1].value,
               );
-            },
+            }, generateCode: (String middle) {
+              return 'EdgeInsets.symmetric($middle)';
+          },
           ),
         ],
         defaultValue: 0,
@@ -87,10 +93,11 @@ class Parameters {
   static marginParameter() => paddingParameter().copyWith('margin');
 
   static colorParameter() => SimpleParameter<String>(
-      name: 'color',
-      paramType: ParamType.string,
-      defaultValue: '#000000',
-      evaluate: (value) => hexToColor(value));
+        name: 'color',
+        paramType: ParamType.string,
+        defaultValue: '#000000',
+    evaluate: (value) => hexToColor(value)
+      );
 
   static mainAxisAlignmentParameter() => ChoiceValueParameter(
       name: 'mainAxisAlignment',
@@ -102,7 +109,7 @@ class Parameters {
         'spaceAround': MainAxisAlignment.spaceAround,
         'spaceEvenly': MainAxisAlignment.spaceEvenly,
       },
-      defaultValue: 'start');
+      defaultValue: 'start',);
 
   static crossAxisAlignmentParameter() => ChoiceValueParameter(
       name: 'crossAxisAlignment',
@@ -113,7 +120,7 @@ class Parameters {
         'stretch': CrossAxisAlignment.stretch,
         'baseline': CrossAxisAlignment.baseline,
       },
-      defaultValue: 'start');
+      defaultValue: 'start', );
 
   static mainAxisSizeParameter() => ChoiceValueParameter(
       name: 'mainAxisSize',
@@ -164,7 +171,9 @@ class Parameters {
                   bottomRight: Radius.circular(params[3].value),
                 );
               },
-              name: 'only')
+              name: 'only', generateCode: (String middle) {
+                return 'BorderRadius.only(\n$middle)';
+          })
         ],
         defaultValue: 0,
       );
@@ -306,7 +315,11 @@ class CContainer extends Holder {
 
   @override
   String code() {
-    return '';
+    String middle='';
+    for(final para in parameters){
+      middle+=para.code;
+    }
+    return 'Container($middle),';
   }
 
   @override
@@ -356,7 +369,7 @@ class CText extends Component {
                     fontSize: params[0].value,
                     color: params[1].value,
                     fontWeight: params[2].value);
-              })
+              }, generateCode: (String ) { return ''; })
         ]);
 
   @override

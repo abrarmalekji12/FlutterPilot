@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_builder/common/custom_popup_menu_button.dart';
 import 'package:flutter_builder/component_model.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
@@ -67,20 +68,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                 ),
               ),
               const Spacer(),
-              IconButton(
-                onPressed: () {
-                  showSelectionDialog((comp) {
-                    component.addChild(comp);
-                    Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .changedComponent();
-                  });
-                },
-                icon: const Icon(
-                  Icons.add,
-                  color: Colors.black,
-                  size: 24,
-                ),
-              )
+              ComponentModificationMenu(component: component)
             ],
           ),
           Padding(
@@ -121,20 +109,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                 ),
               ),
               const Spacer(),
-              IconButton(
-                onPressed: () {
-                  showSelectionDialog((comp) {
-                    component.updateChild(comp);
-                    Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .changedComponent();
-                  });
-                },
-                icon: const Icon(
-                  Icons.add,
-                  color: Colors.black,
-                  size: 24,
-                ),
-              )
+              ComponentModificationMenu(component: component)
             ],
           ),
           if (component.child != null) ...[
@@ -170,11 +145,93 @@ class _ComponentTreeState extends State<ComponentTree> {
       ),
     );
   }
+}
+
+class ComponentModificationMenu extends StatelessWidget {
+  static const operations = ['add', 'remove', 'replace', 'wrap with'];
+  final Component component;
+
+  const ComponentModificationMenu({Key? key, required this.component})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPopupMenuButton(
+        itemBuilder: (context) {
+          return operations
+              .map(
+                (e) => CustomPopupMenuItem(
+                  value: e,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      e,
+                      style:
+                          AppFontStyle.roboto(18, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+              )
+              .toList();
+        },
+        onSelected: (e) {
+          switch (e) {
+            case 'add':
+              showSelectionDialog((comp) {
+                if (component is Holder) {
+                  (component as Holder).updateChild(comp);
+                } else if (component is MultiHolder) {
+                  (component as MultiHolder).addChild(comp);
+                }
+                Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
+              });
+              break;
+            case 'remove':
+              if(component.parent!=null){
+                if(component.parent is Holder){
+                  (component.parent as Holder).updateChild(null);
+                } else if(component.parent is MultiHolder){
+                  (component.parent as MultiHolder).removeChild(component);
+                }
+                Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
+              }
+              break;
+            case 'replace':
+              showSelectionDialog((comp) {
+                if(component is Holder){
+                  if(comp is Holder){
+                    comp.updateChild((component as Holder).child);
+                    Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
+                  }
+                  else if(comp is MultiHolder&&(component as Holder).child!=null){
+                    comp.addChild((component as Holder).child!);
+                    Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
+                  }
+
+                }
+                else if(component is MultiHolder){
+                  if(comp is MultiHolder){
+                    comp.children.clear();
+                    comp.addChildren((component as MultiHolder).children);
+                    (component as MultiHolder).children.clear();
+                    Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
+                  }
+                }
+              });
+
+          }
+        },
+        child: const Icon(
+          Icons.menu,
+          color: Colors.black,
+          size: 24,
+        ));
+  }
 
   void showSelectionDialog(void Function(Component) onSelection) {
     Get.dialog(
       GestureDetector(
-        onTap: (){
+        onTap: () {
           Get.back();
         },
         child: Material(
