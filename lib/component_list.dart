@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/component_model.dart';
 import 'package:flutter_builder/data_type.dart';
+import 'package:flutter_builder/parameter_model.dart';
 
 final componentList = {
   'Row': () => CRow(),
@@ -16,28 +17,35 @@ final componentList = {
 class Parameters {
   static paddingParameter() => ChoiceParameter(
         name: 'padding',
+        info: NamedParameterInfo('padding'),
         options: [
           SimpleParameter<double>(
+            info: InnerObjectParameterInfo(innerObjectName: 'EdgeInsets.all',),
               name: 'all',
               paramType: ParamType.double,
               evaluate: (value) => EdgeInsets.all(value)),
           ComplexParameter(
             name: 'only',
+            info: InnerObjectParameterInfo(innerObjectName: 'EdgeInsets.only',),
             params: [
               SimpleParameter<double>(
                 name: 'top',
+                info: NamedParameterInfo('top'),
                 paramType: ParamType.double,
               ),
               SimpleParameter<double>(
                 name: 'left',
+                info: NamedParameterInfo('left'),
                 paramType: ParamType.double,
               ),
               SimpleParameter<double>(
                 name: 'bottom',
+                info: NamedParameterInfo('bottom'),
                 paramType: ParamType.double,
               ),
               SimpleParameter<double>(
                 name: 'right',
+                info: NamedParameterInfo('right'),
                 paramType: ParamType.double,
               )
             ],

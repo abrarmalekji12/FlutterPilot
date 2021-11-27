@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/common/custom_animated_dialog.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
-import 'package:flutter_builder/component_model.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_property/component_property_cubit.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
 
 import '../data_type.dart';
+import '../parameter_model.dart';
 
 class ChoiceParameterWidget extends StatelessWidget {
   final ChoiceParameter parameter;
@@ -138,11 +138,11 @@ class ChoiceValueParameterWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Text(
-        //   parameter.name,
-        //   style: const TextStyle(
-        //       fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
-        // ),
+        Text(
+          parameter.name,
+          style: const TextStyle(
+              fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+        ),
         StatefulBuilder(builder: (context, setStateForSelectionChange) {
           return SizedBox(
             height: 45,
