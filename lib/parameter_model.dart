@@ -1,11 +1,18 @@
-import 'data_type.dart';
+import 'enums.dart';
 
-abstract class ParameterInfo {}
+abstract class ParameterInfo {
+  String code(String value);
+}
 
 class NamedParameterInfo extends ParameterInfo {
   final String name;
 
   NamedParameterInfo(this.name);
+
+  @override
+  String code(String value) {
+    return '$name:$value';
+  }
 }
 
 class InnerObjectParameterInfo extends ParameterInfo {
@@ -14,65 +21,87 @@ class InnerObjectParameterInfo extends ParameterInfo {
 
   InnerObjectParameterInfo(
       {required this.innerObjectName, this.namedIfHaveAny});
+
+  @override
+  String code(String value) {
+    if (namedIfHaveAny != null) {
+      return '$namedIfHaveAny:$innerObjectName($value)';
+    }
+    return '$innerObjectName($value)';
+  }
+}
+
+class SimpleParameterInfo extends ParameterInfo {
+  @override
+  String code(String value) {
+    return value;
+  }
 }
 
 abstract class Parameter {
-  String name;
+  String? displayName;
+  bool required;
   ParameterInfo? info;
 
-  Parameter(this.name, this.info);
+  Parameter(this.displayName, this.info, this.required);
 
   get value;
 
   get rawValue;
 
-  get code;
+  String get code;
 
   void removeParametersWithName(List<String> parameterNames);
 
-  Parameter copyWith(String name,ParameterInfo? info);
+  void withDisplayName(String? name) {
+    displayName = name;
+  }
+
+  void withInfo(ParameterInfo? info) {
+    this.info = info;
+  }
+
+  void withRequired(bool required) {
+    this.required = required;
+  }
 }
 
 class SimpleParameter<T> extends Parameter {
   final ParamType paramType;
   T? val;
-  final T? defaultValue;
+  final ParamInputType inputType;
+  T? defaultValue;
 
   @override
   dynamic get value {
     if (val != null) {
       return evaluate(val!);
-    } else if (defaultValue != null) {
+    } else if(!required){
+      return null;
+    }else if (defaultValue != null) {
       return evaluate(defaultValue!);
     } else if (paramType == ParamType.double || paramType == ParamType.int) {
       return evaluate(0 as T);
     }
-    return null;
+    return '';
   }
 
   late final dynamic Function(T) evaluate;
-  late final String Function(T?) generateCode;
 
   SimpleParameter(
-      {required String name,
+      {String? name,
       required this.paramType,
       this.defaultValue,
       this.val,
+      this.inputType = ParamInputType.text,
       dynamic Function(T)? evaluate,
-      String Function(T?)? generateCode,
+      bool required = true,
       ParameterInfo? info})
-      : super(name,info) {
+      : super(name, info, required) {
     if (evaluate != null) {
       this.evaluate = evaluate;
     } else {
       this.evaluate = (value) => value;
-    }
-
-    if (generateCode != null) {
-      this.generateCode = generateCode;
-    } else {
-      this.generateCode = (value) =>
-          '$name:${paramType == ParamType.string && value != null ? '\'$value\',\n' : '$value,\n'}';
     }
   }
 
@@ -80,12 +109,19 @@ class SimpleParameter<T> extends Parameter {
   get rawValue {
     if (val != null) {
       return val!;
-    } else if (defaultValue != null) {
+    }  else if(!required){
+      return null;
+    }
+    else if (defaultValue != null) {
       return defaultValue!;
     }
     if (paramType == ParamType.double || paramType == ParamType.int) {
       return 0;
     }
+  }
+
+  void withDefaultValue(T? value) {
+    defaultValue = value;
   }
 
   @override
@@ -95,19 +131,22 @@ class SimpleParameter<T> extends Parameter {
   }
 
   @override
-  Parameter copyWith(String name,ParameterInfo? info) {
-    return SimpleParameter(
-        name: name,
-        paramType: paramType,
-        defaultValue: defaultValue,
-        evaluate: evaluate,
-        info: info,
-        val: val);
-  }
-
-  @override
   // TODO: implement code
-  get code => generateCode(rawValue);
+  String get code {
+    if(!required&&val==null){
+      return '';
+    }
+    if (info != null) {
+      if(paramType==ParamType.string){
+        return '${info!.code('\'$rawValue\'')},'.replaceAll(',,', ',');
+      }
+      return '${info!.code('$rawValue')},'.replaceAll(',,', ',');
+    }
+    if(paramType==ParamType.string) {
+      return '\'$rawValue\'';
+    }
+    return '$rawValue';
+  }
 }
 
 class ChoiceValueParameter extends Parameter {
@@ -126,11 +165,13 @@ class ChoiceValueParameter extends Parameter {
   }
 
   ChoiceValueParameter(
-      {required String name,
+      {String? name,
       required this.options,
       required this.defaultValue,
-      this.val,  ParameterInfo? info})
-      : super(name,info);
+      bool required = true,
+      this.val,
+      ParameterInfo? info})
+      : super(name, info, required);
 
   @override
   get rawValue {
@@ -144,18 +185,7 @@ class ChoiceValueParameter extends Parameter {
   }
 
   @override
-  Parameter copyWith(String name,ParameterInfo? info) {
-    return ChoiceValueParameter(
-      name: name,
-      options: options.map((key, value) => MapEntry(key, value)),
-      defaultValue: defaultValue,
-      val: val,
-      info: info
-    );
-  }
-
-  @override
-  get code => '$name:${value.toString()}';
+  get code => '$displayName:${value.toString()}';
 }
 
 class ChoiceParameter extends Parameter {
@@ -164,11 +194,13 @@ class ChoiceParameter extends Parameter {
   Parameter? val;
 
   ChoiceParameter(
-      {required String name,
+      {String? name,
       required this.options,
       required this.defaultValue,
-      this.val,  ParameterInfo? info})
-      : super(name,info);
+      bool required = true,
+      this.val,
+      ParameterInfo? info})
+      : super(name, info, required);
 
   @override
   get value => val?.value ?? options[defaultValue].value;
@@ -181,7 +213,7 @@ class ChoiceParameter extends Parameter {
     List<Parameter> removeList = [];
     for (final param in parameterNames) {
       for (final optionValue in options) {
-        if (optionValue.name == param) {
+        if (optionValue.displayName == param) {
           removeList.add(optionValue);
         }
       }
@@ -193,31 +225,22 @@ class ChoiceParameter extends Parameter {
   }
 
   @override
-  Parameter copyWith(String name,ParameterInfo? info) {
-    return ChoiceParameter(
-        name: name,
-        options: options.map((e) => e.copyWith(e.name,info)).toList(),
-        defaultValue: defaultValue,
-        val: val);
+  get code {
+    return info != null ? info!.code(rawValue.code) : rawValue.code;
   }
-
-  @override
-  // TODO: implement code
-  get code => rawValue.code;
 }
 
 class ComplexParameter extends Parameter {
   final List<Parameter> params;
-  final String Function(String) generateCode;
   final dynamic Function(List<Parameter>) evaluate;
 
-  ComplexParameter({
-    required this.params,
-    required String name,
-    required this.evaluate,
-    required this.generateCode,
-    ParameterInfo? info
-  }) : super(name,info);
+  ComplexParameter(
+      {String? name,
+      required this.params,
+      required this.evaluate,
+      ParameterInfo? info,
+      bool required = true})
+      : super(name, info, required);
 
   @override
   get value => evaluate.call(params);
@@ -231,7 +254,7 @@ class ComplexParameter extends Parameter {
     List<Parameter> removeList = [];
     for (final param in parameterNames) {
       for (final optionValue in params) {
-        if (optionValue.name == param) {
+        if (optionValue.displayName == param) {
           removeList.add(optionValue);
         }
       }
@@ -243,21 +266,12 @@ class ComplexParameter extends Parameter {
   }
 
   @override
-  Parameter copyWith(String name,ParameterInfo? info) {
-    return ComplexParameter(
-        name: name,
-        params: params.map((e) => e.copyWith(e.name,info)).toList(),
-        evaluate: evaluate,
-        generateCode: generateCode);
-  }
-
-  @override
   // TODO: implement code
   get code {
     String middle = '';
     for (final para in params) {
-      middle += '${para.code},';
+      middle += '${para.code},'.replaceAll(',,', ',');
     }
-    return generateCode(middle);
+    return info?.code(middle) ?? middle;
   }
 }

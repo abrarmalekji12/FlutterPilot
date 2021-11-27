@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
+import 'package:flutter_builder/cubit/component_property/component_property_cubit.dart';
+import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
 import 'package:flutter_builder/parameter_model.dart';
+import 'package:provider/provider.dart';
 
 abstract class Component {
   final List<Parameter> parameters;
@@ -8,9 +13,32 @@ abstract class Component {
 
   Component(this.name, this.parameters);
 
-  Widget create();
+  Widget build(BuildContext context){
+    return BlocBuilder<ComponentPropertyCubit,ComponentPropertyState>(builder: (context,state){
+      return create(context);
+    },
+      buildWhen: (state1,state2){
+      if(Provider.of<ComponentSelectionCubit>(context,listen: false).currentSelected==this) {
+        return true;
+      }
+      return false;
+      },
 
-  String code();
+    );
+  }
+  Widget create(BuildContext context);
+
+  String code() {
+    String middle='';
+    for(final para in parameters){
+      final paramCode=para.code;
+      if(paramCode.isNotEmpty) {
+        middle+= '$paramCode,'.replaceAll(',,', ',');
+      }
+    }
+    middle=middle.replaceAll(',', ',\n');
+    return '$name(\n$middle),';
+  }
 
   void setParent(Component? component) {
     parent = component;
@@ -23,6 +51,22 @@ abstract class MultiHolder extends Component {
   MultiHolder(String name, List<Parameter> parameters)
       : super(name, parameters);
 
+  @override
+  String code() {
+    String middle='';
+    for(final para in parameters){
+      final paramCode=para.code;
+      if(paramCode.isNotEmpty) {
+        middle+= '$paramCode,'.replaceAll(',,', ',');
+      }
+    }
+    middle=middle.replaceAll(',', ',\n');
+    String childrenCode='';
+    for(final Component comp in children){
+      childrenCode+=comp.code();
+    }
+    return '$name(\n${middle}children:[\n$childrenCode\n],\n),';
+  }
   void addChild(Component component) {
     children.add(component);
     component.setParent(this);
@@ -52,5 +96,26 @@ abstract class Holder extends Component {
       child.setParent(this);
     }
   }
-}
 
+  @override
+  String code() {
+    String middle='';
+    for(final para in parameters){
+      final paramCode=para.code;
+      if(paramCode.isNotEmpty) {
+        final paramCode=para.code;
+        if(paramCode.isNotEmpty) {
+          middle+= '$paramCode,'.replaceAll(',,', ',');
+        }
+      }
+    }
+    middle=middle.replaceAll(',', ',\n');
+    if(child==null){
+      return '$name(\n$middle\n),';
+    }
+    return '$name(\n${middle}child:${child!.code()}\n),';
+  }
+}
+// class CustomNamedHolder extends Component{
+//   Map<String,Component>
+// }

@@ -4,3 +4,8 @@ enum ParamType{
   string,
   other
 }
+enum ParamInputType{
+  text,
+  color,
+  slider,
+}

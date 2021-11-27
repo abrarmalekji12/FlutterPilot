@@ -5,7 +5,7 @@ import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
 import 'package:flutter_builder/cubit/component_property/component_property_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
-import 'package:flutter_builder/data_type.dart';
+import 'package:flutter_builder/enums.dart';
 import 'package:flutter_builder/screen_model.dart';
 import 'package:flutter_builder/ui/component_selection.dart';
 import 'package:flutter_builder/ui/parameter_ui.dart';
@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   ScreenConfig screenConfig = screenConfigs[0];
   final componentPropertyCubit = ComponentPropertyCubit();
   final componentOperationCubit =
-      ComponentOperationCubit((componentList['Container']!() as Holder));
+      ComponentOperationCubit(componentList['Container']!());
   /*
   * ..addChildren([
         componentList['Container']!(),
@@ -71,7 +71,6 @@ class _HomePageState extends State<HomePage> {
                 width: 300,
                 child: BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
                   builder: (context, state) {
-                    print('BUILDING');
                     return ListView(
                       children: [
                         for (final param
@@ -99,17 +98,17 @@ class _HomePageState extends State<HomePage> {
           child: Align(
             alignment: Alignment.topLeft,
             child:
-                BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
-              builder: (context, state) {
-                return BlocBuilder<ComponentPropertyCubit,
-                    ComponentPropertyState>(
-                  builder: (context, state) {
+                BlocListener<ComponentPropertyCubit,ComponentPropertyState>(
+                  listener: (context,state){
                     print(componentOperationCubit.rootComponent.code());
-                    return componentOperationCubit.rootComponent.create();
                   },
-                );
+                  child: BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
+              builder: (context, state) {
+
+                  return componentOperationCubit.rootComponent.build(context);
               },
             ),
+                ),
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
