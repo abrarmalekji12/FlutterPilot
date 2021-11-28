@@ -6,6 +6,7 @@ enum ParamType{
 }
 enum ParamInputType{
   text,
+  longText,
   color,
-  slider,
+  sliderZeroToOne,
 }

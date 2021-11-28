@@ -6,13 +6,18 @@ import 'package:flutter_builder/parameter_model.dart';
 
 final componentList = {
   'Scaffold': () => CScaffold(),
-  'AppBar':() => CAppBar(),
+  'AppBar': () => CAppBar(),
   'Row': () => CRow(),
   'Column': () => CColumn(),
   'Flex': () => CFlex(),
   'Padding': () => CPadding(),
   'ClipRRect': () => CClipRRect(),
   'Container': () => CContainer(),
+  'Expanded': () => CExpanded(),
+  'Center': () => CCenter(),
+  'FractionallySizedBox': () => CFractionallySizedBox(),
+  'Flexible': () => CFlexible(),
+  'Card': () => CCard(),
   'SizedBox': () => CSizedBox(),
   'Text': () => CText(),
 };
@@ -98,7 +103,7 @@ class Parameters {
       ComplexParameter(
           params: [
             colorParameter()
-              ..withDefaultValue(Colors.black),
+              ..withDefaultValue(const Color(0xff000000)),
             borderRadiusParameter(),
             borderParameter()
           ],
@@ -122,7 +127,7 @@ class Parameters {
               info: InnerObjectParameterInfo(innerObjectName: 'Border.all'),
               params: [
                 colorParameter()
-                  ..withDefaultValue(Colors.white),
+                  ..withDefaultValue(const Color(0xffffffff)),
                 widthParameter()
                   ..withDefaultValue(2)
                   ..withRequired(true),
@@ -134,7 +139,10 @@ class Parameters {
                     width: params[1].value,
                   ),
             ),
-            ComplexParameter(params: [], evaluate: (List<Parameter> params) => null,name: 'none')
+            ComplexParameter(
+                params: [],
+                evaluate: (List<Parameter> params) => null,
+                name: 'none')
           ],
           defaultValue: 0);
 
@@ -161,7 +169,7 @@ class Parameters {
       SimpleParameter<Color>(
         name: 'color',
         paramType: ParamType.other,
-        defaultValue: Colors.black,
+        defaultValue: const Color(0xff000000),
         inputType: ParamInputType.color,
         info: NamedParameterInfo('color'),
       );
@@ -276,53 +284,218 @@ class Parameters {
       SimpleParameter<double>(
           info: NamedParameterInfo('height'),
           name: 'height',
-
           required: false,
           paramType: ParamType.double,
           defaultValue: 100);
+
+  static SimpleParameter flexParameter() =>
+      SimpleParameter<int>(
+          info: NamedParameterInfo('flex'),
+          name: 'flex',
+          required: true,
+          paramType: ParamType.int,
+          defaultValue: 1);
+
+  static borderSideParameter() =>
+      ChoiceParameter(
+          info: NamedParameterInfo('borderSide'),
+          options: [
+            ComplexParameter(
+                info: InnerObjectParameterInfo(innerObjectName: 'BorderSide',),
+                params: [
+                  colorParameter(),
+                  widthParameter()
+                    ..withRequired(true)
+                    ..withDefaultValue(2)
+                ],
+                evaluate: (params) {
+                  return BorderSide(
+                    color: params[0].value,
+                    width: params[1].value,
+                  );
+                }),
+            ConstantValueParameter(
+                displayName: 'None', constantValue: BorderSide.none,constantValueInString: 'BorderSide.none', paramType: ParamType.other)
+          ], defaultValue: 0);
+
+  static shapeBorderParameter() =>
+      ChoiceParameter(
+          options: [
+            NullParameter(displayName: 'None'),
+            ComplexParameter(
+              name: 'Round Rectangular Border',
+              params: [
+                borderRadiusParameter(),
+                borderSideParameter(),
+              ],
+              evaluate: (params) {
+                return RoundedRectangleBorder(
+                    borderRadius: params[0].value, side: params[1].value);
+              },
+              info: InnerObjectParameterInfo(
+                  innerObjectName: 'RoundedRectangleBorder'),
+            )
+          ],
+          name: 'Shape Border',
+          defaultValue: 0,
+          info: NamedParameterInfo('shape'));
+
+  static SimpleParameter widthFactorParameter() =>
+      SimpleParameter<double>(
+          paramType: ParamType.double,
+          defaultValue: null,
+          inputType: ParamInputType.sliderZeroToOne,
+          name: 'width factor',
+          required: false,
+          info: NamedParameterInfo('widthFactor'));
+
+  static SimpleParameter heightFactorParameter() =>
+      SimpleParameter<double>(
+          paramType: ParamType.double,
+          defaultValue: null,
+
+          inputType: ParamInputType.sliderZeroToOne,
+          name: 'height factor',
+          required: false,
+          info: NamedParameterInfo('heightFactor'));
+
+  static SimpleParameter elevationParameter() =>
+      SimpleParameter<double>(
+          paramType: ParamType.double,
+          defaultValue: 1,
+          required: false,
+          info: NamedParameterInfo('elevation'),
+          name: 'elevation');
+  static final toolbarHeight = heightParameter()
+    ..withRequired(true)
+    ..withDisplayName('toolbar-height')
+    ..withInfo(NamedParameterInfo('toolbarHeight'))
+    ..withDefaultValue(55);
 }
 
-Color hexToColor(String code) {
-  if (code.length == 7) {
-    return Color(
-        (int.tryParse(code.substring(1, 7), radix: 16) ?? 0) + 0xFF000000);
+class CExpanded extends Holder {
+  CExpanded() : super('Expanded', [Parameters.flexParameter()]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Expanded(
+        flex: parameters[0].value, child: child?.build(context) ?? Container());
   }
-  return Colors.white;
 }
-class CAppBar extends CustomNamedHolder{
-  CAppBar() : super('AppBar', [
-    Parameters.colorParameter()..withDefaultValue(Colors.blue) ..withDisplayName('background-color') ..withInfo(NamedParameterInfo('backgroundColor')),
+
+class CCenter extends Holder {
+  CCenter()
+      : super('Center', [
+    Parameters.widthFactorParameter(),
+    Parameters.heightFactorParameter(),
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Center(
+      child: child?.build(context),
+      widthFactor: parameters[0].value,
+      heightFactor: parameters[1].value,
+    );
+  }
+}
+
+class CFractionallySizedBox extends Holder {
+  CFractionallySizedBox()
+      : super('FractionallySizedBox', [
+    Parameters.widthFactorParameter() .. withDefaultValue(1),
+    Parameters.heightFactorParameter() .. withDefaultValue(1),
+    Parameters.alignmentParameter()
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return FractionallySizedBox(
+      child: child?.build(context),
+      widthFactor: parameters[0].value,
+      heightFactor: parameters[1].value,
+      alignment: parameters[2].value,
+    );
+  }
+}
+
+class CFlexible extends Holder {
+  CFlexible() : super('Flexible', [Parameters.flexParameter()]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Flexible(
+      flex: parameters[0].value,
+      child: child?.build(context) ?? Container(),
+    );
+  }
+}
+
+class CCard extends Holder {
+  CCard()
+      : super('Card', [
+    Parameters.shapeBorderParameter(),
+    Parameters.elevationParameter(),
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Card(
+      shape: parameters[0].value,
+      elevation: parameters[1].value,
+      child: child?.build(context),
+    );
+  }
+}
+
+class CAppBar extends CustomNamedHolder {
+  CAppBar()
+      : super('AppBar', [
+    Parameters.colorParameter()
+      ..withDefaultValue(const Color(0xff0000ff))
+      ..withDisplayName('background-color')
+      ..withInfo(NamedParameterInfo('backgroundColor')),
+    Parameters.toolbarHeight
   ], {
-    'title':null,
-    'leading':null,
+    'title': null,
+    'leading': null,
   });
 
   @override
   Widget create(BuildContext context) {
-  return AppBar(
-    // toolbarHeight: ,
-    backgroundColor: parameters[0].value,
-    title: children['title']?.build(context),
-    leading: children['leading']?.build(context),
-  );
+    return AppBar(
+      backgroundColor: parameters[0].value,
+      title: children['title']?.build(context),
+      leading: children['leading']?.build(context),
+    );
   }
-
 }
 
 class CScaffold extends CustomNamedHolder {
-  CScaffold() : super('Scaffold', [
-    Parameters.heightParameter() ..withDisplayName('appbar height') .. withDefaultValue(70)
+  CScaffold()
+      : super('Scaffold', [
+    Parameters.colorParameter()
+      ..withDisplayName('background-color')
+      ..withDefaultValue(const Color(0xffffffff))
+      ..withInfo(NamedParameterInfo('backgroundColor'))
   ], {
-    'appBar':['AppBar'], 'body':null, 'floatingActionButton':null});
+    'appBar': ['AppBar'],
+    'body': null,
+    'floatingActionButton': null
+  });
 
   @override
   Widget create(BuildContext context) {
-
     // TODO: implement create
     return Scaffold(
-      appBar:children['appBar']!=null?PreferredSize(child: children['appBar']!.build(context),preferredSize: Size(-1,parameters[0].value),):null,
-      body:children['body']?.build(context),
-      floatingActionButton:children['floatingActionButton']?.build(context),
+      appBar: children['appBar'] != null
+          ? PreferredSize(
+          child: children['appBar']!.build(context),
+          preferredSize: Size(-1, children['appBar']!.parameters[1].value))
+          : null,
+      body: children['body']?.build(context),
+      backgroundColor: parameters[0].value,
+      floatingActionButton: children['floatingActionButton']?.build(context),
     );
   }
 }
@@ -433,7 +606,6 @@ class CContainer extends Holder {
       decoration: parameters[5].value,
     );
   }
-
 }
 
 class CSizedBox extends Holder {

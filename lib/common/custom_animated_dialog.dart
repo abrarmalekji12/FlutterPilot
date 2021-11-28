@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class CustomAnimatedDialog {
+class CustomDialog {
   static Future<void> show(BuildContext context, Widget widget,
       {bool closeOnOutsideClick = true,void Function()? onDismiss}) async {
     // final initialPosition = getPosition(sourceKey);

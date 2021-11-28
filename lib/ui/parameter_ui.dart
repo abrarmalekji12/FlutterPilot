@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_builder/common/custom_animated_dialog.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
 import 'package:flutter_builder/constant/font_style.dart';
+import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
 import 'package:flutter_builder/cubit/component_property/component_property_cubit.dart';
 import 'package:provider/provider.dart';
 
@@ -31,30 +32,40 @@ class ChoiceParameterWidget extends StatelessWidget {
             return Column(
               children: [
                 for (final subParam in parameter.options)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Column(
                     children: [
                       SizedBox(
-                        height: 40,
-                        child: Radio<Parameter>(
-                            value: parameter.rawValue,
-                            groupValue: subParam,
-                            onChanged: (value) {
-                              parameter.val = subParam;
-                              setStateForChoiceChange(() {});
-                              Provider.of<ComponentPropertyCubit>(context,
-                                      listen: false)
-                                  .changedProperty();
-                            }),
-                      ),
-                      const SizedBox(
-                        width: 5,
+                        height: 30,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Radio<Parameter>(
+                                value: parameter.rawValue,
+                                groupValue: subParam,
+                                onChanged: (value) {
+                                  parameter.val = subParam;
+                                  setStateForChoiceChange(() {});
+                                  Provider.of<ComponentPropertyCubit>(context,
+                                          listen: false)
+                                      .changedProperty(context);
+                                }),
+                            const SizedBox(
+                              width: 5,
+                            ),
+                            if (subParam.displayName != null)
+                              Text(
+                                subParam.displayName!,
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                          ],
+                        ),
                       ),
                       if (parameter.rawValue == subParam)
-                        Expanded(
-                          child: ParameterWidget(
-                            parameter: subParam,
-                          ),
+                        ParameterWidget(
+                          parameter: subParam,
                         ),
                     ],
                   )
@@ -126,15 +137,16 @@ class SimpleParameterWidget extends StatelessWidget {
   }
 
   Widget _buildInputType(BuildContext context) {
-    if (parameter.inputType == ParamInputType.text) {
+    switch(parameter.inputType){
+      case ParamInputType.text:
       return SizedBox(
         width: 50,
         child: TextField(
           // key:  parameter.name=='color'?GlobalObjectKey('simple ${parameter.name}'):null,
           controller: TextEditingController.fromValue(
-              TextEditingValue(text: '${parameter.rawValue??''}')),
+              TextEditingValue(text: '${parameter.rawValue ?? ''}')),
           onChanged: (value) {
-            if(value.isNotEmpty) {
+            if (value.isNotEmpty) {
               if (parameter.paramType == ParamType.string) {
                 parameter.val = value;
               } else if (parameter.paramType == ParamType.double) {
@@ -142,40 +154,75 @@ class SimpleParameterWidget extends StatelessWidget {
               } else if (parameter.paramType == ParamType.int) {
                 parameter.val = int.tryParse(value);
               }
-            }else{
-              parameter.val=null;
+            } else {
+              parameter.val = null;
             }
             Provider.of<ComponentPropertyCubit>(context, listen: false)
-                .changedProperty();
+                .changedProperty(context);
           },
-          decoration:
-              const InputDecoration(contentPadding: EdgeInsets.all(5)),
+          decoration: const InputDecoration(contentPadding: EdgeInsets.all(5)),
         ),
       );
-    }
-    else if(parameter.inputType==ParamInputType.color){
-      return StatefulBuilder(
-        builder: (context,setStateForColor) {
+      case ParamInputType.longText:
+        return SizedBox(
+          width: 150,
+          child: TextField(
+            // key:  parameter.name=='color'?GlobalObjectKey('simple ${parameter.name}'):null,
+            controller: TextEditingController.fromValue(
+                TextEditingValue(text: '${parameter.rawValue ?? ''}')),
+            onChanged: (value) {
+              if (value.isNotEmpty) {
+                if (parameter.paramType == ParamType.string) {
+                  parameter.val = value;
+                } else if (parameter.paramType == ParamType.double) {
+                  parameter.val = double.tryParse(value);
+                } else if (parameter.paramType == ParamType.int) {
+                  parameter.val = int.tryParse(value);
+                }
+              } else {
+                parameter.val = null;
+              }
+              Provider.of<ComponentPropertyCubit>(context, listen: false)
+                  .changedProperty(context);
+            },
+            decoration: const InputDecoration(contentPadding: EdgeInsets.all(5)),
+          ),
+        );
+      case ParamInputType.color:
+        // TODO: Handle this case.
+        return StatefulBuilder(builder: (context, setStateForColor) {
           return SizedBox(
             width: 15,
-            child:  ColorButton(
-              color: parameter.value??Colors.transparent,
+            child: ColorButton(
+              color: parameter.value ?? Colors.transparent,
               decoration: BoxDecoration(
-              shape: BoxShape.circle,
-                color: parameter.value??Colors.transparent,
-              border: Border.all(color: Colors.black,width: 1),
-            ),
+                shape: BoxShape.circle,
+                color: parameter.value ?? Colors.transparent,
+                border: Border.all(color: Colors.black, width: 1),
+              ),
               // colorPickerWidth: 300,
               //   pickerColor: Colors.blueAccent,
               onColorChanged: (color) {
                 parameter.val = color;
-                setStateForColor((){});
+                setStateForColor(() {});
                 Provider.of<ComponentPropertyCubit>(context, listen: false)
-                    .changedProperty();
-              },),
+                    .changedProperty(context);
+              },
+            ),
           );
-        }
-      );
+        });
+      case ParamInputType.sliderZeroToOne:
+        // TODO: Handle this case.
+       return StatefulBuilder(
+         builder: (context,setStateForSlider) {
+           return Slider.adaptive(value: parameter.rawValue??0, onChanged: (i){
+             parameter.val=i;
+             Provider.of<ComponentPropertyCubit>(context, listen: false)
+                 .changedProperty(context);
+             setStateForSlider((){});
+           });
+         }
+       );
     }
     return Container();
   }
@@ -233,7 +280,7 @@ class ChoiceValueParameterWidget extends StatelessWidget {
                 parameter.val = key;
                 setStateForSelectionChange(() {});
                 Provider.of<ComponentPropertyCubit>(context, listen: false)
-                    .changedProperty();
+                    .changedProperty(context);
               },
             ),
           );

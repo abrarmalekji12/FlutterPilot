@@ -28,6 +28,7 @@ class _ComponentTreeState extends State<ComponentTree> {
             return SingleChildScrollView(
               scrollDirection: Axis.vertical,
               child: Container(
+                alignment: Alignment.topLeft,
                 padding: const EdgeInsets.all(10),
                 child: getSublist(
                     Provider.of<ComponentOperationCubit>(context, listen: false)
@@ -254,7 +255,7 @@ class ComponentModificationMenu extends StatelessWidget {
                   }
                 }
                 Provider.of<ComponentOperationCubit>(context, listen: false)
-                    .changedComponent();
+                    .addedComponent(context,comp);
               },possibleItems: (customNamed!=null&&(component as CustomNamedHolder).selectable[customNamed!]!=null)?(component as CustomNamedHolder).selectable[customNamed!]!:null);
               break;
             case 'remove':
@@ -265,7 +266,7 @@ class ComponentModificationMenu extends StatelessWidget {
                   (component.parent as MultiHolder).removeChild(component);
                 }
                 Provider.of<ComponentOperationCubit>(context, listen: false)
-                    .changedComponent();
+                    .addedComponent(context,component);
               }
               break;
             case 'replace':
@@ -274,12 +275,12 @@ class ComponentModificationMenu extends StatelessWidget {
                   if (comp is Holder) {
                     comp.updateChild((component as Holder).child);
                     Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .changedComponent();
+                        .addedComponent(context,comp);
                   } else if (comp is MultiHolder &&
                       (component as Holder).child != null) {
                     comp.addChild((component as Holder).child!);
                     Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .changedComponent();
+                        .addedComponent(context,comp);
                   }
                 } else if (component is MultiHolder) {
                   if (comp is MultiHolder) {
@@ -287,14 +288,14 @@ class ComponentModificationMenu extends StatelessWidget {
                     comp.addChildren((component as MultiHolder).children);
                     (component as MultiHolder).children.clear();
                     Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .changedComponent();
+                        .addedComponent(context,comp);
                   }
                 }
               });
           }
         },
         child: const Icon(
-          Icons.menu,
+          Icons.more_vert,
           color: Colors.black,
           size: 24,
         ));
@@ -311,10 +312,10 @@ class ComponentModificationMenu extends StatelessWidget {
           child: Center(
             child: Container(
               width: 300,
+              height: 500,
               color: Colors.white,
               padding: const EdgeInsets.all(10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: ListView(
                 children:(possibleItems ?? componentList.keys.toList())
                     .map(
                       (e) => InkWell(

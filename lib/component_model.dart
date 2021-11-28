@@ -18,7 +18,7 @@ abstract class Component {
       return create(context);
     },
       buildWhen: (state1,state2){
-      if(Provider.of<ComponentSelectionCubit>(context,listen: false).currentSelected==this) {
+      if(state2 is ComponentPropertyChangeState&&state2.rebuildComponent==this) {
         return true;
       }
       return false;
@@ -128,7 +128,9 @@ abstract class CustomNamedHolder extends Component{
 
   void updateChild(String key,Component? component){
     children[key]=component;
+    component?.setParent(this);
   }
+
   @override
   String code() {
     String middle='';

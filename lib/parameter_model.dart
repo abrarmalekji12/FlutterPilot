@@ -51,8 +51,6 @@ abstract class Parameter {
 
   String get code;
 
-  void removeParametersWithName(List<String> parameterNames);
-
   void withDisplayName(String? name) {
     displayName = name;
   }
@@ -83,7 +81,10 @@ class SimpleParameter<T> extends Parameter {
     } else if (paramType == ParamType.double || paramType == ParamType.int) {
       return evaluate(0 as T);
     }
-    return '';
+    if((info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny==null)||info==null) {
+      return 'null';
+    }
+      return '';
   }
 
   late final dynamic Function(T) evaluate;
@@ -126,17 +127,14 @@ class SimpleParameter<T> extends Parameter {
     val=value;
   }
 
-  @override
-  void removeParametersWithName(List<String> parameterNames) {
-    // TODO: implement removeParametersWithName
-    throw UnimplementedError('Please implement this method');
-  }
 
   @override
-  // TODO: implement code
   String get code {
     if(!required&&val==null){
-      return '';
+      if((info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny==null)||info==null) {
+        return 'null';
+      }
+        return '';
     }
     if (info != null) {
       if(paramType==ParamType.string){
@@ -181,12 +179,6 @@ class ChoiceValueParameter extends Parameter {
   }
 
   @override
-  void removeParametersWithName(List<String> parameterNames) {
-    // TODO: implement removeParametersWithName
-    throw UnimplementedError('Please implement this method');
-  }
-
-  @override
   get code => '$displayName:${value.toString()}';
 }
 
@@ -213,25 +205,12 @@ class ChoiceParameter extends Parameter {
   Parameter get rawValue => val??options[defaultValue];
 
   @override
-  void removeParametersWithName(List<String> parameterNames) {
-    List<Parameter> removeList = [];
-    for (final param in parameterNames) {
-      for (final optionValue in options) {
-        if (optionValue.displayName == param) {
-          removeList.add(optionValue);
-        }
-      }
-    }
-    for (final value in removeList) {
-      options.remove(value);
-    }
-    removeList.clear();
-  }
-
-  @override
   get code {
     final paramCode=rawValue.code;
     if(paramCode.isEmpty) {
+      if((info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny==null)||info==null) {
+        return 'null';
+      }
       return '';
     }
     return info != null ? info!.code(paramCode) : paramCode;
@@ -257,21 +236,6 @@ class ComplexParameter extends Parameter {
   // TODO: implement rawValue
   get rawValue => throw UnimplementedError();
 
-  @override
-  void removeParametersWithName(List<String> parameterNames) {
-    List<Parameter> removeList = [];
-    for (final param in parameterNames) {
-      for (final optionValue in params) {
-        if (optionValue.displayName == param) {
-          removeList.add(optionValue);
-        }
-      }
-    }
-    for (final value in removeList) {
-      params.remove(value);
-    }
-    removeList.clear();
-  }
 
   @override
   // TODO: implement code
@@ -285,4 +249,54 @@ class ComplexParameter extends Parameter {
     }
     return info?.code(middle) ?? middle;
   }
+}
+class ConstantValueParameter extends Parameter {
+  dynamic constantValue;
+  late String constantValueString;
+  ParamType paramType;
+  ConstantValueParameter({String? displayName, ParameterInfo? info,String? constantValueInString,required this.constantValue,required this.paramType}) : super(displayName, info, true){
+    if(constantValueInString!=null){
+      constantValueString=constantValueInString;
+    }
+    else{
+     constantValueString=constantValue.toString();
+    }
+  }
+
+  @override
+  // TODO: implement code
+  String get code {
+   if(info==null||info is SimpleParameterInfo) {
+     if(paramType==ParamType.string){
+       return '\'$constantValueString}\'';
+     }
+     return constantValueString;
+   }
+   return info!.code(paramType==ParamType.string?'\'$constantValueString}\'':constantValueString);
+  }
+
+  @override
+  get rawValue => constantValue;
+
+  @override
+  get value => constantValue;
+
+}
+class NullParameter extends Parameter{
+  NullParameter({String? displayName, ParameterInfo? info, bool required=false}) : super(displayName, info, required);
+  @override
+  String get code{
+   if((info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny==null)||info==null) {
+     return 'null';
+   }
+   return '';
+  }
+
+  @override
+  get rawValue => null;
+
+
+  @override
+  get value => null;
+
 }
