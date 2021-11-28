@@ -259,6 +259,7 @@ class ComponentModificationMenu extends StatelessWidget {
               },possibleItems: (customNamed!=null&&(component as CustomNamedHolder).selectable[customNamed!]!=null)?(component as CustomNamedHolder).selectable[customNamed!]!:null);
               break;
             case 'remove':
+              final parent=component.parent;
               if (component.parent != null) {
                 if (component.parent is Holder) {
                   (component.parent as Holder).updateChild(null);
@@ -266,7 +267,7 @@ class ComponentModificationMenu extends StatelessWidget {
                   (component.parent as MultiHolder).removeChild(component);
                 }
                 Provider.of<ComponentOperationCubit>(context, listen: false)
-                    .addedComponent(context,component);
+                    .removedComponent(context,parent!);
               }
               break;
             case 'replace':

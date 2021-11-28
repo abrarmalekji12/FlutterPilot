@@ -11,6 +11,9 @@ class NamedParameterInfo extends ParameterInfo {
 
   @override
   String code(String value) {
+    if(value.isEmpty) {
+      return '';
+    }
     return '$name:$value';
   }
 }
@@ -25,6 +28,9 @@ class InnerObjectParameterInfo extends ParameterInfo {
   @override
   String code(String value) {
     if (namedIfHaveAny != null) {
+      if(value.isEmpty){
+        return '';
+      }
       return '$namedIfHaveAny:$innerObjectName($value)';
     }
     return '$innerObjectName($value)';
@@ -81,9 +87,6 @@ class SimpleParameter<T> extends Parameter {
     } else if (paramType == ParamType.double || paramType == ParamType.int) {
       return evaluate(0 as T);
     }
-    if((info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny==null)||info==null) {
-      return 'null';
-    }
       return '';
   }
 
@@ -131,9 +134,6 @@ class SimpleParameter<T> extends Parameter {
   @override
   String get code {
     if(!required&&val==null){
-      if((info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny==null)||info==null) {
-        return 'null';
-      }
         return '';
     }
     if (info != null) {
@@ -208,9 +208,6 @@ class ChoiceParameter extends Parameter {
   get code {
     final paramCode=rawValue.code;
     if(paramCode.isEmpty) {
-      if((info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny==null)||info==null) {
-        return 'null';
-      }
       return '';
     }
     return info != null ? info!.code(paramCode) : paramCode;

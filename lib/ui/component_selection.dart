@@ -36,6 +36,7 @@ class _ComponentSelectionState extends State<ComponentSelection> {
               child: Center(
                 child: Text(
                   componentKeys[i],
+                  textAlign: TextAlign.center,
                   style: AppFontStyle.roboto(12, fontWeight: FontWeight.w500),
                 ),
               ),

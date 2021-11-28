@@ -8,11 +8,15 @@ import 'package:flutter_builder/cubit/component_operation/component_operation_cu
 import 'package:flutter_builder/cubit/component_property/component_property_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
 import 'package:flutter_builder/cubit/screen_config/screen_config_cubit.dart';
+import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
 import 'package:flutter_builder/enums.dart';
 import 'package:flutter_builder/screen_model.dart';
+import 'package:flutter_builder/ui/boundary_widget.dart';
 import 'package:flutter_builder/ui/code_view_widget.dart';
 import 'package:flutter_builder/ui/component_selection.dart';
 import 'package:flutter_builder/ui/parameter_ui.dart';
+import 'package:flutter_builder/ui/visual_model.dart';
+import 'package:flutter_builder/ui/visual_painter.dart';
 import 'package:provider/provider.dart';
 
 import '../component_list.dart';
@@ -31,6 +35,7 @@ class _HomePageState extends State<HomePage> {
   final componentPropertyCubit = ComponentPropertyCubit();
   final componentOperationCubit =
       ComponentOperationCubit(componentList['Scaffold']!());
+  final visualBoxCubit = VisualBoxCubit();
   final screenConfigCubit = ScreenConfigCubit();
 
   /*
@@ -62,6 +67,7 @@ class _HomePageState extends State<HomePage> {
                 create: (context) => componentSelectionCubit),
             BlocProvider<ScreenConfigCubit>(
                 create: (context) => screenConfigCubit),
+            BlocProvider<VisualBoxCubit>(create: (context) => visualBoxCubit),
           ],
           child: Row(
             children: [
@@ -119,40 +125,36 @@ class _HomePageState extends State<HomePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const ScreenConfigSelection(),
-                  Container(
-                    width: screenConfigCubit.screenConfig.width,
-                    height: screenConfigCubit.screenConfig.height,
-                    color: Colors.white,
-                    child: Stack(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(1.0),
-                          child: BlocListener<ComponentPropertyCubit,
-                              ComponentPropertyState>(
-                            listener: (context, state) {
-                              print(
-                                  componentOperationCubit.rootComponent.code());
-                            },
-                            child: BlocConsumer<ComponentOperationCubit,
-                                ComponentOperationState>(
+                  GestureDetector(
+                    onTapDown: (event){
+                      print('tappp ${event.localPosition.dx} ${event.localPosition.dy}');
+                      final tappedComp=componentOperationCubit.rootComponent.searchTappedComponent(event.localPosition);
+                      if(tappedComp!=null){
+                        componentSelectionCubit.changeComponentSelection(tappedComp);
+                      }
+                    },
+                    child: Container(
+                      key: const GlobalObjectKey('device window'),
+                      width: screenConfigCubit.screenConfig.width,
+                      height: screenConfigCubit.screenConfig.height,
+                      color: Colors.white,
+                      child: Stack(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(1.0),
+                            child: BlocListener<ComponentPropertyCubit,
+                                ComponentPropertyState>(
                               listener: (context, state) {
-                                print(componentOperationCubit.rootComponent
-                                    .code());
+                                // print(
+                                //     componentOperationCubit.rootComponent.code());
                               },
-                              builder: (context, state) {
-                                return componentOperationCubit.rootComponent
-                                    .build(context);
-                              },
+                              child: componentOperationCubit.rootComponent
+                                  .build(context),
                             ),
                           ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black, width: 1.5),
-                            color: Colors.transparent,
-                          ),
-                        ),
-                      ],
+                          const BoundaryWidget(),
+                        ],
+                      ),
                     ),
                   ),
                 ],
