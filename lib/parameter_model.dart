@@ -103,6 +103,7 @@ class SimpleParameter<T> extends Parameter {
     } else {
       this.evaluate = (value) => value;
     }
+    val=defaultValue;
   }
 
   @override
@@ -122,6 +123,7 @@ class SimpleParameter<T> extends Parameter {
 
   void withDefaultValue(T? value) {
     defaultValue = value;
+    val=value;
   }
 
   @override
@@ -200,13 +202,15 @@ class ChoiceParameter extends Parameter {
       bool required = true,
       this.val,
       ParameterInfo? info})
-      : super(name, info, required);
+      : super(name, info, required){
+    val=options[defaultValue];
+  }
 
   @override
-  get value => val?.value ?? options[defaultValue].value;
+  get value => val?.value;
 
   @override
-  Parameter get rawValue => val ?? options[defaultValue];
+  Parameter get rawValue => val??options[defaultValue];
 
   @override
   void removeParametersWithName(List<String> parameterNames) {
@@ -226,7 +230,11 @@ class ChoiceParameter extends Parameter {
 
   @override
   get code {
-    return info != null ? info!.code(rawValue.code) : rawValue.code;
+    final paramCode=rawValue.code;
+    if(paramCode.isEmpty) {
+      return '';
+    }
+    return info != null ? info!.code(paramCode) : paramCode;
   }
 }
 
@@ -270,7 +278,10 @@ class ComplexParameter extends Parameter {
   get code {
     String middle = '';
     for (final para in params) {
-      middle += '${para.code},'.replaceAll(',,', ',');
+      final paramCode=para.code;
+      if(paramCode.isNotEmpty) {
+        middle += '$paramCode,'.replaceAll(',,', ',');
+      }
     }
     return info?.code(middle) ?? middle;
   }

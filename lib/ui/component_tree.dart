@@ -25,11 +25,14 @@ class _ComponentTreeState extends State<ComponentTree> {
       builder: (context, state) {
         return BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
           builder: (context, state) {
-            return Container(
-              padding: const EdgeInsets.all(10),
-              child: getSublist(
-                  Provider.of<ComponentOperationCubit>(context, listen: false)
-                      .rootComponent),
+            return SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                child: getSublist(
+                    Provider.of<ComponentOperationCubit>(context, listen: false)
+                        .rootComponent),
+              ),
             );
           },
         );
@@ -120,29 +123,90 @@ class _ComponentTreeState extends State<ComponentTree> {
           ]
         ],
       );
+    } else if (component is CustomNamedHolder) {
+      return Column(
+        children: [
+          Row(
+            children: [
+              InkWell(
+                onTap: () {
+                  Provider.of<ComponentSelectionCubit>(context, listen: false)
+                      .changeComponentSelection(component);
+                },
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(5),
+                    child: Text(
+                      component.name,
+                      style: AppFontStyle.roboto(14,
+                          color: Provider.of<ComponentSelectionCubit>(context,
+                                          listen: false)
+                                      .currentSelected ==
+                                  component
+                              ? Colors.blue
+                              : Colors.black,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10, top: 5),
+            child: Column(children: [
+              for (final child in component.children.keys) ...[
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          child,
+                          style: AppFontStyle.roboto(12, color: Colors.grey),
+                        ),
+                        const Spacer(),
+                        ComponentModificationMenu(component: component,customNamed: child,)
+                      ],
+                    ),
+                    if (component.children[child] != null)
+                      getSublist(component.children[child]!),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                )
+              ]
+            ]),
+          ),
+        ],
+      );
     }
-    return InkWell(
-      onTap: () {
-        Provider.of<ComponentSelectionCubit>(context, listen: false)
-            .changeComponentSelection(component);
-      },
-      child: Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(5),
-          child: Text(
-            component.name,
-            style: AppFontStyle.roboto(14,
-                color:
-                    Provider.of<ComponentSelectionCubit>(context, listen: false)
+    return Column(
+      children: [
+        InkWell(
+          onTap: () {
+            Provider.of<ComponentSelectionCubit>(context, listen: false)
+                .changeComponentSelection(component);
+          },
+          child: Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(5),
+              child: Text(
+                component.name,
+                style: AppFontStyle.roboto(14,
+                    color: Provider.of<ComponentSelectionCubit>(context,
+                                    listen: false)
                                 .currentSelected ==
                             component
                         ? Colors.blue
                         : Colors.black,
-                fontWeight: FontWeight.w500),
+                    fontWeight: FontWeight.w500),
+              ),
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -151,7 +215,8 @@ class ComponentModificationMenu extends StatelessWidget {
   static const operations = ['add', 'remove', 'replace', 'wrap with'];
   final Component component;
 
-  const ComponentModificationMenu({Key? key, required this.component})
+  final String? customNamed;
+  const ComponentModificationMenu({Key? key, this.customNamed,required this.component})
       : super(key: key);
 
   @override
@@ -178,47 +243,54 @@ class ComponentModificationMenu extends StatelessWidget {
           switch (e) {
             case 'add':
               showSelectionDialog((comp) {
-                if (component is Holder) {
-                  (component as Holder).updateChild(comp);
-                } else if (component is MultiHolder) {
-                  (component as MultiHolder).addChild(comp);
+                if(customNamed!=null){
+                  (component as CustomNamedHolder).updateChild(customNamed!, comp);
                 }
-                Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
-              });
+                else {
+                  if (component is Holder) {
+                    (component as Holder).updateChild(comp);
+                  } else if (component is MultiHolder) {
+                    (component as MultiHolder).addChild(comp);
+                  }
+                }
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .changedComponent();
+              },possibleItems: (customNamed!=null&&(component as CustomNamedHolder).selectable[customNamed!]!=null)?(component as CustomNamedHolder).selectable[customNamed!]!:null);
               break;
             case 'remove':
-              if(component.parent!=null){
-                if(component.parent is Holder){
+              if (component.parent != null) {
+                if (component.parent is Holder) {
                   (component.parent as Holder).updateChild(null);
-                } else if(component.parent is MultiHolder){
+                } else if (component.parent is MultiHolder) {
                   (component.parent as MultiHolder).removeChild(component);
                 }
-                Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .changedComponent();
               }
               break;
             case 'replace':
               showSelectionDialog((comp) {
-                if(component is Holder){
-                  if(comp is Holder){
+                if (component is Holder) {
+                  if (comp is Holder) {
                     comp.updateChild((component as Holder).child);
-                    Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
-                  }
-                  else if(comp is MultiHolder&&(component as Holder).child!=null){
+                    Provider.of<ComponentOperationCubit>(context, listen: false)
+                        .changedComponent();
+                  } else if (comp is MultiHolder &&
+                      (component as Holder).child != null) {
                     comp.addChild((component as Holder).child!);
-                    Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
+                    Provider.of<ComponentOperationCubit>(context, listen: false)
+                        .changedComponent();
                   }
-
-                }
-                else if(component is MultiHolder){
-                  if(comp is MultiHolder){
+                } else if (component is MultiHolder) {
+                  if (comp is MultiHolder) {
                     comp.children.clear();
                     comp.addChildren((component as MultiHolder).children);
                     (component as MultiHolder).children.clear();
-                    Provider.of<ComponentOperationCubit>(context,listen: false).changedComponent();
+                    Provider.of<ComponentOperationCubit>(context, listen: false)
+                        .changedComponent();
                   }
                 }
               });
-
           }
         },
         child: const Icon(
@@ -228,7 +300,7 @@ class ComponentModificationMenu extends StatelessWidget {
         ));
   }
 
-  void showSelectionDialog(void Function(Component) onSelection) {
+  void showSelectionDialog(void Function(Component) onSelection,{List<String>? possibleItems}) {
     Get.dialog(
       GestureDetector(
         onTap: () {
@@ -243,7 +315,7 @@ class ComponentModificationMenu extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: componentList.keys
+                children:(possibleItems ?? componentList.keys.toList())
                     .map(
                       (e) => InkWell(
                         onTap: () {

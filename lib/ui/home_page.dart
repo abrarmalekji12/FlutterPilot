@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   ScreenConfig screenConfig = screenConfigs[0];
   final componentPropertyCubit = ComponentPropertyCubit();
   final componentOperationCubit =
-      ComponentOperationCubit(componentList['Container']!());
+      ComponentOperationCubit(componentList['Scaffold']!());
   /*
   * ..addChildren([
         componentList['Container']!(),

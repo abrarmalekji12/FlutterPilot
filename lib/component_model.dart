@@ -116,6 +116,39 @@ abstract class Holder extends Component {
     return '$name(\n${middle}child:${child!.code()}\n),';
   }
 }
-// class CustomNamedHolder extends Component{
-//   Map<String,Component>
-// }
+abstract class CustomNamedHolder extends Component{
+  Map<String,Component?> children={};
+  late Map<String,List<String>?> selectable;
+
+  CustomNamedHolder(String name,List<Parameter> parameters,this.selectable) : super(name, parameters){
+    for(final child in selectable.keys) {
+      children[child]=null;
+    }
+  }
+
+  void updateChild(String key,Component? component){
+    children[key]=component;
+  }
+  @override
+  String code() {
+    String middle='';
+    for(final para in parameters){
+      final paramCode=para.code;
+      if(paramCode.isNotEmpty) {
+        final paramCode=para.code;
+        if(paramCode.isNotEmpty) {
+          middle+= '$paramCode,'.replaceAll(',,', ',');
+        }
+      }
+    }
+    middle=middle.replaceAll(',', ',\n');
+
+    String childrenCode='';
+    for(final child in children.keys){
+      if(children[child]!=null){
+        childrenCode+='$child:${children[child]!.code()}';
+      }
+    }
+    return '$name(\n$middle$childrenCode\n),';
+  }
+}
