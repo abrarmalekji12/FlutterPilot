@@ -25,14 +25,17 @@ class _ComponentTreeState extends State<ComponentTree> {
       builder: (context, state) {
         return BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
           builder: (context, state) {
-            return SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Container(
-                alignment: Alignment.topLeft,
-                padding: const EdgeInsets.all(10),
-                child: getSublist(
-                    Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .rootComponent),
+            return Align(
+              alignment: Alignment.topLeft,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Container(
+                  alignment: Alignment.topLeft,
+                  padding: const EdgeInsets.all(10),
+                  child: getSublist(
+                      Provider.of<ComponentOperationCubit>(context, listen: false)
+                          .rootComponent),
+                ),
               ),
             );
           },

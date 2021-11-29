@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/component_model.dart';
+import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/enums.dart';
 import 'package:flutter_builder/parameter_info.dart';
 import 'package:flutter_builder/parameter_model.dart';
@@ -21,10 +22,13 @@ final componentList = {
   'Card': () => CCard(),
   'SizedBox': () => CSizedBox(),
   'Text': () => CText(),
+  'CircleAvatar': () => CCircleAvatar(),
+  'Divider': () => CDivider()
 };
 
 class Parameters {
-  static paddingParameter() => ChoiceParameter(
+  static paddingParameter() =>
+      ChoiceParameter(
         name: 'padding',
         info: NamedParameterInfo('padding'),
         options: [
@@ -99,9 +103,11 @@ class Parameters {
         defaultValue: 0,
       );
 
-  static decorationParameter() => ComplexParameter(
+  static decorationParameter() =>
+      ComplexParameter(
           params: [
-            colorParameter()..withDefaultValue(const Color(0xff000000)),
+            colorParameter()
+              ..withDefaultValue(const Color(0xff000000)),
             borderRadiusParameter(),
             borderParameter()
           ],
@@ -116,55 +122,73 @@ class Parameters {
           info: InnerObjectParameterInfo(
               innerObjectName: 'BoxDecoration', namedIfHaveAny: 'decoration'));
 
-  static borderParameter() => ChoiceParameter(
-      name: 'border',
-      // info: NamedParameterInfo('border'),
-      options: [
-        ComplexParameter(
-          info: InnerObjectParameterInfo(
-              innerObjectName: 'Border.all', namedIfHaveAny: 'border'),
-          params: [
-            colorParameter()..withDefaultValue(const Color(0xffffffff)),
-            widthParameter()
-              ..withDefaultValue(2)
-              ..withRequired(true),
+  static borderParameter() =>
+      ChoiceParameter(
+          name: 'border',
+          // info: NamedParameterInfo('border'),
+          options: [
+            ComplexParameter(
+              info: InnerObjectParameterInfo(
+                  innerObjectName: 'Border.all', namedIfHaveAny: 'border'),
+              params: [
+                colorParameter()
+                  ..withDefaultValue(const Color(0xffffffff)),
+                widthParameter()
+                  ..withDefaultValue(2)
+                  ..withRequired(true),
+              ],
+              name: 'all',
+              evaluate: (params) =>
+                  Border.all(
+                    color: params[0].value,
+                    width: params[1].value,
+                  ),
+            ),
+            NullParameter(
+                displayName: 'none', info: NamedParameterInfo('border'))
           ],
-          name: 'all',
-          evaluate: (params) => Border.all(
-            color: params[0].value,
-            width: params[1].value,
-          ),
-        ),
-        NullParameter(displayName: 'none', info: NamedParameterInfo('border'))
-      ],
-      defaultValue: 1);
+          defaultValue: 1);
 
-  static alignmentParameter() => ChoiceValueParameter(
-      name: 'alignment',
-      options: {
-        'centerLeft': Alignment.centerLeft,
-        'center': Alignment.center,
-        'centerRight': Alignment.centerRight,
-        'topLeft': Alignment.topLeft,
-        'topRight': Alignment.topRight,
-        'bottomLeft': Alignment.bottomLeft,
-        'bottomRight': Alignment.bottomRight,
-      },
-      defaultValue: 'center');
+  static alignmentParameter() =>
+      ChoiceValueParameter(
+          name: 'alignment',
+          options: {
+            'centerLeft': Alignment.centerLeft,
+            'center': Alignment.center,
+            'centerRight': Alignment.centerRight,
+            'topLeft': Alignment.topLeft,
+            'topRight': Alignment.topRight,
+            'bottomLeft': Alignment.bottomLeft,
+            'bottomRight': Alignment.bottomRight,
+          },
+          defaultValue: 'center');
 
-  static marginParameter() => paddingParameter()
-    ..withDisplayName('margin')
-    ..withInfo(NamedParameterInfo('margin'));
+  static marginParameter() =>
+      paddingParameter()
+        ..withDisplayName('margin')
+        ..withInfo(NamedParameterInfo('margin'));
 
-  static SimpleParameter colorParameter() => SimpleParameter<Color>(
+  static SimpleParameter colorParameter() =>
+      SimpleParameter<Color>(
         name: 'color',
         paramType: ParamType.other,
-        defaultValue: const Color(0xff000000),
+        defaultValue: AppColors.black,
         inputType: ParamInputType.color,
         info: NamedParameterInfo('color'),
       );
 
-  static mainAxisAlignmentParameter() => ChoiceValueParameter(
+  static SimpleParameter backgroundColorParameter() =>
+      colorParameter()
+        ..withDisplayName('background-color')
+        ..withInfo(NamedParameterInfo('backgroundColor'));
+
+  static SimpleParameter foregroundColorParameter() =>
+      colorParameter()
+        ..withDisplayName('foreground-color')
+        ..withInfo(NamedParameterInfo('foregroundColor'));
+
+  static mainAxisAlignmentParameter() =>
+      ChoiceValueParameter(
         name: 'mainAxisAlignment',
         options: {
           'start': MainAxisAlignment.start,
@@ -177,7 +201,8 @@ class Parameters {
         defaultValue: 'start',
       );
 
-  static crossAxisAlignmentParameter() => ChoiceValueParameter(
+  static crossAxisAlignmentParameter() =>
+      ChoiceValueParameter(
         name: 'crossAxisAlignment',
         options: {
           'start': CrossAxisAlignment.start,
@@ -189,20 +214,23 @@ class Parameters {
         defaultValue: 'start',
       );
 
-  static mainAxisSizeParameter() => ChoiceValueParameter(
-      name: 'mainAxisSize',
-      options: {
-        'max': MainAxisSize.max,
-        'min': MainAxisSize.min,
-      },
-      defaultValue: 'max');
+  static mainAxisSizeParameter() =>
+      ChoiceValueParameter(
+          name: 'mainAxisSize',
+          options: {
+            'max': MainAxisSize.max,
+            'min': MainAxisSize.min,
+          },
+          defaultValue: 'max');
 
-  static axisParameter() => ChoiceValueParameter(
-      name: 'direction',
-      options: {'vertical': Axis.vertical, 'horizontal': Axis.horizontal},
-      defaultValue: 'vertical');
+  static axisParameter() =>
+      ChoiceValueParameter(
+          name: 'direction',
+          options: {'vertical': Axis.vertical, 'horizontal': Axis.horizontal},
+          defaultValue: 'vertical');
 
-  static borderRadiusParameter() => ChoiceParameter(
+  static borderRadiusParameter() =>
+      ChoiceParameter(
         name: 'borderRadius',
         info: NamedParameterInfo('borderRadius'),
         options: [
@@ -216,7 +244,7 @@ class Parameters {
               }),
           ComplexParameter(
             info:
-                InnerObjectParameterInfo(innerObjectName: 'BorderRadius.only'),
+            InnerObjectParameterInfo(innerObjectName: 'BorderRadius.only'),
             params: [
               SimpleParameter<double>(
                   paramType: ParamType.double,
@@ -257,55 +285,76 @@ class Parameters {
         defaultValue: 0,
       );
 
-  static SimpleParameter widthParameter() => SimpleParameter<double>(
-      info: NamedParameterInfo('width'),
-      name: 'width',
-      required: false,
-      paramType: ParamType.double,
-      defaultValue: 100);
+  static SimpleParameter widthParameter() =>
+      SimpleParameter<double>(
+          info: NamedParameterInfo('width'),
+          name: 'width',
+          required: false,
+          paramType: ParamType.double,
+          defaultValue: 100);
 
-  static SimpleParameter heightParameter() => SimpleParameter<double>(
-      info: NamedParameterInfo('height'),
-      name: 'height',
-      required: false,
-      paramType: ParamType.double,
-      defaultValue: 100);
+  static SimpleParameter heightParameter() =>
+      SimpleParameter<double>(
+          info: NamedParameterInfo('height'),
+          name: 'height',
+          required: false,
+          paramType: ParamType.double,
+          defaultValue: 100);
 
-  static SimpleParameter flexParameter() => SimpleParameter<int>(
-      info: NamedParameterInfo('flex'),
-      name: 'flex',
-      required: true,
-      paramType: ParamType.int,
-      defaultValue: 1);
+  static SimpleParameter thicknessParameter() =>
+      SimpleParameter<double>(
+          info: NamedParameterInfo('thickness'),
+          name: 'thickness',
+          required: false,
+          paramType: ParamType.double,
+          defaultValue: 1);
 
-  static borderSideParameter() => ChoiceParameter(
-      info: NamedParameterInfo('borderSide'),
-      options: [
-        ComplexParameter(
-            info: InnerObjectParameterInfo(
-              innerObjectName: 'BorderSide',
-            ),
-            params: [
-              colorParameter(),
-              widthParameter()
-                ..withRequired(true)
-                ..withDefaultValue(2)
-            ],
-            evaluate: (params) {
-              return BorderSide(
-                color: params[0].value,
-                width: params[1].value,
-              );
-            }),
-        ConstantValueParameter(
-            displayName: 'None',
-            constantValue: BorderSide.none,
-            constantValueInString: 'BorderSide.none',
-            paramType: ParamType.other)
-      ],
-      defaultValue: 0);
+  static SimpleParameter radiusParameter() =>
+      SimpleParameter<double>(
+          info: NamedParameterInfo('radius'),
+          name: 'radius',
+          required: false,
+          paramType: ParamType.double,
+          defaultValue: 30);
 
-  static shapeBorderParameter() => ChoiceParameter(
+  static SimpleParameter flexParameter() =>
+      SimpleParameter<int>(
+          info: NamedParameterInfo('flex'),
+          name: 'flex',
+          required: true,
+          paramType: ParamType.int,
+          defaultValue: 1);
+
+  static borderSideParameter() =>
+      ChoiceParameter(
+          info: NamedParameterInfo('borderSide'),
+          options: [
+            ComplexParameter(
+                info: InnerObjectParameterInfo(
+                  innerObjectName: 'BorderSide',
+                ),
+                params: [
+                  colorParameter(),
+                  widthParameter()
+                    ..withRequired(true)
+                    ..withDefaultValue(2)
+                ],
+                evaluate: (params) {
+                  return BorderSide(
+                    color: params[0].value,
+                    width: params[1].value,
+                  );
+                }),
+            ConstantValueParameter(
+                displayName: 'None',
+                constantValue: BorderSide.none,
+                constantValueInString: 'BorderSide.none',
+                paramType: ParamType.other)
+          ],
+          defaultValue: 0);
+
+  static shapeBorderParameter() =>
+      ChoiceParameter(
           options: [
             NullParameter(displayName: 'None'),
             ComplexParameter(
@@ -326,28 +375,31 @@ class Parameters {
           defaultValue: 0,
           info: NamedParameterInfo('shape'));
 
-  static SimpleParameter widthFactorParameter() => SimpleParameter<double>(
-      paramType: ParamType.double,
-      defaultValue: null,
-      inputType: ParamInputType.sliderZeroToOne,
-      name: 'width factor',
-      required: false,
-      info: NamedParameterInfo('widthFactor'));
+  static SimpleParameter widthFactorParameter() =>
+      SimpleParameter<double>(
+          paramType: ParamType.double,
+          defaultValue: null,
+          inputType: ParamInputType.sliderZeroToOne,
+          name: 'width factor',
+          required: false,
+          info: NamedParameterInfo('widthFactor'));
 
-  static SimpleParameter heightFactorParameter() => SimpleParameter<double>(
-      paramType: ParamType.double,
-      defaultValue: null,
-      inputType: ParamInputType.sliderZeroToOne,
-      name: 'height factor',
-      required: false,
-      info: NamedParameterInfo('heightFactor'));
+  static SimpleParameter heightFactorParameter() =>
+      SimpleParameter<double>(
+          paramType: ParamType.double,
+          defaultValue: null,
+          inputType: ParamInputType.sliderZeroToOne,
+          name: 'height factor',
+          required: false,
+          info: NamedParameterInfo('heightFactor'));
 
-  static SimpleParameter elevationParameter() => SimpleParameter<double>(
-      paramType: ParamType.double,
-      defaultValue: 1,
-      required: false,
-      info: NamedParameterInfo('elevation'),
-      name: 'elevation');
+  static SimpleParameter elevationParameter() =>
+      SimpleParameter<double>(
+          paramType: ParamType.double,
+          defaultValue: 1,
+          required: false,
+          info: NamedParameterInfo('elevation'),
+          name: 'elevation');
   static final toolbarHeight = heightParameter()
     ..withRequired(true)
     ..withDisplayName('toolbar-height')
@@ -356,7 +408,7 @@ class Parameters {
 }
 
 class CExpanded extends Holder {
-  CExpanded() : super('Expanded', [Parameters.flexParameter()],required: true);
+  CExpanded() : super('Expanded', [Parameters.flexParameter()], required: true);
 
   @override
   Widget create(BuildContext context) {
@@ -368,9 +420,9 @@ class CExpanded extends Holder {
 class CCenter extends Holder {
   CCenter()
       : super('Center', [
-          Parameters.widthFactorParameter(),
-          Parameters.heightFactorParameter(),
-        ]);
+    Parameters.widthFactorParameter(),
+    Parameters.heightFactorParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -385,10 +437,12 @@ class CCenter extends Holder {
 class CFractionallySizedBox extends Holder {
   CFractionallySizedBox()
       : super('FractionallySizedBox', [
-          Parameters.widthFactorParameter()..withDefaultValue(1),
-          Parameters.heightFactorParameter()..withDefaultValue(1),
-          Parameters.alignmentParameter()
-        ]);
+    Parameters.widthFactorParameter()
+      ..withDefaultValue(1),
+    Parameters.heightFactorParameter()
+      ..withDefaultValue(1),
+    Parameters.alignmentParameter()
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -402,7 +456,7 @@ class CFractionallySizedBox extends Holder {
 }
 
 class CFlexible extends Holder {
-  CFlexible() : super('Flexible', [Parameters.flexParameter()],required: true);
+  CFlexible() : super('Flexible', [Parameters.flexParameter()], required: true);
 
   @override
   Widget create(BuildContext context) {
@@ -413,19 +467,45 @@ class CFlexible extends Holder {
   }
 }
 
+class CDivider extends Component {
+  CDivider() : super('Divider', [
+    Parameters.colorParameter()
+      ..withDefaultValue(AppColors.grey),
+    Parameters.heightParameter()
+      ..withDefaultValue(20),
+    Parameters.thicknessParameter(),
+    Parameters.heightParameter()
+      ..withDefaultValue(0) .. withDisplayName('indent')..withInfo(NamedParameterInfo('indent')) .. withRequired(false),
+    Parameters.heightParameter()
+      ..withDefaultValue(0) .. withDisplayName('end-indent')..withInfo(NamedParameterInfo('endIndent')) .. withRequired(false)
+  ],);
+
+  @override
+  Widget create(BuildContext context) {
+    return Divider(
+      color:parameters[0].value,
+      height: parameters[1].value,
+      thickness:parameters[2].value,
+      indent: parameters[3].value,
+      endIndent: parameters[4].value,
+    );
+  }
+}
+
 class CCard extends Holder {
   CCard()
       : super('Card', [
-          Parameters.colorParameter(),
-          Parameters.shapeBorderParameter(),
-          Parameters.elevationParameter(),
-          Parameters.marginParameter(),
-          Parameters.colorParameter()
-            ..withDisplayName('shadowColor')
-            ..withInfo(
-              NamedParameterInfo('shadowColor'),
-            ),
-        ]);
+    Parameters.colorParameter()
+      ..withDefaultValue(AppColors.white),
+    Parameters.shapeBorderParameter(),
+    Parameters.elevationParameter(),
+    Parameters.marginParameter(),
+    Parameters.colorParameter()
+      ..withDisplayName('shadowColor')
+      ..withInfo(
+        NamedParameterInfo('shadowColor'),
+      ),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -442,15 +522,15 @@ class CCard extends Holder {
 class CAppBar extends CustomNamedHolder {
   CAppBar()
       : super('AppBar', [
-          Parameters.colorParameter()
-            ..withDefaultValue(const Color(0xff0000ff))
-            ..withDisplayName('background-color')
-            ..withInfo(NamedParameterInfo('backgroundColor')),
-          Parameters.toolbarHeight
-        ], {
-          'title': null,
-          'leading': null,
-        });
+    Parameters.colorParameter()
+      ..withDefaultValue(const Color(0xff0000ff))
+      ..withDisplayName('background-color')
+      ..withInfo(NamedParameterInfo('backgroundColor')),
+    Parameters.toolbarHeight
+  ], {
+    'title': null,
+    'leading': null,
+  });
 
   @override
   Widget create(BuildContext context) {
@@ -465,23 +545,23 @@ class CAppBar extends CustomNamedHolder {
 class CScaffold extends CustomNamedHolder {
   CScaffold()
       : super('Scaffold', [
-          Parameters.colorParameter()
-            ..withDisplayName('background-color')
-            ..withDefaultValue(const Color(0xffffffff))
-            ..withInfo(NamedParameterInfo('backgroundColor'))
-        ], {
-          'appBar': ['AppBar'],
-          'body': null,
-          'floatingActionButton': null
-        });
+    Parameters.colorParameter()
+      ..withDisplayName('background-color')
+      ..withDefaultValue(const Color(0xffffffff))
+      ..withInfo(NamedParameterInfo('backgroundColor'))
+  ], {
+    'appBar': ['AppBar'],
+    'body': null,
+    'floatingActionButton': null
+  });
 
   @override
   Widget create(BuildContext context) {
     return Scaffold(
       appBar: children['appBar'] != null
           ? PreferredSize(
-              child: children['appBar']!.build(context),
-              preferredSize: Size(-1, children['appBar']!.parameters[1].value))
+          child: children['appBar']!.build(context),
+          preferredSize: Size(-1, children['appBar']!.parameters[1].value))
           : null,
       body: children['body']?.build(context),
       backgroundColor: parameters[0].value,
@@ -493,10 +573,10 @@ class CScaffold extends CustomNamedHolder {
 class CRow extends MultiHolder {
   CRow()
       : super('Row', [
-          Parameters.mainAxisAlignmentParameter(),
-          Parameters.crossAxisAlignmentParameter(),
-          Parameters.mainAxisSizeParameter()
-        ]);
+    Parameters.mainAxisAlignmentParameter(),
+    Parameters.crossAxisAlignmentParameter(),
+    Parameters.mainAxisSizeParameter()
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -512,10 +592,10 @@ class CRow extends MultiHolder {
 class CColumn extends MultiHolder {
   CColumn()
       : super('Column', [
-          Parameters.mainAxisAlignmentParameter(),
-          Parameters.crossAxisAlignmentParameter(),
-          Parameters.mainAxisSizeParameter()
-        ]);
+    Parameters.mainAxisAlignmentParameter(),
+    Parameters.crossAxisAlignmentParameter(),
+    Parameters.mainAxisSizeParameter()
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -531,11 +611,11 @@ class CColumn extends MultiHolder {
 class CFlex extends MultiHolder {
   CFlex()
       : super('Flex', [
-          Parameters.mainAxisAlignmentParameter(),
-          Parameters.crossAxisAlignmentParameter(),
-          Parameters.mainAxisSizeParameter(),
-          Parameters.axisParameter()
-        ]);
+    Parameters.mainAxisAlignmentParameter(),
+    Parameters.crossAxisAlignmentParameter(),
+    Parameters.mainAxisSizeParameter(),
+    Parameters.axisParameter()
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -573,16 +653,44 @@ class CClipRRect extends Holder {
   }
 }
 
+class CCircleAvatar extends Holder {
+  CCircleAvatar()
+      : super('CircleAvatar', [
+    Parameters.radiusParameter(),
+    Parameters.backgroundColorParameter(),
+    Parameters.foregroundColorParameter(),
+    // Parameters.radiusParameter()
+    //   ..withDisplayName('minimum radius')
+    //   ..withInfo(NamedParameterInfo('minRadius')),
+    // Parameters.radiusParameter()
+    //   ..withDisplayName('maximum radius')
+    //   ..withInfo(NamedParameterInfo('maxRadius')),
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return CircleAvatar(
+      radius: parameters[0].value,
+      backgroundColor: parameters[1].value,
+      foregroundColor: parameters[2].value,
+      child: child?.build(context),
+      // maxRadius: parameters[3].value,
+      // minRadius: parameters[4].value,
+
+    );
+  }
+}
+
 class CContainer extends Holder {
   CContainer()
       : super('Container', [
-          Parameters.paddingParameter(),
-          Parameters.widthParameter(),
-          Parameters.heightParameter(),
-          Parameters.marginParameter(),
-          Parameters.alignmentParameter(),
-          Parameters.decorationParameter()
-        ]);
+    Parameters.paddingParameter(),
+    Parameters.widthParameter(),
+    Parameters.heightParameter(),
+    Parameters.marginParameter(),
+    Parameters.alignmentParameter(),
+    Parameters.decorationParameter()
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -601,9 +709,11 @@ class CContainer extends Holder {
 class CSizedBox extends Holder {
   CSizedBox()
       : super('SizedBox', [
-          Parameters.widthParameter()..withDefaultValue(50),
-          Parameters.heightParameter()..withDefaultValue(50),
-        ]);
+    Parameters.widthParameter()
+      ..withDefaultValue(50),
+    Parameters.heightParameter()
+      ..withDefaultValue(50),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -618,43 +728,43 @@ class CSizedBox extends Holder {
 class CText extends Component {
   CText()
       : super('Text', [
-          SimpleParameter<String>(
-              name: 'text', paramType: ParamType.string, defaultValue: ''),
-          ComplexParameter(
-            info: InnerObjectParameterInfo(
-                innerObjectName: 'TextStyle', namedIfHaveAny: 'style'),
-            params: [
-              SimpleParameter<double>(
-                  name: 'font-size',
-                  info: NamedParameterInfo('fontSize'),
-                  paramType: ParamType.double,
-                  defaultValue: 13),
-              Parameters.colorParameter(),
-              ChoiceValueParameter(
-                options: {
-                  'w200': FontWeight.w200,
-                  'w300': FontWeight.w300,
-                  'w400': FontWeight.w400,
-                  'w500': FontWeight.w500,
-                  'normal': FontWeight.normal,
-                  'w600': FontWeight.w600,
-                  'w700': FontWeight.w700,
-                  'w800': FontWeight.w800,
-                  'w900': FontWeight.w900,
-                },
-                defaultValue: 'normal',
-                name: 'fontWeight',
-              ),
-            ],
-            name: 'Style',
-            evaluate: (params) {
-              return TextStyle(
-                  fontSize: params[0].value,
-                  color: params[1].value,
-                  fontWeight: params[2].value);
-            },
-          )
-        ]);
+    SimpleParameter<String>(
+        name: 'text', paramType: ParamType.string, defaultValue: ''),
+    ComplexParameter(
+      info: InnerObjectParameterInfo(
+          innerObjectName: 'TextStyle', namedIfHaveAny: 'style'),
+      params: [
+        SimpleParameter<double>(
+            name: 'font-size',
+            info: NamedParameterInfo('fontSize'),
+            paramType: ParamType.double,
+            defaultValue: 13),
+        Parameters.colorParameter(),
+        ChoiceValueParameter(
+          options: {
+            'w200': FontWeight.w200,
+            'w300': FontWeight.w300,
+            'w400': FontWeight.w400,
+            'w500': FontWeight.w500,
+            'normal': FontWeight.normal,
+            'w600': FontWeight.w600,
+            'w700': FontWeight.w700,
+            'w800': FontWeight.w800,
+            'w900': FontWeight.w900,
+          },
+          defaultValue: 'normal',
+          name: 'fontWeight',
+        ),
+      ],
+      name: 'Style',
+      evaluate: (params) {
+        return TextStyle(
+            fontSize: params[0].value,
+            color: params[1].value,
+            fontWeight: params[2].value);
+      },
+    )
+  ]);
 
   @override
   Widget create(BuildContext context) {

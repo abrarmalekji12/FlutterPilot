@@ -16,22 +16,24 @@ abstract class Component {
   Component(this.name, this.parameters);
 
   Widget build(BuildContext context) {
-    print('BUILDING $name ${parent?.name} true');
-    return BlocBuilder<ComponentPropertyCubit, ComponentPropertyState>(
+    return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
       builder: (context, state) {
+        print('BUILDING $name');
         WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-          RenderBox renderBox = GlobalObjectKey(this)
+          final RenderBox renderBox = GlobalObjectKey(this)
               .currentContext!
               .findRenderObject()! as RenderBox;
-          Offset position = renderBox.localToGlobal(Offset.zero,
+          final position = renderBox.localToGlobal(Offset.zero,
               ancestor: const GlobalObjectKey('device window')
                   .currentContext!
                   .findRenderObject());
+
           boundary = Rect.fromLTWH(position.dx - 1, position.dy - 1,
               renderBox.size.width, renderBox.size.height);
-          if (this ==
-              Provider.of<ComponentSelectionCubit>(context, listen: false)
-                  .currentSelected) {
+          if (Provider
+              .of<ComponentSelectionCubit>(context, listen: false)
+              .currentSelected ==
+              this) {
             Provider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
           }
         });
@@ -39,9 +41,14 @@ abstract class Component {
       },
       key: GlobalObjectKey(this),
       buildWhen: (state1, state2) {
-        if (state2 is ComponentPropertyChangeState &&
-            state2.rebuildComponent == this) {
-          return true;
+        switch (state2.runtimeType) {
+          case ComponentPropertyChangeState :
+            if ((state2 as ComponentPropertyChangeState).rebuildComponent
+                .parent == parent) {
+              return true;
+            }
+            break;
+         case
         }
         return false;
       },
@@ -205,7 +212,7 @@ abstract class CustomNamedHolder extends Component {
           return component!.searchTappedComponent(offset);
         }
       }
-        return this;
+      return this;
     }
   }
 

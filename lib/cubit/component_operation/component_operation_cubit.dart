@@ -14,14 +14,14 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   void addedComponent(BuildContext context,Component component){
     if(component.parent!=null) {
       Provider.of<ComponentSelectionCubit>(context,listen: false).changeComponentSelection(component);
-      Provider.of<ComponentPropertyCubit>(context,listen: false).changedProperty(context,addedComp: component.parent);
+      Provider.of<ComponentCreationCubit>(context,listen: false).changedProperty(context,addedComp: component.parent);
     }
     emit(ComponentUpdatedState());
   }
 
   void removedComponent(BuildContext context,Component component){
     Provider.of<ComponentSelectionCubit>(context,listen: false).changeComponentSelection(component);
-    Provider.of<ComponentPropertyCubit>(context,listen: false).changedProperty(context);
+    Provider.of<ComponentCreationCubit>(context,listen: false).changedProperty(context);
     emit(ComponentUpdatedState());
   }
 }

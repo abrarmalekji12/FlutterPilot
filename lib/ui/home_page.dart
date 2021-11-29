@@ -32,9 +32,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ScrollController propertyScrollController = ScrollController();
-  final componentPropertyCubit = ComponentPropertyCubit();
+  final componentPropertyCubit = ComponentCreationCubit();
   final componentOperationCubit =
-      ComponentOperationCubit(componentList['Scaffold']!());
+  ComponentOperationCubit(componentList['Scaffold']!());
   final visualBoxCubit = VisualBoxCubit();
   final screenConfigCubit = ScreenConfigCubit();
 
@@ -59,7 +59,7 @@ class _HomePageState extends State<HomePage> {
       body: Material(
         child: MultiBlocProvider(
           providers: [
-            BlocProvider<ComponentPropertyCubit>(
+            BlocProvider<ComponentCreationCubit>(
                 create: (context) => componentPropertyCubit),
             BlocProvider<ComponentOperationCubit>(
                 create: (context) => componentOperationCubit),
@@ -71,6 +71,10 @@ class _HomePageState extends State<HomePage> {
           ],
           child: Row(
             children: [
+              const SizedBox(
+                width: 200,
+                child: ComponentTree(),
+              ),
               Expanded(
                 child: Stack(
                   children: [
@@ -79,30 +83,40 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              const SizedBox(
-                width: 200,
-                child: ComponentTree(),
-              ),
-              const SizedBox(
-                width: 200,
-                child: ComponentSelection(),
-              ),
+
+              // const SizedBox(
+              //   width: 200,
+              //   child: ComponentSelection(),
+              // ),
               SizedBox(
                 width: 300,
-                child: BlocBuilder<ComponentSelectionCubit,
-                    ComponentSelectionState>(
-                  builder: (context, state) {
-                    return ListView(
-                      controller: propertyScrollController,
-                      children: [
-                        for (final param in componentSelectionCubit
-                            .currentSelected.parameters)
-                          ParameterWidget(
-                            parameter: param,
+                child: Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: BlocBuilder<ComponentSelectionCubit,
+                      ComponentSelectionState>(
+                    builder: (context, state) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 20,),
+                          Text(componentSelectionCubit
+                              .currentSelected.name,style: AppFontStyle.roboto(18,fontWeight: FontWeight.bold),),
+                          Expanded(
+                            child: ListView(
+                              controller: propertyScrollController,
+                              children: [
+                                for (final param in componentSelectionCubit
+                                    .currentSelected.parameters)
+                                  ParameterWidget(
+                                    parameter: param,
+                                  ),
+                              ],
+                            ),
                           ),
-                      ],
-                    );
-                  },
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
@@ -126,11 +140,15 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   const ScreenConfigSelection(),
                   GestureDetector(
-                    onTapDown: (event){
-                      print('tappp ${event.localPosition.dx} ${event.localPosition.dy}');
-                      final tappedComp=componentOperationCubit.rootComponent.searchTappedComponent(event.localPosition);
-                      if(tappedComp!=null){
-                        componentSelectionCubit.changeComponentSelection(tappedComp);
+                    onTapDown: (event) {
+                      print(
+                          'tappp ${event.localPosition.dx} ${event.localPosition
+                              .dy}');
+                      final tappedComp = componentOperationCubit.rootComponent
+                          .searchTappedComponent(event.localPosition);
+                      if (tappedComp != null) {
+                        componentSelectionCubit.changeComponentSelection(
+                            tappedComp);
                       }
                     },
                     child: Container(
@@ -142,8 +160,8 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(1.0),
-                            child: BlocListener<ComponentPropertyCubit,
-                                ComponentPropertyState>(
+                            child: BlocListener<ComponentCreationCubit,
+                                ComponentCreationState>(
                               listener: (context, state) {
                                 // print(
                                 //     componentOperationCubit.rootComponent.code());
@@ -181,18 +199,19 @@ class ScreenConfigSelection extends StatelessWidget {
           hint: null,
           items: cubit.screenConfigs
               .map<CustomDropdownMenuItem<ScreenConfig>>(
-                (e) => CustomDropdownMenuItem<ScreenConfig>(
+                (e) =>
+                CustomDropdownMenuItem<ScreenConfig>(
                   value: e,
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       '${e.name} (${e.width}x${e.height})',
                       style:
-                          AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                      AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ),
-              )
+          )
               .toList(),
           onChanged: (value) {
             cubit.changeScreenConfig(value);
@@ -221,25 +240,26 @@ class CodeViewerButton extends StatelessWidget {
         padding: const EdgeInsets.all(10),
         child: InkWell(
           highlightColor: Colors.blueAccent.shade200,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           onTap: () {
             CustomDialog.show(
               context,
               CodeViewerWidget(
                 code:
-                    Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .rootComponent
-                        .code(),
+                Provider
+                    .of<ComponentOperationCubit>(context, listen: false)
+                    .rootComponent
+                    .code(),
               ),
             );
           },
           child: Card(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             color: Colors.blueAccent,
             child: Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,

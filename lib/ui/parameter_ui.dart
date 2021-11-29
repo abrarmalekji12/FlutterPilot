@@ -45,7 +45,7 @@ class ChoiceParameterWidget extends StatelessWidget {
                                 onChanged: (value) {
                                   parameter.val = subParam;
                                   setStateForChoiceChange(() {});
-                                  Provider.of<ComponentPropertyCubit>(context,
+                                  Provider.of<ComponentCreationCubit>(context,
                                           listen: false)
                                       .changedProperty(context);
                                 }),
@@ -157,7 +157,7 @@ class SimpleParameterWidget extends StatelessWidget {
             } else {
               parameter.val = null;
             }
-            Provider.of<ComponentPropertyCubit>(context, listen: false)
+            Provider.of<ComponentCreationCubit>(context, listen: false)
                 .changedProperty(context);
           },
           decoration: const InputDecoration(contentPadding: EdgeInsets.all(5)),
@@ -182,7 +182,7 @@ class SimpleParameterWidget extends StatelessWidget {
               } else {
                 parameter.val = null;
               }
-              Provider.of<ComponentPropertyCubit>(context, listen: false)
+              Provider.of<ComponentCreationCubit>(context, listen: false)
                   .changedProperty(context);
             },
             decoration: const InputDecoration(contentPadding: EdgeInsets.all(5)),
@@ -205,7 +205,7 @@ class SimpleParameterWidget extends StatelessWidget {
               onColorChanged: (color) {
                 parameter.val = color;
                 setStateForColor(() {});
-                Provider.of<ComponentPropertyCubit>(context, listen: false)
+                Provider.of<ComponentCreationCubit>(context, listen: false)
                     .changedProperty(context);
               },
             ),
@@ -217,7 +217,7 @@ class SimpleParameterWidget extends StatelessWidget {
          builder: (context,setStateForSlider) {
            return Slider.adaptive(value: parameter.rawValue??0, onChanged: (i){
              parameter.val=i;
-             Provider.of<ComponentPropertyCubit>(context, listen: false)
+             Provider.of<ComponentCreationCubit>(context, listen: false)
                  .changedProperty(context);
              setStateForSlider((){});
            });
@@ -279,7 +279,7 @@ class ChoiceValueParameterWidget extends StatelessWidget {
               onChanged: (key) {
                 parameter.val = key;
                 setStateForSelectionChange(() {});
-                Provider.of<ComponentPropertyCubit>(context, listen: false)
+                Provider.of<ComponentCreationCubit>(context, listen: false)
                     .changedProperty(context);
               },
             ),

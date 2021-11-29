@@ -1,11 +1,11 @@
 part of 'component_property_cubit.dart';
 
 @immutable
-abstract class ComponentPropertyState {}
+abstract class ComponentCreationState {}
 
-class ComponentPropertyInitial extends ComponentPropertyState {}
+class ComponentPropertyInitial extends ComponentCreationState {}
 
-class ComponentPropertyChangeState extends ComponentPropertyState {
+class ComponentPropertyChangeState extends ComponentCreationState {
   final Component rebuildComponent;
   ComponentPropertyChangeState(this.rebuildComponent);
 }

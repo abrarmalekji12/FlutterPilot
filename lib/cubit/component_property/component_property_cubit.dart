@@ -9,8 +9,8 @@ import '../../component_model.dart';
 
 part 'component_property_state.dart';
 
-class ComponentPropertyCubit extends Cubit<ComponentPropertyState> {
-  ComponentPropertyCubit() : super(ComponentPropertyInitial());
+class ComponentCreationCubit extends Cubit<ComponentCreationState> {
+  ComponentCreationCubit() : super(ComponentPropertyInitial());
 
   void changedProperty(BuildContext context,{Component? addedComp}){
     final component=addedComp??Provider.of<ComponentSelectionCubit>(context,
