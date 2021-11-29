@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
-import 'package:flutter_builder/cubit/component_property/component_property_cubit.dart';
+import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
 import 'package:flutter_builder/parameter_model.dart';
@@ -18,41 +18,57 @@ abstract class Component {
   Widget build(BuildContext context) {
     return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
       builder: (context, state) {
-        print('BUILDING $name');
         WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-          final RenderBox renderBox = GlobalObjectKey(this)
-              .currentContext!
-              .findRenderObject()! as RenderBox;
-          final position = renderBox.localToGlobal(Offset.zero,
-              ancestor: const GlobalObjectKey('device window')
-                  .currentContext!
-                  .findRenderObject());
-
-          boundary = Rect.fromLTWH(position.dx - 1, position.dy - 1,
-              renderBox.size.width, renderBox.size.height);
-          if (Provider
-              .of<ComponentSelectionCubit>(context, listen: false)
-              .currentSelected ==
-              this) {
-            Provider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
-          }
+          _lookForUIChanges(context);
         });
         return create(context);
       },
       key: GlobalObjectKey(this),
       buildWhen: (state1, state2) {
         switch (state2.runtimeType) {
-          case ComponentPropertyChangeState :
-            if ((state2 as ComponentPropertyChangeState).rebuildComponent
-                .parent == parent) {
+          case ComponentCreationChangeState:
+            if ((state2 as ComponentCreationChangeState)
+                    .rebuildComponent
+                    .parent ==
+                parent) {
               return true;
             }
             break;
-         case
+          // case
         }
         return false;
       },
     );
+  }
+
+  void _lookForUIChanges(BuildContext context) async {
+    RenderBox renderBox =
+        GlobalObjectKey(this).currentContext!.findRenderObject()! as RenderBox;
+    Offset position = renderBox.localToGlobal(Offset.zero,
+        ancestor: const GlobalObjectKey('device window')
+            .currentContext!
+            .findRenderObject());
+
+    while (boundary?.left != position.dx - 1 ||
+        boundary?.top != position.dy - 1 ||
+        boundary?.width != renderBox.size.width ||
+        boundary?.height != renderBox.size.height) {
+      boundary = Rect.fromLTWH(position.dx - 1, position.dy - 1,
+          renderBox.size.width, renderBox.size.height);
+      print('IN WHILE $name ');
+      if (Provider.of<ComponentSelectionCubit>(context, listen: false)
+              .currentSelected ==
+          this) {
+        Provider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
+      }
+      await Future.delayed(const Duration(milliseconds: 600));
+      renderBox = GlobalObjectKey(this).currentContext!.findRenderObject()!
+          as RenderBox;
+      position = renderBox.localToGlobal(Offset.zero,
+          ancestor: const GlobalObjectKey('device window')
+              .currentContext!
+              .findRenderObject());
+    }
   }
 
   Widget create(BuildContext context);

@@ -5,7 +5,7 @@ import 'package:flutter_builder/common/custom_animated_dialog.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
-import 'package:flutter_builder/cubit/component_property/component_property_cubit.dart';
+import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
 import 'package:flutter_builder/cubit/screen_config/screen_config_cubit.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';

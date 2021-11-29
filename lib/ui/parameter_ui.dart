@@ -4,7 +4,7 @@ import 'package:flutter_builder/common/custom_animated_dialog.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
-import 'package:flutter_builder/cubit/component_property/component_property_cubit.dart';
+import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
 import 'package:provider/provider.dart';
 
 import '../enums.dart';
@@ -122,47 +122,55 @@ class SimpleParameterWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (parameter.displayName != null)
-            Text(
-              parameter.displayName!,
-              style: AppFontStyle.roboto(13,
-                  color: Colors.black, fontWeight: FontWeight.w500),
+            Expanded(
+              child: Text(
+                parameter.displayName!,
+                style: AppFontStyle.roboto(13,
+                    color: Colors.black, fontWeight: FontWeight.w500),
+              ),
             ),
           const SizedBox(
             width: 20,
           ),
-          _buildInputType(context)
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: _buildInputType(context),
+            ),
+          )
         ],
       ),
     );
   }
 
   Widget _buildInputType(BuildContext context) {
-    switch(parameter.inputType){
+    switch (parameter.inputType) {
       case ParamInputType.text:
-      return SizedBox(
-        width: 50,
-        child: TextField(
-          // key:  parameter.name=='color'?GlobalObjectKey('simple ${parameter.name}'):null,
-          controller: TextEditingController.fromValue(
-              TextEditingValue(text: '${parameter.rawValue ?? ''}')),
-          onChanged: (value) {
-            if (value.isNotEmpty) {
-              if (parameter.paramType == ParamType.string) {
-                parameter.val = value;
-              } else if (parameter.paramType == ParamType.double) {
-                parameter.val = double.tryParse(value);
-              } else if (parameter.paramType == ParamType.int) {
-                parameter.val = int.tryParse(value);
+        return SizedBox(
+          width: 50,
+          child: TextField(
+            // key:  parameter.name=='color'?GlobalObjectKey('simple ${parameter.name}'):null,
+            controller: TextEditingController.fromValue(
+                TextEditingValue(text: '${parameter.rawValue ?? ''}')),
+            onChanged: (value) {
+              if (value.isNotEmpty) {
+                if (parameter.paramType == ParamType.string) {
+                  parameter.val = value;
+                } else if (parameter.paramType == ParamType.double) {
+                  parameter.val = double.tryParse(value);
+                } else if (parameter.paramType == ParamType.int) {
+                  parameter.val = int.tryParse(value);
+                }
+              } else {
+                parameter.val = null;
               }
-            } else {
-              parameter.val = null;
-            }
-            Provider.of<ComponentCreationCubit>(context, listen: false)
-                .changedProperty(context);
-          },
-          decoration: const InputDecoration(contentPadding: EdgeInsets.all(5)),
-        ),
-      );
+              Provider.of<ComponentCreationCubit>(context, listen: false)
+                  .changedProperty(context);
+            },
+            decoration:
+                const InputDecoration(contentPadding: EdgeInsets.all(5)),
+          ),
+        );
       case ParamInputType.longText:
         return SizedBox(
           width: 150,
@@ -185,7 +193,8 @@ class SimpleParameterWidget extends StatelessWidget {
               Provider.of<ComponentCreationCubit>(context, listen: false)
                   .changedProperty(context);
             },
-            decoration: const InputDecoration(contentPadding: EdgeInsets.all(5)),
+            decoration:
+                const InputDecoration(contentPadding: EdgeInsets.all(5)),
           ),
         );
       case ParamInputType.color:
@@ -213,16 +222,19 @@ class SimpleParameterWidget extends StatelessWidget {
         });
       case ParamInputType.sliderZeroToOne:
         // TODO: Handle this case.
-       return StatefulBuilder(
-         builder: (context,setStateForSlider) {
-           return Slider.adaptive(value: parameter.rawValue??0, onChanged: (i){
-             parameter.val=i;
-             Provider.of<ComponentCreationCubit>(context, listen: false)
-                 .changedProperty(context);
-             setStateForSlider((){});
-           });
-         }
-       );
+        return StatefulBuilder(builder: (context, setStateForSlider) {
+          return SizedBox(
+            width: 300,
+            child: Slider.adaptive(
+                value: parameter.rawValue ?? 0,
+                onChanged: (i) {
+                  parameter.val = i;
+                  Provider.of<ComponentCreationCubit>(context, listen: false)
+                      .changedProperty(context);
+                  setStateForSlider(() {});
+                }),
+          );
+        });
     }
     return Container();
   }

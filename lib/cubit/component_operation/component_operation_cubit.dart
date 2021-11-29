@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_builder/component_model.dart';
-import 'package:flutter_builder/cubit/component_property/component_property_cubit.dart';
+import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
 import 'package:meta/meta.dart';
 import 'package:provider/provider.dart';

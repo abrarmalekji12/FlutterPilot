@@ -39,8 +39,8 @@ class BoundaryWidget extends StatelessWidget {
           );
         },
       ),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black, width: 1.5),
+      decoration: const BoxDecoration(
+        // border: Border.all(color: Colors.black, width: 1.5),
         color: Colors.transparent,
       ),
     );
