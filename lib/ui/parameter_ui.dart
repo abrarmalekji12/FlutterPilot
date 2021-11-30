@@ -1,5 +1,6 @@
 import 'package:cyclop/cyclop.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_builder/common/app_switch.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
@@ -455,7 +456,14 @@ class BooleanParameterWidget extends StatelessWidget {
               fontWeight: FontWeight.bold,
               decoration: TextDecoration.underline),
         ),
-
+        StatefulBuilder(
+          builder: (context,setStateSwitch) {
+            return AppSwitch(value: parameter.val, onToggle: (value){
+              parameter.val=value;
+              setStateSwitch((){});
+            });
+          }
+        )
       ],
     );
   }

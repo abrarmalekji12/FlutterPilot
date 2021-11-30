@@ -668,6 +668,7 @@ class CListView extends MultiHolder{
   CListView() : super('ListView',[
     Parameters.paddingParameter(),
     Parameters.axisParameter() .. withInfo(NamedParameterInfo('scrollDirection')),
+    BooleanParameter(displayName: 'reverse', required: true, val: false,info: NamedParameterInfo('reverse'))
   ]);
 
   @override
@@ -676,6 +677,7 @@ class CListView extends MultiHolder{
     children: children.map((e) => e.build(context)).toList(),
     padding: parameters[0].value,
     scrollDirection: parameters[1].value,
+    reverse: parameters[2].value,
   );
   }
 

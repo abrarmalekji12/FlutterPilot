@@ -5,6 +5,8 @@ class AppColors {
   static bool _isOperator = true;
 
   static const Color grey=Color(0xffd3d3d3);
+
+  static const theme=Colors.blueAccent;
   static set operator(bool isOperator) {
     _isOperator = isOperator;
   }
