@@ -170,14 +170,21 @@ class SimpleParameterWidget extends StatelessWidget {
               Provider.of<ComponentCreationCubit>(context, listen: false)
                   .changedProperty(context);
             },
-            decoration:
-            InputDecoration(contentPadding: const EdgeInsets.all(5),
-                  enabled: true,
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.grey,width: 1.5)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.grey,width: 1.5)),
-
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.blueAccent,width: 1.5))
-                ),
+            decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(5),
+                enabled: true,
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Colors.grey, width: 1.5)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Colors.grey, width: 1.5)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: Colors.blueAccent, width: 1.5))),
           ),
         );
       case ParamInputType.longText:
@@ -202,14 +209,21 @@ class SimpleParameterWidget extends StatelessWidget {
               Provider.of<ComponentCreationCubit>(context, listen: false)
                   .changedProperty(context);
             },
-            decoration:
-            InputDecoration(contentPadding: const EdgeInsets.all(5),
+            decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(5),
                 enabled: true,
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.grey,width: 1.5)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.grey,width: 1.5)),
-
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.blueAccent,width: 1.5))
-            ),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Colors.grey, width: 1.5)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Colors.grey, width: 1.5)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                        color: Colors.blueAccent, width: 1.5))),
           ),
         );
       case ParamInputType.color:
@@ -293,11 +307,9 @@ class ListParameterWidget extends StatelessWidget {
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)
-              ),
+                  borderRadius: BorderRadius.circular(10)),
               child: Padding(
                 padding: const EdgeInsets.all(10),
-
                 child: Stack(
                   children: [
                     ParameterWidget(
@@ -402,9 +414,14 @@ class ComplexParameterWidget extends StatelessWidget {
           Text(
             parameter.displayName!,
             style: const TextStyle(
-                fontSize: 13, color: Colors.black, fontWeight: FontWeight.bold,decoration: TextDecoration.underline),
+                fontSize: 13,
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                decoration: TextDecoration.underline),
           ),
-        const SizedBox(height: 5,),
+        const SizedBox(
+          height: 5,
+        ),
         Column(
           children: [
             for (final subParam in parameter.params)
@@ -413,6 +430,32 @@ class ComplexParameterWidget extends StatelessWidget {
               )
           ],
         ),
+      ],
+    );
+  }
+}
+
+class BooleanParameterWidget extends StatelessWidget {
+  final BooleanParameter parameter;
+
+  const BooleanParameterWidget({Key? key, required this.parameter})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          parameter.displayName!,
+          style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              decoration: TextDecoration.underline),
+        ),
+
       ],
     );
   }
