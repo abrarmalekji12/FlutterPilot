@@ -158,18 +158,6 @@ class Parameters {
       },
       defaultValue: 'center');
 
-  static alignmentParameter() => ChoiceValueParameter(
-      name: 'alignment',
-      options: {
-        'centerLeft': Alignment.centerLeft,
-        'center': Alignment.center,
-        'centerRight': Alignment.centerRight,
-        'topLeft': Alignment.topLeft,
-        'topRight': Alignment.topRight,
-        'bottomLeft': Alignment.bottomLeft,
-        'bottomRight': Alignment.bottomRight,
-      },
-      defaultValue: 'center');
 
   static marginParameter() => paddingParameter()
     ..withDisplayName('margin')
