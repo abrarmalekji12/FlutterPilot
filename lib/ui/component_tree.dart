@@ -32,9 +32,10 @@ class _ComponentTreeState extends State<ComponentTree> {
                 child: Container(
                   alignment: Alignment.topLeft,
                   padding: const EdgeInsets.all(10),
-                  child: getSublist(
-                      Provider.of<ComponentOperationCubit>(context, listen: false)
-                          .rootComponent),
+                  child: getSublist(Provider.of<ComponentOperationCubit>(
+                          context,
+                          listen: false)
+                      .rootComponent),
                 ),
               ),
             );
@@ -51,29 +52,7 @@ class _ComponentTreeState extends State<ComponentTree> {
         children: [
           Row(
             children: [
-              InkWell(
-                onTap: () {
-                  Provider.of<ComponentSelectionCubit>(context, listen: false)
-                      .changeComponentSelection(component);
-                },
-                child: Card(
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: Text(
-                      component.name,
-                      style: AppFontStyle.roboto(14,
-                          color: Provider.of<ComponentSelectionCubit>(context,
-                                          listen: false)
-                                      .currentSelected ==
-                                  component
-                              ? Colors.blue
-                              : Colors.black,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ),
+              ComponentTile(component: component),
               const Spacer(),
               ComponentModificationMenu(component: component)
             ],
@@ -93,28 +72,7 @@ class _ComponentTreeState extends State<ComponentTree> {
         children: [
           Row(
             children: [
-              InkWell(
-                onTap: () {
-                  Provider.of<ComponentSelectionCubit>(context, listen: false)
-                      .changeComponentSelection(component);
-                },
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: Text(
-                      component.name,
-                      style: AppFontStyle.roboto(14,
-                          color: Provider.of<ComponentSelectionCubit>(context,
-                                          listen: false)
-                                      .currentSelected ==
-                                  component
-                              ? Colors.blue
-                              : Colors.black,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ),
+              ComponentTile(component: component),
               const Spacer(),
               ComponentModificationMenu(component: component)
             ],
@@ -131,30 +89,7 @@ class _ComponentTreeState extends State<ComponentTree> {
       return Column(
         children: [
           Row(
-            children: [
-              InkWell(
-                onTap: () {
-                  Provider.of<ComponentSelectionCubit>(context, listen: false)
-                      .changeComponentSelection(component);
-                },
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: Text(
-                      component.name,
-                      style: AppFontStyle.roboto(14,
-                          color: Provider.of<ComponentSelectionCubit>(context,
-                                          listen: false)
-                                      .currentSelected ==
-                                  component
-                              ? Colors.blue
-                              : Colors.black,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            children: [ComponentTile(component: component)],
           ),
           Padding(
             padding: const EdgeInsets.only(left: 10, top: 5),
@@ -169,7 +104,10 @@ class _ComponentTreeState extends State<ComponentTree> {
                           style: AppFontStyle.roboto(12, color: Colors.grey),
                         ),
                         const Spacer(),
-                        ComponentModificationMenu(component: component,customNamed: child,)
+                        ComponentModificationMenu(
+                          component: component,
+                          customNamed: child,
+                        )
                       ],
                     ),
                     if (component.children[child] != null)
@@ -186,31 +124,7 @@ class _ComponentTreeState extends State<ComponentTree> {
       );
     }
     return Column(
-      children: [
-        InkWell(
-          onTap: () {
-            Provider.of<ComponentSelectionCubit>(context, listen: false)
-                .changeComponentSelection(component);
-          },
-          child: Card(
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(5),
-              child: Text(
-                component.name,
-                style: AppFontStyle.roboto(14,
-                    color: Provider.of<ComponentSelectionCubit>(context,
-                                    listen: false)
-                                .currentSelected ==
-                            component
-                        ? Colors.blue
-                        : Colors.black,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-          ),
-        ),
-      ],
+      children: [ComponentTile(component: component)],
     );
   }
 }
@@ -220,7 +134,9 @@ class ComponentModificationMenu extends StatelessWidget {
   final Component component;
 
   final String? customNamed;
-  const ComponentModificationMenu({Key? key, this.customNamed,required this.component})
+
+  const ComponentModificationMenu(
+      {Key? key, this.customNamed, required this.component})
       : super(key: key);
 
   @override
@@ -247,10 +163,10 @@ class ComponentModificationMenu extends StatelessWidget {
           switch (e) {
             case 'add':
               showSelectionDialog((comp) {
-                if(customNamed!=null){
-                  (component as CustomNamedHolder).updateChild(customNamed!, comp);
-                }
-                else {
+                if (customNamed != null) {
+                  (component as CustomNamedHolder)
+                      .updateChild(customNamed!, comp);
+                } else {
                   if (component is Holder) {
                     (component as Holder).updateChild(comp);
                   } else if (component is MultiHolder) {
@@ -258,11 +174,18 @@ class ComponentModificationMenu extends StatelessWidget {
                   }
                 }
                 Provider.of<ComponentOperationCubit>(context, listen: false)
-                    .addedComponent(context,comp);
-              },possibleItems: (customNamed!=null&&(component as CustomNamedHolder).selectable[customNamed!]!=null)?(component as CustomNamedHolder).selectable[customNamed!]!:null);
+                    .addedComponent(context, comp);
+              },
+                  possibleItems: (customNamed != null &&
+                          (component as CustomNamedHolder)
+                                  .selectable[customNamed!] !=
+                              null)
+                      ? (component as CustomNamedHolder)
+                          .selectable[customNamed!]!
+                      : null);
               break;
             case 'remove':
-              final parent=component.parent;
+              final parent = component.parent;
               if (component.parent != null) {
                 if (component.parent is Holder) {
                   (component.parent as Holder).updateChild(null);
@@ -270,7 +193,7 @@ class ComponentModificationMenu extends StatelessWidget {
                   (component.parent as MultiHolder).removeChild(component);
                 }
                 Provider.of<ComponentOperationCubit>(context, listen: false)
-                    .removedComponent(context,parent!);
+                    .removedComponent(context, parent!);
               }
               break;
             case 'replace':
@@ -279,12 +202,12 @@ class ComponentModificationMenu extends StatelessWidget {
                   if (comp is Holder) {
                     comp.updateChild((component as Holder).child);
                     Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .addedComponent(context,comp);
+                        .addedComponent(context, comp);
                   } else if (comp is MultiHolder &&
                       (component as Holder).child != null) {
                     comp.addChild((component as Holder).child!);
                     Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .addedComponent(context,comp);
+                        .addedComponent(context, comp);
                   }
                 } else if (component is MultiHolder) {
                   if (comp is MultiHolder) {
@@ -292,7 +215,7 @@ class ComponentModificationMenu extends StatelessWidget {
                     comp.addChildren((component as MultiHolder).children);
                     (component as MultiHolder).children.clear();
                     Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .addedComponent(context,comp);
+                        .addedComponent(context, comp);
                   }
                 }
               });
@@ -305,7 +228,8 @@ class ComponentModificationMenu extends StatelessWidget {
         ));
   }
 
-  void showSelectionDialog(void Function(Component) onSelection,{List<String>? possibleItems}) {
+  void showSelectionDialog(void Function(Component) onSelection,
+      {List<String>? possibleItems}) {
     Get.dialog(
       GestureDetector(
         onTap: () {
@@ -317,36 +241,79 @@ class ComponentModificationMenu extends StatelessWidget {
             child: Container(
               width: 300,
               height: 500,
-              color: Colors.white,
-              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: Colors.white, borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.all(20),
               child: ListView(
-                children:(possibleItems ?? componentList.keys.toList())
+                children: (possibleItems ?? componentList.keys.toList())
                     .map(
                       (e) => InkWell(
                         onTap: () {
                           onSelection(componentList[e]!());
                           Get.back();
                         },
-                        child: Container(
-                          width: 130,
-                          padding: const EdgeInsets.all(10),
-                          margin: const EdgeInsets.only(bottom: 10),
-                          child: Center(
-                            child: Text(
-                              e,
-                              style: const TextStyle(
-                                  color: Colors.black, fontSize: 14),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            child: Container(
+                              width: 130,
+                              padding: const EdgeInsets.all(10),
+
+                              alignment: Alignment.center,
+                              child: Text(
+                                e,
+                                style: AppFontStyle.roboto(
+                                  14,
+                                  color: Colors.black,
+                                fontWeight: FontWeight.w500
+                                ),
+                              ),
                             ),
                           ),
-                          decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey, width: 2),
-                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                     )
                     .toList(),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ComponentTile extends StatelessWidget {
+  final Component component;
+
+  const ComponentTile({Key? key, required this.component}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () {
+        Provider.of<ComponentSelectionCubit>(context, listen: false)
+            .changeComponentSelection(component);
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: Provider.of<ComponentSelectionCubit>(context, listen: false)
+                        .currentSelected ==
+                    component
+                ? const BorderSide(color: Colors.blueAccent, width: 2.5)
+                : const BorderSide()),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+          child: Text(
+            component.name,
+            style: AppFontStyle.roboto(14,
+                color: Colors.black, fontWeight: FontWeight.w500),
           ),
         ),
       ),

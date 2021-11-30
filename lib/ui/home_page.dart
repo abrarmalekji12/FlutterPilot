@@ -101,6 +101,7 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 20,),
                           Text(componentSelectionCubit
                               .currentSelected.name,style: AppFontStyle.roboto(18,fontWeight: FontWeight.bold),),
+                          const SizedBox(height: 20,),
                           Expanded(
                             child: ListView(
                               controller: propertyScrollController,

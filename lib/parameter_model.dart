@@ -115,10 +115,14 @@ class ListParameter extends Parameter{
   @override
   // TODO: implement code
   String get code {
-    String parametersCode='';
+    String parametersCode='[';
     for(final parameter in params){
-      parametersCode+='${parameter.code},'.replaceAll(',,', ',');
+      if(parameter.info is InnerObjectParameterInfo){
+        parameter.withInfo(InnerObjectParameterInfo(innerObjectName: (parameter.info as InnerObjectParameterInfo).innerObjectName));
+      }
+      parametersCode+='${(parameter).code},'.replaceAll(',,', ',');
     }
+    parametersCode+='],'.replaceAll(',,', ',');
     if (info != null) {
       return '${info!.code(parametersCode)},'.replaceAll(',,', ',');
     }
@@ -284,5 +288,25 @@ class NullParameter extends Parameter{
 
   @override
   get value => null;
+
+}
+
+class BooleanParameter extends Parameter{
+  bool val;
+  BooleanParameter({String? displayName, ParameterInfo? info, required bool required,required this.val}) : super(displayName, info, required);
+
+  @override
+  // TODO: implement code
+  String get code {
+    return info?.code(val.toString())??val.toString();
+  }
+
+  @override
+  // TODO: implement rawValue
+  get rawValue => val;
+
+  @override
+  // TODO: implement value
+  get value => val;
 
 }

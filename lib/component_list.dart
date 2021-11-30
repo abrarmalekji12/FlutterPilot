@@ -11,6 +11,7 @@ final componentList = {
   'AppBar': () => CAppBar(),
   'Row': () => CRow(),
   'Column': () => CColumn(),
+  'ListView':() => CListView(),
   'Flex': () => CFlex(),
   'Padding': () => CPadding(),
   'ClipRRect': () => CClipRRect(),
@@ -24,7 +25,8 @@ final componentList = {
   'Text': () => CText(),
   'CircleAvatar': () => CCircleAvatar(),
   'Divider': () => CDivider(),
-  'RichText': () => CRichText()
+  'RichText': () => CRichText(),
+  // 'TextField':
 };
 
 class Parameters {
@@ -156,6 +158,19 @@ class Parameters {
       },
       defaultValue: 'center');
 
+  static alignmentParameter() => ChoiceValueParameter(
+      name: 'alignment',
+      options: {
+        'centerLeft': Alignment.centerLeft,
+        'center': Alignment.center,
+        'centerRight': Alignment.centerRight,
+        'topLeft': Alignment.topLeft,
+        'topRight': Alignment.topRight,
+        'bottomLeft': Alignment.bottomLeft,
+        'bottomRight': Alignment.bottomRight,
+      },
+      defaultValue: 'center');
+
   static marginParameter() => paddingParameter()
     ..withDisplayName('margin')
     ..withInfo(NamedParameterInfo('margin'));
@@ -209,7 +224,7 @@ class Parameters {
       },
       defaultValue: 'max');
 
-  static axisParameter() => ChoiceValueParameter(
+  static ChoiceValueParameter axisParameter() => ChoiceValueParameter(
       name: 'direction',
       options: {'vertical': Axis.vertical, 'horizontal': Axis.horizontal},
       defaultValue: 'vertical');
@@ -383,7 +398,7 @@ class Parameters {
   static Parameter textSpanParameter() => ChoiceParameter(options: [
         ComplexParameter(
             params: [
-              textParameter(),
+              textParameter()..withInfo(NamedParameterInfo('text')),
               textStyleParameter(),
             ],
             evaluate: (params) =>
@@ -394,6 +409,7 @@ class Parameters {
               ListParameter(
                 parameterGenerator: textSpanParameter,
                 displayName: 'text list',
+                info: NamedParameterInfo('children')
               )
             ],
             evaluate: (params) {
@@ -401,10 +417,10 @@ class Parameters {
               return TextSpan(children: list);
             },
             name: 'Add Multiple Text')
-      ], defaultValue: 0);
+      ], defaultValue: 0,info: InnerObjectParameterInfo(innerObjectName: 'TextSpan',namedIfHaveAny: 'children'));
 
   static Parameter textParameter() => SimpleParameter<String>(
-      name: 'text', paramType: ParamType.string, defaultValue: '');
+      name: 'text', paramType: ParamType.string, defaultValue: '',inputType: ParamInputType.longText);
 
   static Parameter textStyleParameter() => ComplexParameter(
         info: InnerObjectParameterInfo(
@@ -445,7 +461,7 @@ class Parameters {
 class CRichText extends Component {
   CRichText()
       : super('RichText', [
-          Parameters.textSpanParameter()..withInfo(NamedParameterInfo('text'))
+          Parameters.textSpanParameter()..withInfo(InnerObjectParameterInfo(innerObjectName: 'TextSpan',namedIfHaveAny: 'text'))
         ]);
 
   @override
@@ -660,6 +676,22 @@ class CColumn extends MultiHolder {
   }
 }
 
+class CListView extends MultiHolder{
+  CListView() : super('ListView',[
+    Parameters.paddingParameter(),
+    Parameters.axisParameter() .. withInfo(NamedParameterInfo('scrollDirection')),
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+  return ListView(
+    children: children.map((e) => e.build(context)).toList(),
+    padding: parameters[0].value,
+    scrollDirection: parameters[1].value,
+  );
+  }
+
+}
 class CFlex extends MultiHolder {
   CFlex()
       : super('Flex', [

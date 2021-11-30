@@ -1,9 +1,7 @@
 import 'package:cyclop/cyclop.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/common/custom_animated_dialog.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
 import 'package:flutter_builder/constant/font_style.dart';
-import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
 import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
 import 'package:provider/provider.dart';
 
@@ -64,9 +62,12 @@ class ChoiceParameterWidget extends StatelessWidget {
                         ),
                       ),
                       if (parameter.rawValue == subParam)
-                        ParameterWidget(
-                          parameter: subParam,
-                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: ParameterWidget(
+                            parameter: subParam,
+                          ),
+                        )
                     ],
                   )
               ],
@@ -119,7 +120,7 @@ class SimpleParameterWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 40,
+      height: 30,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -127,7 +128,7 @@ class SimpleParameterWidget extends StatelessWidget {
             Expanded(
               child: Text(
                 parameter.displayName!,
-                style: AppFontStyle.roboto(13,
+                style: AppFontStyle.roboto(14,
                     color: Colors.black, fontWeight: FontWeight.w500),
               ),
             ),
@@ -170,7 +171,13 @@ class SimpleParameterWidget extends StatelessWidget {
                   .changedProperty(context);
             },
             decoration:
-                const InputDecoration(contentPadding: EdgeInsets.all(5)),
+            InputDecoration(contentPadding: const EdgeInsets.all(5),
+                  enabled: true,
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.grey,width: 1.5)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.grey,width: 1.5)),
+
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.blueAccent,width: 1.5))
+                ),
           ),
         );
       case ParamInputType.longText:
@@ -196,7 +203,13 @@ class SimpleParameterWidget extends StatelessWidget {
                   .changedProperty(context);
             },
             decoration:
-                const InputDecoration(contentPadding: EdgeInsets.all(5)),
+            InputDecoration(contentPadding: const EdgeInsets.all(5),
+                enabled: true,
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.grey,width: 1.5)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.grey,width: 1.5)),
+
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),borderSide: const BorderSide(color: Colors.blueAccent,width: 1.5))
+            ),
           ),
         );
       case ParamInputType.color:
@@ -277,25 +290,35 @@ class ListParameterWidget extends StatelessWidget {
             ],
           ),
           for (int i = 0; i < parameter.params.length; i++)
-            Stack(
-              children: [
-                ParameterWidget(
-                  parameter: parameter.params[i],
-                ),
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.delete,
-                      color: Colors.red,
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+
+                child: Stack(
+                  children: [
+                    ParameterWidget(
+                      parameter: parameter.params[i],
                     ),
-                    onPressed: () {
-                      parameter.params.removeAt(i);
-                      setStateForParameter(() {});
-                    },
-                  ),
-                )
-              ],
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.delete,
+                          color: Colors.red,
+                        ),
+                        onPressed: () {
+                          parameter.params.removeAt(i);
+                          setStateForParameter(() {});
+                        },
+                      ),
+                    )
+                  ],
+                ),
+              ),
             )
         ],
       );
@@ -379,8 +402,9 @@ class ComplexParameterWidget extends StatelessWidget {
           Text(
             parameter.displayName!,
             style: const TextStyle(
-                fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
+                fontSize: 13, color: Colors.black, fontWeight: FontWeight.bold,decoration: TextDecoration.underline),
           ),
+        const SizedBox(height: 5,),
         Column(
           children: [
             for (final subParam in parameter.params)

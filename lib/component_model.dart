@@ -12,6 +12,7 @@ abstract class Component {
   final String name;
   Component? parent;
   Rect? boundary;
+  int? depth;
 
   Component(this.name, this.parameters);
 
@@ -28,13 +29,13 @@ abstract class Component {
         switch (state2.runtimeType) {
           case ComponentCreationChangeState:
             if ((state2 as ComponentCreationChangeState)
-                .rebuildComponent
-                .parent ==
+                    .rebuildComponent
+                    .parent ==
                 parent) {
               return true;
             }
             break;
-        // case
+          // case
         }
         return false;
       },
@@ -43,7 +44,7 @@ abstract class Component {
 
   void _lookForUIChanges(BuildContext context) async {
     RenderBox renderBox =
-    GlobalObjectKey(this).currentContext!.findRenderObject()! as RenderBox;
+        GlobalObjectKey(this).currentContext!.findRenderObject()! as RenderBox;
     Offset position = renderBox.localToGlobal(Offset.zero,
         ancestor: const GlobalObjectKey('device window')
             .currentContext!
@@ -52,26 +53,24 @@ abstract class Component {
         .currentContext!
         .findRenderObject();
     int sameCount = 0;
-    while (sameCount<5) {
-      if(boundary?.left == position.dx &&
+    while (sameCount < 5) {
+      if (boundary?.left == position.dx &&
           boundary?.top == position.dy &&
           boundary?.width == renderBox.size.width &&
-          boundary?.height == renderBox.size.height)
-        {
-          sameCount++;
-        }
+          boundary?.height == renderBox.size.height) {
+        sameCount++;
+      }
       boundary = Rect.fromLTWH(position.dx, position.dy, renderBox.size.width,
           renderBox.size.height);
-      print('IN WHILE $name ');
-      if (Provider
-          .of<ComponentSelectionCubit>(context, listen: false)
-          .currentSelected ==
+      depth=renderBox.depth;
+      if (Provider.of<ComponentSelectionCubit>(context, listen: false)
+              .currentSelected ==
           this) {
         Provider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
       }
       await Future.delayed(const Duration(milliseconds: 50));
       renderBox = GlobalObjectKey(this).currentContext!.findRenderObject()!
-      as RenderBox;
+          as RenderBox;
       position = renderBox.localToGlobal(Offset.zero, ancestor: ancestor);
     }
   }
@@ -139,10 +138,17 @@ abstract class MultiHolder extends Component {
   Component? searchTappedComponent(Offset offset) {
     if (boundary?.contains(offset) ?? false) {
       Component? component;
+      Component? depthComponent;
       for (final child in children) {
         if ((component = child.searchTappedComponent(offset)) != null) {
-          return component!.searchTappedComponent(offset);
+          if (depthComponent == null ||
+              component!.depth! > depthComponent.depth!) {
+            depthComponent = component;
+          }
         }
+      }
+      if(depthComponent!=null) {
+        return depthComponent.searchTappedComponent(offset);
       }
       return this;
     }
@@ -224,14 +230,20 @@ abstract class CustomNamedHolder extends Component {
   @override
   Component? searchTappedComponent(Offset offset) {
     if (boundary?.contains(offset) ?? false) {
-      Component? component;
+      Component? component,depthComponent;
       for (final child in children.values) {
         if (child == null) {
           continue;
         }
         if ((component = child.searchTappedComponent(offset)) != null) {
-          return component!.searchTappedComponent(offset);
+          if (depthComponent == null ||
+              component!.depth! > depthComponent.depth!) {
+            depthComponent = component;
+          }
         }
+      }
+      if(depthComponent!=null){
+        return depthComponent.searchTappedComponent(offset);
       }
       return this;
     }
