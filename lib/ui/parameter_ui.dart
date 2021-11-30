@@ -2,6 +2,7 @@ import 'package:cyclop/cyclop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/common/app_switch.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
+import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
 import 'package:provider/provider.dart';
@@ -121,28 +122,31 @@ class SimpleParameterWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 30,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (parameter.displayName != null)
-            Expanded(
-              child: Text(
-                parameter.displayName!,
-                style: AppFontStyle.roboto(14,
-                    color: Colors.black, fontWeight: FontWeight.w500),
+      height: 35,
+      child: Padding(
+        padding: const EdgeInsets.all(5.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (parameter.displayName != null)
+              Expanded(
+                child: Text(
+                  parameter.displayName!,
+                  style: AppFontStyle.roboto(14,
+                      color: Colors.black, fontWeight: FontWeight.w500),
+                ),
               ),
+            const SizedBox(
+              width: 20,
             ),
-          const SizedBox(
-            width: 20,
-          ),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: _buildInputType(context),
-            ),
-          )
-        ],
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _buildInputType(context),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -151,7 +155,7 @@ class SimpleParameterWidget extends StatelessWidget {
     switch (parameter.inputType) {
       case ParamInputType.text:
         return SizedBox(
-          width: 50,
+          width: 70,
           child: TextField(
             // key:  parameter.name=='color'?GlobalObjectKey('simple ${parameter.name}'):null,
             controller: TextEditingController.fromValue(
@@ -172,7 +176,7 @@ class SimpleParameterWidget extends StatelessWidget {
                   .changedProperty(context);
             },
             decoration: InputDecoration(
-                contentPadding: const EdgeInsets.all(5),
+                contentPadding: const EdgeInsets.all(3),
                 enabled: true,
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -211,7 +215,7 @@ class SimpleParameterWidget extends StatelessWidget {
                   .changedProperty(context);
             },
             decoration: InputDecoration(
-                contentPadding: const EdgeInsets.all(5),
+                contentPadding: const EdgeInsets.all(3),
                 enabled: true,
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -411,15 +415,13 @@ class ComplexParameterWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (parameter.displayName != null)
+        if (parameter.displayName != null) ... [
+          const SizedBox(height: 10,),
           Text(
             parameter.displayName!,
-            style: const TextStyle(
-                fontSize: 13,
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline),
+            style: AppFontStyle.roboto(14,color: AppColors.theme.shade700,fontWeight: FontWeight.w800),
           ),
+        ],
         const SizedBox(
           height: 5,
         ),

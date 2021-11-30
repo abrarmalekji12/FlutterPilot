@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             children: [
               const SizedBox(
-                width: 200,
+                width: 250,
                 child: ComponentTree(),
               ),
               Expanded(
@@ -129,7 +129,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildLeftSide() {
     return Container(
-      color: const Color(0xfff2f2f2),
+      color: const Color(0xffd3d3d3),
       child: Center(
         child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
           builder: (context, state) {

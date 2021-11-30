@@ -99,6 +99,8 @@ abstract class Component {
   void setParent(Component? component) {
     parent = component;
   }
+
+  int get type => 1;
 }
 
 abstract class MultiHolder extends Component {
@@ -124,14 +126,27 @@ abstract class MultiHolder extends Component {
     return '$name(\n${middle}children:[\n$childrenCode\n],\n),';
   }
 
-  void addChild(Component component) {
-    children.add(component);
+  void addChild(Component component,{int? index}) {
+    if(index==null) {
+      children.add(component);
+    }
+    else{
+      children.insert(index, component);
+    }
     component.setParent(this);
   }
 
-  void removeChild(Component component) {
+  int removeChild(Component component) {
+    final index=children.indexOf(component);
     component.setParent(null);
     children.remove(component);
+    return index;
+  }
+  void replaceChild(Component old,Component component) {
+    final index=children.indexOf(old);
+    children.remove(old);
+    children.insert(index, component);
+    component.parent=this;
   }
 
   @override
@@ -160,6 +175,9 @@ abstract class MultiHolder extends Component {
       comp.setParent(this);
     }
   }
+  @override
+  // TODO: implement type
+  int get type => 2;
 }
 
 abstract class Holder extends Component {
@@ -209,6 +227,9 @@ abstract class Holder extends Component {
     }
     return '$name(\n${middle}child:${child!.code()}\n),';
   }
+  @override
+  // TODO: implement type
+  int get type => 3;
 }
 
 abstract class CustomNamedHolder extends Component {
@@ -270,5 +291,20 @@ abstract class CustomNamedHolder extends Component {
       }
     }
     return '$name(\n$middle$childrenCode\n),';
+  }
+  @override
+  // TODO: implement type
+  int get type => 4;
+
+  void replaceChild(Component oldComp, Component? comp) {
+    late final String compKey;
+    for(final String key in children.keys){
+      if(children[key]==oldComp){
+        compKey=key;
+        break;
+      }
+    }
+    children[compKey]=comp;
+    comp?.setParent(this);
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/common/custom_popup_menu_button.dart';
 import 'package:flutter_builder/component_model.dart';
+import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
@@ -101,7 +102,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                       children: [
                         Text(
                           child,
-                          style: AppFontStyle.roboto(12, color: Colors.grey),
+                          style: AppFontStyle.roboto(12,
+                              color: Colors.grey.shade700),
                         ),
                         const Spacer(),
                         ComponentModificationMenu(
@@ -130,7 +132,7 @@ class _ComponentTreeState extends State<ComponentTree> {
 }
 
 class ComponentModificationMenu extends StatelessWidget {
-  static const operations = ['add', 'remove', 'replace', 'wrap with'];
+  static const operations = ['wrap with', 'remove'];
   final Component component;
 
   final String? customNamed;
@@ -141,27 +143,17 @@ class ComponentModificationMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPopupMenuButton(
-        itemBuilder: (context) {
-          return operations
-              .map(
-                (e) => CustomPopupMenuItem(
-                  value: e,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      e,
-                      style:
-                          AppFontStyle.roboto(18, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ),
-              )
-              .toList();
-        },
-        onSelected: (e) {
-          switch (e) {
-            case 'add':
+    final components =
+        componentList.map((key, value) => MapEntry(key, value()));
+    return Row(
+      children: [
+        if (component is MultiHolder ||
+            (component is Holder && (component as Holder).child == null) ||
+            (component is CustomNamedHolder &&
+                (component as CustomNamedHolder).children[customNamed!] ==
+                    null)) ...[
+          InkWell(
+            onTap: () {
               showSelectionDialog((comp) {
                 if (customNamed != null) {
                   (component as CustomNamedHolder)
@@ -183,49 +175,156 @@ class ComponentModificationMenu extends StatelessWidget {
                       ? (component as CustomNamedHolder)
                           .selectable[customNamed!]!
                       : null);
-              break;
-            case 'remove':
-              final parent = component.parent;
-              if (component.parent != null) {
-                if (component.parent is Holder) {
-                  (component.parent as Holder).updateChild(null);
-                } else if (component.parent is MultiHolder) {
-                  (component.parent as MultiHolder).removeChild(component);
+            },
+            child: const CircleAvatar(
+                radius: 10,
+                backgroundColor: AppColors.theme,
+                child: Icon(
+                  Icons.add,
+                  size: 15,
+                  color: Colors.white,
+                )),
+          ),
+        ],
+        if (customNamed == null) ...[
+          const SizedBox(
+            width: 10,
+          ),
+          InkWell(
+            onTap: () {
+              showSelectionDialog((comp) {
+                switch (comp.type) {
+                  case 2:
+                    //MultiHolder
+                    switch (component.parent?.type) {
+                      case 2:
+                        //MultiHolder
+                        final children = (component as MultiHolder).children;
+                        (component.parent as MultiHolder)
+                            .replaceChild(component, comp);
+                        (comp as MultiHolder).children = children;
+                        break;
+                      case 3:
+                        //Holder
+                        final child = (component as Holder).child;
+                        (component.parent as Holder).updateChild(comp);
+                        (comp as Holder).child = child;
+                        break;
+                      case 4:
+                        final children = (component as MultiHolder).children;
+                        (component.parent as CustomNamedHolder)
+                            .replaceChild(component, comp);
+                        (comp as MultiHolder).children = children;
+                        break;
+                    }
+                    break;
+                  case 3:
+                    //Holder
+                    switch (component.parent?.type) {
+                      case 2:
+                        //MultiHolder
+                        final child = (component as Holder).child;
+                        (component.parent as MultiHolder)
+                            .replaceChild(component, comp);
+                        (comp as Holder).child = child;
+                        break;
+                      case 3:
+                        //Holder
+                        final child = (component as Holder).child;
+                        (component.parent as Holder).updateChild(comp);
+                        (comp as Holder).child = child;
+                        break;
+                      case 4:
+                        //CustomNamedHolder
+                        final child = (component as Holder).child;
+                        (component.parent as CustomNamedHolder)
+                            .replaceChild(component, comp);
+                        (comp as Holder).child = child;
+                        break;
+                    }
                 }
                 Provider.of<ComponentOperationCubit>(context, listen: false)
-                    .removedComponent(context, parent!);
+                    .addedComponent(context, comp);
+              }, possibleItems: getSameComponents(components, component));
+            },
+            child: const CircleAvatar(
+              radius: 10,
+              backgroundColor: Colors.purple,
+              child: Icon(
+                Icons.find_replace_outlined,
+                size: 15,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+        CustomPopupMenuButton(
+            itemBuilder: (context) {
+              return operations
+                  .map(
+                    (e) => CustomPopupMenuItem(
+                      value: e,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          e,
+                          style: AppFontStyle.roboto(18,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList();
+            },
+            onSelected: (e) {
+              switch (e) {
+                case 'remove':
+                  final parent=component.parent;
+                  switch(component.type){
+                    case 1:
+                      //Component
+
+                      break;
+                    case 2:
+                      //MultiHolder
+                      (component as MultiHolder).children.clear();
+                      break;
+                  }
+                  switch(component.parent?.type){
+                    case 2:
+                      (component.parent as MultiHolder).removeChild(component);
+                      break;
+                    case 3 :
+                      (component.parent as Holder).updateChild(null);
+                      break;
+                    case 4 :
+                      (component.parent as CustomNamedHolder).replaceChild(component,null);
+                      break;
+                  }
+                  Provider.of<ComponentOperationCubit>(context, listen: false)
+                      .removedComponent(context, parent!);
+                  break;
               }
-              break;
-            case 'replace':
-              showSelectionDialog((comp) {
-                if (component is Holder) {
-                  if (comp is Holder) {
-                    comp.updateChild((component as Holder).child);
-                    Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .addedComponent(context, comp);
-                  } else if (comp is MultiHolder &&
-                      (component as Holder).child != null) {
-                    comp.addChild((component as Holder).child!);
-                    Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .addedComponent(context, comp);
-                  }
-                } else if (component is MultiHolder) {
-                  if (comp is MultiHolder) {
-                    comp.children.clear();
-                    comp.addChildren((component as MultiHolder).children);
-                    (component as MultiHolder).children.clear();
-                    Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .addedComponent(context, comp);
-                  }
-                }
-              });
-          }
-        },
-        child: const Icon(
-          Icons.more_vert,
-          color: Colors.black,
-          size: 24,
-        ));
+            },
+            child: const Icon(
+              Icons.more_vert,
+              color: Colors.black,
+              size: 24,
+            )),
+      ],
+    );
+  }
+
+  List<String> getSameComponents(
+      Map<String, Component> components, Component component) {
+    final List<String> sameComponents = [];
+    for (final key in components.keys) {
+      if (components[key] != component &&
+          components[key]!.type == component.type) {
+        sameComponents.add(key);
+      }
+    }
+    return sameComponents;
   }
 
   void showSelectionDialog(void Function(Component) onSelection,
@@ -261,15 +360,12 @@ class ComponentModificationMenu extends StatelessWidget {
                             child: Container(
                               width: 130,
                               padding: const EdgeInsets.all(10),
-
                               alignment: Alignment.center,
                               child: Text(
                                 e,
-                                style: AppFontStyle.roboto(
-                                  14,
-                                  color: Colors.black,
-                                fontWeight: FontWeight.w500
-                                ),
+                                style: AppFontStyle.roboto(14,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w500),
                               ),
                             ),
                           ),
