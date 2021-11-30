@@ -102,6 +102,8 @@ class ParameterWidget extends StatelessWidget {
       case ChoiceValueParameter:
         return ChoiceValueParameterWidget(
             parameter: parameter as ChoiceValueParameter);
+      case ListParameter:
+        return ListParameterWidget(parameter: parameter as ListParameter);
       default:
         return Container();
     }
@@ -240,6 +242,67 @@ class SimpleParameterWidget extends StatelessWidget {
   }
 }
 
+class ListParameterWidget extends StatelessWidget {
+  final ListParameter parameter;
+
+  const ListParameterWidget({Key? key, required this.parameter})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return StatefulBuilder(builder: (context, setStateForParameter) {
+      return Column(
+        children: [
+          Row(
+            children: [
+              if (parameter.displayName != null)
+                Text(
+                  parameter.displayName!,
+                  style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold),
+                ),
+              IconButton(
+                icon: const Icon(
+                  Icons.add,
+                  color: Colors.blue,
+                  size: 24,
+                ),
+                onPressed: () {
+                  parameter.params.add(parameter.parameterGenerator());
+                  setStateForParameter(() {});
+                },
+              ),
+            ],
+          ),
+          for (int i = 0; i < parameter.params.length; i++)
+            Stack(
+              children: [
+                ParameterWidget(
+                  parameter: parameter.params[i],
+                ),
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.delete,
+                      color: Colors.red,
+                    ),
+                    onPressed: () {
+                      parameter.params.removeAt(i);
+                      setStateForParameter(() {});
+                    },
+                  ),
+                )
+              ],
+            )
+        ],
+      );
+    });
+  }
+}
+
 class ChoiceValueParameterWidget extends StatelessWidget {
   final ChoiceValueParameter parameter;
 
@@ -259,43 +322,42 @@ class ChoiceValueParameterWidget extends StatelessWidget {
           ),
         StatefulBuilder(builder: (context, setStateForSelectionChange) {
           return SizedBox(
-            height: 45,
-            child: CustomDropdownButton<String>(
-              value: parameter.rawValue,
-              hint: Text(
-                'select ${parameter.displayName ?? 'option'}',
-                style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-              ),
-              style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-              selectedItemBuilder: (_, key) {
-                return Text(
-                  key,
+              height: 45,
+              child: CustomDropdownButton<String>(
+                value: parameter.rawValue,
+                hint: Text(
+                  'select ${parameter.displayName ?? 'option'}',
                   style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-                );
-              },
-              items: parameter.options.keys
-                  .map(
-                    (e) => CustomDropdownMenuItem<String>(
-                      value: e,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          e,
-                          style: AppFontStyle.roboto(14,
-                              fontWeight: FontWeight.w500),
+                ),
+                style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                selectedItemBuilder: (_, key) {
+                  return Text(
+                    key,
+                    style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                  );
+                },
+                items: parameter.options.keys
+                    .map(
+                      (e) => CustomDropdownMenuItem<String>(
+                        value: e,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            e,
+                            style: AppFontStyle.roboto(14,
+                                fontWeight: FontWeight.w500),
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (key) {
-                parameter.val = key;
-                setStateForSelectionChange(() {});
-                Provider.of<ComponentCreationCubit>(context, listen: false)
-                    .changedProperty(context);
-              },
-            ),
-          );
+                    )
+                    .toList(),
+                onChanged: (key) {
+                  parameter.val = key;
+                  setStateForSelectionChange(() {});
+                  Provider.of<ComponentCreationCubit>(context, listen: false)
+                      .changedProperty(context);
+                },
+              ));
         })
       ],
     );

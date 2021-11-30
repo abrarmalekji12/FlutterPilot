@@ -106,7 +106,38 @@ class SimpleParameter<T> extends Parameter {
     return '$rawValue';
   }
 }
+class ListParameter extends Parameter{
+  final List<Parameter> params=[];
+  final Parameter Function() parameterGenerator;
+  ListParameter({required String? displayName, ParameterInfo? info,required this.parameterGenerator}) : super(displayName, info, false);
 
+
+  @override
+  // TODO: implement code
+  String get code {
+    String parametersCode='';
+    for(final parameter in params){
+      parametersCode+='${parameter.code},'.replaceAll(',,', ',');
+    }
+    if (info != null) {
+      return '${info!.code(parametersCode)},'.replaceAll(',,', ',');
+    }
+    return parametersCode;
+  }
+
+  @override
+  // TODO: implement rawValue
+  get rawValue {
+    return params;
+  }
+
+  @override
+  // TODO: implement value
+  get value {
+   return params.map((e) => e.value).toList();
+  }
+
+}
 class ChoiceValueParameter extends Parameter {
   final Map<String, dynamic> options;
   final dynamic defaultValue;

@@ -28,13 +28,13 @@ abstract class Component {
         switch (state2.runtimeType) {
           case ComponentCreationChangeState:
             if ((state2 as ComponentCreationChangeState)
-                    .rebuildComponent
-                    .parent ==
+                .rebuildComponent
+                .parent ==
                 parent) {
               return true;
             }
             break;
-          // case
+        // case
         }
         return false;
       },
@@ -43,31 +43,36 @@ abstract class Component {
 
   void _lookForUIChanges(BuildContext context) async {
     RenderBox renderBox =
-        GlobalObjectKey(this).currentContext!.findRenderObject()! as RenderBox;
+    GlobalObjectKey(this).currentContext!.findRenderObject()! as RenderBox;
     Offset position = renderBox.localToGlobal(Offset.zero,
         ancestor: const GlobalObjectKey('device window')
             .currentContext!
             .findRenderObject());
-
-    while (boundary?.left != position.dx - 1 ||
-        boundary?.top != position.dy - 1 ||
-        boundary?.width != renderBox.size.width ||
-        boundary?.height != renderBox.size.height) {
-      boundary = Rect.fromLTWH(position.dx - 1, position.dy - 1,
-          renderBox.size.width, renderBox.size.height);
+    final ancestor = const GlobalObjectKey('device window')
+        .currentContext!
+        .findRenderObject();
+    int sameCount = 0;
+    while (sameCount<5) {
+      if(boundary?.left == position.dx &&
+          boundary?.top == position.dy &&
+          boundary?.width == renderBox.size.width &&
+          boundary?.height == renderBox.size.height)
+        {
+          sameCount++;
+        }
+      boundary = Rect.fromLTWH(position.dx, position.dy, renderBox.size.width,
+          renderBox.size.height);
       print('IN WHILE $name ');
-      if (Provider.of<ComponentSelectionCubit>(context, listen: false)
-              .currentSelected ==
+      if (Provider
+          .of<ComponentSelectionCubit>(context, listen: false)
+          .currentSelected ==
           this) {
         Provider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
       }
-      await Future.delayed(const Duration(milliseconds: 600));
+      await Future.delayed(const Duration(milliseconds: 50));
       renderBox = GlobalObjectKey(this).currentContext!.findRenderObject()!
-          as RenderBox;
-      position = renderBox.localToGlobal(Offset.zero,
-          ancestor: const GlobalObjectKey('device window')
-              .currentContext!
-              .findRenderObject());
+      as RenderBox;
+      position = renderBox.localToGlobal(Offset.zero, ancestor: ancestor);
     }
   }
 
