@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 
+import 'constant/app_colors.dart';
 import 'ui/home_page.dart';
 
 void main() {
@@ -19,7 +20,8 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       scrollBehavior: MyCustomScrollBehavior(),
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.standard,
+        primaryColor: AppColors.theme
       ),
       home: const HomePage(),
     );

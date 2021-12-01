@@ -107,6 +107,8 @@ class ParameterWidget extends StatelessWidget {
             parameter: parameter as ChoiceValueParameter);
       case ListParameter:
         return ListParameterWidget(parameter: parameter as ListParameter);
+      case BooleanParameter :
+        return BooleanParameterWidget(parameter: parameter as BooleanParameter);
       default:
         return Container();
     }
@@ -446,27 +448,27 @@ class BooleanParameterWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          parameter.displayName!,
-          style: const TextStyle(
-              fontSize: 13,
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              decoration: TextDecoration.underline),
-        ),
-        StatefulBuilder(
-          builder: (context,setStateSwitch) {
-            return AppSwitch(value: parameter.val, onToggle: (value){
-              parameter.val=value;
-              setStateSwitch((){});
-            });
-          }
-        )
-      ],
+    return SizedBox(
+      height: 35,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            parameter.displayName!,
+            style: AppFontStyle.roboto(14,
+                color: Colors.black, fontWeight: FontWeight.w500),
+          ),
+          StatefulBuilder(
+            builder: (context,setStateSwitch) {
+              return AppSwitch(value: parameter.val, onToggle: (value){
+                parameter.val=value;
+                setStateSwitch((){});
+              });
+            }
+          )
+        ],
+      ),
     );
   }
 }
