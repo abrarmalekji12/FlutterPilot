@@ -47,23 +47,30 @@ class _ComponentTreeState extends State<ComponentTree> {
 
   Widget getSublist(Component component) {
     if (component is MultiHolder) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      return ReorderableListView(
+        onReorder: (int oldIndex, int newIndex) {
+
+        },
         children: [
-          Row(
+          Column(
+            key: GlobalObjectKey(component),
             children: [
-              ComponentTile(component: component),
-              const Spacer(),
-              ComponentModificationMenu(component: component)
+              Row(
+                children: [
+                  ComponentTile(component: component),
+                  const Spacer(),
+                  ComponentModificationMenu(component: component)
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 10, top: 5),
+                child: Column(
+                  children: [
+                    for (final comp in component.children) getSublist(comp)
+                  ],
+                ),
+              ),
             ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 10, top: 5),
-            child: Column(
-              children: [
-                for (final comp in component.children) getSublist(comp)
-              ],
-            ),
           ),
         ],
       );
@@ -327,7 +334,7 @@ class ComponentModificationMenu extends StatelessWidget {
                 // }
                 switch (component.parent?.type) {
                   case 2:
-                    (component.parent as MultiHolder).replaceChild((component as MultiHolder).children);
+                    // (component.parent as MultiHolder).replaceChild((component as MultiHolder).children);
                     break;
                   case 3:
                     (component.parent as Holder).updateChild(null);
