@@ -464,6 +464,8 @@ class BooleanParameterWidget extends StatelessWidget {
               return AppSwitch(value: parameter.val, onToggle: (value){
                 parameter.val=value;
                 setStateSwitch((){});
+                Provider.of<ComponentCreationCubit>(context, listen: false)
+                    .changedProperty(context);
               });
             }
           )

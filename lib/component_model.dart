@@ -10,11 +10,12 @@ import 'package:provider/provider.dart';
 abstract class Component {
   final List<Parameter> parameters;
   final String name;
+  bool isConstant;
   Component? parent;
   Rect? boundary;
   int? depth;
 
-  Component(this.name, this.parameters);
+  Component(this.name, this.parameters, {this.isConstant=false});
 
   Widget build(BuildContext context) {
     return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(

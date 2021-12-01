@@ -293,12 +293,20 @@ class NullParameter extends Parameter{
 
 class BooleanParameter extends Parameter{
   bool val;
-  BooleanParameter({String? displayName, ParameterInfo? info, required bool required,required this.val}) : super(displayName, info, required);
+  late final String Function(bool) evaluate;
+  BooleanParameter({required String displayName, ParameterInfo? info, required bool required,required this.val,String Function(bool)? evaluate}) : super(displayName, info, required){
+    if(evaluate==null){
+      this.evaluate=(value)=>value.toString();
+    }
+    else{
+     this.evaluate=evaluate;
+    }
+  }
 
   @override
   // TODO: implement code
   String get code {
-    return info?.code(val.toString())??val.toString();
+    return info?.code(evaluate(val))??evaluate(val).toString();
   }
 
   @override
