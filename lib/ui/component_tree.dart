@@ -283,11 +283,16 @@ class ComponentModificationMenu extends StatelessWidget {
                       components, customNamed == null ? [2, 3] : [])
                   .map((e) => 'wrap with $e')
                   .toList();
+              if(component.type==component.parent?.type||(component.type==2&&(component as MultiHolder).children.length==1)){
+                list.add('remove');
+              }
               if (customNamed == null &&
                   component !=
                       Provider.of<ComponentOperationCubit>(context,
                               listen: false)
-                          .rootComponent) list.add('remove');
+                          .rootComponent) {
+                list.add('remove tree');
+              }
               return list
                   .map(
                     (e) => CustomPopupMenuItem(
@@ -307,19 +312,22 @@ class ComponentModificationMenu extends StatelessWidget {
             onSelected: (e) {
               if (e == 'remove') {
                 final parent = component.parent;
-                switch (component.type) {
-                  case 1:
-                    //Component
-
-                    break;
-                  case 2:
-                    //MultiHolder
-                    (component as MultiHolder).children.clear();
-                    break;
-                }
+                // switch (component.type) {
+                //   case 1:
+                //     //Component
+                //
+                //     break;
+                //   case 2:
+                //     //MultiHolder
+                //     (component as MultiHolder).children.clear();
+                //     break;
+                //   case 3:
+                //     (component as Holder).updateChild(null);
+                //     break;
+                // }
                 switch (component.parent?.type) {
                   case 2:
-                    (component.parent as MultiHolder).removeChild(component);
+                    (component.parent as MultiHolder).replaceChild((component as MultiHolder).children);
                     break;
                   case 3:
                     (component.parent as Holder).updateChild(null);
@@ -331,7 +339,11 @@ class ComponentModificationMenu extends StatelessWidget {
                 }
                 Provider.of<ComponentOperationCubit>(context, listen: false)
                     .removedComponent(context, parent!);
-              } else if ((e as String).startsWith('wrap')) {
+              }
+              else if(e=='remove tree'){
+
+              }
+              else if ((e as String).startsWith('wrap')) {
                 final compName = e.split(' ')[2];
                 final Component wrapperComp = componentList[compName]!();
                 switch (wrapperComp.type) {
