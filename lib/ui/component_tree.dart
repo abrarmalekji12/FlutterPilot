@@ -47,30 +47,22 @@ class _ComponentTreeState extends State<ComponentTree> {
 
   Widget getSublist(Component component) {
     if (component is MultiHolder) {
-      return ReorderableListView(
-        onReorder: (int oldIndex, int newIndex) {
-
-        },
+      return Column(
         children: [
-          Column(
-            key: GlobalObjectKey(component),
+          Row(
             children: [
-              Row(
-                children: [
-                  ComponentTile(component: component),
-                  const Spacer(),
-                  ComponentModificationMenu(component: component)
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 10, top: 5),
-                child: Column(
-                  children: [
-                    for (final comp in component.children) getSublist(comp)
-                  ],
-                ),
-              ),
+              ComponentTile(component: component),
+              const Spacer(),
+              ComponentModificationMenu(component: component)
             ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10, top: 5),
+            child: Column(
+              children: [
+                for (final comp in component.children) getSublist(comp)
+              ],
+            ),
           ),
         ],
       );

@@ -1,3 +1,5 @@
+import 'dart:html' as html;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/component_model.dart';
@@ -19,11 +21,13 @@ final componentList = {
   'Expanded': () => CExpanded(),
   'Spacer': () => CSpacer(),
   'Center': () => CCenter(),
+
   'FractionallySizedBox': () => CFractionallySizedBox(),
   'Flexible': () => CFlexible(),
   'Card': () => CCard(),
   'SizedBox': () => CSizedBox(),
   'Text': () => CText(),
+  'Image': () => CImage(),
   'CircleAvatar': () => CCircleAvatar(),
   'Divider': () => CDivider(),
   'RichText': () => CRichText(),
@@ -865,6 +869,18 @@ class CText extends Component {
   }
 }
 
+class CImage extends Component {
+  CImage()
+      : super('Image.',
+      [
+        Parameters.textParameter()..withDisplayName('path')
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Image.file(html.File);
+  }
+}
 class CTextField extends Component {
   CTextField()
       : super('TextField', [
