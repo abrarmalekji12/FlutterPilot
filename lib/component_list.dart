@@ -494,7 +494,7 @@ class CExpanded extends Holder {
 
 class CSpacer extends Component {
   CSpacer()
-      : super('coSpacer', [
+      : super('Spacer', [
           Parameters.flexParameter(),
         ]);
 

@@ -131,8 +131,14 @@ class _ComponentTreeState extends State<ComponentTree> {
         ],
       );
     }
-    return Column(
-      children: [ComponentTile(component: component)],
+    return Row(
+      children: [
+        ComponentTile(component: component),
+        const Spacer(),
+        ComponentModificationMenu(
+          component: component,
+        )
+      ],
     );
   }
 }
@@ -266,13 +272,22 @@ class ComponentModificationMenu extends StatelessWidget {
               ),
             ),
           ),
+        ],
+        if (customNamed == null) ...[
+          const SizedBox(
+            width: 10,
+          ),
           CustomPopupMenuButton(
-            itemBuilder: (context) {
+            itemBuilder: (context2) {
               final list = getTypeComponents(
                       components, customNamed == null ? [2, 3] : [])
                   .map((e) => 'wrap with $e')
                   .toList();
-              if (customNamed == null) list.add('remove');
+              if (customNamed == null &&
+                  component !=
+                      Provider.of<ComponentOperationCubit>(context,
+                              listen: false)
+                          .rootComponent) list.add('remove');
               return list
                   .map(
                     (e) => CustomPopupMenuItem(
@@ -324,10 +339,11 @@ class ComponentModificationMenu extends StatelessWidget {
                     //MultiHolder
                     final parent = component.parent;
                     (wrapperComp as MultiHolder).addChild(component);
-                    wrapperComp.parent=parent;
-                    switch(parent!.type){
+                    wrapperComp.parent = parent;
+                    switch (parent!.type) {
                       case 2:
-                        (parent as MultiHolder).replaceChild(component, wrapperComp);
+                        (parent as MultiHolder)
+                            .replaceChild(component, wrapperComp);
                         break;
                     }
                     break;
@@ -345,7 +361,7 @@ class ComponentModificationMenu extends StatelessWidget {
               size: 24,
             ),
           ),
-        ],
+        ]
       ],
     );
   }
