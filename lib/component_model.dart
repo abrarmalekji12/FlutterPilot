@@ -244,11 +244,19 @@ abstract class CustomNamedHolder extends Component {
     }
   }
 
-  void updateChild(String key, Component? component) {
+  void updateChildWithKey(String key, Component? component) {
     children[key] = component;
     component?.setParent(this);
   }
-
+  void updateChild(Component? oldComponent, Component? component) {
+    component?.setParent(this);
+    for(final entry in children.entries){
+      if(entry.value==oldComponent){
+        children[entry.key]=component;
+        return;
+      }
+    }
+  }
   @override
   Component? searchTappedComponent(Offset offset) {
     if (boundary?.contains(offset) ?? false) {

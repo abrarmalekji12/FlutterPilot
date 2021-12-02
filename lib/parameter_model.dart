@@ -172,7 +172,12 @@ class ChoiceValueParameter extends Parameter {
   }
 
   @override
-  get code => '$displayName:${value.toString()}';
+  get code {
+    if(info==null||info is SimpleParameterInfo){
+      return value.toString();
+    }
+   return info!.code(value.toString());
+  }
 }
 
 class ChoiceParameter extends Parameter {

@@ -57,7 +57,7 @@ class _ComponentTreeState extends State<ComponentTree> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 10, top: 5),
+            padding: const EdgeInsets.only(left: 5, top: 5),
             child: Column(
               children: [
                 for (final comp in component.children) getSublist(comp)
@@ -78,7 +78,7 @@ class _ComponentTreeState extends State<ComponentTree> {
           ),
           if (component.child != null) ...[
             Padding(
-              padding: const EdgeInsets.only(left: 10, top: 5),
+              padding: const EdgeInsets.only(left: 5, top: 5),
               child: getSublist(component.child!),
             ),
           ]
@@ -98,7 +98,7 @@ class _ComponentTreeState extends State<ComponentTree> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 10, top: 5),
+            padding: const EdgeInsets.only(left: 5, top: 5),
             child: Column(children: [
               for (final child in component.children.keys) ...[
                 Column(
@@ -169,7 +169,7 @@ class ComponentModificationMenu extends StatelessWidget {
               showSelectionDialog((comp) {
                 if (customNamed != null) {
                   (component as CustomNamedHolder)
-                      .updateChild(customNamed!, comp);
+                      .updateChildWithKey(customNamed!, comp);
                 } else {
                   if (component is Holder) {
                     (component as Holder).updateChild(comp);
@@ -198,11 +198,11 @@ class ComponentModificationMenu extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(
+            width: 5,
+          ),
         ],
         if ([1, 2, 3].contains(component.type)) ...[
-          const SizedBox(
-            width: 10,
-          ),
           InkWell(
             borderRadius: BorderRadius.circular(10),
             onTap: () {
@@ -271,25 +271,41 @@ class ComponentModificationMenu extends StatelessWidget {
               ),
             ),
           ),
-        ],
-        if (customNamed == null) ...[
           const SizedBox(
-            width: 10,
+            width: 5,
           ),
+        ],
+        if (customNamed == null &&
+            component !=
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .rootComponent) ...[
           CustomPopupMenuButton(
             itemBuilder: (context2) {
               final list = getTypeComponents(
                       components, customNamed == null ? [2, 3] : [])
                   .map((e) => 'wrap with $e')
                   .toList();
-              if(component.type==component.parent?.type||(component.type==2&&(component as MultiHolder).children.length==1)){
+              if (customNamed == null &&
+                  component.parent != null &&
+                  (component.type == 1 ||
+                      (component.type == 2 &&
+                          (component.parent?.type == 4 ||
+                              component.parent?.type == 2 ||
+                              (component.parent?.type == 1 &&
+                                  (component as MultiHolder).children.length <
+                                      2))) ||
+                      (component.type == 3 &&
+                          ([2, 3, 4].contains(component.parent?.type))))) {
                 list.add('remove');
               }
               if (customNamed == null &&
+                  component.type != 1 &&
                   component !=
                       Provider.of<ComponentOperationCubit>(context,
                               listen: false)
-                          .rootComponent) {
+                          .rootComponent &&
+                  (component.type == 2 &&
+                      (component as MultiHolder).children.isNotEmpty)) {
                 list.add('remove tree');
               }
               return list
@@ -310,39 +326,71 @@ class ComponentModificationMenu extends StatelessWidget {
             },
             onSelected: (e) {
               if (e == 'remove') {
-                final parent = component.parent;
-                // switch (component.type) {
-                //   case 1:
-                //     //Component
-                //
-                //     break;
-                //   case 2:
-                //     //MultiHolder
-                //     (component as MultiHolder).children.clear();
-                //     break;
-                //   case 3:
-                //     (component as Holder).updateChild(null);
-                //     break;
-                // }
-                switch (component.parent?.type) {
+                final parent = component.parent!;
+                switch (parent.type) {
                   case 2:
-                    // (component.parent as MultiHolder).replaceChild((component as MultiHolder).children);
+                    switch (component.type) {
+                      case 1:
+                        (parent as MultiHolder).removeChild(component);
+                        break;
+                      case 2:
+                        (parent as MultiHolder).removeChild(component);
+                        parent.addChildren((component as MultiHolder).children);
+                        (component as MultiHolder).children.clear();
+                        break;
+                      case 3:
+                        (parent as MultiHolder).removeChild(component);
+                        if ((component as Holder).child != null) {
+                          parent.addChild((component as Holder).child!);
+                        }
+                        break;
+                    }
+
                     break;
                   case 3:
-                    (component.parent as Holder).updateChild(null);
+                    switch (component.type) {
+                      case 1:
+                        (parent as Holder)
+                            .updateChild((component as Holder).child);
+                        break;
+                      case 2:
+                        if ((component as MultiHolder).children.length == 1) {
+                          (parent as Holder).updateChild(
+                              (component as MultiHolder).children.first);
+                        }
+                        break;
+                      case 3:
+                        (parent as Holder).updateChild(null);
+                        break;
+                    }
                     break;
                   case 4:
-                    (component.parent as CustomNamedHolder)
-                        .replaceChild(component, null);
+                    (parent as CustomNamedHolder).replaceChild(component, null);
                     break;
                 }
                 Provider.of<ComponentOperationCubit>(context, listen: false)
-                    .removedComponent(context, parent!);
-              }
-              else if(e=='remove tree'){
-
-              }
-              else if ((e as String).startsWith('wrap')) {
+                    .removedComponent(context, parent);
+              } else if (e == 'remove tree') {
+                final parent = component.parent!;
+                if (component.type == 2) {
+                  (component as MultiHolder).children.clear();
+                } else if (component.type == 3) {
+                  (component as CustomNamedHolder).children.clear();
+                }
+                switch (parent.type) {
+                  case 2:
+                    (parent as MultiHolder).removeChild(component);
+                    break;
+                  case 3:
+                    (parent as Holder).updateChild(null);
+                    break;
+                  case 4:
+                    (parent as CustomNamedHolder).replaceChild(component, null);
+                    break;
+                }
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .removedComponent(context, parent);
+              } else if ((e as String).startsWith('wrap')) {
                 final compName = e.split(' ')[2];
                 final Component wrapperComp = componentList[compName]!();
                 switch (wrapperComp.type) {
@@ -350,15 +398,40 @@ class ComponentModificationMenu extends StatelessWidget {
                     //MultiHolder
                     final parent = component.parent;
                     (wrapperComp as MultiHolder).addChild(component);
+                    component.parent = wrapperComp;
                     wrapperComp.parent = parent;
                     switch (parent!.type) {
                       case 2:
                         (parent as MultiHolder)
                             .replaceChild(component, wrapperComp);
                         break;
+                      case 3:
+                        (parent as Holder).updateChild(wrapperComp);
+                        break;
+                      case 4:
+                        (parent as CustomNamedHolder)
+                            .updateChild(component, wrapperComp);
+                        break;
                     }
                     break;
                   case 3:
+                    final parent = component.parent;
+                    (wrapperComp as Holder).updateChild(component);
+                    wrapperComp.parent = parent;
+                    switch (parent!.type) {
+                      case 2:
+                        (parent as MultiHolder)
+                            .replaceChild(component, wrapperComp);
+                        break;
+                      case 3:
+                        (parent as Holder).updateChild(wrapperComp);
+                        break;
+                      case 4:
+                        (parent as CustomNamedHolder)
+                            .updateChild(component, wrapperComp);
+                        break;
+                    }
+                    break;
                   //Holder
                 }
                 Provider.of<ComponentOperationCubit>(context, listen: false)

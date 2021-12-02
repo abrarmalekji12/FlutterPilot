@@ -64,36 +64,39 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
                           offset: Offset(0, -100 * (1 - value)),
                           child: SizedBox(
                             width: getWidth(),
+                            height: getCalculatedHeight(),
                             child: Card(
                               elevation: 5,
                               color: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: widget.items
-                                    .where((element) =>
-                                element.value != widget.value)
-                                    .map(
-                                      (e) => InkWell(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: e,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: widget.items
+                                      .where((element) =>
+                                  element.value != widget.value)
+                                      .map(
+                                        (e) => InkWell(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: e,
+                                      ),
+                                      onTap: () {
+                                        widget.onChanged(e.value);
+                                        overlayEntry?.remove();
+                                        setState(() {
+                                          state = 2;
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(10),
+                                      splashColor: Colors.grey,
                                     ),
-                                    onTap: () {
-                                      widget.onChanged(e.value);
-                                      overlayEntry?.remove();
-                                      setState(() {
-                                        state = 2;
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(10),
-                                    splashColor: Colors.grey,
-                                  ),
-                                )
-                                    .toList(),
+                                  )
+                                      .toList(),
+                                ),
                               ),
                             ),
                           ),
@@ -189,6 +192,16 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
     return renderBox.size.width;
   }
 
+  double getCalculatedHeight() {
+    final size=MediaQuery.of(context).size;
+    final itemsHeight=widget.items.length*30.0;
+    final topPosition=getTopPosition();
+    if(topPosition+itemsHeight>size.height){
+      return size.height-(topPosition);
+    }
+    // buttonSize = renderBox.size;
+    return itemsHeight;
+  }
   double getTopPosition() {
     RenderBox renderBox =
     globalKey.currentContext!.findRenderObject()! as RenderBox;

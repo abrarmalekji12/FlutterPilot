@@ -165,7 +165,7 @@ class Parameters {
         'bottomLeft': Alignment.bottomLeft,
         'bottomRight': Alignment.bottomRight,
       },
-      defaultValue: 'center');
+      defaultValue: 'center',info: NamedParameterInfo('alignment'));
 
   static marginParameter() => paddingParameter()
     ..withDisplayName('margin')
@@ -197,6 +197,7 @@ class Parameters {
           'spaceAround': MainAxisAlignment.spaceAround,
           'spaceEvenly': MainAxisAlignment.spaceEvenly,
         },
+    info: NamedParameterInfo('mainAxisAlignment'),
         defaultValue: 'start',
       );
 
@@ -210,6 +211,7 @@ class Parameters {
           'baseline': CrossAxisAlignment.baseline,
         },
         defaultValue: 'start',
+    info: NamedParameterInfo('crossAxisAlignment'),
       );
 
   static mainAxisSizeParameter() => ChoiceValueParameter(
@@ -218,12 +220,12 @@ class Parameters {
         'max': MainAxisSize.max,
         'min': MainAxisSize.min,
       },
-      defaultValue: 'max');
+      defaultValue: 'max'   , info: NamedParameterInfo('mainAxisSize'),);
 
   static ChoiceValueParameter axisParameter() => ChoiceValueParameter(
       name: 'direction',
       options: {'vertical': Axis.vertical, 'horizontal': Axis.horizontal},
-      defaultValue: 'vertical');
+      defaultValue: 'vertical', info: NamedParameterInfo('direction'),);
 
   static borderRadiusParameter() => ChoiceParameter(
         name: 'borderRadius',
@@ -302,7 +304,7 @@ class Parameters {
         'contain': BoxFit.contain,
         'scaleDown': BoxFit.scaleDown,
         'cover': BoxFit.cover,
-      }, defaultValue: 'none',info: NamedParameterInfo('fit'));
+      }, defaultValue: 'none', info: NamedParameterInfo('fit'));
 
   static SimpleParameter thicknessParameter() => SimpleParameter<double>(
       info: NamedParameterInfo('thickness'),
@@ -467,6 +469,7 @@ class Parameters {
             },
             defaultValue: 'normal',
             name: 'fontWeight',
+              info: NamedParameterInfo('fontWeight')
           ),
           SimpleParameter<String>(
               name: 'font-family',
@@ -897,6 +900,7 @@ class CImage extends Component {
           Parameters.imageParameter(),
           Parameters.widthParameter(),
           Parameters.heightParameter(),
+          Parameters.colorParameter()..withDefaultValue(null) .. withRequired(false),
           Parameters.boxFitParameter(),
         ]);
 
@@ -904,10 +908,11 @@ class CImage extends Component {
   Widget create(BuildContext context) {
     return parameters[0].value != null
         ? Image.memory(
-      (parameters[0].value as ImageData).bytes!,
+            (parameters[0].value as ImageData).bytes!,
             width: parameters[1].value,
             height: parameters[2].value,
-            fit: parameters[3].value,
+            color: parameters[3].value,
+            fit: parameters[4].value,
           )
         : Container();
   }

@@ -19,7 +19,7 @@ class CustomPopupMenuButton<T> extends StatefulWidget {
       Key? key,
       this.backgroundColor,
       this.animateSuffixIcon = false,
-      this.suffixIcon})
+      this.suffixIcon,})
       : super(key: key);
 
   @override
@@ -30,7 +30,14 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
   GlobalKey globalKey = GlobalKey();
   OverlayEntry? overlayEntry;
   bool expanded = false;
+  late int _itemCount;
+@override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
 
+    _itemCount=widget.itemBuilder(context).length;
+}
   @override
   void initState() {
     // TODO: implement initState
@@ -59,8 +66,9 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
                         scale: value,
                         child: Transform.translate(
                           offset: Offset(0, -100 * (1 - value)),
-                          child: Container(
+                          child: SizedBox(
                             width: 180,
+                            height: getCalculatedHeight(),
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Card(
@@ -69,31 +77,33 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: widget
-                                      .itemBuilder(context)
-                                      .map((e) => InkWell(
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: e,
-                                            ),
-                                            onTap: () {
-                                              widget.onSelected(e.value);
-                                              overlayEntry?.remove();
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: widget
+                                        .itemBuilder(context)
+                                        .map((e) => InkWell(
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: e,
+                                              ),
+                                              onTap: () {
+                                                widget.onSelected(e.value);
+                                                overlayEntry?.remove();
 
-                                              setState(() {
-                                                expanded = false;
-                                              });
-                                            },
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            splashColor: Colors.grey,
-                                          ))
-                                      .toList(),
+                                                setState(() {
+                                                  expanded = false;
+                                                });
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              splashColor: Colors.grey,
+                                            ))
+                                        .toList(),
+                                  ),
                                 ),
                               ),
                             ),
@@ -171,7 +181,16 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
       return position.left;
     }
   }
-
+  double getCalculatedHeight() {
+    final size=MediaQuery.of(context).size;
+    final itemsHeight=_itemCount*60.0;
+    final topPosition=getTopPosition();
+    if(topPosition+itemsHeight>size.height){
+      return size.height-(topPosition);
+    }
+    // buttonSize = renderBox.size;
+    return itemsHeight;
+  }
   double getTopPosition() {
     RenderBox renderBox =
         globalKey.currentContext!.findRenderObject()! as RenderBox;
