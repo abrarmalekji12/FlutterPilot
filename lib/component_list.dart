@@ -1,4 +1,5 @@
 import 'dart:html' as html;
+import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,8 @@ import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/enums.dart';
 import 'package:flutter_builder/parameter_info.dart';
 import 'package:flutter_builder/parameter_model.dart';
+
+import 'other_model.dart';
 
 final componentList = {
   'Scaffold': () => CScaffold(),
@@ -27,7 +30,7 @@ final componentList = {
   'Card': () => CCard(),
   'SizedBox': () => CSizedBox(),
   'Text': () => CText(),
-  'Image': () => CImage(),
+  'Image.asset': () => CImage(),
   'CircleAvatar': () => CCircleAvatar(),
   'Divider': () => CDivider(),
   'RichText': () => CRichText(),
@@ -291,6 +294,16 @@ class Parameters {
       paramType: ParamType.double,
       defaultValue: 100);
 
+  static Parameter boxFitParameter() => ChoiceValueParameter(options: {
+        'none': BoxFit.none,
+        'fill': BoxFit.fill,
+        'fitWidth': BoxFit.fitWidth,
+        'fitHeight': BoxFit.fitHeight,
+        'contain': BoxFit.contain,
+        'scaleDown': BoxFit.scaleDown,
+        'cover': BoxFit.cover,
+      }, defaultValue: 'none',info: NamedParameterInfo('fit'));
+
   static SimpleParameter thicknessParameter() => SimpleParameter<double>(
       info: NamedParameterInfo('thickness'),
       name: 'thickness',
@@ -422,6 +435,13 @@ class Parameters {
       paramType: ParamType.string,
       defaultValue: '',
       inputType: ParamInputType.longText);
+
+  static Parameter imageParameter() => SimpleParameter<ImageData>(
+      name: 'choose image',
+      paramType: ParamType.other,
+      required: false,
+      defaultValue: null,
+      inputType: ParamInputType.image);
 
   static Parameter textStyleParameter() => ComplexParameter(
         info: InnerObjectParameterInfo(
@@ -857,8 +877,10 @@ class CSizedBox extends Holder {
 
 class CText extends Component {
   CText()
-      : super('Text',
-            [Parameters.textParameter(), Parameters.textStyleParameter()]);
+      : super('Text', [
+          Parameters.textParameter(),
+          Parameters.textStyleParameter(),
+        ]);
 
   @override
   Widget create(BuildContext context) {
@@ -871,16 +893,26 @@ class CText extends Component {
 
 class CImage extends Component {
   CImage()
-      : super('Image.',
-      [
-        Parameters.textParameter()..withDisplayName('path')
+      : super('Image.asset', [
+          Parameters.imageParameter(),
+          Parameters.widthParameter(),
+          Parameters.heightParameter(),
+          Parameters.boxFitParameter(),
         ]);
 
   @override
   Widget create(BuildContext context) {
-    return Image.file(html.File);
+    return parameters[0].value != null
+        ? Image.memory(
+      (parameters[0].value as ImageData).bytes!,
+            width: parameters[1].value,
+            height: parameters[2].value,
+            fit: parameters[3].value,
+          )
+        : Container();
   }
 }
+
 class CTextField extends Component {
   CTextField()
       : super('TextField', [

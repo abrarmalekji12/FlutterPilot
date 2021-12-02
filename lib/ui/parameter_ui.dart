@@ -5,7 +5,10 @@ import 'package:flutter_builder/common/custom_drop_down.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
+import 'package:flutter_builder/other_model.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'dart:html' as html;
 
 import '../enums.dart';
 import '../parameter_model.dart';
@@ -89,7 +92,7 @@ class ParameterWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (parameter == null) return Container();
-    if (parameter.runtimeType.toString().startsWith('SimpleParameter')) {
+    if (parameter is SimpleParameter) {
       // print('paramm ${param.name} ${param.runtimeType}');
       return SimpleParameterWidget(parameter: parameter as SimpleParameter);
     }
@@ -271,6 +274,26 @@ class SimpleParameterWidget extends StatelessWidget {
                 }),
           );
         });
+      case ParamInputType.image:
+        return StatefulBuilder(builder: (context, setStateForImage) {
+          return InkWell(
+            onTap: (){
+              ImagePicker().pickImage(source: ImageSource.gallery,).then((value) {
+                if(value!=null) {
+                  value.readAsBytes().then((bytes){
+                    parameter.val=ImageData(bytes,value.name,value.path);
+                    setStateForImage((){});
+                    Provider.of<ComponentCreationCubit>(context, listen: false)
+                        .changedProperty(context);
+                  });
+
+              }
+              });
+            },
+            child: parameter.value!=null?Image.memory((parameter.value as ImageData).bytes!,width: 40,fit: BoxFit.fitHeight,):const Icon(Icons.image,size: 30,color: Colors.grey,),
+          );
+        });
+        break;
     }
     return Container();
   }

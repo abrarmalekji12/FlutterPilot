@@ -9,4 +9,5 @@ enum ParamInputType{
   longText,
   color,
   sliderZeroToOne,
+  image,
 }
