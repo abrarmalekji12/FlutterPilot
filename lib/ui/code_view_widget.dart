@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 
@@ -16,18 +17,30 @@ class CodeViewerWidget extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         child: Padding(
           padding: const EdgeInsets.all(30),
-          child: Center(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: SelectableText(
-                code,
-                style: AppFontStyle.roboto(
-                  15,
-                  color: const Color(0xff494949),
-                  fontWeight: FontWeight.w600
+          child: Stack(
+            children: [
+              Center(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: SelectableText(
+                    code,
+                    style: AppFontStyle.roboto(15,
+                        color: Colors.black, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
-            ),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: code));
+                    },
+                    child: const Icon(
+                      Icons.copy,
+                      color: Color(0xff494949),
+                    )),
+              )
+            ],
           ),
         ),
       ),

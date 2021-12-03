@@ -22,6 +22,7 @@ dependencies:
   cyclop: ^0.5.2
   flutter_switch: ^0.3.2
   image_picker: ^0.8.4+4
+  flutter_reorderable_list: ^1.1.0
 
 dev_dependencies:
   flutter_test:

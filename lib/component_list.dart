@@ -1,6 +1,3 @@
-import 'dart:html' as html;
-import 'dart:typed_data';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/component_model.dart';
@@ -111,13 +108,16 @@ class Parameters {
             },
           ),
         ],
-        defaultValue: 0,
       );
 
   static decorationParameter() => ComplexParameter(
           params: [
-            colorParameter()..withDefaultValue(const Color(0xff000000)),
+            colorParameter(),
             borderRadiusParameter(),
+            //   ..setValidToShow=(comp){
+            // return (comp.parameters[2].rawValue as Parameter?)?.displayName=='only'?
+            //     'You can not set border radius for not uniform border':null;
+            // },
             borderParameter()
           ],
           name: 'decoration',
@@ -150,9 +150,32 @@ class Parameters {
             width: params[1].value,
           ),
         ),
-        NullParameter(displayName: 'none', info: NamedParameterInfo('border'))
+        ComplexParameter(
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'Border', namedIfHaveAny: 'border'),
+          params: [
+            Parameters.borderSideParameter()
+              ..withInfo(NamedParameterInfo('left'))
+              ..withDisplayName('left'),
+            Parameters.borderSideParameter()
+              ..withInfo(NamedParameterInfo('top'))
+              ..withDisplayName('top'),
+            Parameters.borderSideParameter()
+              ..withInfo(NamedParameterInfo('right'))
+              ..withDisplayName('right'),
+            Parameters.borderSideParameter()
+              ..withInfo(NamedParameterInfo('bottom'))
+              ..withDisplayName('bottom'),
+          ],
+          name: 'only',
+          evaluate: (params) => Border(
+              left: params[0].value,
+              top: params[1].value,
+              right: params[2].value,
+              bottom: params[3].value),
+        ),
       ],
-      defaultValue: 1);
+     );
 
   static alignmentParameter() => ChoiceValueParameter(
       name: 'alignment',
@@ -165,7 +188,8 @@ class Parameters {
         'bottomLeft': Alignment.bottomLeft,
         'bottomRight': Alignment.bottomRight,
       },
-      defaultValue: 'center',info: NamedParameterInfo('alignment'));
+      defaultValue: 'center',
+      info: NamedParameterInfo('alignment'));
 
   static marginParameter() => paddingParameter()
     ..withDisplayName('margin')
@@ -174,7 +198,7 @@ class Parameters {
   static SimpleParameter colorParameter() => SimpleParameter<Color>(
         name: 'color',
         paramType: ParamType.other,
-        defaultValue: AppColors.black,
+        defaultValue: AppColors.white,
         inputType: ParamInputType.color,
         info: NamedParameterInfo('color'),
       );
@@ -197,7 +221,7 @@ class Parameters {
           'spaceAround': MainAxisAlignment.spaceAround,
           'spaceEvenly': MainAxisAlignment.spaceEvenly,
         },
-    info: NamedParameterInfo('mainAxisAlignment'),
+        info: NamedParameterInfo('mainAxisAlignment'),
         defaultValue: 'start',
       );
 
@@ -211,25 +235,30 @@ class Parameters {
           'baseline': CrossAxisAlignment.baseline,
         },
         defaultValue: 'start',
-    info: NamedParameterInfo('crossAxisAlignment'),
+        info: NamedParameterInfo('crossAxisAlignment'),
       );
 
   static mainAxisSizeParameter() => ChoiceValueParameter(
-      name: 'mainAxisSize',
-      options: {
-        'max': MainAxisSize.max,
-        'min': MainAxisSize.min,
-      },
-      defaultValue: 'max'   , info: NamedParameterInfo('mainAxisSize'),);
+        name: 'mainAxisSize',
+        options: {
+          'max': MainAxisSize.max,
+          'min': MainAxisSize.min,
+        },
+        defaultValue: 'max',
+        info: NamedParameterInfo('mainAxisSize'),
+      );
 
   static ChoiceValueParameter axisParameter() => ChoiceValueParameter(
-      name: 'direction',
-      options: {'vertical': Axis.vertical, 'horizontal': Axis.horizontal},
-      defaultValue: 'vertical', info: NamedParameterInfo('direction'),);
+        name: 'direction',
+        options: {'vertical': Axis.vertical, 'horizontal': Axis.horizontal},
+        defaultValue: 'vertical',
+        info: NamedParameterInfo('direction'),
+      );
 
-  static borderRadiusParameter() => ChoiceParameter(
+  static Parameter borderRadiusParameter() => ChoiceParameter(
         name: 'borderRadius',
         info: NamedParameterInfo('borderRadius'),
+        required: false,
         options: [
           SimpleParameter<double>(
               name: 'circular',
@@ -279,7 +308,6 @@ class Parameters {
             name: 'only',
           )
         ],
-        defaultValue: 0,
       );
 
   static SimpleParameter widthParameter() => SimpleParameter<double>(
@@ -327,7 +355,7 @@ class Parameters {
       paramType: ParamType.int,
       defaultValue: 1);
 
-  static borderSideParameter() => ChoiceParameter(
+  static ChoiceParameter borderSideParameter() => ChoiceParameter(
       info: NamedParameterInfo('borderSide'),
       options: [
         ComplexParameter(
@@ -351,8 +379,7 @@ class Parameters {
             constantValue: BorderSide.none,
             constantValueInString: 'BorderSide.none',
             paramType: ParamType.other)
-      ],
-      defaultValue: 0);
+      ],);
 
   static shapeBorderParameter() => ChoiceParameter(
           options: [
@@ -372,7 +399,6 @@ class Parameters {
             )
           ],
           name: 'Shape Border',
-          defaultValue: 0,
           info: NamedParameterInfo('shape'));
 
   static SimpleParameter widthFactorParameter() => SimpleParameter<double>(
@@ -428,7 +454,6 @@ class Parameters {
                 },
                 name: 'Add Multiple Text')
           ],
-          defaultValue: 0,
           info: InnerObjectParameterInfo(
               innerObjectName: 'TextSpan', namedIfHaveAny: 'children'));
 
@@ -456,21 +481,20 @@ class Parameters {
               defaultValue: 13),
           Parameters.colorParameter(),
           ChoiceValueParameter(
-            options: {
-              'w200': FontWeight.w200,
-              'w300': FontWeight.w300,
-              'w400': FontWeight.w400,
-              'w500': FontWeight.w500,
-              'normal': FontWeight.normal,
-              'w600': FontWeight.w600,
-              'w700': FontWeight.w700,
-              'w800': FontWeight.w800,
-              'w900': FontWeight.w900,
-            },
-            defaultValue: 'normal',
-            name: 'fontWeight',
-              info: NamedParameterInfo('fontWeight')
-          ),
+              options: {
+                'w200': FontWeight.w200,
+                'w300': FontWeight.w300,
+                'w400': FontWeight.w400,
+                'w500': FontWeight.w500,
+                'normal': FontWeight.normal,
+                'w600': FontWeight.w600,
+                'w700': FontWeight.w700,
+                'w800': FontWeight.w800,
+                'w900': FontWeight.w900,
+              },
+              defaultValue: 'normal',
+              name: 'fontWeight',
+              info: NamedParameterInfo('fontWeight')),
           SimpleParameter<String>(
               name: 'font-family',
               info: NamedParameterInfo('fontFamily'),
@@ -798,7 +822,7 @@ class CPadding extends Holder {
 }
 
 class CClipRRect extends Holder {
-  CClipRRect() : super('ClipRRect', [Parameters.borderRadiusParameter()]);
+  CClipRRect() : super('ClipRRect', [Parameters.borderRadiusParameter() .. withRequired(true)]);
 
   @override
   Widget create(BuildContext context) {
@@ -900,7 +924,9 @@ class CImage extends Component {
           Parameters.imageParameter(),
           Parameters.widthParameter(),
           Parameters.heightParameter(),
-          Parameters.colorParameter()..withDefaultValue(null) .. withRequired(false),
+          Parameters.colorParameter()
+            ..withDefaultValue(null)
+            ..withRequired(false),
           Parameters.boxFitParameter(),
         ]);
 

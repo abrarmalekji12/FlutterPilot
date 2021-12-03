@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -7,8 +8,13 @@ import 'constant/app_colors.dart';
 import 'ui/home_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  runZonedGuarded(() {
+    runApp(const MyApp());
+  },(Object error, StackTrace stack){
+
+  });
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);

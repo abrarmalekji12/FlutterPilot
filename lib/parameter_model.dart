@@ -5,6 +5,7 @@ import 'enums.dart';
 abstract class Parameter {
   String? displayName;
   bool required;
+  String? Function(ComplexParameter)? validToShow;
   ParameterInfo? info;
 
   Parameter(this.displayName, this.info, this.required);
@@ -14,6 +15,18 @@ abstract class Parameter {
   get rawValue;
 
   String get code;
+
+  String? checkIfValidToShow(ComplexParameter complexParameter) {
+    if (validToShow != null) {
+      return validToShow?.call(complexParameter);
+    } else {
+      return null;
+    }
+  }
+
+  set setValidToShow(String? Function(ComplexParameter)? validToShow) {
+    this.validToShow = validToShow;
+  }
 
   void withDisplayName(String? name) {
     displayName = name;
@@ -25,6 +38,18 @@ abstract class Parameter {
 
   void withRequired(bool required) {
     this.required = required;
+
+      switch(runtimeType){
+        case ChoiceParameter :
+          if(required) {
+            (this as ChoiceParameter).defaultValue = 1;
+          }
+          else{
+            (this as ChoiceParameter).defaultValue = 0;
+          }
+          (this as ChoiceParameter).val = (this as ChoiceParameter).options[ (this as ChoiceParameter).defaultValue];
+          break;
+      }
   }
 }
 
@@ -38,14 +63,14 @@ class SimpleParameter<T> extends Parameter {
   dynamic get value {
     if (val != null) {
       return evaluate(val!);
-    } else if(!required){
+    } else if (!required) {
       return null;
-    }else if (defaultValue != null) {
+    } else if (defaultValue != null) {
       return evaluate(defaultValue!);
     } else if (paramType == ParamType.double || paramType == ParamType.int) {
       return evaluate(0 as T);
     }
-      return '';
+    return '';
   }
 
   late final dynamic Function(T) evaluate;
@@ -65,17 +90,18 @@ class SimpleParameter<T> extends Parameter {
     } else {
       this.evaluate = (value) => value;
     }
-    val=defaultValue;
+    if (required) {
+      val = defaultValue;
+    }
   }
 
   @override
   get rawValue {
     if (val != null) {
       return val!;
-    }  else if(!required){
+    } else if (!required) {
       return null;
-    }
-    else if (defaultValue != null) {
+    } else if (defaultValue != null) {
       return defaultValue!;
     }
     if (paramType == ParamType.double || paramType == ParamType.int) {
@@ -85,44 +111,50 @@ class SimpleParameter<T> extends Parameter {
 
   void withDefaultValue(T? value) {
     defaultValue = value;
-    val=value;
+    val = value;
   }
-
 
   @override
   String get code {
-    if(!required&&val==null){
-        return '';
+    if (!required && val == null) {
+      return '';
     }
     if (info != null) {
-      if(paramType==ParamType.string){
+      if (paramType == ParamType.string) {
         return '${info!.code('\'$rawValue\'')},'.replaceAll(',,', ',');
       }
       return '${info!.code('$rawValue')},'.replaceAll(',,', ',');
     }
-    if(paramType==ParamType.string) {
+    if (paramType == ParamType.string) {
       return '\'$rawValue\'';
     }
     return '$rawValue';
   }
 }
-class ListParameter extends Parameter{
-  final List<Parameter> params=[];
-  final Parameter Function() parameterGenerator;
-  ListParameter({required String? displayName, ParameterInfo? info,required this.parameterGenerator}) : super(displayName, info, false);
 
+class ListParameter extends Parameter {
+  final List<Parameter> params = [];
+  final Parameter Function() parameterGenerator;
+
+  ListParameter(
+      {required String? displayName,
+      ParameterInfo? info,
+      required this.parameterGenerator})
+      : super(displayName, info, false);
 
   @override
   // TODO: implement code
   String get code {
-    String parametersCode='[';
-    for(final parameter in params){
-      if(parameter.info is InnerObjectParameterInfo){
-        parameter.withInfo(InnerObjectParameterInfo(innerObjectName: (parameter.info as InnerObjectParameterInfo).innerObjectName));
+    String parametersCode = '[';
+    for (final parameter in params) {
+      if (parameter.info is InnerObjectParameterInfo) {
+        parameter.withInfo(InnerObjectParameterInfo(
+            innerObjectName:
+                (parameter.info as InnerObjectParameterInfo).innerObjectName));
       }
-      parametersCode+='${(parameter).code},'.replaceAll(',,', ',');
+      parametersCode += '${(parameter).code},'.replaceAll(',,', ',');
     }
-    parametersCode+='],'.replaceAll(',,', ',');
+    parametersCode += '],'.replaceAll(',,', ',');
     if (info != null) {
       return '${info!.code(parametersCode)},'.replaceAll(',,', ',');
     }
@@ -138,10 +170,10 @@ class ListParameter extends Parameter{
   @override
   // TODO: implement value
   get value {
-   return params.map((e) => e.value).toList();
+    return params.map((e) => e.value).toList();
   }
-
 }
+
 class ChoiceValueParameter extends Parameter {
   final Map<String, dynamic> options;
   final dynamic defaultValue;
@@ -173,39 +205,48 @@ class ChoiceValueParameter extends Parameter {
 
   @override
   get code {
-    if(info==null||info is SimpleParameterInfo){
+    if (info == null || info is SimpleParameterInfo) {
       return value.toString();
     }
-   return info!.code(value.toString());
+    return info!.code(value.toString());
   }
 }
 
 class ChoiceParameter extends Parameter {
   final List<Parameter> options;
-  final int defaultValue;
+  late int defaultValue;
   Parameter? val;
+  String? nullParameterName;
 
   ChoiceParameter(
       {String? name,
       required this.options,
-      required this.defaultValue,
       bool required = true,
       this.val,
+      this.nullParameterName='none',
       ParameterInfo? info})
-      : super(name, info, required){
-    val=options[defaultValue];
+      : super(name, info, required) {
+    defaultValue=required?1:0;
+    options.insert(
+      0,
+      NullParameter(displayName: nullParameterName),
+    );
+    val = options[defaultValue];
+
   }
 
   @override
-  get value => val?.value;
+  get value {
+      return  val?.value;
+  }
 
   @override
-  Parameter get rawValue => val??options[defaultValue];
+  Parameter get rawValue => val ?? options[defaultValue];
 
   @override
   get code {
-    final paramCode=rawValue.code;
-    if(paramCode.isEmpty) {
+    final paramCode = rawValue.code;
+    if (paramCode.isEmpty) {
       return '';
     }
     return info != null ? info!.code(paramCode) : paramCode;
@@ -231,43 +272,51 @@ class ComplexParameter extends Parameter {
   // TODO: implement rawValue
   get rawValue => throw UnimplementedError();
 
-
   @override
   // TODO: implement code
   get code {
     String middle = '';
     for (final para in params) {
-      final paramCode=para.code;
-      if(paramCode.isNotEmpty) {
+      final paramCode = para.code;
+      if (paramCode.isNotEmpty) {
         middle += '$paramCode,'.replaceAll(',,', ',');
       }
     }
     return info?.code(middle) ?? middle;
   }
 }
+
 class ConstantValueParameter extends Parameter {
   dynamic constantValue;
   late String constantValueString;
   ParamType paramType;
-  ConstantValueParameter({String? displayName, ParameterInfo? info,String? constantValueInString,required this.constantValue,required this.paramType}) : super(displayName, info, true){
-    if(constantValueInString!=null){
-      constantValueString=constantValueInString;
-    }
-    else{
-     constantValueString=constantValue.toString();
+
+  ConstantValueParameter(
+      {String? displayName,
+      ParameterInfo? info,
+      String? constantValueInString,
+      required this.constantValue,
+      required this.paramType})
+      : super(displayName, info, true) {
+    if (constantValueInString != null) {
+      constantValueString = constantValueInString;
+    } else {
+      constantValueString = constantValue.toString();
     }
   }
 
   @override
   // TODO: implement code
   String get code {
-   if(info==null||info is SimpleParameterInfo) {
-     if(paramType==ParamType.string){
-       return '\'$constantValueString}\'';
-     }
-     return constantValueString;
-   }
-   return info!.code(paramType==ParamType.string?'\'$constantValueString}\'':constantValueString);
+    if (info == null || info is SimpleParameterInfo) {
+      if (paramType == ParamType.string) {
+        return '\'$constantValueString}\'';
+      }
+      return constantValueString;
+    }
+    return info!.code(paramType == ParamType.string
+        ? '\'$constantValueString}\''
+        : constantValueString);
   }
 
   @override
@@ -275,43 +324,52 @@ class ConstantValueParameter extends Parameter {
 
   @override
   get value => constantValue;
-
 }
-class NullParameter extends Parameter{
-  NullParameter({String? displayName, ParameterInfo? info, bool required=false}) : super(displayName, info, required);
+
+class NullParameter extends Parameter {
+  NullParameter(
+      {String? displayName, ParameterInfo? info, bool required = false})
+      : super(displayName, info, required);
+
   @override
-  String get code{
-   if((info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny==null)||info==null) {
-     return 'null';
-   }
-   return '';
+  String get code {
+    if ((info is InnerObjectParameterInfo &&
+            (info as InnerObjectParameterInfo).namedIfHaveAny == null) ||
+        info == null) {
+      return 'null';
+    }
+    return '';
   }
 
   @override
   get rawValue => null;
 
-
   @override
   get value => null;
-
 }
 
-class BooleanParameter extends Parameter{
+class BooleanParameter extends Parameter {
   bool val;
   late final String Function(bool) evaluate;
-  BooleanParameter({required String displayName, ParameterInfo? info, required bool required,required this.val,String Function(bool)? evaluate}) : super(displayName, info, required){
-    if(evaluate==null){
-      this.evaluate=(value)=>value.toString();
-    }
-    else{
-     this.evaluate=evaluate;
+
+  BooleanParameter(
+      {required String displayName,
+      ParameterInfo? info,
+      required bool required,
+      required this.val,
+      String Function(bool)? evaluate})
+      : super(displayName, info, required) {
+    if (evaluate == null) {
+      this.evaluate = (value) => value.toString();
+    } else {
+      this.evaluate = evaluate;
     }
   }
 
   @override
   // TODO: implement code
   String get code {
-    return info?.code(evaluate(val))??evaluate(val).toString();
+    return info?.code(evaluate(val)) ?? evaluate(val).toString();
   }
 
   @override
@@ -321,5 +379,4 @@ class BooleanParameter extends Parameter{
   @override
   // TODO: implement value
   get value => val;
-
 }

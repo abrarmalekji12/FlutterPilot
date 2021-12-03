@@ -9,6 +9,6 @@ class ImageData {
   ImageData(this.bytes,this.imagePath,this.imageName);
   @override
   String toString() {
-    return imagePath??'';
+    return imagePath!=null?'\'$imagePath\'':'';
   }
 }

@@ -7,6 +7,7 @@ import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
 import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
+import 'package:flutter_builder/cubit/parameter_build_cubit/parameter_build_cubit.dart';
 import 'package:flutter_builder/cubit/screen_config/screen_config_cubit.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
 import 'package:flutter_builder/enums.dart';
@@ -35,6 +36,7 @@ class _HomePageState extends State<HomePage> {
   final componentPropertyCubit = ComponentCreationCubit();
   final componentOperationCubit =
   ComponentOperationCubit(componentList['Scaffold']!());
+  final ParameterBuildCubit _parameterBuildCubit=ParameterBuildCubit();
   final visualBoxCubit = VisualBoxCubit();
   final screenConfigCubit = ScreenConfigCubit();
 
@@ -100,18 +102,22 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           const SizedBox(height: 20,),
                           Text(componentSelectionCubit
-                              .currentSelected.name,style: AppFontStyle.roboto(18,fontWeight: FontWeight.bold),),
+                              .currentSelected.name, style: AppFontStyle.roboto(
+                              18, fontWeight: FontWeight.bold),),
                           const SizedBox(height: 20,),
                           Expanded(
-                            child: ListView(
-                              controller: propertyScrollController,
-                              children: [
-                                for (final param in componentSelectionCubit
-                                    .currentSelected.parameters)
-                                  ParameterWidget(
-                                    parameter: param,
-                                  ),
-                              ],
+                            child: BlocProvider(
+                              create: (context) => _parameterBuildCubit,
+                              child: ListView(
+                                controller: propertyScrollController,
+                                children: [
+                                  for (final param in componentSelectionCubit
+                                      .currentSelected.parameters)
+                                    ParameterWidget(
+                                      parameter: param,
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
                         ],

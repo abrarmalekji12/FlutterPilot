@@ -6,6 +6,7 @@ import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
+import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
