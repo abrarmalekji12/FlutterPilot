@@ -140,45 +140,50 @@ class _HomePageState extends State<HomePage> {
         child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
           builder: (context, state) {
             return SizedBox(
-              width: screenConfigCubit.screenConfig.width,
+              // width: screenConfigCubit.screenConfig.width,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const ScreenConfigSelection(),
-                  GestureDetector(
-                    onTapDown: (event) {
-                      print(
-                          'tappp ${event.localPosition.dx} ${event.localPosition
-                              .dy}');
-                      final tappedComp = componentOperationCubit.rootComponent
-                          .searchTappedComponent(event.localPosition);
-                      if (tappedComp != null) {
-                        componentSelectionCubit.changeComponentSelection(
-                            tappedComp);
-                      }
-                    },
-                    child: Container(
-                      key: const GlobalObjectKey('device window'),
-                      width: screenConfigCubit.screenConfig.width,
-                      height: screenConfigCubit.screenConfig.height,
-                      color: Colors.white,
-                      child: Stack(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(1.0),
-                            child: BlocListener<ComponentCreationCubit,
-                                ComponentCreationState>(
-                              listener: (context, state) {
-                                // print(
-                                //     componentOperationCubit.rootComponent.code());
-                              },
-                              child: componentOperationCubit.rootComponent
-                                  .build(context),
-                            ),
+                  Expanded(
+                    child: Transform.scale(
+                      scale: 0.8,
+                      child: GestureDetector(
+                        onTapDown: (event) {
+                          print(
+                              'tappp ${event.localPosition.dx} ${event.localPosition
+                                  .dy}');
+                          final tappedComp = componentOperationCubit.rootComponent
+                              .searchTappedComponent(event.localPosition);
+                          if (tappedComp != null) {
+                            componentSelectionCubit.changeComponentSelection(
+                                tappedComp);
+                          }
+                        },
+                        child: Container(
+                          key: const GlobalObjectKey('device window'),
+                          width: screenConfigCubit.screenConfig.width,
+                          height: screenConfigCubit.screenConfig.height,
+                          color: Colors.white,
+                          child: Stack(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(1.0),
+                                child: BlocListener<ComponentCreationCubit,
+                                    ComponentCreationState>(
+                                  listener: (context, state) {
+                                    // print(
+                                    //     componentOperationCubit.rootComponent.code());
+                                  },
+                                  child: componentOperationCubit.rootComponent
+                                      .build(context),
+                                ),
+                              ),
+                              const BoundaryWidget(),
+                            ],
                           ),
-                          const BoundaryWidget(),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -200,6 +205,7 @@ class ScreenConfigSelection extends StatelessWidget {
     final cubit = Provider.of<ScreenConfigCubit>(context, listen: false);
     return SizedBox(
       width: 200,
+      height: 50,
       child: CustomDropdownButton<ScreenConfig>(
           style: AppFontStyle.roboto(14),
           value: cubit.screenConfig,
