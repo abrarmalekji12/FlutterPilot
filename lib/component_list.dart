@@ -132,50 +132,51 @@ class Parameters {
               innerObjectName: 'BoxDecoration', namedIfHaveAny: 'decoration'));
 
   static borderParameter() => ChoiceParameter(
-      name: 'border',
-      // info: NamedParameterInfo('border'),
-      options: [
-        ComplexParameter(
-          info: InnerObjectParameterInfo(
-              innerObjectName: 'Border.all', namedIfHaveAny: 'border'),
-          params: [
-            colorParameter()..withDefaultValue(const Color(0xffffffff)),
-            widthParameter()
-              ..withDefaultValue(2)
-              ..withRequired(true),
-          ],
-          name: 'all',
-          evaluate: (params) => Border.all(
-            color: params[0].value,
-            width: params[1].value,
+        name: 'border',
+        // info: NamedParameterInfo('border'),
+        options: [
+          ComplexParameter(
+            info: InnerObjectParameterInfo(
+                innerObjectName: 'Border.all', namedIfHaveAny: 'border'),
+            params: [
+              colorParameter()..withDefaultValue(const Color(0xffffffff)),
+              widthParameter()
+              .. withDisplayName('stroke-width')
+                ..withDefaultValue(2)
+                ..withRequired(true),
+            ],
+            name: 'all',
+            evaluate: (params) => Border.all(
+              color: params[0].value,
+              width: params[1].value,
+            ),
           ),
-        ),
-        ComplexParameter(
-          info: InnerObjectParameterInfo(
-              innerObjectName: 'Border', namedIfHaveAny: 'border'),
-          params: [
-            Parameters.borderSideParameter()
-              ..withInfo(NamedParameterInfo('left'))
-              ..withDisplayName('left'),
-            Parameters.borderSideParameter()
-              ..withInfo(NamedParameterInfo('top'))
-              ..withDisplayName('top'),
-            Parameters.borderSideParameter()
-              ..withInfo(NamedParameterInfo('right'))
-              ..withDisplayName('right'),
-            Parameters.borderSideParameter()
-              ..withInfo(NamedParameterInfo('bottom'))
-              ..withDisplayName('bottom'),
-          ],
-          name: 'only',
-          evaluate: (params) => Border(
-              left: params[0].value,
-              top: params[1].value,
-              right: params[2].value,
-              bottom: params[3].value),
-        ),
-      ],
-     );
+          ComplexParameter(
+            info: InnerObjectParameterInfo(
+                innerObjectName: 'Border', namedIfHaveAny: 'border'),
+            params: [
+              Parameters.borderSideParameter()
+                ..withInfo(NamedParameterInfo('left'))
+                ..withDisplayName('left'),
+              Parameters.borderSideParameter()
+                ..withInfo(NamedParameterInfo('top'))
+                ..withDisplayName('top'),
+              Parameters.borderSideParameter()
+                ..withInfo(NamedParameterInfo('right'))
+                ..withDisplayName('right'),
+              Parameters.borderSideParameter()
+                ..withInfo(NamedParameterInfo('bottom'))
+                ..withDisplayName('bottom'),
+            ],
+            name: 'only',
+            evaluate: (params) => Border(
+                left: params[0].value,
+                top: params[1].value,
+                right: params[2].value,
+                bottom: params[3].value),
+          ),
+        ],
+      );
 
   static alignmentParameter() => ChoiceValueParameter(
       name: 'alignment',
@@ -356,50 +357,49 @@ class Parameters {
       defaultValue: 1);
 
   static ChoiceParameter borderSideParameter() => ChoiceParameter(
-      info: NamedParameterInfo('borderSide'),
-      options: [
-        ComplexParameter(
-            info: InnerObjectParameterInfo(
-              innerObjectName: 'BorderSide',
-            ),
-            params: [
-              colorParameter(),
-              widthParameter()
-                ..withRequired(true)
-                ..withDefaultValue(2)
-            ],
-            evaluate: (params) {
-              return BorderSide(
-                color: params[0].value,
-                width: params[1].value,
-              );
-            }),
-        ConstantValueParameter(
-            displayName: 'None',
-            constantValue: BorderSide.none,
-            constantValueInString: 'BorderSide.none',
-            paramType: ParamType.other)
-      ],);
-
-  static shapeBorderParameter() => ChoiceParameter(
-          options: [
-            NullParameter(displayName: 'None'),
-            ComplexParameter(
-              name: 'Round Rectangular Border',
+        info: NamedParameterInfo('borderSide'),
+        options: [
+          ComplexParameter(
+              info: InnerObjectParameterInfo(
+                innerObjectName: 'BorderSide',
+              ),
               params: [
-                borderRadiusParameter(),
-                borderSideParameter(),
+                colorParameter(),
+                widthParameter()
+                  .. withDisplayName('stroke-width')
+                  ..withRequired(true)
+                  ..withDefaultValue(2)
               ],
               evaluate: (params) {
-                return RoundedRectangleBorder(
-                    borderRadius: params[0].value, side: params[1].value);
-              },
-              info: InnerObjectParameterInfo(
-                  innerObjectName: 'RoundedRectangleBorder'),
-            )
+                return BorderSide(
+                  color: params[0].value,
+                  width: params[1].value,
+                );
+              }),
+          ConstantValueParameter(
+              displayName: 'None',
+              constantValue: BorderSide.none,
+              constantValueInString: 'BorderSide.none',
+              paramType: ParamType.other)
+        ],
+      );
+
+  static shapeBorderParameter() => ChoiceParameter(options: [
+        NullParameter(displayName: 'None'),
+        ComplexParameter(
+          name: 'Round Rectangular Border',
+          params: [
+            borderRadiusParameter(),
+            borderSideParameter(),
           ],
-          name: 'Shape Border',
-          info: NamedParameterInfo('shape'));
+          evaluate: (params) {
+            return RoundedRectangleBorder(
+                borderRadius: params[0].value, side: params[1].value);
+          },
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'RoundedRectangleBorder'),
+        )
+      ], name: 'Shape Border', info: NamedParameterInfo('shape'));
 
   static SimpleParameter widthFactorParameter() => SimpleParameter<double>(
       paramType: ParamType.double,
@@ -675,14 +675,14 @@ class CAppBar extends CustomNamedHolder {
         ], {
           'title': null,
           'leading': null,
-        });
+        }, []);
 
   @override
   Widget create(BuildContext context) {
     return AppBar(
       backgroundColor: parameters[0].value,
-      title: children['title']?.build(context),
-      leading: children['leading']?.build(context),
+      title: childMap['title']?.build(context),
+      leading: childMap['leading']?.build(context),
     );
   }
 }
@@ -706,21 +706,23 @@ class CScaffold extends CustomNamedHolder {
           'floatingActionButton': null,
           'bottomNavigationBar': null,
           'bottomSheet': null,
-        });
+        }, [
+          'actions'
+        ]);
 
   @override
   Widget create(BuildContext context) {
     return Scaffold(
-      appBar: children['appBar'] != null
+      appBar: childMap['appBar'] != null
           ? PreferredSize(
-              child: children['appBar']!.build(context),
-              preferredSize: Size(-1, children['appBar']!.parameters[1].value))
+              child: childMap['appBar']!.build(context),
+              preferredSize: Size(-1, childMap['appBar']!.parameters[1].value))
           : null,
-      body: children['body']?.build(context),
+      body: childMap['body']?.build(context),
       backgroundColor: parameters[0].value,
-      floatingActionButton: children['floatingActionButton']?.build(context),
-      bottomNavigationBar: children['bottomNavigationBar']?.build(context),
-      bottomSheet: children['bottomSheet']?.build(context),
+      floatingActionButton: childMap['floatingActionButton']?.build(context),
+      bottomNavigationBar: childMap['bottomNavigationBar']?.build(context),
+      bottomSheet: childMap['bottomSheet']?.build(context),
       resizeToAvoidBottomInset: parameters[1].value,
     );
   }
@@ -822,7 +824,9 @@ class CPadding extends Holder {
 }
 
 class CClipRRect extends Holder {
-  CClipRRect() : super('ClipRRect', [Parameters.borderRadiusParameter() .. withRequired(true)]);
+  CClipRRect()
+      : super('ClipRRect',
+            [Parameters.borderRadiusParameter()..withRequired(true)]);
 
   @override
   Widget create(BuildContext context) {

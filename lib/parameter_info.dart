@@ -3,7 +3,7 @@ abstract class ParameterInfo {
   String code(String value);
 }
 
-class NamedParameterInfo extends ParameterInfo {
+class NamedParameterInfo extends ParameterInfo  {
   final String name;
 
   NamedParameterInfo(this.name);

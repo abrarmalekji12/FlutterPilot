@@ -234,25 +234,30 @@ abstract class Holder extends Component {
 }
 
 abstract class CustomNamedHolder extends Component {
-  Map<String, Component?> children = {};
+  Map<String, Component?> childMap = {};
+  Map<String, List<Component>> childrenMap = {};
+
   late Map<String, List<String>?> selectable;
 
-  CustomNamedHolder(String name, List<Parameter> parameters, this.selectable)
+  CustomNamedHolder(String name, List<Parameter> parameters, this.selectable,List<String> childrenMap)
       : super(name, parameters) {
     for (final child in selectable.keys) {
-      children[child] = null;
+      childMap[child] = null;
+    }
+    for(final children in childrenMap){
+      this.childrenMap[children]=[];
     }
   }
 
   void updateChildWithKey(String key, Component? component) {
-    children[key] = component;
+    childMap[key] = component;
     component?.setParent(this);
   }
   void updateChild(Component? oldComponent, Component? component) {
     component?.setParent(this);
-    for(final entry in children.entries){
+    for(final entry in childMap.entries){
       if(entry.value==oldComponent){
-        children[entry.key]=component;
+        childMap[entry.key]=component;
         return;
       }
     }
@@ -261,7 +266,7 @@ abstract class CustomNamedHolder extends Component {
   Component? searchTappedComponent(Offset offset) {
     if (boundary?.contains(offset) ?? false) {
       Component? component,depthComponent;
-      for (final child in children.values) {
+      for (final child in childMap.values) {
         if (child == null) {
           continue;
         }
@@ -294,9 +299,9 @@ abstract class CustomNamedHolder extends Component {
     middle = middle.replaceAll(',', ',\n');
 
     String childrenCode = '';
-    for (final child in children.keys) {
-      if (children[child] != null) {
-        childrenCode += '$child:${children[child]!.code()}';
+    for (final child in childMap.keys) {
+      if (childMap[child] != null) {
+        childrenCode += '$child:${childMap[child]!.code()}';
       }
     }
     return '$name(\n$middle$childrenCode\n),';
@@ -305,15 +310,18 @@ abstract class CustomNamedHolder extends Component {
   // TODO: implement type
   int get type => 4;
 
-  void replaceChild(Component oldComp, Component? comp) {
-    late final String compKey;
-    for(final String key in children.keys){
-      if(children[key]==oldComp){
+  String? replaceChild(Component oldComp, Component? comp) {
+    late final String? compKey;
+    for(final String key in childMap.keys){
+      if(childMap[key]==oldComp){
         compKey=key;
         break;
       }
     }
-    children[compKey]=comp;
-    comp?.setParent(this);
+    if(compKey!=null){
+      childMap[compKey]=comp;
+      comp?.setParent(this);
+      return compKey;
+    }
   }
 }

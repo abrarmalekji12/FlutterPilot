@@ -51,6 +51,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    // FlutterError.onError = onErrorIgnoreOverflowErrors;
+
     componentSelectionCubit = ComponentSelectionCubit(
         currentSelected: componentOperationCubit.rootComponent);
   }
@@ -176,8 +178,10 @@ class _HomePageState extends State<HomePage> {
                                     // print(
                                     //     componentOperationCubit.rootComponent.code());
                                   },
-                                  child: componentOperationCubit.rootComponent
-                                      .build(context),
+                                  child: OverflowBox(
+                                    child: componentOperationCubit.rootComponent
+                                        .build(context),
+                                  ),
                                 ),
                               ),
                               const BoundaryWidget(),
@@ -194,6 +198,30 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  void onErrorIgnoreOverflowErrors(
+      FlutterErrorDetails details, {
+        bool forceReport = false,
+      }) {
+
+    bool ifIsOverflowError = false;
+
+    // Detect overflow error.
+    var exception = details.exception;
+    if (exception is FlutterError) {
+      ifIsOverflowError = !exception.diagnostics.any(
+              (e) => e.value.toString().startsWith("A RenderFlex overflowed by"));
+    }
+
+    // Ignore if is overflow error.
+    if (ifIsOverflowError) {
+      print('Overflow error.');
+      visualBoxCubit.enableError('Error happened');
+
+    } else {
+      FlutterError.dumpErrorToConsole(details, forceReport: forceReport);
+    }
   }
 }
 

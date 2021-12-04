@@ -8,13 +8,9 @@ import 'constant/app_colors.dart';
 import 'ui/home_page.dart';
 
 void main() {
-  runZonedGuarded(() {
-    runApp(const MyApp());
-  },(Object error, StackTrace stack){
-
-  });
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -22,24 +18,25 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+
     return GetMaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter Visual Builder',
       scrollBehavior: MyCustomScrollBehavior(),
       theme: ThemeData(
-        visualDensity: VisualDensity.standard,
-        primaryColor: AppColors.theme
-      ),
+          visualDensity: VisualDensity.standard, primaryColor: AppColors.theme),
       home: const HomePage(),
     );
   }
+
+
 }
+
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
   // Override behavior methods and getters like dragDevices
   @override
   Set<PointerDeviceKind> get dragDevices => {
-    PointerDeviceKind.touch,
-    PointerDeviceKind.mouse,
-    // etc.
-  };
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        // etc.
+      };
 }
-
