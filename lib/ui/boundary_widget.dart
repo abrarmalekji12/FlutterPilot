@@ -97,16 +97,16 @@ class BoundaryWidget extends StatelessWidget {
     Component? tracer = object;
     List<List<Parameter>> paramList = [];
     while (tracer != original) {
-      print('TRACER ${tracer?.name}');
+      // print('TRACER ${tracer?.name}');
       paramList.add(tracer!.parameters);
       tracer = tracer.parent;
     }
-    print('TRACER 1 ${tracer?.name}');
+    // print('TRACER 1 ${tracer?.name}');
     tracer = copy;
     for (final param in paramList.reversed) {
       tracer = findChildWithParam(tracer!, param);
     }
-    print('TRACER 2 ${tracer?.name}');
+    // print('TRACER 2 ${tracer?.name}');
 
     return tracer!;
   }

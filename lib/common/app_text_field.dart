@@ -20,6 +20,7 @@ class AppTextField extends StatelessWidget {
         changedValue=value;
         onChange?.call(value);
       },
+      controller: textFieldController,
       decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(horizontal: 10),
           enabled: true,

@@ -14,6 +14,7 @@ final componentList = {
   'AppBar': () => CAppBar(),
   'Row': () => CRow(),
   'Column': () => CColumn(),
+  'Stack':()=> CStack(),
   'ListView': () => CListView(),
   'Flex': () => CFlex(),
   'Padding': () => CPadding(),
@@ -800,6 +801,20 @@ class CColumn extends MultiHolder {
       mainAxisAlignment: (parameters[0] as ChoiceValueParameter).value,
       crossAxisAlignment: (parameters[1] as ChoiceValueParameter).value,
       mainAxisSize: (parameters[2] as ChoiceValueParameter).value,
+      children: children.map((e) => e.build(context)).toList(),
+    );
+  }
+}
+class CStack extends MultiHolder {
+  CStack()
+      : super('Stack', [
+        Parameters.alignmentParameter(),
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Stack(
+      alignment: parameters[0].value,
       children: children.map((e) => e.build(context)).toList(),
     );
   }

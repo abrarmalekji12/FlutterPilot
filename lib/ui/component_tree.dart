@@ -8,6 +8,7 @@ import 'package:flutter_builder/common/custom_popup_menu_button.dart';
 import 'package:flutter_builder/component_model.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
+import 'package:flutter_builder/cubit/component_creation/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
 import 'package:flutter_builder/parameter_model.dart';
@@ -52,11 +53,38 @@ class _ComponentTreeState extends State<ComponentTree> {
                     ),
                     Padding(
                       padding: const EdgeInsets.all(10),
-                      child: Text(
-                        'Custom Widgets',
-                        style: AppFontStyle.roboto(14,
-                            color: const Color(0xff494949),
-                            fontWeight: FontWeight.bold),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Custom Widgets',
+                            style: AppFontStyle.roboto(14,
+                                color: const Color(0xff494949),
+                                fontWeight: FontWeight.bold),
+                          ),
+                          InkWell(
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () {
+                              //ADD Custom Widgtes
+                              showCustomWidgetRename(
+                                  context, 'Enter widget name', (name) {
+                                Provider.of<ComponentOperationCubit>(context,
+                                        listen: false)
+                                    .addCustomComponent(name);
+                                Get.back();
+                              });
+                            },
+                            child: const CircleAvatar(
+                              radius: 10,
+                              backgroundColor: AppColors.theme,
+                              child: Icon(
+                                Icons.add,
+                                size: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     for (CustomComponent comp
@@ -92,7 +120,10 @@ class _ComponentTreeState extends State<ComponentTree> {
                           padding: const EdgeInsets.all(10),
                           child: getSublist(comp.root!, comp),
                         ),
-                    ]
+                    ],
+                    const SizedBox(
+                      height: 100,
+                    ),
                   ],
                 ),
               ),
@@ -101,6 +132,50 @@ class _ComponentTreeState extends State<ComponentTree> {
         );
       },
     );
+  }
+
+  void showCustomWidgetRename(
+      BuildContext context, String title, Function(String) onSubmit) {
+    CustomDialog.show(
+        context,
+        Container(
+          padding: const EdgeInsets.all(15),
+          color: Colors.white,
+          width: 500,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: AppFontStyle.roboto(14, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              SizedBox(
+                height: 40,
+                child: AppTextField(
+                  value: '',
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              AppButton(
+                height: 40,
+                title: 'create',
+                onPressed: () {
+                  if (AppTextField.changedValue.length > 1 &&
+                      !AppTextField.changedValue.contains(' ') &&
+                      !AppTextField.changedValue.contains('.')) {
+                    onSubmit(AppTextField.changedValue);
+                  }
+                },
+              )
+            ],
+          ),
+        ));
   }
 
   Widget getSublist(Component component, Component ancestor) {
@@ -121,12 +196,33 @@ class _ComponentTreeState extends State<ComponentTree> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 5, top: 5),
-            child: Column(
-              children: [
-                for (final comp in component.children)
-                  getSublist(comp, ancestor)
-              ],
+            padding: const EdgeInsets.only(left: 5, top: 0),
+            child: SizedBox(
+              height: getCalculatedHeight(component),
+              child: ReorderableListView.builder(
+                shrinkWrap: true,
+                restorationId: component.toString(),
+                onReorder: (int oldIndex, int newIndex) {
+                  print('INDEX $oldIndex $newIndex');
+                  if (oldIndex < newIndex) {
+                    newIndex -= 1;
+                  }
+                  // final old = component.children[oldIndex];
+                  // component.children[oldIndex] = component.children[newIndex];
+                  // component.children[newIndex] = old;
+                  final old= component.children.removeAt(oldIndex);
+                  component.children.insert(newIndex,old);
+                  Provider.of<ComponentOperationCubit>(context, listen: false)
+                      .arrangeComponent(context);
+                },
+                itemBuilder: (BuildContext context, int index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 30),
+                    key: GlobalObjectKey(component.children[index]),
+                    child: getSublist(component.children[index], ancestor),
+                  );
+                }, itemCount: component.children.length,
+              ),
             ),
           ),
         ],
@@ -144,7 +240,7 @@ class _ComponentTreeState extends State<ComponentTree> {
           ),
           if (component.child != null) ...[
             Padding(
-              padding: const EdgeInsets.only(left: 5, top: 5),
+              padding: const EdgeInsets.only(left: 5, top: 0),
               child: getSublist(component.child!, ancestor),
             ),
           ]
@@ -162,19 +258,20 @@ class _ComponentTreeState extends State<ComponentTree> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 5, top: 5),
+            padding: const EdgeInsets.only(left: 5, top: 0),
             child: Column(children: [
               for (final child in component.childMap.keys) ...[
                 Column(
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           child,
                           style: AppFontStyle.roboto(12,
-                              color: Colors.grey.shade700),
+                              color: const Color(0xff494949),
+                              fontWeight: FontWeight.w500),
                         ),
-                        const Spacer(),
                         ComponentModificationMenu(
                             component: component,
                             customNamed: child,
@@ -218,10 +315,37 @@ class _ComponentTreeState extends State<ComponentTree> {
       ],
     );
   }
+
+  double getCalculatedHeight(Component component) {
+    switch (component.type) {
+      case 1:
+      case 5:
+        return 35;
+      case 2:
+        double height = 35;
+        for (Component comp in (component as MultiHolder).children) {
+          height += getCalculatedHeight(comp);
+        }
+        return height;
+      case 3:
+        return (component as Holder).child != null
+            ? 35 + getCalculatedHeight(component.child!)
+            : 35;
+      case 4:
+        double height = 0;
+        for (Component? comp
+            in (component as CustomNamedHolder).childMap.values) {
+          if (comp != null) {
+            height += getCalculatedHeight(comp);
+          }
+        }
+        return height;
+    }
+    return 0;
+  }
 }
 
 class ComponentModificationMenu extends StatelessWidget {
-  static const operations = ['remove'];
   final Component component;
   final Component ancestor;
 
@@ -245,50 +369,19 @@ class ComponentModificationMenu extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             onTap: () {
               //rename
-              CustomDialog.show(
-                  context,
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    color: Colors.white,
-                    width: 500,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Rename ${component.name}',
-                          style: AppFontStyle.roboto(14,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        SizedBox(
-                          height: 40,
-                          child: AppTextField(
-                            value: component.name,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        AppButton(
-                          title: 'ok',
-                          onPressed: () {
-                            if (AppTextField.changedValue.length > 1 &&
-                                !AppTextField.changedValue.contains(' ') &&
-                                !AppTextField.changedValue.contains('.')) {
-                              component.name = AppTextField.changedValue;
-                              Get.back();
-                              Provider.of<ComponentOperationCubit>(context,
-                                      listen: false)
-                                  .emit(ComponentUpdatedState());
-                            }
-                          },
-                        )
-                      ],
-                    ),
-                  ));
+              showCustomWidgetRename(
+                context,
+                'Rename ${component.name}',(value){
+                component.name = AppTextField.changedValue;
+                for (Component comp
+                in (component as CustomComponent).objects) {
+                  comp.name = component.name;
+                }
+                Get.back();
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .emit(ComponentUpdatedState());
+              }
+              );
             },
             child: const Icon(
               Icons.edit,
@@ -302,7 +395,8 @@ class ComponentModificationMenu extends StatelessWidget {
         ],
         if (component is MultiHolder ||
             (component is Holder && (component as Holder).child == null) ||
-            (component is CustomComponent &&
+            (component.type == 5 &&
+                component == ancestor &&
                 (component as CustomComponent).root == null) ||
             (customNamed != null &&
                 (component as CustomNamedHolder).childMap[customNamed!] ==
@@ -437,7 +531,8 @@ class ComponentModificationMenu extends StatelessWidget {
                       (component.type == 2 &&
                           ((component.parent?.type == 4 && compChildren <= 1) ||
                               component.parent?.type == 2 ||
-                              ((component.parent?.type == 3||component.parent?.type == 5) &&
+                              ((component.parent?.type == 3 ||
+                                      component.parent?.type == 5) &&
                                   compChildren < 2))) ||
                       (component.type == 3 &&
                           ([2, 3, 4, 5].contains(component.parent?.type))) ||
@@ -449,6 +544,9 @@ class ComponentModificationMenu extends StatelessWidget {
                 list.add('remove');
               } else if (component.type == 5 && component == ancestor) {
                 list.add('delete');
+              }
+              if(component.type!=5){
+                list.add('create custom widget');
               }
               if (component != ancestor &&
                   customNamed == null &&
@@ -478,102 +576,19 @@ class ComponentModificationMenu extends StatelessWidget {
                   .toList();
             },
             onSelected: (e) {
-              if (e == 'remove') {
+              if(e=='create custom widget'){
+                showCustomWidgetRename(context, 'Enter name of widget',(value){
+                  Provider.of<ComponentOperationCubit>(context, listen: false).addCustomComponent(value,root: component);
+                  Get.back();
+                });
+              }
+              else if (e == 'delete') {
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .deleteCustomComponent(component as CustomComponent);
+              } else if (e == 'remove') {
                 final parent = component.parent!;
-                switch (parent.type) {
-                  case 2:
-                    (parent as MultiHolder).removeChild(component);
-                    switch (component.type) {
-                      case 1:
-                        break;
-                      case 2:
-                        parent.addChildren((component as MultiHolder).children);
-                        (component as MultiHolder).children.clear();
-                        break;
-                      case 3:
-                        if ((component as Holder).child != null) {
-                          parent.addChild((component as Holder).child!);
-                        }
-                        break;
-                    }
-
-                    break;
-                  case 3:
-                    switch (component.type) {
-                      case 1:
-                        (parent as Holder).updateChild(null);
-                        break;
-                      case 2:
-                        if ((component as MultiHolder).children.length == 1) {
-                          (parent as Holder).updateChild(
-                              (component as MultiHolder).children.first);
-                        }
-                        else{
-                          (parent as Holder).updateChild(null);
-                        }
-                        break;
-                      case 3:
-                        (parent as Holder)
-                            .updateChild((component as Holder).child);
-                        break;
-                      case 4:
-                        (parent as Holder).updateChild(null);
-                        break;
-                      case 5:
-                        (parent as Holder).updateChild(null);
-                        break;
-                    }
-                    break;
-                  case 4:
-                    switch (component.type) {
-                      case 1:
-                        (parent as CustomNamedHolder)
-                            .replaceChild(component, null);
-                        break;
-                      case 2:
-                        final key = (parent as CustomNamedHolder)
-                            .replaceChild(component, null);
-                        if (key != null &&
-                            (component as MultiHolder).children.length == 1) {
-                          parent.childMap[key] =
-                              (component as MultiHolder).children.first;
-                          parent.childMap[key]?.setParent(parent);
-                        }
-                        break;
-                      case 3:
-                        final key = (parent as CustomNamedHolder)
-                            .replaceChild(component, null);
-                        if (key != null) {
-                          parent.childMap[key] = (component as Holder).child;
-                          (component as Holder).child?.setParent(parent);
-                        }
-                        break;
-                      case 4:
-                        (parent as CustomNamedHolder)
-                            .updateChild(component, null);
-                        break;
-                      case 5:
-                        (parent as CustomNamedHolder)
-                            .updateChild(component, null);
-                        break;
-                    }
-
-                    break;
-                  case 5:
-                    switch (component.type) {
-                      case 3:
-                        (parent as CustomComponent).root?.setParent(null);
-                        parent.root=(component as Holder).child;
-                        if((component as Holder).child!=null){
-                          (component as Holder).child!.setParent(parent);
-                        }
-                        break;
-                      default:
-                        (parent as CustomComponent).root?.setParent(null);
-                        (parent).root = null;
-
-                    }
-                }
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .removeComponent(component);
                 if (ancestor is CustomComponent) {
                   (ancestor as CustomComponent).notifyChanged();
                 }
@@ -813,6 +828,50 @@ class ComponentModificationMenu extends StatelessWidget {
         break;
     }
   }
+
+  void showCustomWidgetRename(BuildContext context, String title,Function(String) onChange) {
+    CustomDialog.show(
+        context,
+        Container(
+          padding: const EdgeInsets.all(15),
+          color: Colors.white,
+          width: 500,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: AppFontStyle.roboto(14, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              SizedBox(
+                height: 40,
+                child: AppTextField(
+                  value: component.name,
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              AppButton(
+                height: 45,
+                title: 'ok',
+                onPressed: () {
+                  if (AppTextField.changedValue.length > 1 &&
+                      !AppTextField.changedValue.contains(' ') &&
+                      !AppTextField.changedValue.contains('.')) {
+                    onChange.call(AppTextField.changedValue);
+
+                  }
+                },
+              )
+            ],
+          ),
+        ));
+  }
 }
 
 class ComponentTile extends StatelessWidget {
@@ -826,25 +885,25 @@ class ComponentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(4),
       onTap: () {
         Provider.of<ComponentSelectionCubit>(context, listen: false)
             .changeComponentSelection(component, root: ancestor);
       },
       child: Card(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(4),
             side: Provider.of<ComponentSelectionCubit>(context, listen: false)
                         .currentSelected ==
                     component
-                ? const BorderSide(color: Colors.blueAccent, width: 2.5)
+                ? const BorderSide(color: Colors.blueAccent, width: 2)
                 : const BorderSide()),
         elevation: 2,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           child: Text(
             component.name,
-            style: AppFontStyle.roboto(14,
+            style: AppFontStyle.roboto(13,
                 color: Colors.black, fontWeight: FontWeight.w500),
           ),
         ),

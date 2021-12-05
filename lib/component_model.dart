@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
 import 'package:flutter_builder/parameter_model.dart';
-import 'package:flutter_builder/ui/home_page.dart';
 import 'package:provider/provider.dart';
 
 import 'component_list.dart';
@@ -23,6 +21,7 @@ class MainExecution {
     (rootComponent as CustomNamedHolder)
         .updateChildWithKey('home',customCopy);
   }
+
 
   void setRoot(Component component) {
     rootComponent = component;
@@ -159,7 +158,7 @@ abstract class MultiHolder extends Component {
     middle = middle.replaceAll(',', ',\n');
     String childrenCode = '';
     for (final Component comp in children) {
-      childrenCode += '${comp.code()},';
+      childrenCode += '${comp.code()},'.replaceAll(',,', ',');
     }
     return '$name(\n${middle}children:[\n$childrenCode\n],\n)';
   }
@@ -184,7 +183,7 @@ abstract class MultiHolder extends Component {
     final index = children.indexOf(old);
     children.remove(old);
     children.insert(index, component);
-    component.parent = this;
+    component.setParent(this);
   }
 
   @override

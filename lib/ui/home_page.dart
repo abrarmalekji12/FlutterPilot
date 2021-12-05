@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             children: [
               const SizedBox(
-                width: 250,
+                width: 300,
                 child: ComponentTree(),
               ),
               Expanded(
@@ -148,12 +148,13 @@ class _HomePageState extends State<HomePage> {
           gradient: RadialGradient(colors: [
         Color(0xffd3d3d3),
         Color(0xffffffff),
-      ], tileMode: TileMode.decal, radius: 6, focalRadius: 0.5)),
+      ], tileMode: TileMode.clamp, radius: 20, focalRadius: 0.1)),
       child: Center(
         child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
           builder: (context, state) {
             return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
               builder: (context, state) {
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -185,8 +186,8 @@ class _HomePageState extends State<HomePage> {
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.all(1.0),
-                                    child: BlocListener<ComponentCreationCubit,
-                                        ComponentCreationState>(
+                                    child: BlocListener<ComponentOperationCubit,
+                                        ComponentOperationState>(
                                       listener: (context, state) {
                                         // print(
                                         //     componentOperationCubit.rootComponent.code());
