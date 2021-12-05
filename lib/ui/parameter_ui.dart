@@ -5,8 +5,7 @@ import 'package:flutter_builder/common/app_switch.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
-import 'package:flutter_builder/cubit/component_property/component_creation_cubit.dart';
-import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
+import 'package:flutter_builder/cubit/component_creation/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/parameter_build_cubit/parameter_build_cubit.dart';
 import 'package:flutter_builder/other_model.dart';
 import 'package:image_picker/image_picker.dart';
@@ -60,18 +59,20 @@ class ChoiceParameterWidget extends StatelessWidget {
                                         .parameterChanged(parameter);
                                     Provider.of<ComponentCreationCubit>(context,
                                             listen: false)
-                                        .changedProperty(context);
+                                        .changedComponent();
                                   }),
                               const SizedBox(
                                 width: 5,
                               ),
                               if (subParam.displayName != null)
-                                Text(
-                                  subParam.displayName!,
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold),
+                                Flexible(
+                                  child: Text(
+                                    subParam.displayName!,
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold),
+                                  ),
                                 ),
                             ],
                           ),
@@ -146,8 +147,9 @@ class SimpleParameterWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -196,7 +198,7 @@ class SimpleParameterWidget extends StatelessWidget {
                 parameter.val = null;
               }
               Provider.of<ComponentCreationCubit>(context, listen: false)
-                  .changedProperty(context);
+                  .changedComponent();
             },
             textAlignVertical:  TextAlignVertical.center,
             decoration: InputDecoration(
@@ -220,7 +222,6 @@ class SimpleParameterWidget extends StatelessWidget {
         return SizedBox(
           width: 150,
           child: TextField(
-            // key:  parameter.name=='color'?GlobalObjectKey('simple ${parameter.name}'):null,
             controller: TextEditingController.fromValue(
                 TextEditingValue(text: '${parameter.rawValue ?? ''}')),
             onChanged: (value) {
@@ -236,7 +237,7 @@ class SimpleParameterWidget extends StatelessWidget {
                 parameter.val = null;
               }
               Provider.of<ComponentCreationCubit>(context, listen: false)
-                  .changedProperty(context);
+                  .changedComponent();
             },
             decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 10),
@@ -273,7 +274,7 @@ class SimpleParameterWidget extends StatelessWidget {
                 parameter.val = color;
                 setStateForColor(() {});
                 Provider.of<ComponentCreationCubit>(context, listen: false)
-                    .changedProperty(context);
+                    .changedComponent();
               },
             ),
           );
@@ -288,7 +289,7 @@ class SimpleParameterWidget extends StatelessWidget {
                 onChanged: (i) {
                   parameter.val = i;
                   Provider.of<ComponentCreationCubit>(context, listen: false)
-                      .changedProperty(context);
+                      .changedComponent();
                   setStateForSlider(() {});
                 }),
           );
@@ -307,7 +308,7 @@ class SimpleParameterWidget extends StatelessWidget {
                     parameter.val = ImageData(bytes, value.name, value.path);
                     setStateForImage(() {});
                     Provider.of<ComponentCreationCubit>(context, listen: false)
-                        .changedProperty(context);
+                        .changedComponent();
                   });
                 }
               });
@@ -469,7 +470,7 @@ class ChoiceValueParameterWidget extends StatelessWidget {
                     Provider.of<ParameterBuildCubit>(context, listen: false)
                         .parameterChanged(parameter);
                     Provider.of<ComponentCreationCubit>(context, listen: false)
-                        .changedProperty(context);
+                        .changedComponent();
                   },
                 ));
           },
@@ -550,7 +551,7 @@ class BooleanParameterWidget extends StatelessWidget {
                     Provider.of<ParameterBuildCubit>(context, listen: false)
                         .parameterChanged(parameter);
                     Provider.of<ComponentCreationCubit>(context, listen: false)
-                        .changedProperty(context);
+                        .changedComponent();
                   });
             },
           )

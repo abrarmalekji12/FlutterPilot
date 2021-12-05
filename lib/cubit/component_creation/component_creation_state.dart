@@ -6,6 +6,10 @@ abstract class ComponentCreationState {}
 class ComponentCreationInitial extends ComponentCreationState {}
 
 class ComponentCreationChangeState extends ComponentCreationState {
+  ComponentCreationChangeState();
+}
+class CustomComponentCreationChangeState extends ComponentCreationState {
   final Component rebuildComponent;
-  ComponentCreationChangeState(this.rebuildComponent);
+  final Component? ancestor;
+  CustomComponentCreationChangeState(this.rebuildComponent,this.ancestor);
 }

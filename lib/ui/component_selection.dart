@@ -28,8 +28,8 @@ class _ComponentSelectionState extends State<ComponentSelection> {
         itemBuilder: (context, i) {
           return InkWell(
             onTap: () {
-              Provider.of<ComponentSelectionCubit>(context, listen: false)
-                  .changeComponentSelection(componentList[componentKeys[i]]!());
+              // Provider.of<ComponentSelectionCubit>(context, listen: false)
+              //     .changeComponentSelection(componentList[componentKeys[i]]!());
             },
             child: Container(
               padding: const EdgeInsets.all(10),

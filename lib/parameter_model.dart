@@ -36,20 +36,34 @@ abstract class Parameter {
     this.info = info;
   }
 
-  void withRequired(bool required) {
+  void withRequired(bool required,{String? nullParameterName='None'}) {
+    if(this.required==required) {
+      return;
+    }
     this.required = required;
-
+    if(this is SimpleParameter){
+      if(required){
+        (this as SimpleParameter).val=(this as SimpleParameter).defaultValue;
+      }
+      else{
+        (this as SimpleParameter).val=null;
+      }
+    }else {
       switch(runtimeType){
         case ChoiceParameter :
           if(required) {
-            (this as ChoiceParameter).defaultValue = 1;
+            (this as ChoiceParameter).options.removeAt(0);
           }
           else{
-            (this as ChoiceParameter).defaultValue = 0;
+            (this as ChoiceParameter).options.insert(
+              0,
+              NullParameter(displayName: nullParameterName),
+            );
           }
           (this as ChoiceParameter).val = (this as ChoiceParameter).options[ (this as ChoiceParameter).defaultValue];
           break;
       }
+    }
   }
 }
 
@@ -214,7 +228,7 @@ class ChoiceValueParameter extends Parameter {
 
 class ChoiceParameter extends Parameter {
   final List<Parameter> options;
-  late int defaultValue;
+  late int defaultValue=0;
   Parameter? val;
   String? nullParameterName;
 
@@ -226,11 +240,12 @@ class ChoiceParameter extends Parameter {
       this.nullParameterName='none',
       ParameterInfo? info})
       : super(name, info, required) {
-    defaultValue=required?1:0;
-    options.insert(
+    if(!required) {
+      options.insert(
       0,
       NullParameter(displayName: nullParameterName),
     );
+    }
     val = options[defaultValue];
 
   }
@@ -246,7 +261,7 @@ class ChoiceParameter extends Parameter {
   @override
   get code {
     final paramCode = rawValue.code;
-    if (paramCode.isEmpty) {
+    if (paramCode.isEmpty||(info!=null&&(info is NamedParameterInfo||(info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny!=null))&&paramCode=='null')) {
       return '';
     }
     return info != null ? info!.code(paramCode) : paramCode;

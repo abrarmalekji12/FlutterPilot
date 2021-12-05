@@ -9,15 +9,12 @@ import 'package:provider/provider.dart';
 
 import '../../component_model.dart';
 
-part 'component_property_state.dart';
+part 'component_creation_state.dart';
 
 class ComponentCreationCubit extends Cubit<ComponentCreationState> {
   ComponentCreationCubit() : super(ComponentCreationInitial());
 
-  void changedProperty(BuildContext context,{Component? addedComp}){
-    final component=addedComp??Provider.of<ComponentSelectionCubit>(context,
-        listen: false).currentSelected;
-
-      emit(ComponentCreationChangeState(component.parent??component));
+  void changedComponent() {
+    emit(ComponentCreationChangeState());
   }
 }

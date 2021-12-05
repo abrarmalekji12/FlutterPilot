@@ -9,6 +9,7 @@ import 'package:flutter_builder/parameter_model.dart';
 import 'other_model.dart';
 
 final componentList = {
+  'MaterialApp': () => CMaterialApp(),
   'Scaffold': () => CScaffold(),
   'AppBar': () => CAppBar(),
   'Row': () => CRow(),
@@ -18,10 +19,11 @@ final componentList = {
   'Padding': () => CPadding(),
   'ClipRRect': () => CClipRRect(),
   'Container': () => CContainer(),
+  'Material': () => CMaterial(),
   'Expanded': () => CExpanded(),
   'Spacer': () => CSpacer(),
   'Center': () => CCenter(),
-
+  'Align': () => CAlign(),
   'FractionallySizedBox': () => CFractionallySizedBox(),
   'Flexible': () => CFlexible(),
   'Card': () => CCard(),
@@ -32,12 +34,13 @@ final componentList = {
   'Divider': () => CDivider(),
   'RichText': () => CRichText(),
   'TextField': () => CTextField()
-  // 'TextField':
+// 'TextField':
 };
 
 class Parameters {
-  static paddingParameter() => ChoiceParameter(
+  static ChoiceParameter paddingParameter() => ChoiceParameter(
         name: 'padding',
+        required: false,
         info: NamedParameterInfo('padding'),
         options: [
           SimpleParameter<double>(
@@ -133,15 +136,17 @@ class Parameters {
 
   static borderParameter() => ChoiceParameter(
         name: 'border',
-        // info: NamedParameterInfo('border'),
+        required: false,
+        info: NamedParameterInfo('border'),
         options: [
           ComplexParameter(
             info: InnerObjectParameterInfo(
-                innerObjectName: 'Border.all', namedIfHaveAny: 'border'),
+              innerObjectName: 'Border.all',
+            ),
             params: [
               colorParameter()..withDefaultValue(const Color(0xffffffff)),
               widthParameter()
-              .. withDisplayName('stroke-width')
+                ..withDisplayName('stroke-width')
                 ..withDefaultValue(2)
                 ..withRequired(true),
             ],
@@ -152,8 +157,7 @@ class Parameters {
             ),
           ),
           ComplexParameter(
-            info: InnerObjectParameterInfo(
-                innerObjectName: 'Border', namedIfHaveAny: 'border'),
+            info: InnerObjectParameterInfo(innerObjectName: 'Border'),
             params: [
               Parameters.borderSideParameter()
                 ..withInfo(NamedParameterInfo('left'))
@@ -358,7 +362,13 @@ class Parameters {
 
   static ChoiceParameter borderSideParameter() => ChoiceParameter(
         info: NamedParameterInfo('borderSide'),
+        required: true,
         options: [
+          ConstantValueParameter(
+              displayName: 'None',
+              constantValue: BorderSide.none,
+              constantValueInString: 'BorderSide.none',
+              paramType: ParamType.other),
           ComplexParameter(
               info: InnerObjectParameterInfo(
                 innerObjectName: 'BorderSide',
@@ -366,7 +376,7 @@ class Parameters {
               params: [
                 colorParameter(),
                 widthParameter()
-                  .. withDisplayName('stroke-width')
+                  ..withDisplayName('stroke-width')
                   ..withRequired(true)
                   ..withDefaultValue(2)
               ],
@@ -376,20 +386,17 @@ class Parameters {
                   width: params[1].value,
                 );
               }),
-          ConstantValueParameter(
-              displayName: 'None',
-              constantValue: BorderSide.none,
-              constantValueInString: 'BorderSide.none',
-              paramType: ParamType.other)
         ],
       );
 
-  static shapeBorderParameter() => ChoiceParameter(options: [
+  static shapeBorderParameter() => ChoiceParameter(
+      required: true,
+      options: [
         NullParameter(displayName: 'None'),
         ComplexParameter(
           name: 'Round Rectangular Border',
           params: [
-            borderRadiusParameter(),
+            borderRadiusParameter()..withRequired(true),
             borderSideParameter(),
           ],
           evaluate: (params) {
@@ -399,7 +406,9 @@ class Parameters {
           info: InnerObjectParameterInfo(
               innerObjectName: 'RoundedRectangleBorder'),
         )
-      ], name: 'Shape Border', info: NamedParameterInfo('shape'));
+      ],
+      name: 'Shape Border',
+      info: NamedParameterInfo('shape'));
 
   static SimpleParameter widthFactorParameter() => SimpleParameter<double>(
       paramType: ParamType.double,
@@ -519,6 +528,17 @@ class Parameters {
       );
 }
 
+class CMaterialApp extends CustomNamedHolder {
+  CMaterialApp() : super('MaterialApp', [], {'home': null}, []);
+
+  @override
+  Widget create(BuildContext context) {
+    return MaterialApp(
+      home: childMap['home']?.build(context),
+    );
+  }
+}
+
 class CRichText extends Component {
   CRichText()
       : super('RichText', [
@@ -570,6 +590,25 @@ class CCenter extends Holder {
       child: child?.build(context),
       widthFactor: parameters[0].value,
       heightFactor: parameters[1].value,
+    );
+  }
+}
+
+class CAlign extends Holder {
+  CAlign()
+      : super('Align', [
+          Parameters.alignmentParameter(),
+          Parameters.widthFactorParameter(),
+          Parameters.heightFactorParameter(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Align(
+      child: child?.build(context),
+      alignment: parameters[0].value,
+      widthFactor: parameters[1].value,
+      heightFactor: parameters[2].value,
     );
   }
 }
@@ -812,7 +851,8 @@ class CFlex extends MultiHolder {
 }
 
 class CPadding extends Holder {
-  CPadding() : super('Padding', [Parameters.paddingParameter()]);
+  CPadding()
+      : super('Padding', [Parameters.paddingParameter()..withRequired(true)]);
 
   @override
   Widget create(BuildContext context) {
@@ -902,6 +942,21 @@ class CSizedBox extends Holder {
       child: child?.build(context),
       width: parameters[0].value,
       height: parameters[1].value,
+    );
+  }
+}
+
+class CMaterial extends Holder {
+  CMaterial()
+      : super('Material', [
+          Parameters.colorParameter()..withDefaultValue(const Color(0x00000000))
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Material(
+      child: child?.build(context),
+      color: parameters[0].value,
     );
   }
 }
