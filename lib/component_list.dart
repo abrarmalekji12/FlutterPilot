@@ -398,7 +398,7 @@ class Parameters {
           name: 'Round Rectangular Border',
           params: [
             borderRadiusParameter()..withRequired(true),
-            borderSideParameter(),
+            borderSideParameter() ..withInfo(NamedParameterInfo('side')),
           ],
           evaluate: (params) {
             return RoundedRectangleBorder(
