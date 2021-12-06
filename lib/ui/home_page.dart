@@ -1,3 +1,4 @@
+import 'dart:html' as html;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,6 +20,7 @@ import 'package:flutter_builder/ui/parameter_ui.dart';
 import 'package:flutter_builder/ui/visual_model.dart';
 import 'package:flutter_builder/ui/visual_painter.dart';
 import 'package:provider/provider.dart';
+
 
 import '../component_list.dart';
 import '../component_model.dart';
@@ -56,6 +58,9 @@ class _HomePageState extends State<HomePage> {
       currentSelected: componentOperationCubit.mainExecution.rootComponent!, currentSelectedRoot:
     componentOperationCubit.mainExecution.rootComponent!,
     );
+    html.window.onResize.listen((event) {
+      componentPropertyCubit.changedComponent();
+    });
   }
 
   @override

@@ -335,6 +335,7 @@ class _ComponentTreeState extends State<ComponentTree> {
         double height = 0;
         for (Component? comp
             in (component as CustomNamedHolder).childMap.values) {
+          height+=40;
           if (comp != null) {
             height += getCalculatedHeight(comp);
           }

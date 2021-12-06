@@ -9,7 +9,11 @@ import 'ui/home_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runZonedGuarded(() {
+    runApp(const MyApp());
+  },(Object error, StackTrace stack){
+
+  });
 }
 
 class MyApp extends StatelessWidget {
