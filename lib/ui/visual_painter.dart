@@ -20,15 +20,15 @@ class BoundaryPainter extends CustomPainter {
     myPaint.color = Colors.blueAccent;
     for (final boundary in boundaries) {
       canvas.drawRect(boundary.rect, myPaint);
-      TextPainter textPainter = TextPainter();
-      textPainter.text = TextSpan(
-          text: boundary.name,
-          style: AppFontStyle.roboto(
-            15,
-            color: AppColors.theme,
-            fontWeight: FontWeight.bold,
-          ));
-      textPainter.textDirection = TextDirection.ltr;
+      final textPainter = TextPainter(
+        text: TextSpan(
+            text: boundary.name,
+            style: const TextStyle(
+              fontSize: 15,
+              color: AppColors.theme,
+              fontWeight: FontWeight.bold,
+            )), textDirection:  TextDirection.ltr
+      );
       textPainter.layout();
       textPainter.paint(canvas, boundary.rect.topLeft.translate(0, -20));
 

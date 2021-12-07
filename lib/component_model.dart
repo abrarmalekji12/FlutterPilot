@@ -16,8 +16,7 @@ class MainExecution {
         root: componentList['Scaffold']!());
     customComponents.add(homePage);
     setRoot(componentList['MaterialApp']!());
-    final customCopy= homePage.clone(rootComponent);
-    homePage.objects.add(customCopy as CustomComponent);
+    final customCopy= homePage.createInstance(rootComponent);
     (rootComponent as CustomNamedHolder)
         .updateChildWithKey('home',customCopy);
   }
@@ -410,6 +409,7 @@ abstract class CustomNamedHolder extends Component {
 abstract class CustomComponent extends Component {
   String? extensionName;
   Component? root;
+  CustomComponent? cloneOf;
   List<CustomComponent> objects = [];
   List<CustomComponent> dependencies = [];
 
@@ -482,6 +482,48 @@ abstract class CustomComponent extends Component {
     comp2.parameters = parameters;
     comp2.root = root?.clone(parent);
     return comp2;
+  }
+
+  CustomComponent createInstance(Component? root){
+    final customCopy= clone(root);
+    objects.add(customCopy as CustomComponent);
+    customCopy.cloneOf=this;
+    return customCopy;
+  }
+  Component findSameLevelComponent(
+      CustomComponent copy, CustomComponent original, Component object) {
+    Component? tracer = object;
+    List<List<Parameter>> paramList = [];
+    while (tracer != original) {
+      // print('TRACER ${tracer?.name}');
+      paramList.add(tracer!.parameters);
+      tracer = tracer.parent;
+    }
+    // print('TRACER 1 ${tracer?.name}');
+    tracer = copy;
+    for (final param in paramList.reversed) {
+      tracer = findChildWithParam(tracer!, param);
+    }
+    // print('TRACER 2 ${tracer?.name}');
+
+    return tracer!;
+  }
+
+  Component? findChildWithParam(Component component, List<Parameter> params) {
+    switch (component.type) {
+      case 3:
+        return (component as Holder).child!;
+      case 2:
+        return (component as MultiHolder)
+            .children
+            .firstWhere((element) => element.parameters == params);
+      case 4:
+        return (component as CustomNamedHolder).childMap.values.firstWhere(
+                (element) => element != null && element.parameters == params);
+      case 5:
+        return (component as CustomComponent).root;
+    }
+    return null;
   }
 }
 

@@ -52,10 +52,13 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     mainExecution.customComponents.add(component);
     if (root != null) {
       component.root=root;
-      final instance = component.clone(root.parent) as CustomComponent;
+      final instance=component.createInstance(root.parent);
+      // final instance = component.clone(root.parent) as CustomComponent;
       replaceChildOfParent(root, instance);
-      instance.parent=root.parent;
-      component.objects.add(instance);
+
+      root.parent=component;
+      // instance.parent=root.parent;
+      // component.objects.add(instance);
     }
     emit(ComponentUpdatedState());
   }

@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_builder/constant/font_style.dart';
 
 class AppTextField extends StatelessWidget {
   late final TextEditingController textFieldController;
   static String changedValue='';
   final void Function(String)? onChange;
 
-  AppTextField({Key? key, String? value, this.onChange}) : super(key: key) {
-    if (value != null) {
+  AppTextField({Key? key, String? value, this.onChange, TextEditingController? controller}) : super(key: key) {
+    if(controller!=null){
+      textFieldController=controller;
+    }
+    else if (value != null) {
       textFieldController = TextEditingController.fromValue(TextEditingValue(text: value));
       changedValue=value;
     }
+
   }
 
 
@@ -20,9 +25,11 @@ class AppTextField extends StatelessWidget {
         changedValue=value;
         onChange?.call(value);
       },
+      focusNode: FocusNode()..requestFocus(),
       controller: textFieldController,
+      style: AppFontStyle.roboto(14,fontWeight: FontWeight.w500),
       decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10,vertical: 0),
           enabled: true,
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

@@ -175,6 +175,7 @@ class _ComponentTreeState extends State<ComponentTree> {
               )
             ],
           ),
+          if(component.children.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(left: 5, top: 0),
             child: SizedBox(
@@ -192,12 +193,15 @@ class _ComponentTreeState extends State<ComponentTree> {
                   // component.children[newIndex] = old;
                   final old = component.children.removeAt(oldIndex);
                   component.children.insert(newIndex, old);
+                  if(ancestor is CustomComponent){
+                    ancestor.notifyChanged();
+                  }
                   Provider.of<ComponentOperationCubit>(context, listen: false).arrangeComponent(context);
                 },
                 itemBuilder: (BuildContext context, int index) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 30),
-                    key: GlobalObjectKey(component.children[index]),
+                    key: GlobalObjectKey('${component.children[index].hashCode} reorder'),
                     child: getSublist(component.children[index], ancestor),
                   );
                 },
@@ -604,8 +608,9 @@ class ComponentModificationMenu extends StatelessWidget {
   }
 
   void showSelectionDialog(BuildContext context, void Function(Component) onSelection, {List<String>? possibleItems}) {
-    List<CustomComponent> customComponents =
-        Provider.of<ComponentOperationCubit>(context, listen: false).mainExecution.customComponents;
+
+    String filter='';
+    final TextEditingController controller=TextEditingController();
     Get.dialog(
       GestureDetector(
         onTap: () {
@@ -622,27 +627,78 @@ class ComponentModificationMenu extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Text(
-                      'basic widgets',
-                      style: AppFontStyle.roboto(14, color: const Color(0xff494949)),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 6,
-                    child: GridView(
-                      controller: ScrollController(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3.5),
-                      children: (possibleItems ?? componentList.keys.toList())
-                          .map(
-                            (e) => InkWell(
+              child: StatefulBuilder(
+                builder: (context2,setStateForWidgetSearch) {
+                  final customComponents =
+                      Provider.of<ComponentOperationCubit>(context, listen: false).mainExecution.customComponents.where((element) => element.name.isCaseInsensitiveContains(filter)).toList();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppTextField(
+                        controller: controller,
+                        key: const GlobalObjectKey('search'),
+                        onChange: (value){
+                          filter=value.toLowerCase();
+                          setStateForWidgetSearch((){});
+                        },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Text(
+                          'basic widgets',
+                          style: AppFontStyle.roboto(14, color: const Color(0xff494949)),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 6,
+                        child: GridView(
+                          controller: ScrollController(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3.5),
+                          children: (possibleItems ?? componentList.keys.toList()).where((element) => element.isCaseInsensitiveContains(filter))
+                              .map(
+                                (e) => InkWell(
+                                  onTap: () {
+                                    onSelection(componentList[e]!());
+                                    Get.back();
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: Card(
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      child: Center(
+                                        child: Text(
+                                          e,
+                                          style: AppFontStyle.roboto(12, color: Colors.black, fontWeight: FontWeight.w500),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Text(
+                          'custom widgets',
+                          style: AppFontStyle.roboto(14, color: const Color(0xff494949)),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 4,
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3.5),
+                          controller: ScrollController(),
+                          itemBuilder: (context, i) {
+                            return InkWell(
                               onTap: () {
-                                onSelection(componentList[e]!());
+                                final customComponentClone = customComponents[i].clone(null);
+                                customComponents[i].objects.add(customComponentClone as CustomComponent);
+                                onSelection(customComponentClone);
                                 Get.back();
                               },
                               child: Padding(
@@ -652,57 +708,20 @@ class ComponentModificationMenu extends StatelessWidget {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   child: Center(
                                     child: Text(
-                                      e,
+                                      customComponents[i].name,
                                       style: AppFontStyle.roboto(12, color: Colors.black, fontWeight: FontWeight.w500),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Text(
-                      'custom widgets',
-                      style: AppFontStyle.roboto(14, color: const Color(0xff494949)),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 4,
-                    child: GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3.5),
-                      controller: ScrollController(),
-                      itemBuilder: (context, i) {
-                        return InkWell(
-                          onTap: () {
-                            final customComponentClone = customComponents[i].clone(null);
-                            customComponents[i].objects.add(customComponentClone as CustomComponent);
-                            onSelection(customComponentClone);
-                            Get.back();
+                            );
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Card(
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              child: Center(
-                                child: Text(
-                                  customComponents[i].name,
-                                  style: AppFontStyle.roboto(12, color: Colors.black, fontWeight: FontWeight.w500),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      itemCount: customComponents.length,
-                    ),
-                  )
-                ],
+                          itemCount: customComponents.length,
+                        ),
+                      )
+                    ],
+                  );
+                }
               ),
             ),
           ),
