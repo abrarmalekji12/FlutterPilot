@@ -1,21 +1,34 @@
-import 'package:flutter_builder/component_list.dart';
-import 'package:flutter_builder/component_model.dart';
-import 'package:flutter_builder/parameter_model.dart';
 
-// abstract class CodeToComponent {
-//   static Component fromCode(String code) {
-//     final split1=code.split('(');
-//     final split2=split1[1].split(')');
-//     final component=componentList[split1[0]]!();
-//     for(final paramCode in split2[0].split(',')){
-//       final paramNamed=paramCode.contains(':')?paramCode.split(':'):null;
-//
-//     }
-//   }
-// }
-//
-// abstract class CodeToParameter{
-//   static Parameter fromCode(String code){
-//
-//   }
-// }
+
+abstract class CodeToComponent {
+
+  static List<String> splitByComma(String paramCode){
+    int parenthesisCount = 0;
+    final List<int> dividers = [-1];
+    for (int i = 0; i < paramCode.length; i++) {
+      if (paramCode[i] == ',' && parenthesisCount==0) {
+        dividers.add(i);
+      } else if (paramCode[i] == '(') {
+        parenthesisCount++;
+      } else if (paramCode[i] == ')') {
+        parenthesisCount--;
+      }
+    }
+    List<String> parameterCodes = [];
+    for (int divideIndex = 0; divideIndex < dividers.length; divideIndex++) {
+      if (divideIndex + 1 < dividers.length) {
+        final subCode = paramCode.substring(
+            dividers[divideIndex] + 1, dividers[divideIndex + 1]);
+        if (subCode.isNotEmpty) {
+          parameterCodes.add(subCode);
+        }
+      } else {
+        final subCode = paramCode.substring(dividers[divideIndex] + 1);
+        if (subCode.isNotEmpty) {
+          parameterCodes.add(subCode);
+        }
+      }
+    }
+    return parameterCodes;
+  }
+}

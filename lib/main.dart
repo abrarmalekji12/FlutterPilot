@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 
+import 'component_list.dart';
 import 'constant/app_colors.dart';
 import 'ui/home_page.dart';
 

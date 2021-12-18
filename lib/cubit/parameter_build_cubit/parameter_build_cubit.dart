@@ -1,8 +1,8 @@
 import 'package:bloc/bloc.dart';
-import 'package:flutter_builder/parameter_model.dart';
+import 'package:flutter_builder/models/parameter_model.dart';
 import 'package:meta/meta.dart';
 
-import '../../component_model.dart';
+import '../../models/component_model.dart';
 
 part 'parameter_build_state.dart';
 

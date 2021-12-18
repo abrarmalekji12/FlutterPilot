@@ -7,7 +7,7 @@ import 'package:flutter_builder/cubit/parameter_build_cubit/parameter_build_cubi
 import 'package:meta/meta.dart';
 import 'package:provider/provider.dart';
 
-import '../../component_model.dart';
+import '../../models/component_model.dart';
 
 part 'component_creation_state.dart';
 

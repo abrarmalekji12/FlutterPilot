@@ -1,26 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_builder/code_to_component.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
-import 'package:flutter_builder/parameter_model.dart';
+import 'package:flutter_builder/models/parameter_info.dart';
+import 'package:flutter_builder/models/parameter_model.dart';
 import 'package:provider/provider.dart';
 
-import 'component_list.dart';
+import '../component_list.dart';
 
 class MainExecution {
   Component? rootComponent;
   List<CustomComponent> customComponents = [];
 
   MainExecution() {
-    final homePage=StatelessComponent(
+    final homePage = StatelessComponent(
         name: 'HomePage',
         dependencies: [],
-        root: componentList['Scaffold']!());
+        root: Component.fromCode('''
+          Container(
+          width:150,
+          child:Padding(
+          padding:EdgeInsets.only(
+          bottom:2.5
+          ),
+          child:Column(
+          children:[
+          Padding(
+          padding:EdgeInsets.all(10.4),
+          )
+          ]
+          ),
+          ),
+          alignment:Alignment.topRight,
+          decoration:BoxDecoration(
+          border:Border(
+          top:BorderSide(
+          color:Color(0xff00ff00),
+          width:32.4
+          ),
+          ),
+          ),
+          )
+          '''
+            .replaceAll('\n', '')
+            .replaceAll(' ', '')));
     customComponents.add(homePage);
     setRoot(componentList['MaterialApp']!());
-    final customCopy= homePage.createInstance(rootComponent);
-    (rootComponent as CustomNamedHolder)
-        .updateChildWithKey('home',customCopy);
+    final customCopy = homePage.createInstance(rootComponent);
+    (rootComponent as CustomNamedHolder).updateChildWithKey('home', customCopy);
   }
-
 
   void setRoot(Component component) {
     rootComponent = component;
@@ -58,6 +85,74 @@ abstract class Component {
 
   Component(this.name, this.parameters, {this.isConstant = false});
 
+  static Component fromCode(String code) {
+    final name = code.substring(0, code.indexOf('(', 0));
+    final comp = componentList[name]!();
+
+    final componentCode = code.replaceFirst('$name(', '');
+    final parameterCodes = CodeToComponent.splitByComma(
+        componentCode.substring(0, componentCode.length - 1));
+
+    switch (comp.type) {
+      case 3:
+        int index = -1;
+        for (int i = 0; i < parameterCodes.length; i++) {
+          if (parameterCodes[i].startsWith('child:')) {
+            index = i;
+            break;
+          }
+        }
+        if (index != -1) {
+          final childCode = parameterCodes.removeAt(index);
+          print('CHILD CODE $childCode');
+          (comp as Holder).updateChild(
+              Component.fromCode(childCode.replaceFirst('child:', '')));
+        }
+        break;
+      case 2:
+        int index = -1;
+        for (int i = 0; i < parameterCodes.length; i++) {
+          if (parameterCodes[i].startsWith('children:')) {
+            index = i;
+            break;
+          }
+        }
+        if (index != -1) {
+          final childCode = parameterCodes.removeAt(index);
+          print('CHILD CODE $childCode');
+          final code2=childCode
+              .replaceFirst('children:[', '');
+          final List<Component> componentList=[];
+          final List<String> childrenCodes=CodeToComponent.splitByComma(code2.substring(0,code2.length-1));
+          for(final childCode in childrenCodes){
+            componentList.add(Component.fromCode(childCode));
+          }
+          (comp as MultiHolder)
+              .children=componentList;
+        }
+        break;
+      case 4:
+        break;
+      case 1:
+        break;
+    }
+    for (Parameter parameter in comp.parameters) {
+      if (parameter.info is NamedParameterInfo ||
+          (parameter.info is InnerObjectParameterInfo &&
+              (parameter.info as InnerObjectParameterInfo).namedIfHaveAny !=
+                  null)) {
+        for (final paramCode in parameterCodes) {
+          if (paramCode.startsWith(
+              '${parameter.info is NamedParameterInfo ? (parameter.info as NamedParameterInfo).name : (parameter.info as InnerObjectParameterInfo).namedIfHaveAny!}:')) {
+            parameter.fromCode(paramCode);
+            break;
+          }
+        }
+      }
+    }
+    return comp;
+  }
+
   Widget build(BuildContext context) {
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       _lookForUIChanges(context);
@@ -90,7 +185,7 @@ abstract class Component {
       // if (Provider.of<ComponentSelectionCubit>(context, listen: false)
       //         .currentSelected ==
       //     this) {
-        Provider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
+      Provider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
       // }
       await Future.delayed(const Duration(milliseconds: 50));
       renderBox = GlobalObjectKey(this).currentContext!.findRenderObject()!
@@ -325,7 +420,6 @@ abstract class CustomNamedHolder extends Component {
         return;
       }
     }
-
   }
 
   @override
@@ -422,7 +516,7 @@ abstract class CustomComponent extends Component {
 
   @override
   Widget create(BuildContext context) {
-    return root?.build(context) ??Container();
+    return root?.build(context) ?? Container();
   }
 
   @override
@@ -484,12 +578,13 @@ abstract class CustomComponent extends Component {
     return comp2;
   }
 
-  CustomComponent createInstance(Component? root){
-    final customCopy= clone(root);
+  CustomComponent createInstance(Component? root) {
+    final customCopy = clone(root);
     objects.add(customCopy as CustomComponent);
-    customCopy.cloneOf=this;
+    customCopy.cloneOf = this;
     return customCopy;
   }
+
   Component findSameLevelComponent(
       CustomComponent copy, CustomComponent original, Component object) {
     Component? tracer = object;
@@ -519,7 +614,7 @@ abstract class CustomComponent extends Component {
             .firstWhere((element) => element.parameters == params);
       case 4:
         return (component as CustomNamedHolder).childMap.values.firstWhere(
-                (element) => element != null && element.parameters == params);
+            (element) => element != null && element.parameters == params);
       case 5:
         return (component as CustomComponent).root;
     }

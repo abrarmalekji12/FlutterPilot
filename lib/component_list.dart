@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/component_model.dart';
+import 'package:flutter_builder/models/component_model.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/enums.dart';
-import 'package:flutter_builder/parameter_info.dart';
-import 'package:flutter_builder/parameter_model.dart';
 
-import 'other_model.dart';
+import 'models/other_model.dart';
+import 'models/parameter_info.dart';
+import 'models/parameter_model.dart';
 
 final componentList = {
   'MaterialApp': () => CMaterialApp(),

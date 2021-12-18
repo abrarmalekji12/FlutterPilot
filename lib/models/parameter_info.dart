@@ -1,6 +1,7 @@
 
 abstract class ParameterInfo {
   String code(String value);
+  String fromCode(String code);
 }
 
 class NamedParameterInfo extends ParameterInfo  {
@@ -15,6 +16,12 @@ class NamedParameterInfo extends ParameterInfo  {
     }
     return '$name:$value';
   }
+
+  @override
+  String fromCode(String code) {
+    return code.replaceFirst('$name:', '');
+  }
+
 }
 
 class InnerObjectParameterInfo extends ParameterInfo {
@@ -34,11 +41,22 @@ class InnerObjectParameterInfo extends ParameterInfo {
     }
     return '$innerObjectName($value)';
   }
+
+  @override
+  String fromCode(String code) {
+    final out=(namedIfHaveAny!=null?code.replaceFirst('$namedIfHaveAny:', ''):code).replaceFirst('$innerObjectName(', '');
+    return out.substring(0,out.length-1);
+  }
 }
 
 class SimpleParameterInfo extends ParameterInfo {
   @override
   String code(String value) {
     return value;
+  }
+
+  @override
+  String fromCode(String code) {
+    return code;
   }
 }

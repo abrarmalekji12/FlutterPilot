@@ -4,15 +4,22 @@ import 'package:flutter_builder/constant/font_style.dart';
 class AppTextField extends StatelessWidget {
   late final TextEditingController textFieldController;
   static String changedValue='';
+  late final FocusNode focusNode;
   final void Function(String)? onChange;
 
-  AppTextField({Key? key, String? value, this.onChange, TextEditingController? controller}) : super(key: key) {
+  AppTextField({Key? key, String? value, this.onChange, TextEditingController? controller, FocusNode? node}) : super(key: key) {
     if(controller!=null){
       textFieldController=controller;
     }
     else if (value != null) {
       textFieldController = TextEditingController.fromValue(TextEditingValue(text: value));
       changedValue=value;
+    }
+    if(node!=null){
+      focusNode=node;
+    }
+    else{
+      focusNode=FocusNode();
     }
 
   }
@@ -25,9 +32,16 @@ class AppTextField extends StatelessWidget {
         changedValue=value;
         onChange?.call(value);
       },
-      focusNode: FocusNode()..requestFocus(),
+      focusNode: focusNode..requestFocus(),
+      autofocus: true,
       controller: textFieldController,
-      style: AppFontStyle.roboto(14,fontWeight: FontWeight.w500),
+      style: AppFontStyle.roboto(15,fontWeight: FontWeight.normal),
+      onSubmitted: (data){
+        print('SUBMITTED');
+      },
+      onEditingComplete: (){
+        print('EDITING COMP');
+      },
       decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(horizontal: 10,vertical: 0),
           enabled: true,

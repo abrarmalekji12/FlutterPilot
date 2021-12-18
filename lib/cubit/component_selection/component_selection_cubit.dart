@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
-import '../../component_model.dart';
+import '../../models/component_model.dart';
 
 part 'component_selection_state.dart';
 

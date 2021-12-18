@@ -7,12 +7,12 @@ import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_creation/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/parameter_build_cubit/parameter_build_cubit.dart';
-import 'package:flutter_builder/other_model.dart';
+import 'package:flutter_builder/models/other_model.dart';
+import 'package:flutter_builder/models/parameter_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../enums.dart';
-import '../parameter_model.dart';
 
 class ChoiceParameterWidget extends StatelessWidget {
   final ChoiceParameter parameter;

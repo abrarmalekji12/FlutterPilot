@@ -5,12 +5,13 @@ import 'package:flutter_builder/common/app_button.dart';
 import 'package:flutter_builder/common/app_text_field.dart';
 import 'package:flutter_builder/common/custom_animated_dialog.dart';
 import 'package:flutter_builder/common/custom_popup_menu_button.dart';
-import 'package:flutter_builder/component_model.dart';
+import 'package:flutter_builder/models/component_model.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
-import 'package:flutter_builder/parameter_model.dart';
+import 'package:flutter_builder/models/parameter_model.dart';
+import 'package:flutter_builder/ui/selection_dialog.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
@@ -41,8 +42,14 @@ class _ComponentTreeState extends State<ComponentTree> {
                       alignment: Alignment.topLeft,
                       padding: const EdgeInsets.all(10),
                       child: getSublist(
-                          Provider.of<ComponentOperationCubit>(context, listen: false).mainExecution.rootComponent!,
-                          Provider.of<ComponentOperationCubit>(context, listen: false).mainExecution.rootComponent!),
+                          Provider.of<ComponentOperationCubit>(context,
+                                  listen: false)
+                              .mainExecution
+                              .rootComponent!,
+                          Provider.of<ComponentOperationCubit>(context,
+                                  listen: false)
+                              .mainExecution
+                              .rootComponent!),
                     ),
                     Padding(
                       padding: const EdgeInsets.all(10),
@@ -51,14 +58,19 @@ class _ComponentTreeState extends State<ComponentTree> {
                         children: [
                           Text(
                             'Custom Widgets',
-                            style: AppFontStyle.roboto(14, color: const Color(0xff494949), fontWeight: FontWeight.bold),
+                            style: AppFontStyle.roboto(14,
+                                color: const Color(0xff494949),
+                                fontWeight: FontWeight.bold),
                           ),
                           InkWell(
                             borderRadius: BorderRadius.circular(10),
                             onTap: () {
                               //ADD Custom Widgtes
-                              showCustomWidgetRename(context, 'Enter widget name', (name) {
-                                Provider.of<ComponentOperationCubit>(context, listen: false).addCustomComponent(name);
+                              showCustomWidgetRename(
+                                  context, 'Enter widget name', (name) {
+                                Provider.of<ComponentOperationCubit>(context,
+                                        listen: false)
+                                    .addCustomComponent(name);
                                 Get.back();
                               });
                             },
@@ -75,24 +87,31 @@ class _ComponentTreeState extends State<ComponentTree> {
                         ],
                       ),
                     ),
-                    for (CustomComponent comp in Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .mainExecution
-                        .customComponents) ...[
+                    for (CustomComponent comp
+                        in Provider.of<ComponentOperationCubit>(context,
+                                listen: false)
+                            .mainExecution
+                            .customComponents) ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                                border: Border.all(color: AppColors.theme, width: 1.5),
+                                border: Border.all(
+                                    color: AppColors.theme, width: 1.5),
                                 borderRadius: BorderRadius.circular(4)),
                             padding: const EdgeInsets.all(5),
-                            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
                             child: Text(
                               comp.name,
-                              style: AppFontStyle.roboto(15, color: AppColors.theme, fontWeight: FontWeight.bold),
+                              style: AppFontStyle.roboto(15,
+                                  color: AppColors.theme,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
-                          ComponentModificationMenu(component: comp, ancestor: comp)
+                          ComponentModificationMenu(
+                              component: comp, ancestor: comp)
                         ],
                       ),
                       if (comp.root != null)
@@ -115,7 +134,8 @@ class _ComponentTreeState extends State<ComponentTree> {
     );
   }
 
-  void showCustomWidgetRename(BuildContext context, String title, Function(String) onSubmit) {
+  void showCustomWidgetRename(
+      BuildContext context, String title, Function(String) onSubmit) {
     CustomDialog.show(
         context,
         Container(
@@ -175,40 +195,42 @@ class _ComponentTreeState extends State<ComponentTree> {
               )
             ],
           ),
-          if(component.children.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(left: 5, top: 0),
-            child: SizedBox(
-              height: getCalculatedHeight(component),
-              child: ReorderableListView.builder(
-                shrinkWrap: true,
-                restorationId: component.toString(),
-                onReorder: (int oldIndex, int newIndex) {
-                  print('INDEX $oldIndex $newIndex');
-                  if (oldIndex < newIndex) {
-                    newIndex -= 1;
-                  }
-                  // final old = component.children[oldIndex];
-                  // component.children[oldIndex] = component.children[newIndex];
-                  // component.children[newIndex] = old;
-                  final old = component.children.removeAt(oldIndex);
-                  component.children.insert(newIndex, old);
-                  if(ancestor is CustomComponent){
-                    ancestor.notifyChanged();
-                  }
-                  Provider.of<ComponentOperationCubit>(context, listen: false).arrangeComponent(context);
-                },
-                itemBuilder: (BuildContext context, int index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 30),
-                    key: GlobalObjectKey('${component.children[index].hashCode} reorder'),
-                    child: getSublist(component.children[index], ancestor),
-                  );
-                },
-                itemCount: component.children.length,
+          if (component.children.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 5, top: 0),
+              child: SizedBox(
+                height: getCalculatedHeight(component),
+                child: ReorderableListView.builder(
+                  shrinkWrap: true,
+                  restorationId: component.toString(),
+                  onReorder: (int oldIndex, int newIndex) {
+                    print('INDEX $oldIndex $newIndex');
+                    if (oldIndex < newIndex) {
+                      newIndex -= 1;
+                    }
+                    // final old = component.children[oldIndex];
+                    // component.children[oldIndex] = component.children[newIndex];
+                    // component.children[newIndex] = old;
+                    final old = component.children.removeAt(oldIndex);
+                    component.children.insert(newIndex, old);
+                    if (ancestor is CustomComponent) {
+                      ancestor.notifyChanged();
+                    }
+                    Provider.of<ComponentOperationCubit>(context, listen: false)
+                        .arrangeComponent(context);
+                  },
+                  itemBuilder: (BuildContext context, int index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 30),
+                      key: GlobalObjectKey(
+                          '${component.children[index].hashCode} reorder'),
+                      child: getSublist(component.children[index], ancestor),
+                    );
+                  },
+                  itemCount: component.children.length,
+                ),
               ),
             ),
-          ),
         ],
       );
     } else if (component is Holder) {
@@ -218,7 +240,8 @@ class _ComponentTreeState extends State<ComponentTree> {
             children: [
               ComponentTile(component: component, ancestor: ancestor),
               const Spacer(),
-              ComponentModificationMenu(component: component, ancestor: ancestor)
+              ComponentModificationMenu(
+                  component: component, ancestor: ancestor)
             ],
           ),
           if (component.child != null) ...[
@@ -236,7 +259,8 @@ class _ComponentTreeState extends State<ComponentTree> {
             children: [
               ComponentTile(component: component, ancestor: ancestor),
               const Spacer(),
-              ComponentModificationMenu(component: component, customNamed: null, ancestor: ancestor),
+              ComponentModificationMenu(
+                  component: component, customNamed: null, ancestor: ancestor),
             ],
           ),
           Padding(
@@ -250,12 +274,18 @@ class _ComponentTreeState extends State<ComponentTree> {
                       children: [
                         Text(
                           child,
-                          style: AppFontStyle.roboto(12, color: const Color(0xff494949), fontWeight: FontWeight.w500),
+                          style: AppFontStyle.roboto(12,
+                              color: const Color(0xff494949),
+                              fontWeight: FontWeight.w500),
                         ),
-                        ComponentModificationMenu(component: component, customNamed: child, ancestor: ancestor)
+                        ComponentModificationMenu(
+                            component: component,
+                            customNamed: child,
+                            ancestor: ancestor)
                       ],
                     ),
-                    if (component.childMap[child] != null) getSublist(component.childMap[child]!, ancestor),
+                    if (component.childMap[child] != null)
+                      getSublist(component.childMap[child]!, ancestor),
                   ],
                 ),
                 const SizedBox(
@@ -276,7 +306,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                 ancestor: ancestor,
               ),
               const Spacer(),
-              ComponentModificationMenu(component: component, ancestor: ancestor)
+              ComponentModificationMenu(
+                  component: component, ancestor: ancestor)
             ],
           ),
         ],
@@ -303,10 +334,13 @@ class _ComponentTreeState extends State<ComponentTree> {
         }
         return height;
       case 3:
-        return (component as Holder).child != null ? 35 + getCalculatedHeight(component.child!) : 35;
+        return (component as Holder).child != null
+            ? 35 + getCalculatedHeight(component.child!)
+            : 35;
       case 4:
         double height = 0;
-        for (Component? comp in (component as CustomNamedHolder).childMap.values) {
+        for (Component? comp
+            in (component as CustomNamedHolder).childMap.values) {
           height += 40;
           if (comp != null) {
             height += getCalculatedHeight(comp);
@@ -324,12 +358,17 @@ class ComponentModificationMenu extends StatelessWidget {
 
   final String? customNamed;
 
-  const ComponentModificationMenu({Key? key, this.customNamed, required this.component, required this.ancestor})
+  const ComponentModificationMenu(
+      {Key? key,
+      this.customNamed,
+      required this.component,
+      required this.ancestor})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final components = componentList.map((key, value) => MapEntry(key, value()));
+    final components =
+        componentList.map((key, value) => MapEntry(key, value()));
     return Row(
       children: [
         if (component.type == 5 && ancestor == component) ...[
@@ -337,13 +376,15 @@ class ComponentModificationMenu extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             onTap: () {
               //rename
-              showCustomWidgetRename(context, 'Rename ${component.name}', (value) {
+              showCustomWidgetRename(context, 'Rename ${component.name}',
+                  (value) {
                 component.name = AppTextField.changedValue;
                 for (Component comp in (component as CustomComponent).objects) {
                   comp.name = component.name;
                 }
                 Get.back();
-                Provider.of<ComponentOperationCubit>(context, listen: false).emit(ComponentUpdatedState());
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .emit(ComponentUpdatedState());
               });
             },
             child: const Icon(
@@ -358,15 +399,20 @@ class ComponentModificationMenu extends StatelessWidget {
         ],
         if (component is MultiHolder ||
             (component is Holder && (component as Holder).child == null) ||
-            (component.type == 5 && component == ancestor && (component as CustomComponent).root == null) ||
-            (customNamed != null && (component as CustomNamedHolder).childMap[customNamed!] == null)) ...[
+            (component.type == 5 &&
+                component == ancestor &&
+                (component as CustomComponent).root == null) ||
+            (customNamed != null &&
+                (component as CustomNamedHolder).childMap[customNamed!] ==
+                    null)) ...[
           InkWell(
             borderRadius: BorderRadius.circular(10),
             onTap: () {
               //ADDING COMPONENT
               showSelectionDialog(context, (comp) {
                 if (customNamed != null) {
-                  (component as CustomNamedHolder).updateChildWithKey(customNamed!, comp);
+                  (component as CustomNamedHolder)
+                      .updateChildWithKey(customNamed!, comp);
                 } else {
                   if (component is Holder) {
                     (component as Holder).updateChild(comp);
@@ -381,12 +427,16 @@ class ComponentModificationMenu extends StatelessWidget {
                   }
                   (ancestor as CustomComponent).notifyChanged();
                 }
-                Provider.of<ComponentOperationCubit>(context, listen: false).addedComponent(context, comp, ancestor);
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .addedComponent(context, comp, ancestor);
               },
-                  possibleItems:
-                      (customNamed != null && (component as CustomNamedHolder).selectable[customNamed!] != null)
-                          ? (component as CustomNamedHolder).selectable[customNamed!]!
-                          : null);
+                  possibleItems: (customNamed != null &&
+                          (component as CustomNamedHolder)
+                                  .selectable[customNamed!] !=
+                              null)
+                      ? (component as CustomNamedHolder)
+                          .selectable[customNamed!]!
+                      : null);
             },
             child: const CircleAvatar(
               radius: 10,
@@ -408,9 +458,10 @@ class ComponentModificationMenu extends StatelessWidget {
             onTap: () {
               //Replacing component
               showSelectionDialog(context, (comp) {
-                for (Parameter source in component.parameters) {
-                  for (Parameter dest in comp.parameters) {
-                    if (source.runtimeType == dest.runtimeType && dest.displayName == source.displayName) {
+                for (final source in component.parameters) {
+                  for (final dest in comp.parameters) {
+                    if (source.runtimeType == dest.runtimeType &&
+                        dest.displayName == source.displayName) {
                       copyValueSourceToDest(source, dest);
                     }
                   }
@@ -418,7 +469,8 @@ class ComponentModificationMenu extends StatelessWidget {
                 switch (comp.type) {
                   case 2:
                     //MultiHolder
-                    (comp as MultiHolder).children = (component as MultiHolder).children;
+                    (comp as MultiHolder).children =
+                        (component as MultiHolder).children;
                     break;
                   case 3:
                     //Holder
@@ -432,7 +484,8 @@ class ComponentModificationMenu extends StatelessWidget {
                   }
                   (ancestor as CustomComponent).notifyChanged();
                 }
-                Provider.of<ComponentOperationCubit>(context, listen: false).addedComponent(context, comp, ancestor);
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .addedComponent(context, comp, ancestor);
               }, possibleItems: getSameComponents(components, component));
             },
             child: const CircleAvatar(
@@ -450,10 +503,17 @@ class ComponentModificationMenu extends StatelessWidget {
           ),
         ],
         if (customNamed == null &&
-            component != Provider.of<ComponentOperationCubit>(context, listen: false).mainExecution.rootComponent!) ...[
+            component !=
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .mainExecution
+                    .rootComponent!) ...[
           CustomPopupMenuButton(
             itemBuilder: (context2) {
-              final list = getTypeComponents(components, customNamed == null && component != ancestor ? [2, 3] : [])
+              final list = getTypeComponents(
+                      components,
+                      customNamed == null && component != ancestor
+                          ? [2, 3]
+                          : [])
                   .map((e) => 'wrap with $e')
                   .toList();
               late final int compChildren;
@@ -475,8 +535,11 @@ class ComponentModificationMenu extends StatelessWidget {
                       (component.type == 2 &&
                           ((component.parent?.type == 4 && compChildren <= 1) ||
                               component.parent?.type == 2 ||
-                              ((component.parent?.type == 3 || component.parent?.type == 5) && compChildren < 2))) ||
-                      (component.type == 3 && ([2, 3, 4, 5].contains(component.parent?.type))) ||
+                              ((component.parent?.type == 3 ||
+                                      component.parent?.type == 5) &&
+                                  compChildren < 2))) ||
+                      (component.type == 3 &&
+                          ([2, 3, 4, 5].contains(component.parent?.type))) ||
                       (component.type == 4
                       // &&(component as CustomNamedHolder).childrenMap.isEmpty
                       // &&(component as CustomNamedHolder).childMap.isEmpty
@@ -493,7 +556,10 @@ class ComponentModificationMenu extends StatelessWidget {
                   customNamed == null &&
                   component.type != 1 &&
                   component !=
-                      Provider.of<ComponentOperationCubit>(context, listen: false).mainExecution.rootComponent! &&
+                      Provider.of<ComponentOperationCubit>(context,
+                              listen: false)
+                          .mainExecution
+                          .rootComponent! &&
                   (component.type == 2 && compChildren >= 1)) {
                 list.add('remove tree');
               }
@@ -505,7 +571,8 @@ class ComponentModificationMenu extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           e,
-                          style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                          style: AppFontStyle.roboto(14,
+                              fontWeight: FontWeight.w500),
                         ),
                       ),
                     ),
@@ -514,7 +581,8 @@ class ComponentModificationMenu extends StatelessWidget {
             },
             onSelected: (e) {
               if (e == 'create custom widget') {
-                showCustomWidgetRename(context, 'Enter name of widget', (value) {
+                showCustomWidgetRename(context, 'Enter name of widget',
+                    (value) {
                   Provider.of<ComponentOperationCubit>(context, listen: false)
                       .addCustomComponent(value, root: component);
                   Get.back();
@@ -524,7 +592,8 @@ class ComponentModificationMenu extends StatelessWidget {
                     .deleteCustomComponent(component as CustomComponent);
               } else if (e == 'remove') {
                 final parent = component.parent!;
-                Provider.of<ComponentOperationCubit>(context, listen: false).removeComponent(component);
+                Provider.of<ComponentOperationCubit>(context, listen: false)
+                    .removeComponent(component);
                 if (ancestor is CustomComponent) {
                   (ancestor as CustomComponent).notifyChanged();
                 }
@@ -586,7 +655,8 @@ class ComponentModificationMenu extends StatelessWidget {
     );
   }
 
-  List<String> getSameComponents(Map<String, Component> components, Component component) {
+  List<String> getSameComponents(
+      Map<String, Component> components, Component component) {
     final List<String> sameComponents = [];
     for (final key in components.keys) {
       if (components[key].runtimeType != component.runtimeType &&
@@ -597,7 +667,8 @@ class ComponentModificationMenu extends StatelessWidget {
     return sameComponents;
   }
 
-  List<String> getTypeComponents(Map<String, Component> components, List<int> types) {
+  List<String> getTypeComponents(
+      Map<String, Component> components, List<int> types) {
     final List<String> sameComponents = [];
     for (final key in components.keys) {
       if (types.contains(components[key]!.type)) {
@@ -607,123 +678,20 @@ class ComponentModificationMenu extends StatelessWidget {
     return sameComponents;
   }
 
-  void showSelectionDialog(BuildContext context, void Function(Component) onSelection, {List<String>? possibleItems}) {
-
-    String filter='';
-    final TextEditingController controller=TextEditingController();
+  void showSelectionDialog(
+      BuildContext context, void Function(Component) onSelection,
+      {List<String>? possibleItems}) {
     Get.dialog(
       GestureDetector(
         onTap: () {
           Get.back();
         },
-        child: Material(
-          color: Colors.transparent,
-          child: Center(
-            child: Container(
-              width: 400,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: const EdgeInsets.all(20),
-              child: StatefulBuilder(
-                builder: (context2,setStateForWidgetSearch) {
-                  final customComponents =
-                      Provider.of<ComponentOperationCubit>(context, listen: false).mainExecution.customComponents.where((element) => element.name.isCaseInsensitiveContains(filter)).toList();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppTextField(
-                        controller: controller,
-                        key: const GlobalObjectKey('search'),
-                        onChange: (value){
-                          filter=value.toLowerCase();
-                          setStateForWidgetSearch((){});
-                        },
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Text(
-                          'basic widgets',
-                          style: AppFontStyle.roboto(14, color: const Color(0xff494949)),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 6,
-                        child: GridView(
-                          controller: ScrollController(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3.5),
-                          children: (possibleItems ?? componentList.keys.toList()).where((element) => element.isCaseInsensitiveContains(filter))
-                              .map(
-                                (e) => InkWell(
-                                  onTap: () {
-                                    onSelection(componentList[e]!());
-                                    Get.back();
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
-                                    child: Card(
-                                      elevation: 2,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      child: Center(
-                                        child: Text(
-                                          e,
-                                          style: AppFontStyle.roboto(12, color: Colors.black, fontWeight: FontWeight.w500),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Text(
-                          'custom widgets',
-                          style: AppFontStyle.roboto(14, color: const Color(0xff494949)),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 4,
-                        child: GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3.5),
-                          controller: ScrollController(),
-                          itemBuilder: (context, i) {
-                            return InkWell(
-                              onTap: () {
-                                final customComponentClone = customComponents[i].clone(null);
-                                customComponents[i].objects.add(customComponentClone as CustomComponent);
-                                onSelection(customComponentClone);
-                                Get.back();
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Card(
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  child: Center(
-                                    child: Text(
-                                      customComponents[i].name,
-                                      style: AppFontStyle.roboto(12, color: Colors.black, fontWeight: FontWeight.w500),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                          itemCount: customComponents.length,
-                        ),
-                      )
-                    ],
-                  );
-                }
-              ),
-            ),
+        child: BlocProvider<ComponentOperationCubit>(
+          create: (context2) =>
+              Provider.of<ComponentOperationCubit>(context, listen: false),
+          child: SelectionDialog(
+            possibleItems: possibleItems,
+            onSelection: onSelection,
           ),
         ),
       ),
@@ -736,8 +704,23 @@ class ComponentModificationMenu extends StatelessWidget {
     } else if (source is ChoiceValueParameter) {
       (dest as ChoiceValueParameter).val = source.val;
     } else if (source is ChoiceParameter && source.val != null) {
-      (dest as ChoiceParameter).val = dest.options[source.options.indexOf(source.val!)];
-      copyValueSourceToDest(source.val!, dest.val!);
+      final sourceSelectionName = source.val?.displayName;
+      for (final option in (dest as ChoiceParameter).options) {
+        if (option.displayName == sourceSelectionName) {
+          dest.val = option;
+          copyValueSourceToDest(source.val!, dest.val!);
+          break;
+        }
+      }
+    } else if (source is ComplexParameter) {
+      for (final param in source.params) {
+        for (final param2 in (dest as ComplexParameter).params) {
+          if ((param.displayName == param2.displayName) &&
+              param.runtimeType == param2.runtimeType) {
+            copyValueSourceToDest(param, param2);
+          }
+        }
+      }
     }
   }
 
@@ -762,7 +745,8 @@ class ComponentModificationMenu extends StatelessWidget {
     }
   }
 
-  void showCustomWidgetRename(BuildContext context, String title, Function(String) onChange) {
+  void showCustomWidgetRename(
+      BuildContext context, String title, Function(String) onChange) {
     CustomDialog.show(
         context,
         Container(
@@ -810,7 +794,9 @@ class ComponentTile extends StatelessWidget {
   final Component component;
   final Component ancestor;
 
-  const ComponentTile({Key? key, required this.component, required this.ancestor}) : super(key: key);
+  const ComponentTile(
+      {Key? key, required this.component, required this.ancestor})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -823,7 +809,9 @@ class ComponentTile extends StatelessWidget {
       child: Card(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(4),
-            side: Provider.of<ComponentSelectionCubit>(context, listen: false).currentSelected == component
+            side: Provider.of<ComponentSelectionCubit>(context, listen: false)
+                        .currentSelected ==
+                    component
                 ? const BorderSide(color: Colors.blueAccent, width: 2)
                 : const BorderSide()),
         elevation: 2,
@@ -831,7 +819,8 @@ class ComponentTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           child: Text(
             component.name,
-            style: AppFontStyle.roboto(13, color: Colors.black, fontWeight: FontWeight.w500),
+            style: AppFontStyle.roboto(13,
+                color: Colors.black, fontWeight: FontWeight.w500),
           ),
         ),
       ),

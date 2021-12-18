@@ -23,7 +23,7 @@ import 'package:provider/provider.dart';
 
 
 import '../component_list.dart';
-import '../component_model.dart';
+import '../models/component_model.dart';
 import 'component_tree.dart';
 
 class HomePage extends StatefulWidget {
@@ -152,7 +152,7 @@ class _HomePageState extends State<HomePage> {
       decoration: const BoxDecoration(
           gradient: RadialGradient(colors: [
         Color(0xffd3d3d3),
-        Color(0xffffffff),
+            Color(0xffffffff),
       ], tileMode: TileMode.clamp, radius: 20, focalRadius: 0.1)),
       child: Center(
         child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(

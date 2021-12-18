@@ -1,20 +1,37 @@
-import 'package:flutter_builder/parameter_info.dart';
-
-import 'enums.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_builder/enums.dart';
+import 'package:flutter_builder/models/parameter_info.dart';
 
 abstract class Parameter {
   String? displayName;
-  bool required;
+  bool isRequired;
   String? Function(ComplexParameter)? validToShow;
   ParameterInfo? info;
 
-  Parameter(this.displayName, this.info, this.required);
+  Parameter(this.displayName, this.info, this.isRequired);
 
   get value;
 
   get rawValue;
 
   String get code;
+
+  void fromCode(String code) {}
+
+  dynamic getValueFromCode<T>(String code) {
+    if (T == int) {
+      return int.tryParse(info?.fromCode(code) ?? code);
+    } else if (T == double) {
+      return double.tryParse(info?.fromCode(code) ?? code);
+    } else if (T == String) {
+      return info?.fromCode(code) ?? code;
+    }
+    else if (T == Color) {
+      final colorString = (info?.fromCode(code) ?? code).replaceAll('Color(', '').replaceAll(')', '');
+      return Color(int.parse(colorString));
+    }
+    return info?.fromCode(code) ?? code;
+  }
 
   String? checkIfValidToShow(ComplexParameter complexParameter) {
     if (validToShow != null) {
@@ -36,31 +53,30 @@ abstract class Parameter {
     this.info = info;
   }
 
-  void withRequired(bool required,{String? nullParameterName='None'}) {
-    if(this.required==required) {
+  void withRequired(bool required, {String? nullParameterName = 'None'}) {
+    if (isRequired == required) {
       return;
     }
-    this.required = required;
-    if(this is SimpleParameter){
-      if(required){
-        (this as SimpleParameter).val=(this as SimpleParameter).defaultValue;
+    isRequired = required;
+    if (this is SimpleParameter) {
+      if (required) {
+        (this as SimpleParameter).val = (this as SimpleParameter).defaultValue;
+      } else {
+        (this as SimpleParameter).val = null;
       }
-      else{
-        (this as SimpleParameter).val=null;
-      }
-    }else {
-      switch(runtimeType){
-        case ChoiceParameter :
-          if(required) {
+    } else {
+      switch (runtimeType) {
+        case ChoiceParameter:
+          if (required) {
             (this as ChoiceParameter).options.removeAt(0);
-          }
-          else{
+          } else {
             (this as ChoiceParameter).options.insert(
               0,
               NullParameter(displayName: nullParameterName),
             );
           }
-          (this as ChoiceParameter).val = (this as ChoiceParameter).options[ (this as ChoiceParameter).defaultValue];
+          (this as ChoiceParameter).val = (this as ChoiceParameter)
+              .options[(this as ChoiceParameter).defaultValue];
           break;
       }
     }
@@ -77,7 +93,7 @@ class SimpleParameter<T> extends Parameter {
   dynamic get value {
     if (val != null) {
       return evaluate(val!);
-    } else if (!required) {
+    } else if (!isRequired) {
       return null;
     } else if (defaultValue != null) {
       return evaluate(defaultValue!);
@@ -89,15 +105,14 @@ class SimpleParameter<T> extends Parameter {
 
   late final dynamic Function(T) evaluate;
 
-  SimpleParameter(
-      {String? name,
-      required this.paramType,
-      this.defaultValue,
-      this.val,
-      this.inputType = ParamInputType.text,
-      dynamic Function(T)? evaluate,
-      bool required = true,
-      ParameterInfo? info})
+  SimpleParameter({String? name,
+    required this.paramType,
+    this.defaultValue,
+    this.val,
+    this.inputType = ParamInputType.text,
+    dynamic Function(T)? evaluate,
+    bool required = true,
+    ParameterInfo? info})
       : super(name, info, required) {
     if (evaluate != null) {
       this.evaluate = evaluate;
@@ -113,7 +128,7 @@ class SimpleParameter<T> extends Parameter {
   get rawValue {
     if (val != null) {
       return val!;
-    } else if (!required) {
+    } else if (!isRequired) {
       return null;
     } else if (defaultValue != null) {
       return defaultValue!;
@@ -130,7 +145,7 @@ class SimpleParameter<T> extends Parameter {
 
   @override
   String get code {
-    if (!required && val == null) {
+    if (!isRequired && val == null) {
       return '';
     }
     if (info != null) {
@@ -144,27 +159,30 @@ class SimpleParameter<T> extends Parameter {
     }
     return '$rawValue';
   }
+
+  @override
+  void fromCode(String code) {
+    val = getValueFromCode<T>(code);
+  }
 }
 
 class ListParameter extends Parameter {
   final List<Parameter> params = [];
   final Parameter Function() parameterGenerator;
 
-  ListParameter(
-      {required String? displayName,
-      ParameterInfo? info,
-      required this.parameterGenerator})
+  ListParameter({required String? displayName,
+    ParameterInfo? info,
+    required this.parameterGenerator})
       : super(displayName, info, false);
 
   @override
-  // TODO: implement code
   String get code {
     String parametersCode = '[';
     for (final parameter in params) {
       if (parameter.info is InnerObjectParameterInfo) {
         parameter.withInfo(InnerObjectParameterInfo(
             innerObjectName:
-                (parameter.info as InnerObjectParameterInfo).innerObjectName));
+            (parameter.info as InnerObjectParameterInfo).innerObjectName));
       }
       parametersCode += '${(parameter).code},'.replaceAll(',,', ',');
     }
@@ -203,13 +221,12 @@ class ChoiceValueParameter extends Parameter {
     return null;
   }
 
-  ChoiceValueParameter(
-      {String? name,
-      required this.options,
-      required this.defaultValue,
-      bool required = true,
-      this.val,
-      ParameterInfo? info})
+  ChoiceValueParameter({String? name,
+    required this.options,
+    required this.defaultValue,
+    bool required = true,
+    this.val,
+    ParameterInfo? info})
       : super(name, info, required);
 
   @override
@@ -224,35 +241,42 @@ class ChoiceValueParameter extends Parameter {
     }
     return info!.code(value.toString());
   }
+
+  @override
+  void fromCode(String code) {
+    final paramCode = (info?.fromCode(code) ?? code);
+    val = options.entries
+        .firstWhere((element) => element.value.toString() == paramCode)
+        .key;
+  }
+
 }
 
 class ChoiceParameter extends Parameter {
   final List<Parameter> options;
-  late int defaultValue=0;
+  late int defaultValue = 0;
   Parameter? val;
   String? nullParameterName;
 
-  ChoiceParameter(
-      {String? name,
-      required this.options,
-      bool required = true,
-      this.val,
-      this.nullParameterName='none',
-      ParameterInfo? info})
+  ChoiceParameter({String? name,
+    required this.options,
+    bool required = true,
+    this.val,
+    this.nullParameterName = 'none',
+    ParameterInfo? info})
       : super(name, info, required) {
-    if(!required) {
+    if (!required) {
       options.insert(
-      0,
-      NullParameter(displayName: nullParameterName),
-    );
+        0,
+        NullParameter(displayName: nullParameterName),
+      );
     }
     val = options[defaultValue];
-
   }
 
   @override
   get value {
-      return  val?.value;
+    return val?.value;
   }
 
   @override
@@ -261,10 +285,26 @@ class ChoiceParameter extends Parameter {
   @override
   get code {
     final paramCode = rawValue.code;
-    if (paramCode.isEmpty||(info!=null&&(info is NamedParameterInfo||(info is InnerObjectParameterInfo&&(info as InnerObjectParameterInfo).namedIfHaveAny!=null))&&paramCode=='null')) {
+    if (paramCode.isEmpty ||
+        (info != null &&
+            (info is NamedParameterInfo ||
+                (info is InnerObjectParameterInfo &&
+                    (info as InnerObjectParameterInfo).namedIfHaveAny !=
+                        null)) &&
+            paramCode == 'null')) {
       return '';
     }
     return info != null ? info!.code(paramCode) : paramCode;
+  }
+
+  @override
+  void fromCode(String code) {
+    final paramCode = (info?.fromCode(code) ?? code);
+    val = options.firstWhere((element) =>
+        paramCode.startsWith('${(element.info as InnerObjectParameterInfo?)
+            ?.innerObjectName}('));
+    print('VALUE $paramCode');
+    val?.fromCode(paramCode);
   }
 }
 
@@ -272,23 +312,20 @@ class ComplexParameter extends Parameter {
   final List<Parameter> params;
   final dynamic Function(List<Parameter>) evaluate;
 
-  ComplexParameter(
-      {String? name,
-      required this.params,
-      required this.evaluate,
-      ParameterInfo? info,
-      bool required = true})
+  ComplexParameter({String? name,
+    required this.params,
+    required this.evaluate,
+    ParameterInfo? info,
+    bool required = true})
       : super(name, info, required);
 
   @override
   get value => evaluate.call(params);
 
   @override
-  // TODO: implement rawValue
   get rawValue => throw UnimplementedError();
 
   @override
-  // TODO: implement code
   get code {
     String middle = '';
     for (final para in params) {
@@ -299,6 +336,55 @@ class ComplexParameter extends Parameter {
     }
     return info?.code(middle) ?? middle;
   }
+
+  @override
+  void fromCode(String code) {
+    final paramCodeList = (info?.fromCode(code) ?? code);
+    int parenthesisCount = 0;
+    final List<int> dividers = [-1];
+    for (int i = 0; i < paramCodeList.length; i++) {
+      if (paramCodeList[i] == ',' && parenthesisCount==0) {
+        dividers.add(i);
+      } else if (paramCodeList[i] == '(') {
+        parenthesisCount++;
+      } else if (paramCodeList[i] == ')') {
+        parenthesisCount--;
+      }
+    }
+    List<String> parameterCodes = [];
+    for (int divideIndex = 0; divideIndex < dividers.length; divideIndex++) {
+      if (divideIndex + 1 < dividers.length) {
+        final subCode = paramCodeList.substring(
+            dividers[divideIndex] + 1, dividers[divideIndex + 1]);
+        if (subCode.isNotEmpty) {
+          parameterCodes.add(subCode);
+        }
+      } else {
+        final subCode = paramCodeList.substring(dividers[divideIndex] + 1);
+        if (subCode.isNotEmpty) {
+          parameterCodes.add(subCode);
+        }
+      }
+    }
+
+    print('subcode $parameterCodes');
+    for (Parameter parameter in params) {
+      if (parameter.info is NamedParameterInfo ||
+          (parameter.info is InnerObjectParameterInfo &&
+              (parameter.info as InnerObjectParameterInfo).namedIfHaveAny !=
+                  null)) {
+        for (final paramCode in parameterCodes) {
+          if (paramCode.startsWith('${parameter.info is NamedParameterInfo
+              ? (parameter.info as NamedParameterInfo).name
+              : (parameter.info as InnerObjectParameterInfo)
+              .namedIfHaveAny!}:')) {
+            parameter.fromCode(paramCode);
+            break;
+          }
+        }
+      }
+    }
+  }
 }
 
 class ConstantValueParameter extends Parameter {
@@ -306,12 +392,11 @@ class ConstantValueParameter extends Parameter {
   late String constantValueString;
   ParamType paramType;
 
-  ConstantValueParameter(
-      {String? displayName,
-      ParameterInfo? info,
-      String? constantValueInString,
-      required this.constantValue,
-      required this.paramType})
+  ConstantValueParameter({String? displayName,
+    ParameterInfo? info,
+    String? constantValueInString,
+    required this.constantValue,
+    required this.paramType})
       : super(displayName, info, true) {
     if (constantValueInString != null) {
       constantValueString = constantValueInString;
@@ -349,7 +434,7 @@ class NullParameter extends Parameter {
   @override
   String get code {
     if ((info is InnerObjectParameterInfo &&
-            (info as InnerObjectParameterInfo).namedIfHaveAny == null) ||
+        (info as InnerObjectParameterInfo).namedIfHaveAny == null) ||
         info == null) {
       return 'null';
     }
@@ -367,12 +452,11 @@ class BooleanParameter extends Parameter {
   bool val;
   late final String Function(bool) evaluate;
 
-  BooleanParameter(
-      {required String displayName,
-      ParameterInfo? info,
-      required bool required,
-      required this.val,
-      String Function(bool)? evaluate})
+  BooleanParameter({required String displayName,
+    ParameterInfo? info,
+    required bool required,
+    required this.val,
+    String Function(bool)? evaluate})
       : super(displayName, info, required) {
     if (evaluate == null) {
       this.evaluate = (value) => value.toString();

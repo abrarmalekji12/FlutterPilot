@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/component_list.dart';
-import 'package:flutter_builder/component_model.dart';
+import 'package:flutter_builder/models/component_model.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
 import 'package:provider/provider.dart';
