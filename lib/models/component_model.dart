@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/code_to_component.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
 import 'package:flutter_builder/models/parameter_info.dart';
@@ -120,15 +121,14 @@ abstract class Component {
         if (index != -1) {
           final childCode = parameterCodes.removeAt(index);
           print('CHILD CODE $childCode');
-          final code2=childCode
-              .replaceFirst('children:[', '');
-          final List<Component> componentList=[];
-          final List<String> childrenCodes=CodeToComponent.splitByComma(code2.substring(0,code2.length-1));
-          for(final childCode in childrenCodes){
-            componentList.add(Component.fromCode(childCode));
+          final code2 = childCode.replaceFirst('children:[', '');
+          final List<Component> componentList = [];
+          final List<String> childrenCodes = CodeToComponent.splitByComma(
+              code2.substring(0, code2.length - 1));
+          for (final childCode in childrenCodes) {
+            componentList.add(Component.fromCode(childCode)..setParent(comp));
           }
-          (comp as MultiHolder)
-              .children=componentList;
+          (comp as MultiHolder).children = componentList;
         }
         break;
       case 4:
@@ -162,7 +162,7 @@ abstract class Component {
   }
 
   void _lookForUIChanges(BuildContext context) async {
-    RenderBox renderBox =
+    final RenderBox renderBox =
         GlobalObjectKey(this).currentContext!.findRenderObject()! as RenderBox;
     Offset position = renderBox.localToGlobal(Offset.zero,
         ancestor: const GlobalObjectKey('device window')
@@ -173,23 +173,19 @@ abstract class Component {
         .findRenderObject();
     int sameCount = 0;
     while (sameCount < 5) {
-      if (boundary?.left == position.dx &&
-          boundary?.top == position.dy &&
-          boundary?.width == renderBox.size.width &&
-          boundary?.height == renderBox.size.height) {
+      if ((boundary?.left??position.dx) - position.dx < 0.5 &&
+          (boundary?.top??position.dy) - position.dy < 0.5&&
+          (boundary?.width??renderBox.size.width) - renderBox.size.width < 0.5&&
+          (boundary?.height??renderBox.size.height) - renderBox.size.height < 0.5) {
         sameCount++;
       }
       boundary = Rect.fromLTWH(position.dx, position.dy, renderBox.size.width,
           renderBox.size.height);
       depth = renderBox.depth;
-      // if (Provider.of<ComponentSelectionCubit>(context, listen: false)
-      //         .currentSelected ==
-      //     this) {
-      Provider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
-      // }
+      BlocProvider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
+      print(
+          '======== COMPONENT VISUAL BOX CHANGED  ${boundary?.width} ${renderBox.size.width} ${boundary?.height} ${renderBox.size.height}');
       await Future.delayed(const Duration(milliseconds: 50));
-      renderBox = GlobalObjectKey(this).currentContext!.findRenderObject()!
-          as RenderBox;
       position = renderBox.localToGlobal(Offset.zero, ancestor: ancestor);
     }
   }
@@ -588,9 +584,10 @@ abstract class CustomComponent extends Component {
   Component findSameLevelComponent(
       CustomComponent copy, CustomComponent original, Component object) {
     Component? tracer = object;
-    List<List<Parameter>> paramList = [];
+    final List<List<Parameter>> paramList = [];
+    print('FIND FIRST LEVEL');
     while (tracer != original) {
-      // print('TRACER ${tracer?.name}');
+      print('TRACER ${tracer?.name}');
       paramList.add(tracer!.parameters);
       tracer = tracer.parent;
     }

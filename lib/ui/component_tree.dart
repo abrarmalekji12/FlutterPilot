@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/common/app_button.dart';
@@ -87,7 +86,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                         ],
                       ),
                     ),
-                    for (CustomComponent comp
+                    for (final CustomComponent comp
                         in Provider.of<ComponentOperationCubit>(context,
                                 listen: false)
                             .mainExecution
@@ -748,45 +747,46 @@ class ComponentModificationMenu extends StatelessWidget {
   void showCustomWidgetRename(
       BuildContext context, String title, Function(String) onChange) {
     CustomDialog.show(
-        context,
-        Container(
-          padding: const EdgeInsets.all(15),
-          color: Colors.white,
-          width: 500,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: AppFontStyle.roboto(14, fontWeight: FontWeight.bold),
+      context,
+      Container(
+        padding: const EdgeInsets.all(15),
+        color: Colors.white,
+        width: 500,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: AppFontStyle.roboto(14, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            SizedBox(
+              height: 40,
+              child: AppTextField(
+                value: component.name,
               ),
-              const SizedBox(
-                height: 10,
-              ),
-              SizedBox(
-                height: 40,
-                child: AppTextField(
-                  value: component.name,
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              AppButton(
-                height: 45,
-                title: 'ok',
-                onPressed: () {
-                  if (AppTextField.changedValue.length > 1 &&
-                      !AppTextField.changedValue.contains(' ') &&
-                      !AppTextField.changedValue.contains('.')) {
-                    onChange.call(AppTextField.changedValue);
-                  }
-                },
-              )
-            ],
-          ),
-        ));
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            AppButton(
+              height: 45,
+              title: 'ok',
+              onPressed: () {
+                if (AppTextField.changedValue.length > 1 &&
+                    !AppTextField.changedValue.contains(' ') &&
+                    !AppTextField.changedValue.contains('.')) {
+                  onChange.call(AppTextField.changedValue);
+                }
+              },
+            )
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -800,20 +800,39 @@ class ComponentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    late final bool selected;
+    final selectedComponent =
+        BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+            .currentSelected;
+    // final comp = rootComp.findSameLevelComponent(
+    //     customComponent,
+    //     (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+    //         .currentSelectedRoot as CustomComponent),
+    //     BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+    //         .currentSelected);
+    if (selectedComponent is CustomComponent) {
+      selected = selectedComponent.objects.contains(component);
+    }
+    // else if(BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+    //         .currentSelectedRoot is CustomComponent){
+    //   selected =
+    // }
+    else {
+      selected = (selectedComponent == component);
+    }
     return InkWell(
       borderRadius: BorderRadius.circular(4),
       onTap: () {
-        Provider.of<ComponentSelectionCubit>(context, listen: false)
+        BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
             .changeComponentSelection(component, root: ancestor);
       },
       child: Card(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-            side: Provider.of<ComponentSelectionCubit>(context, listen: false)
-                        .currentSelected ==
-                    component
-                ? const BorderSide(color: Colors.blueAccent, width: 2)
-                : const BorderSide()),
+          borderRadius: BorderRadius.circular(4),
+          side: selected
+              ? const BorderSide(color: Colors.blueAccent, width: 2)
+              : const BorderSide(),
+        ),
         elevation: 2,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

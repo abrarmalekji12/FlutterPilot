@@ -21,7 +21,6 @@ import 'package:flutter_builder/ui/visual_model.dart';
 import 'package:flutter_builder/ui/visual_painter.dart';
 import 'package:provider/provider.dart';
 
-
 import '../component_list.dart';
 import '../models/component_model.dart';
 import 'component_tree.dart';
@@ -55,8 +54,8 @@ class _HomePageState extends State<HomePage> {
     // FlutterError.onError = onErrorIgnoreOverflowErrors;
 
     componentSelectionCubit = ComponentSelectionCubit(
-      currentSelected: componentOperationCubit.mainExecution.rootComponent!, currentSelectedRoot:
-    componentOperationCubit.mainExecution.rootComponent!,
+      currentSelected: componentOperationCubit.mainExecution.rootComponent!,
+      currentSelectedRoot: componentOperationCubit.mainExecution.rootComponent!,
     );
     html.window.onResize.listen((event) {
       componentPropertyCubit.changedComponent();
@@ -152,14 +151,14 @@ class _HomePageState extends State<HomePage> {
       decoration: const BoxDecoration(
           gradient: RadialGradient(colors: [
         Color(0xffd3d3d3),
-            Color(0xffffffff),
+        Color(0xffffffff),
       ], tileMode: TileMode.clamp, radius: 20, focalRadius: 0.1)),
       child: Center(
         child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
           builder: (context, state) {
             return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
               builder: (context, state) {
-
+                print('======== COMPONENT CREATION ');
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -179,7 +178,11 @@ class _HomePageState extends State<HomePage> {
                                   .searchTappedComponent(event.localPosition);
                               if (tappedComp != null) {
                                 componentSelectionCubit
-                                    .changeComponentSelection(tappedComp, root: componentOperationCubit.mainExecution.rootComponent!,);
+                                    .changeComponentSelection(
+                                  tappedComp,
+                                  root: componentOperationCubit
+                                      .mainExecution.rootComponent!,
+                                );
                               }
                             },
                             child: Container(
@@ -194,14 +197,11 @@ class _HomePageState extends State<HomePage> {
                                     child: BlocListener<ComponentOperationCubit,
                                         ComponentOperationState>(
                                       listener: (context, state) {
-                                        // print(
-                                        //     componentOperationCubit.rootComponent.code());
+
                                       },
-                                      child: OverflowBox(
-                                        child: componentOperationCubit
-                                            .mainExecution
-                                            .run(context),
-                                      ),
+                                      child: componentOperationCubit
+                                          .mainExecution
+                                          .run(context),
                                     ),
                                   ),
                                   const BoundaryWidget(),
