@@ -4,7 +4,6 @@ import 'package:flutter_builder/code_to_component.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
 import 'package:flutter_builder/models/parameter_info.dart';
 import 'package:flutter_builder/models/parameter_model.dart';
-import 'package:provider/provider.dart';
 
 import '../component_list.dart';
 
@@ -52,7 +51,7 @@ class MainExecution {
 
   void setRoot(Component component) {
     rootComponent = component;
-    component.setParent(rootComponent);
+    component.setParent(null);
   }
 
   String code() {
@@ -534,7 +533,16 @@ abstract class CustomComponent extends Component {
     for (int i = 0; i < objects.length; i++) {
       final oldObject = objects[i];
       objects[i] = clone(objects[i].parent) as CustomComponent;
+
       replaceChildOfParent(oldObject, objects[i]);
+      Component? tracer=objects[i];
+      while(tracer!.parent!=null){
+        print('======= TRACER FIND ROOT ${tracer.parent?.name}');
+        tracer=tracer.parent;
+      }
+      if(tracer is CustomComponent){
+        tracer.notifyChanged();
+      }
     }
   }
 
