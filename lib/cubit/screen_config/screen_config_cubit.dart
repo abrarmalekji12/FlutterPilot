@@ -30,7 +30,7 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
     else {
       screenConfig.scale=0.9;
     }
-    print('scale ${screenConfig.scale}');
+    debugPrint('scale ${screenConfig.scale}');
     return  screenConfig.scale!;
 
   }

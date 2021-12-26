@@ -9,7 +9,7 @@ import '../component_list.dart';
 
 class MainExecution {
   Component? rootComponent;
-  List<CustomComponent> customComponents = [];
+  final List<CustomComponent> customComponents = [];
 
   MainExecution() {
     final homePage = StatelessComponent(
@@ -61,7 +61,7 @@ class MainExecution {
         implementationCode += '${customComponent.implementationCode()}\n';
       }
     }
-    print('IMPL $implementationCode');
+    debugPrint('IMPL $implementationCode');
     return ''' 
     void main(){
     runApp(${rootComponent!.code()});
@@ -104,7 +104,7 @@ abstract class Component {
         }
         if (index != -1) {
           final childCode = parameterCodes.removeAt(index);
-          print('CHILD CODE $childCode');
+          debugPrint('CHILD CODE $childCode');
           (comp as Holder).updateChild(
               Component.fromCode(childCode.replaceFirst('child:', '')));
         }
@@ -119,7 +119,7 @@ abstract class Component {
         }
         if (index != -1) {
           final childCode = parameterCodes.removeAt(index);
-          print('CHILD CODE $childCode');
+          debugPrint('CHILD CODE $childCode');
           final code2 = childCode.replaceFirst('children:[', '');
           final List<Component> componentList = [];
           final List<String> childrenCodes = CodeToComponent.splitByComma(
@@ -160,6 +160,46 @@ abstract class Component {
     return ComponentWidget(key: GlobalObjectKey(this), child: create(context));
   }
 
+  Component getLastRoot() {
+    Component? tracer = this;
+    while (tracer!.parent != null) {
+      debugPrint('======= TRACER FIND ROOT ${tracer.parent?.name}');
+      tracer = tracer.parent;
+    }
+    return tracer;
+  }
+
+  Component? getCustomComponentRoot() {
+    Component? tracer = this;
+    final List<Component> tree = [];
+    while (tracer!.parent != null && tracer is! CustomComponent) {
+      debugPrint('======= TRACER FIND CUSTOM ROOT ${tracer.parent?.name}');
+      tracer = tracer.parent;
+      tree.add(tracer!);
+    }
+    for (final comp in tree.reversed) {
+      if (comp is Holder && comp.child is CustomComponent) {
+        debugPrint('======= TRACER FIND CUSTOM ROOT ${ comp.child?.name}');
+        return comp.child;
+      } else if (comp is MultiHolder) {
+        for(final childComp in comp.children){
+          if(childComp is CustomComponent){
+            debugPrint('======= TRACER FIND CUSTOM ROOT ${ childComp.name}');
+            return childComp;
+          }
+        }
+      }else if(comp is CustomNamedHolder){
+        for(final childComp in comp.childMap.values){
+          if(childComp is CustomComponent){
+            debugPrint('======= TRACER FIND CUSTOM ROOT ${ childComp.name}');
+            return childComp;
+          }
+        }
+      }
+    }
+    return tracer;
+  }
+
   void _lookForUIChanges(BuildContext context) async {
     final RenderBox renderBox =
         GlobalObjectKey(this).currentContext!.findRenderObject()! as RenderBox;
@@ -172,17 +212,19 @@ abstract class Component {
         .findRenderObject();
     int sameCount = 0;
     while (sameCount < 5) {
-      if ((boundary?.left??position.dx) - position.dx < 0.5 &&
-          (boundary?.top??position.dy) - position.dy < 0.5&&
-          (boundary?.width??renderBox.size.width) - renderBox.size.width < 0.5&&
-          (boundary?.height??renderBox.size.height) - renderBox.size.height < 0.5) {
+      if ((boundary?.left ?? position.dx) - position.dx < 0.5 &&
+          (boundary?.top ?? position.dy) - position.dy < 0.5 &&
+          (boundary?.width ?? renderBox.size.width) - renderBox.size.width <
+              0.5 &&
+          (boundary?.height ?? renderBox.size.height) - renderBox.size.height <
+              0.5) {
         sameCount++;
       }
       boundary = Rect.fromLTWH(position.dx, position.dy, renderBox.size.width,
           renderBox.size.height);
       depth = renderBox.depth;
       BlocProvider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
-      print(
+      debugPrint(
           '======== COMPONENT VISUAL BOX CHANGED  ${boundary?.width} ${renderBox.size.width} ${boundary?.height} ${renderBox.size.height}');
       await Future.delayed(const Duration(milliseconds: 50));
       position = renderBox.localToGlobal(Offset.zero, ancestor: ancestor);
@@ -535,12 +577,8 @@ abstract class CustomComponent extends Component {
       objects[i] = clone(objects[i].parent) as CustomComponent;
 
       replaceChildOfParent(oldObject, objects[i]);
-      Component? tracer=objects[i];
-      while(tracer!.parent!=null){
-        print('======= TRACER FIND ROOT ${tracer.parent?.name}');
-        tracer=tracer.parent;
-      }
-      if(tracer is CustomComponent){
+      final tracer = objects[i].getLastRoot();
+      if (tracer is CustomComponent) {
         tracer.notifyChanged();
       }
     }
@@ -579,13 +617,13 @@ abstract class CustomComponent extends Component {
     comp2.name = name;
     comp2.parameters = parameters;
     comp2.root = root?.clone(parent);
+    comp2.cloneOf = this;
     return comp2;
   }
 
   CustomComponent createInstance(Component? root) {
     final customCopy = clone(root);
     objects.add(customCopy as CustomComponent);
-    customCopy.cloneOf = this;
     return customCopy;
   }
 
@@ -593,18 +631,18 @@ abstract class CustomComponent extends Component {
       CustomComponent copy, CustomComponent original, Component object) {
     Component? tracer = object;
     final List<List<Parameter>> paramList = [];
-    print('FIND FIRST LEVEL');
+    debugPrint('FIND FIRST LEVEL');
     while (tracer != original) {
-      print('TRACER ${tracer?.name}');
+      debugPrint('TRACER ${tracer?.name}');
       paramList.add(tracer!.parameters);
       tracer = tracer.parent;
     }
-    // print('TRACER 1 ${tracer?.name}');
+    // debugPrint('TRACER 1 ${tracer?.name}');
     tracer = copy;
     for (final param in paramList.reversed) {
       tracer = findChildWithParam(tracer!, param);
     }
-    // print('TRACER 2 ${tracer?.name}');
+    // debugPrint('TRACER 2 ${tracer?.name}');
 
     return tracer!;
   }
@@ -644,6 +682,9 @@ class StatelessComponent extends CustomComponent {
 
   @override
   String implementationCode() {
+    if (root == null) {
+      return '';
+    }
     return '''class $name extends StatelessWidget {
           const $name({Key? key}) : super(key: key);
         

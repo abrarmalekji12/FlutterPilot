@@ -37,10 +37,10 @@ class AppTextField extends StatelessWidget {
       controller: textFieldController,
       style: AppFontStyle.roboto(15,fontWeight: FontWeight.normal),
       onSubmitted: (data){
-        print('SUBMITTED');
+        debugPrint('SUBMITTED');
       },
       onEditingComplete: (){
-        print('EDITING COMP');
+        debugPrint('EDITING COMP');
       },
       decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(horizontal: 10,vertical: 0),

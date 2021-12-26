@@ -152,13 +152,13 @@ class _HomePageState extends State<HomePage> {
           gradient: RadialGradient(colors: [
         Color(0xffd3d3d3),
         Color(0xffffffff),
-      ], tileMode: TileMode.clamp, radius: 20, focalRadius: 0.1)),
+      ], tileMode: TileMode.clamp, radius: 0.9, focalRadius: 0.6)),
       child: Center(
         child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
           builder: (context, state) {
             return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
               builder: (context, state) {
-                print('======== COMPONENT CREATION ');
+                debugPrint('======== COMPONENT CREATION ');
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -171,18 +171,26 @@ class _HomePageState extends State<HomePage> {
                           scale: 1,
                           child: GestureDetector(
                             onTapDown: (event) {
-                              print(
+                              debugPrint(
                                   'tappp ${event.localPosition.dx} ${event.localPosition.dy}');
                               final tappedComp = componentOperationCubit
                                   .mainExecution.rootComponent!
                                   .searchTappedComponent(event.localPosition);
                               if (tappedComp != null) {
-                                componentSelectionCubit
-                                    .changeComponentSelection(
-                                  tappedComp,
-                                  root: componentOperationCubit
-                                      .mainExecution.rootComponent!,
-                                );
+                                final lastRoot = tappedComp.getCustomComponentRoot();
+                                if(lastRoot is CustomComponent) {
+                                  componentSelectionCubit
+                                      .changeComponentSelection(
+                                    lastRoot.cloneOf!.findSameLevelComponent(lastRoot.cloneOf!, lastRoot, tappedComp),
+                                    root: lastRoot.cloneOf!,
+                                  );
+                                }else{
+                                  componentSelectionCubit
+                                      .changeComponentSelection(
+                                    tappedComp,
+                                    root: lastRoot!,
+                                  );
+                                }
                               }
                             },
                             child: Container(
@@ -196,9 +204,7 @@ class _HomePageState extends State<HomePage> {
                                     padding: const EdgeInsets.all(1.0),
                                     child: BlocListener<ComponentOperationCubit,
                                         ComponentOperationState>(
-                                      listener: (context, state) {
-
-                                      },
+                                      listener: (context, state) {},
                                       child: componentOperationCubit
                                           .mainExecution
                                           .run(context),
@@ -237,7 +243,7 @@ class _HomePageState extends State<HomePage> {
 
     // Ignore if is overflow error.
     if (ifIsOverflowError) {
-      print('Overflow error.');
+      debugPrint('Overflow error.');
       visualBoxCubit.enableError('Error happened');
     } else {
       FlutterError.dumpErrorToConsole(details, forceReport: forceReport);

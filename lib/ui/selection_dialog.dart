@@ -44,7 +44,7 @@ class _SelectionDialogState extends State<SelectionDialog> {
           focusNode: focusNode,
           onKey: (key) {
             if(key is RawKeyDownEvent) {
-              print('pressed ${key.physicalKey} ${key.logicalKey}');
+              debugPrint('pressed ${key.physicalKey} ${key.logicalKey}');
               if (key.physicalKey == PhysicalKeyboardKey.enter) {
                 widget.onSelection(componentList[filtered[selectedIndex]]!());
                 Get.back();

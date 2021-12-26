@@ -206,7 +206,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                   shrinkWrap: true,
                   restorationId: component.toString(),
                   onReorder: (int oldIndex, int newIndex) {
-                    print('INDEX $oldIndex $newIndex');
+                    debugPrint('INDEX $oldIndex $newIndex');
                     if (oldIndex < newIndex) {
                       newIndex -= 1;
                     }

@@ -17,7 +17,7 @@ class BoundaryWidget extends StatelessWidget {
       color: Colors.transparent,
       child: BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
         builder: (context, state) {
-          print('======== COMPONENT SELECTION ');
+          debugPrint('======== COMPONENT SELECTION ');
           return BlocBuilder<VisualBoxCubit, VisualBoxState>(
             builder: (context, state) {
               final List<Boundary> boundaries = getAllBoundaries(context);
