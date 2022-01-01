@@ -177,11 +177,7 @@ class _SelectionDialogState extends State<SelectionDialog> {
                         itemBuilder: (context, i) {
                           return InkWell(
                             onTap: () {
-                              final customComponentClone =
-                                  filteredCustomComponents[i].clone(null);
-                              filteredCustomComponents[i]
-                                  .objects
-                                  .add(customComponentClone as CustomComponent);
+                              final customComponentClone=filteredCustomComponents[i].createInstance(null);
                               widget.onSelection(customComponentClone);
                               Get.back();
                             },

@@ -39,13 +39,6 @@ class _HomePageState extends State<HomePage> {
   final ParameterBuildCubit _parameterBuildCubit = ParameterBuildCubit();
   final visualBoxCubit = VisualBoxCubit();
   final screenConfigCubit = ScreenConfigCubit();
-
-  /*
-  * ..addChildren([
-        componentList['Container']!(),
-        componentList['Padding']!(),
-      ])
-  * */
   late final ComponentSelectionCubit componentSelectionCubit;
 
   @override
@@ -172,23 +165,25 @@ class _HomePageState extends State<HomePage> {
                           child: GestureDetector(
                             onTapDown: (event) {
                               debugPrint(
-                                  'tappp ${event.localPosition.dx} ${event.localPosition.dy}');
+                                  '==== onTap --- ${event.localPosition.dx} ${event.localPosition.dy}');
                               final tappedComp = componentOperationCubit
                                   .mainExecution.rootComponent!
                                   .searchTappedComponent(event.localPosition);
                               if (tappedComp != null) {
                                 final lastRoot = tappedComp.getCustomComponentRoot();
-                                if(lastRoot is CustomComponent) {
+                                debugPrint('==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
+                                if(lastRoot!=null&&lastRoot is CustomComponent) {
+                                  final rootClone= lastRoot.getRootClone;
                                   componentSelectionCubit
                                       .changeComponentSelection(
-                                    lastRoot.cloneOf!.findSameLevelComponent(lastRoot.cloneOf!, lastRoot, tappedComp),
-                                    root: lastRoot.cloneOf!,
+                                    rootClone.findSameLevelComponent(rootClone, lastRoot, tappedComp),
+                                    root:rootClone,
                                   );
-                                }else{
+                                }else if(lastRoot!=null){
                                   componentSelectionCubit
                                       .changeComponentSelection(
                                     tappedComp,
-                                    root: lastRoot!,
+                                    root: lastRoot,
                                   );
                                 }
                               }

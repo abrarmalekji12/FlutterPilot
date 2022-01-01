@@ -6,7 +6,6 @@ import 'package:flutter_builder/models/component_model.dart';
 import 'package:flutter_builder/cubit/component_creation/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
-import 'package:meta/meta.dart';
 import 'package:provider/provider.dart';
 
 part 'component_operation_state.dart';
@@ -53,12 +52,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     if (root != null) {
       component.root=root;
       final instance=component.createInstance(root.parent);
-      // final instance = component.clone(root.parent) as CustomComponent;
       replaceChildOfParent(root, instance);
-
       root.parent=component;
-      // instance.parent=root.parent;
-      // component.objects.add(instance);
     }
     emit(ComponentUpdatedState());
   }

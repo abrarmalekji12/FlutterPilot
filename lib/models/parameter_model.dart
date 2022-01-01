@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/enums.dart';
-import 'package:flutter_builder/models/parameter_info.dart';
+import 'package:flutter_builder/models/parameter_info_model.dart';
 
 abstract class Parameter {
   String? displayName;

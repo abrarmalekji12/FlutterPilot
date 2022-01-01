@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/code_to_component.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
-import 'package:flutter_builder/models/parameter_info.dart';
+import 'package:flutter_builder/models/parameter_info_model.dart';
 import 'package:flutter_builder/models/parameter_model.dart';
 
 import '../component_list.dart';
@@ -45,8 +45,7 @@ class MainExecution {
             .replaceAll(' ', '')));
     customComponents.add(homePage);
     setRoot(componentList['MaterialApp']!());
-    final customCopy = homePage.createInstance(rootComponent);
-    (rootComponent as CustomNamedHolder).updateChildWithKey('home', customCopy);
+    (rootComponent as CustomNamedHolder).updateChildWithKey('home', homePage.createInstance(rootComponent));
   }
 
   void setRoot(Component component) {
@@ -170,34 +169,37 @@ abstract class Component {
   }
 
   Component? getCustomComponentRoot() {
-    Component? tracer = this;
+    Component? _tracer = this,_root=this;
     final List<Component> tree = [];
-    while (tracer!.parent != null && tracer is! CustomComponent) {
-      debugPrint('======= TRACER FIND CUSTOM ROOT ${tracer.parent?.name}');
-      tracer = tracer.parent;
-      tree.add(tracer!);
+    while (_tracer != null && _tracer is! CustomComponent) {
+      debugPrint('======= TRACER FIND CUSTOM ROOT ${_tracer.parent?.name}');
+      tree.add(_tracer);
+      _root=_tracer;
+      _tracer = _tracer.parent;
     }
-    for (final comp in tree.reversed) {
-      if (comp is Holder && comp.child is CustomComponent) {
+    final reversedTree=tree.toList();
+    for (int i=1;i<reversedTree.length;i++) {
+      final comp=reversedTree[i];
+      if (comp is Holder && comp.child is CustomComponent&&(comp.child as CustomComponent).root==reversedTree[i-1]) {
         debugPrint('======= TRACER FIND CUSTOM ROOT ${ comp.child?.name}');
         return comp.child;
       } else if (comp is MultiHolder) {
         for(final childComp in comp.children){
-          if(childComp is CustomComponent){
+          if(childComp is CustomComponent&&childComp.root==reversedTree[i-1]){
             debugPrint('======= TRACER FIND CUSTOM ROOT ${ childComp.name}');
             return childComp;
           }
         }
       }else if(comp is CustomNamedHolder){
         for(final childComp in comp.childMap.values){
-          if(childComp is CustomComponent){
+          if(childComp is CustomComponent&&childComp.root==reversedTree[i-1]){
             debugPrint('======= TRACER FIND CUSTOM ROOT ${ childComp.name}');
             return childComp;
           }
         }
       }
     }
-    return tracer;
+    return _root;
   }
 
   void _lookForUIChanges(BuildContext context) async {
@@ -273,7 +275,6 @@ abstract class Component {
 
 abstract class MultiHolder extends Component {
   List<Component> children = [];
-
   MultiHolder(String name, List<Parameter> parameters)
       : super(name, parameters);
 
@@ -301,6 +302,9 @@ abstract class MultiHolder extends Component {
       children.insert(index, component);
     }
     component.setParent(this);
+    if(component is CustomComponent){
+      component.root?.parent=this;
+    }
   }
 
   int removeChild(Component component) {
@@ -311,26 +315,29 @@ abstract class MultiHolder extends Component {
   }
 
   void replaceChild(Component old, Component component) {
+    component.setParent(this);
     final index = children.indexOf(old);
     children.remove(old);
     children.insert(index, component);
-    component.setParent(this);
+    if(component is CustomComponent){
+      component.root?.parent=this;
+    }
   }
 
   @override
   Component? searchTappedComponent(Offset offset) {
     if (boundary?.contains(offset) ?? false) {
-      Component? component;
-      Component? depthComponent;
+      Component? _component;
+      Component? _depthComponent;
       for (final child in children) {
-        if ((depthComponent == null ||
-                component!.depth! > depthComponent.depth!) &&
-            (component = child.searchTappedComponent(offset)) != null) {
-          depthComponent = component;
+        if ((_depthComponent == null ||
+                _component!.depth! > _depthComponent.depth!) &&
+            (_component = child.searchTappedComponent(offset)) != null) {
+          _depthComponent = _component;
         }
       }
-      if (depthComponent != null) {
-        return depthComponent.searchTappedComponent(offset);
+      if (_depthComponent != null) {
+        return _depthComponent.searchTappedComponent(offset);
       }
       return this;
     }
@@ -551,6 +558,13 @@ abstract class CustomComponent extends Component {
       this.root})
       : super(name, []);
 
+  CustomComponent get getRootClone {
+   CustomComponent? rootClone=cloneOf;
+   while(rootClone!.cloneOf!=null){
+   rootClone=rootClone.cloneOf;
+   }
+    return rootClone;
+  }
   @override
   Widget create(BuildContext context) {
     return root?.build(context) ?? Container();
@@ -575,7 +589,6 @@ abstract class CustomComponent extends Component {
     for (int i = 0; i < objects.length; i++) {
       final oldObject = objects[i];
       objects[i] = clone(objects[i].parent) as CustomComponent;
-
       replaceChildOfParent(oldObject, objects[i]);
       final tracer = objects[i].getLastRoot();
       if (tracer is CustomComponent) {
@@ -622,28 +635,26 @@ abstract class CustomComponent extends Component {
   }
 
   CustomComponent createInstance(Component? root) {
-    final customCopy = clone(root);
-    objects.add(customCopy as CustomComponent);
-    return customCopy;
+    final compCopy=clone(root) as CustomComponent;
+    objects.add(compCopy);
+    return compCopy;
   }
 
   Component findSameLevelComponent(
       CustomComponent copy, CustomComponent original, Component object) {
     Component? tracer = object;
     final List<List<Parameter>> paramList = [];
-    debugPrint('FIND FIRST LEVEL');
-    while (tracer != original) {
+    debugPrint('=== FIND FIRST LEVEL');
+    while (tracer != original && tracer != original.root?.parent) {
       debugPrint('TRACER ${tracer?.name}');
       paramList.add(tracer!.parameters);
       tracer = tracer.parent;
     }
-    // debugPrint('TRACER 1 ${tracer?.name}');
     tracer = copy;
     for (final param in paramList.reversed) {
+      debugPrint('TRACER2 ${tracer?.name}');
       tracer = findChildWithParam(tracer!, param);
     }
-    // debugPrint('TRACER 2 ${tracer?.name}');
-
     return tracer!;
   }
 

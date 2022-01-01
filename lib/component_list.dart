@@ -5,7 +5,7 @@ import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/enums.dart';
 
 import 'models/other_model.dart';
-import 'models/parameter_info.dart';
+import 'models/parameter_info_model.dart';
 import 'models/parameter_model.dart';
 
 final componentList = {

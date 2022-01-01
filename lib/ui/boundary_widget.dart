@@ -65,17 +65,7 @@ class BoundaryWidget extends StatelessWidget {
       final rootComp =
           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
               .currentSelectedRoot as CustomComponent;
-      for (final customComponent in rootComp.objects) {
-        final comp = rootComp.findSameLevelComponent(
-            customComponent,
-            (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-                .currentSelectedRoot as CustomComponent),
-            BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-                .currentSelected);
-        if (comp.boundary != null) {
-          boundaries.add(Boundary(comp.boundary!, comp.name));
-        }
-      }
+      addCustomComponentInstancesBoundary(context,rootComp,boundaries);
     } else if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
             .currentSelected
             .boundary !=
@@ -90,6 +80,28 @@ class BoundaryWidget extends StatelessWidget {
                 .name),
       );
     }
+    debugPrint('==== BOUNDARY ${boundaries.length}');
     return boundaries;
+  }
+
+
+  void addCustomComponentInstancesBoundary(BuildContext context,CustomComponent rootComp,List<Boundary> boundaries){
+    for (final customComponent in rootComp.objects) {
+      if(customComponent.objects.isNotEmpty){
+        debugPrint('==== ADD CUSTOM Boundary call => ${customComponent.objects}');
+        addCustomComponentInstancesBoundary(context, customComponent, boundaries);
+      }
+      else{
+        final comp = rootComp.findSameLevelComponent(
+            customComponent,
+            (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+                .currentSelectedRoot as CustomComponent),
+            BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+                .currentSelected);
+        if (comp.boundary != null) {
+          boundaries.add(Boundary(comp.boundary!, comp.name));
+        }
+      }
+    }
   }
 }
