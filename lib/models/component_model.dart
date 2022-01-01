@@ -14,38 +14,65 @@ class MainExecution {
   MainExecution() {
     final homePage = StatelessComponent(
         name: 'HomePage',
-        dependencies: [],
+        // root: componentList['Scaffold']!()
         root: Component.fromCode('''
-          Container(
-          width:150,
-          child:Padding(
-          padding:EdgeInsets.only(
-          bottom:2.5
-          ),
-          child:Column(
-          children:[
-          Padding(
-          padding:EdgeInsets.all(10.4),
-          )
-          ]
-          ),
-          ),
-          alignment:Alignment.topRight,
-          decoration:BoxDecoration(
-          border:Border(
-          top:BorderSide(
-          color:Color(0xff00ff00),
-          width:32.4
-          ),
-          ),
-          ),
-          )
-          '''
+        Scaffold(
+        appBar: AppBar(
+        backgroundColor: Color(0xff0000ff),
+        title:Text('Abrar App', style:TextStyle(
+        color:Color(0xffffffff),
+        fontSize:17,
+        ),
+        ),
+        ),
+        body: Column(
+        children:[
+        Container(
+        width:24,
+        height:34.5,
+        decoration: BoxDecoration(
+        color: Color(0xff0000ff)
+        )
+        )
+        ]
+        ),
+        )        
+        '''
             .replaceAll('\n', '')
-            .replaceAll(' ', '')));
+            .replaceAll(' ', ''))
+        //   Container(
+        //   width:150,
+        //   child:Padding(
+        //   padding:EdgeInsets.only(
+        //   bottom:2.5
+        //   ),
+        //   child:Column(
+        //   children:[
+        //   Padding(
+        //   padding:EdgeInsets.all(10.4),
+        //   )
+        //   ]
+        //   ),
+        //   ),
+        //   alignment:Alignment.topRight,
+        //   decoration:BoxDecoration(
+        //   border:Border(
+        //   top:BorderSide(
+        //   color:Color(0xff00ff00),
+        //   width:32.4
+        //   ),
+        //   ),
+        //   ),
+        //   )
+        //   '''
+        //     .replaceAll('\n', '')
+        //     .replaceAll(' ', ''))
+
+        );
     customComponents.add(homePage);
     setRoot(componentList['MaterialApp']!());
-    (rootComponent as CustomNamedHolder).updateChildWithKey('home', homePage.createInstance(rootComponent));
+    (rootComponent as CustomNamedHolder)
+        .updateChildWithKey('home', homePage.createInstance(rootComponent));
   }
 
   void setRoot(Component component) {
@@ -130,22 +157,40 @@ abstract class Component {
         }
         break;
       case 4:
+        final List<String> nameList =
+            (comp as CustomNamedHolder).childMap.keys.toList();
+        for (int i = 0; i < parameterCodes.length; i++) {
+          final colonIndex = parameterCodes[i].indexOf(':');
+          final name = parameterCodes[i].substring(0, colonIndex);
+          if (nameList.contains(name)) {
+            comp.childMap[name] =
+                Component.fromCode(parameterCodes[i].substring(colonIndex + 1))
+                  ..setParent(comp);
+            nameList.remove(name);
+          }
+        }
         break;
       case 1:
         break;
     }
-    for (Parameter parameter in comp.parameters) {
+    for (int i = 0; i < comp.parameters.length; i++) {
+      final Parameter parameter = comp.parameters[i];
       if (parameter.info is NamedParameterInfo ||
           (parameter.info is InnerObjectParameterInfo &&
               (parameter.info as InnerObjectParameterInfo).namedIfHaveAny !=
                   null)) {
+        final paramPrefix =
+            '${parameter.info is NamedParameterInfo ? (parameter.info as NamedParameterInfo).name : (parameter.info as InnerObjectParameterInfo).namedIfHaveAny!}:';
         for (final paramCode in parameterCodes) {
-          if (paramCode.startsWith(
-              '${parameter.info is NamedParameterInfo ? (parameter.info as NamedParameterInfo).name : (parameter.info as InnerObjectParameterInfo).namedIfHaveAny!}:')) {
+          if (paramCode.startsWith(paramPrefix)) {
             parameter.fromCode(paramCode);
+            parameterCodes.remove(paramCode);
+
             break;
           }
         }
+      } else {
+        parameter.fromCode(parameterCodes[i]);
       }
     }
     return comp;
@@ -169,31 +214,35 @@ abstract class Component {
   }
 
   Component? getCustomComponentRoot() {
-    Component? _tracer = this,_root=this;
+    Component? _tracer = this, _root = this;
     final List<Component> tree = [];
     while (_tracer != null && _tracer is! CustomComponent) {
       debugPrint('======= TRACER FIND CUSTOM ROOT ${_tracer.parent?.name}');
       tree.add(_tracer);
-      _root=_tracer;
+      _root = _tracer;
       _tracer = _tracer.parent;
     }
-    final reversedTree=tree.toList();
-    for (int i=1;i<reversedTree.length;i++) {
-      final comp=reversedTree[i];
-      if (comp is Holder && comp.child is CustomComponent&&(comp.child as CustomComponent).root==reversedTree[i-1]) {
-        debugPrint('======= TRACER FIND CUSTOM ROOT ${ comp.child?.name}');
+    final reversedTree = tree.toList();
+    for (int i = 1; i < reversedTree.length; i++) {
+      final comp = reversedTree[i];
+      if (comp is Holder &&
+          comp.child is CustomComponent &&
+          (comp.child as CustomComponent).root == reversedTree[i - 1]) {
+        debugPrint('======= TRACER FIND CUSTOM ROOT ${comp.child?.name}');
         return comp.child;
       } else if (comp is MultiHolder) {
-        for(final childComp in comp.children){
-          if(childComp is CustomComponent&&childComp.root==reversedTree[i-1]){
-            debugPrint('======= TRACER FIND CUSTOM ROOT ${ childComp.name}');
+        for (final childComp in comp.children) {
+          if (childComp is CustomComponent &&
+              childComp.root == reversedTree[i - 1]) {
+            debugPrint('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
             return childComp;
           }
         }
-      }else if(comp is CustomNamedHolder){
-        for(final childComp in comp.childMap.values){
-          if(childComp is CustomComponent&&childComp.root==reversedTree[i-1]){
-            debugPrint('======= TRACER FIND CUSTOM ROOT ${ childComp.name}');
+      } else if (comp is CustomNamedHolder) {
+        for (final childComp in comp.childMap.values) {
+          if (childComp is CustomComponent &&
+              childComp.root == reversedTree[i - 1]) {
+            debugPrint('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
             return childComp;
           }
         }
@@ -275,6 +324,7 @@ abstract class Component {
 
 abstract class MultiHolder extends Component {
   List<Component> children = [];
+
   MultiHolder(String name, List<Parameter> parameters)
       : super(name, parameters);
 
@@ -302,8 +352,8 @@ abstract class MultiHolder extends Component {
       children.insert(index, component);
     }
     component.setParent(this);
-    if(component is CustomComponent){
-      component.root?.parent=this;
+    if (component is CustomComponent) {
+      component.root?.parent = this;
     }
   }
 
@@ -319,8 +369,8 @@ abstract class MultiHolder extends Component {
     final index = children.indexOf(old);
     children.remove(old);
     children.insert(index, component);
-    if(component is CustomComponent){
-      component.root?.parent=this;
+    if (component is CustomComponent) {
+      component.root?.parent = this;
     }
   }
 
@@ -549,22 +599,19 @@ abstract class CustomComponent extends Component {
   Component? root;
   CustomComponent? cloneOf;
   List<CustomComponent> objects = [];
-  List<CustomComponent> dependencies = [];
 
   CustomComponent(
-      {required this.extensionName,
-      required this.dependencies,
-      required String name,
-      this.root})
+      {required this.extensionName, required String name, this.root})
       : super(name, []);
 
   CustomComponent get getRootClone {
-   CustomComponent? rootClone=cloneOf;
-   while(rootClone!.cloneOf!=null){
-   rootClone=rootClone.cloneOf;
-   }
+    CustomComponent? rootClone = cloneOf;
+    while (rootClone!.cloneOf != null) {
+      rootClone = rootClone.cloneOf;
+    }
     return rootClone;
   }
+
   @override
   Widget create(BuildContext context) {
     return root?.build(context) ?? Container();
@@ -626,16 +673,19 @@ abstract class CustomComponent extends Component {
 
   @override
   Component clone(Component? parent) {
-    final comp2 = StatelessComponent(name: name, dependencies: dependencies);
+    final comp2 = StatelessComponent(
+      name: name,
+    );
     comp2.name = name;
     comp2.parameters = parameters;
     comp2.root = root?.clone(parent);
     comp2.cloneOf = this;
+
     return comp2;
   }
 
   CustomComponent createInstance(Component? root) {
-    final compCopy=clone(root) as CustomComponent;
+    final compCopy = clone(root) as CustomComponent;
     objects.add(compCopy);
     return compCopy;
   }
@@ -677,15 +727,8 @@ abstract class CustomComponent extends Component {
 }
 
 class StatelessComponent extends CustomComponent {
-  StatelessComponent(
-      {required String name,
-      required List<CustomComponent> dependencies,
-      Component? root})
-      : super(
-            extensionName: 'StatelessWidget',
-            dependencies: dependencies,
-            name: name,
-            root: root) {
+  StatelessComponent({required String name, Component? root})
+      : super(extensionName: 'StatelessWidget', name: name, root: root) {
     if (root != null) {
       root.setParent(this);
     }

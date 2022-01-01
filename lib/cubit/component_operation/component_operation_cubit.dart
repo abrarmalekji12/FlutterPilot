@@ -47,7 +47,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   void addCustomComponent(String name, {Component? root}) {
-    final component = StatelessComponent(name: name, dependencies: []);
+    final component = StatelessComponent(name: name);
     mainExecution.customComponents.add(component);
     if (root != null) {
       component.root=root;

@@ -24,7 +24,7 @@ abstract class Parameter {
     } else if (T == double) {
       return double.tryParse(info?.fromCode(code) ?? code);
     } else if (T == String) {
-      return info?.fromCode(code) ?? code;
+      return (info?.fromCode(code) ?? code).replaceAll('\'', '');
     }
     else if (T == Color) {
       final colorString = (info?.fromCode(code) ?? code).replaceAll('Color(', '').replaceAll(')', '');
