@@ -114,7 +114,7 @@ class ParameterWidget extends StatelessWidget {
     //   );
     // }
     if (parameter is SimpleParameter) {
-      // debugPrint('paramm ${param.name} ${param.runtimeType}');
+      // logger('paramm ${param.name} ${param.runtimeType}');
       return SimpleParameterWidget(parameter: parameter as SimpleParameter);
     }
     switch (parameter.runtimeType) {

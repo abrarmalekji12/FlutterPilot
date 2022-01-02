@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_builder/common/logger.dart';
 import 'package:meta/meta.dart';
 
 import '../../screen_model.dart';
@@ -30,7 +31,7 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
     else {
       screenConfig.scale=0.9;
     }
-    debugPrint('scale ${screenConfig.scale}');
+    logger('scale ${screenConfig.scale}');
     return  screenConfig.scale!;
 
   }

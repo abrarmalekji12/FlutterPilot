@@ -4,6 +4,7 @@ import 'package:flutter_builder/common/app_button.dart';
 import 'package:flutter_builder/common/app_text_field.dart';
 import 'package:flutter_builder/common/custom_animated_dialog.dart';
 import 'package:flutter_builder/common/custom_popup_menu_button.dart';
+import 'package:flutter_builder/common/logger.dart';
 import 'package:flutter_builder/models/component_model.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
@@ -210,7 +211,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                   shrinkWrap: true,
                   restorationId: component.toString(),
                   onReorder: (int oldIndex, int newIndex) {
-                    debugPrint('INDEX $oldIndex $newIndex');
+                    logger('INDEX $oldIndex $newIndex');
                     if (oldIndex < newIndex) {
                       newIndex -= 1;
                     }
@@ -812,7 +813,8 @@ class ComponentTile extends StatelessWidget {
             .currentSelected;
     if (component is CustomComponent) {
       selected = (component as CustomComponent).cloneOf == BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-          .currentSelectedRoot;
+          .currentSelectedRoot||(component ==BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+          .currentSelected );
     } else {
       selected = (selectedComponent == component);
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_builder/common/logger.dart';
 import 'package:flutter_builder/enums.dart';
 import 'package:flutter_builder/models/parameter_info_model.dart';
 
@@ -303,7 +304,7 @@ class ChoiceParameter extends Parameter {
     val = options.firstWhere((element) =>
         paramCode.startsWith('${(element.info as InnerObjectParameterInfo?)
             ?.innerObjectName}('));
-    debugPrint('VALUE $paramCode');
+    logger('VALUE $paramCode');
     val?.fromCode(paramCode);
   }
 }
@@ -367,7 +368,7 @@ class ComplexParameter extends Parameter {
       }
     }
 
-    debugPrint('subcode $parameterCodes');
+    logger('subcode $parameterCodes');
     for (Parameter parameter in params) {
       if (parameter.info is NamedParameterInfo ||
           (parameter.info is InnerObjectParameterInfo &&

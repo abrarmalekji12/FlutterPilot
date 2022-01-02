@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/common/custom_animated_dialog.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
+import 'package:flutter_builder/common/logger.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_creation/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
@@ -144,14 +145,14 @@ class _HomePageState extends State<HomePage> {
       decoration: const BoxDecoration(
           gradient: RadialGradient(colors: [
         Color(0xffd3d3d3),
-        Color(0xffffffff),
+            Color(0xffffffff),
       ], tileMode: TileMode.clamp, radius: 0.9, focalRadius: 0.6)),
       child: Center(
         child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
           builder: (context, state) {
             return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
               builder: (context, state) {
-                debugPrint('======== COMPONENT CREATION ');
+                logger('======== COMPONENT CREATION ');
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -164,14 +165,14 @@ class _HomePageState extends State<HomePage> {
                           scale: 1,
                           child: GestureDetector(
                             onTapDown: (event) {
-                              debugPrint(
+                              logger(
                                   '==== onTap --- ${event.localPosition.dx} ${event.localPosition.dy}');
                               final tappedComp = componentOperationCubit
                                   .mainExecution.rootComponent!
                                   .searchTappedComponent(event.localPosition);
                               if (tappedComp != null) {
                                 final lastRoot = tappedComp.getCustomComponentRoot();
-                                debugPrint('==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
+                                logger('==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
                                 if(lastRoot!=null&&lastRoot is CustomComponent) {
                                   final rootClone= lastRoot.getRootClone;
                                   componentSelectionCubit
@@ -238,7 +239,7 @@ class _HomePageState extends State<HomePage> {
 
     // Ignore if is overflow error.
     if (ifIsOverflowError) {
-      debugPrint('Overflow error.');
+      logger('Overflow error.');
       visualBoxCubit.enableError('Error happened');
     } else {
       FlutterError.dumpErrorToConsole(details, forceReport: forceReport);

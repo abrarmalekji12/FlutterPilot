@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/code_to_component.dart';
+import 'package:flutter_builder/common/logger.dart';
 import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
 import 'package:flutter_builder/models/parameter_info_model.dart';
 import 'package:flutter_builder/models/parameter_model.dart';
@@ -87,7 +88,7 @@ class MainExecution {
         implementationCode += '${customComponent.implementationCode()}\n';
       }
     }
-    debugPrint('IMPL $implementationCode');
+    logger('IMPL $implementationCode');
     return ''' 
     void main(){
     runApp(${rootComponent!.code()});
@@ -130,7 +131,7 @@ abstract class Component {
         }
         if (index != -1) {
           final childCode = parameterCodes.removeAt(index);
-          debugPrint('CHILD CODE $childCode');
+          logger('CHILD CODE $childCode');
           (comp as Holder).updateChild(
               Component.fromCode(childCode.replaceFirst('child:', '')));
         }
@@ -145,7 +146,7 @@ abstract class Component {
         }
         if (index != -1) {
           final childCode = parameterCodes.removeAt(index);
-          debugPrint('CHILD CODE $childCode');
+          logger('CHILD CODE $childCode');
           final code2 = childCode.replaceFirst('children:[', '');
           final List<Component> componentList = [];
           final List<String> childrenCodes = CodeToComponent.splitByComma(
@@ -207,7 +208,7 @@ abstract class Component {
   Component getLastRoot() {
     Component? tracer = this;
     while (tracer!.parent != null) {
-      debugPrint('======= TRACER FIND ROOT ${tracer.parent?.name}');
+      logger('======= TRACER FIND ROOT ${tracer.parent?.name}');
       tracer = tracer.parent;
     }
     return tracer;
@@ -217,7 +218,7 @@ abstract class Component {
     Component? _tracer = this, _root = this;
     final List<Component> tree = [];
     while (_tracer != null && _tracer is! CustomComponent) {
-      debugPrint('======= TRACER FIND CUSTOM ROOT ${_tracer.parent?.name}');
+      logger('======= TRACER FIND CUSTOM ROOT ${_tracer.parent?.name}');
       tree.add(_tracer);
       _root = _tracer;
       _tracer = _tracer.parent;
@@ -228,13 +229,13 @@ abstract class Component {
       if (comp is Holder &&
           comp.child is CustomComponent &&
           (comp.child as CustomComponent).root == reversedTree[i - 1]) {
-        debugPrint('======= TRACER FIND CUSTOM ROOT ${comp.child?.name}');
+        logger('======= TRACER FIND CUSTOM ROOT ${comp.child?.name}');
         return comp.child;
       } else if (comp is MultiHolder) {
         for (final childComp in comp.children) {
           if (childComp is CustomComponent &&
               childComp.root == reversedTree[i - 1]) {
-            debugPrint('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
+            logger('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
             return childComp;
           }
         }
@@ -242,7 +243,44 @@ abstract class Component {
         for (final childComp in comp.childMap.values) {
           if (childComp is CustomComponent &&
               childComp.root == reversedTree[i - 1]) {
-            debugPrint('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
+            logger('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
+            return childComp;
+          }
+        }
+      }
+    }
+    return _root;
+  }
+  Component? getLastCustomComponentRoot() {
+    Component? _tracer = this, _root = this;
+    final List<Component> tree = [];
+    while (_tracer != null && _tracer is! CustomComponent) {
+      logger('======= TRACER FIND CUSTOM ROOT ${_tracer.parent?.name}');
+      tree.add(_tracer);
+      _root = _tracer;
+      _tracer = _tracer.parent;
+    }
+    final reversedTree = tree.reversed.toList();
+    for (int i = 0; i < reversedTree.length-1; i++) {
+      final comp = reversedTree[i];
+      if (comp is Holder &&
+          comp.child is CustomComponent &&
+          (comp.child as CustomComponent).root == reversedTree[i + 1]) {
+        logger('======= TRACER FIND CUSTOM ROOT ${comp.child?.name}');
+        return comp.child;
+      } else if (comp is MultiHolder) {
+        for (final childComp in comp.children) {
+          if (childComp is CustomComponent &&
+              childComp.root == reversedTree[i + 1]) {
+            logger('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
+            return childComp;
+          }
+        }
+      } else if (comp is CustomNamedHolder) {
+        for (final childComp in comp.childMap.values) {
+          if (childComp is CustomComponent &&
+              childComp.root == reversedTree[i + 1]) {
+            logger('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
             return childComp;
           }
         }
@@ -275,7 +313,7 @@ abstract class Component {
           renderBox.size.height);
       depth = renderBox.depth;
       BlocProvider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
-      debugPrint(
+      logger(
           '======== COMPONENT VISUAL BOX CHANGED  ${boundary?.width} ${renderBox.size.width} ${boundary?.height} ${renderBox.size.height}');
       await Future.delayed(const Duration(milliseconds: 50));
       position = renderBox.localToGlobal(Offset.zero, ancestor: ancestor);
@@ -694,15 +732,15 @@ abstract class CustomComponent extends Component {
       CustomComponent copy, CustomComponent original, Component object) {
     Component? tracer = object;
     final List<List<Parameter>> paramList = [];
-    debugPrint('=== FIND FIRST LEVEL');
+    logger('=== FIND FIRST LEVEL');
     while (tracer != original && tracer != original.root?.parent) {
-      debugPrint('TRACER ${tracer?.name}');
+      logger('TRACER ${tracer?.name}');
       paramList.add(tracer!.parameters);
       tracer = tracer.parent;
     }
     tracer = copy;
     for (final param in paramList.reversed) {
-      debugPrint('TRACER2 ${tracer?.name}');
+      logger('TRACER2 ${tracer?.name}');
       tracer = findChildWithParam(tracer!, param);
     }
     return tracer!;

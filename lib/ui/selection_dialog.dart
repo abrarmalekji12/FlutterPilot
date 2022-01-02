@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_builder/common/app_text_field.dart';
+import 'package:flutter_builder/common/logger.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
@@ -44,7 +45,7 @@ class _SelectionDialogState extends State<SelectionDialog> {
           focusNode: focusNode,
           onKey: (key) {
             if(key is RawKeyDownEvent) {
-              debugPrint('pressed ${key.physicalKey} ${key.logicalKey}');
+              logger('pressed ${key.physicalKey} ${key.logicalKey}');
               if (key.physicalKey == PhysicalKeyboardKey.enter) {
                 widget.onSelection(componentList[filtered[selectedIndex]]!());
                 Get.back();

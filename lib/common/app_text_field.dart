@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 
+import 'logger.dart';
+
 class AppTextField extends StatelessWidget {
   late final TextEditingController textFieldController;
   static String changedValue='';
@@ -37,10 +39,10 @@ class AppTextField extends StatelessWidget {
       controller: textFieldController,
       style: AppFontStyle.roboto(15,fontWeight: FontWeight.normal),
       onSubmitted: (data){
-        debugPrint('SUBMITTED');
+        logger('SUBMITTED');
       },
       onEditingComplete: (){
-        debugPrint('EDITING COMP');
+        logger('EDITING COMP');
       },
       decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(horizontal: 10,vertical: 0),

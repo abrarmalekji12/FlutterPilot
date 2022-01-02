@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_builder/common/logger.dart';
 import 'package:flutter_builder/models/component_model.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
 import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
@@ -17,7 +18,7 @@ class BoundaryWidget extends StatelessWidget {
       color: Colors.transparent,
       child: BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
         builder: (context, state) {
-          debugPrint('======== COMPONENT SELECTION ');
+          logger('======== COMPONENT SELECTION ');
           return BlocBuilder<VisualBoxCubit, VisualBoxState>(
             builder: (context, state) {
               final List<Boundary> boundaries = getAllBoundaries(context);
@@ -65,7 +66,7 @@ class BoundaryWidget extends StatelessWidget {
       final rootComp =
           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
               .currentSelectedRoot as CustomComponent;
-      addCustomComponentInstancesBoundary(context,rootComp,boundaries);
+      addCustomComponentInstancesBoundary(context, rootComp, boundaries);
     } else if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
             .currentSelected
             .boundary !=
@@ -80,18 +81,22 @@ class BoundaryWidget extends StatelessWidget {
                 .name),
       );
     }
-    debugPrint('==== BOUNDARY ${boundaries.length}');
+    logger('==== BOUNDARY ${boundaries.length}');
     return boundaries;
   }
 
-
-  void addCustomComponentInstancesBoundary(BuildContext context,CustomComponent rootComp,List<Boundary> boundaries){
-    for (final customComponent in rootComp.objects) {
-      if(customComponent.objects.isNotEmpty){
-        debugPrint('==== ADD CUSTOM Boundary call => ${customComponent.objects}');
-        addCustomComponentInstancesBoundary(context, customComponent, boundaries);
-      }
-      else{
+  void addCustomComponentInstancesBoundary(BuildContext context,
+      CustomComponent rootComp, List<Boundary> boundaries) {
+    final comp = rootComp.findSameLevelComponent(
+        rootComp,
+        (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+            .currentSelectedRoot as CustomComponent),
+        BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+            .currentSelected);
+    if (comp.boundary != null) {
+      boundaries.add(Boundary(comp.boundary!, comp.name));
+    } else {
+      for (final customComponent in rootComp.objects) {
         final comp = rootComp.findSameLevelComponent(
             customComponent,
             (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
@@ -101,6 +106,22 @@ class BoundaryWidget extends StatelessWidget {
         if (comp.boundary != null) {
           boundaries.add(Boundary(comp.boundary!, comp.name));
         }
+        final customRoot = customComponent.getLastRoot();
+        if (customRoot is CustomComponent) {
+          for (final customRootObject in customRoot.objects) {
+            final cloneComp = rootComp.findSameLevelComponent(
+                customRootObject, customRoot, customComponent);
+            logger(
+                '=== addCustomComponentInstancesBoundary cloneComp ${cloneComp.name}');
+
+            addCustomComponentInstancesBoundary(
+                context, cloneComp as CustomComponent, boundaries);
+          }
+          // addCustomComponentInstancesBoundary(context,customRoot)
+        }
+        // if(customRoot !=null )
+        logger(
+            '=== addCustomComponentInstancesBoundary CUSTOM ROOT ${customRoot.name}');
       }
     }
   }
