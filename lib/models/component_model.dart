@@ -7,7 +7,9 @@ import 'package:flutter_builder/models/parameter_info_model.dart';
 import 'package:flutter_builder/models/parameter_model.dart';
 
 import '../component_list.dart';
-
+class FlutterProject {
+  MainExecution? mainExecution;
+}
 class MainExecution {
   Component? rootComponent;
   final List<CustomComponent> customComponents = [];
@@ -20,10 +22,7 @@ class MainExecution {
         Scaffold(
         appBar: AppBar(
         backgroundColor: Color(0xff0000ff),
-        title:Text('Abrar App', style:TextStyle(
-        color:Color(0xffffffff),
-        fontSize:17,
-        ),
+        title:Text('Abrar App',
         ),
         ),
         body: Column(
@@ -41,33 +40,6 @@ class MainExecution {
         '''
             .replaceAll('\n', '')
             .replaceAll(' ', ''))
-        //   Container(
-        //   width:150,
-        //   child:Padding(
-        //   padding:EdgeInsets.only(
-        //   bottom:2.5
-        //   ),
-        //   child:Column(
-        //   children:[
-        //   Padding(
-        //   padding:EdgeInsets.all(10.4),
-        //   )
-        //   ]
-        //   ),
-        //   ),
-        //   alignment:Alignment.topRight,
-        //   decoration:BoxDecoration(
-        //   border:Border(
-        //   top:BorderSide(
-        //   color:Color(0xff00ff00),
-        //   width:32.4
-        //   ),
-        //   ),
-        //   ),
-        //   )
-        //   '''
-        //     .replaceAll('\n', '')
-        //     .replaceAll(' ', ''))
 
         );
     customComponents.add(homePage);

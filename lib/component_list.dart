@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_builder/models/component_model.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/enums.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'models/other_model.dart';
 import 'models/parameter_info_model.dart';
@@ -479,10 +480,15 @@ class Parameters {
       required: false,
       defaultValue: null,
       inputType: ParamInputType.image);
+  static Parameter googleFontTypeParameter() => ChoiceValueParameter(options: {
+    'Lato':'Lato',
+    'Roboto':'Roboto',
+
+  }, defaultValue: 'Lato');
 
   static Parameter textStyleParameter() => ComplexParameter(
         info: InnerObjectParameterInfo(
-            innerObjectName: 'TextStyle', namedIfHaveAny: 'style'),
+            innerObjectName: 'TextStyle', namedIfHaveAny: 'textStyle'),
         params: [
           SimpleParameter<double>(
               name: 'font-size',
@@ -527,6 +533,16 @@ class Parameters {
               fontStyle: params[4].value ? FontStyle.italic : FontStyle.normal);
         },
       );
+  static Parameter googleFontTextStyleParameter() => ComplexParameter(
+  info: InnerObjectParameterInfo(
+  innerObjectName: 'GoogleFonts.getFont', namedIfHaveAny: 'style'),
+  params: [
+    googleFontTypeParameter(),
+    textStyleParameter()
+  ], evaluate: (params ) {
+    return GoogleFonts.getFont(params[0].value,textStyle:params[1].value);
+  });
+
 }
 
 class CMaterialApp extends CustomNamedHolder {
@@ -980,7 +996,7 @@ class CText extends Component {
   CText()
       : super('Text', [
           Parameters.textParameter(),
-          Parameters.textStyleParameter(),
+          Parameters.googleFontTextStyleParameter(),
         ]);
 
   @override
@@ -1021,7 +1037,7 @@ class CImage extends Component {
 class CTextField extends Component {
   CTextField()
       : super('TextField', [
-          Parameters.textStyleParameter(),
+          Parameters.googleFontTextStyleParameter(),
           BooleanParameter(
               required: true,
               val: false,
