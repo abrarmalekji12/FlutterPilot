@@ -510,7 +510,7 @@ class Parameters {
           inputType: ParamInputType.image);
 
   static Parameter googleFontTypeParameter() {
-    return ChoiceValueListParameter(options:GoogleFonts.asMap().keys.toList(), defaultValue: 0);
+    return ChoiceValueListParameter(options:GoogleFonts.asMap().keys.toList(), defaultValue: 0,name: 'Font - Family');
   }
 
   static Parameter textStyleParameter() =>

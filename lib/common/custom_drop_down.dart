@@ -71,32 +71,25 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: widget.items
-                                      .where((element) =>
-                                  element.value != widget.value)
-                                      .map(
-                                        (e) => InkWell(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: e,
-                                      ),
-                                      onTap: () {
-                                        widget.onChanged(e.value);
-                                        overlayEntry?.remove();
-                                        setState(() {
-                                          state = 2;
-                                        });
-                                      },
-                                      borderRadius: BorderRadius.circular(10),
-                                      splashColor: Colors.grey,
-                                    ),
-                                  )
-                                      .toList(),
-                                ),
+                              child: ListView.builder(
+                                itemCount: widget.items.length,
+                               itemBuilder: (context,i){
+                                return InkWell(
+                                   child: Padding(
+                                     padding: const EdgeInsets.all(8.0),
+                                     child: widget.items[i].child,
+                                   ),
+                                   onTap: () {
+                                     widget.onChanged(widget.items[i].value);
+                                     overlayEntry?.remove();
+                                     setState(() {
+                                       state = 2;
+                                     });
+                                   },
+                                   borderRadius: BorderRadius.circular(10),
+                                   splashColor: Colors.grey,
+                                 );
+                               },
                               ),
                             ),
                           ),

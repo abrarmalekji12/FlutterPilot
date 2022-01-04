@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/common/app_switch.dart';
 import 'package:flutter_builder/common/custom_drop_down.dart';
+import 'package:flutter_builder/common/dialog_selection.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_creation/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/parameter_build_cubit/parameter_build_cubit.dart';
 import 'package:flutter_builder/models/other_model.dart';
 import 'package:flutter_builder/models/parameter_model.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -448,58 +450,63 @@ class ChoiceValueListParameterWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (parameter.displayName != null)
-          Text(
-            parameter.displayName!,
-            style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
-          ),
-        BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
-          buildWhen: (state1, state2) {
-            if (state2 is ParameterChangeState && (state2).parameter == parameter) return true;
-            return false;
-          },
-          builder: (context, state) {
-            return SizedBox(
-                height: 45,
-                child: DropdownButton<dynamic>(
-                  value: parameter.rawValue,
-                  hint: Text(
-                    'select ${parameter.displayName ?? 'option'}',
-                    style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-                  ),
-                  style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-                  selectedItemBuilder: (_) {
-                    return parameter.options.map((e) => Text(
-                      e,
-                      style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-                    )).toList();
-                  },
-                  items: parameter.options
-                      .map(
-                        (e) => DropdownMenuItem<dynamic>(
-                          value: e,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              e.toString(),
-                              style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-                            ),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (parameter.displayName != null) ...[
+            Text(
+              parameter.displayName!,
+              style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+          ],
+          BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
+            buildWhen: (state1, state2) {
+              if (state2 is ParameterChangeState && (state2).parameter == parameter) return true;
+              return false;
+            },
+            builder: (context, state) {
+              return Card(
+                child: InkWell(
+                  onTap: () {
+                    Get.generalDialog(
+                      barrierDismissible: false,
+                      barrierLabel: 'barrierLabel',
+                      barrierColor: Colors.black45,
+                      transitionDuration: const Duration(milliseconds: 200),
+                      pageBuilder: (context3, animation, secondary) {
+                        return Material(
+                          color: Colors.transparent,
+                          child: DialogSelection(
+                            title: '${parameter.displayName}',
+                            data: parameter.options.map((e) => e.toString()).toList(),
+                            onSelection: (data) {
+                              parameter.val = parameter.options.indexOf(data);
+                              Provider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
+                              Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
+                            },
                           ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (key) {
-                    parameter.val = parameter.options.indexOf(key);
-                    BlocProvider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
-                    BlocProvider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
+                        );
+                      },
+                    );
                   },
-                ));
-          },
-        )
-      ],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0,horizontal: 12),
+                    child: Text(
+                      parameter.value,
+                      style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+              );
+            },
+          )
+        ],
+      ),
     );
   }
 }
