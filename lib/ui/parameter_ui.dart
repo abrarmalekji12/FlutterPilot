@@ -17,8 +17,7 @@ import '../enums.dart';
 class ChoiceParameterWidget extends StatelessWidget {
   final ChoiceParameter parameter;
 
-  const ChoiceParameterWidget({Key? key, required this.parameter})
-      : super(key: key);
+  const ChoiceParameterWidget({Key? key, required this.parameter}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +27,12 @@ class ChoiceParameterWidget extends StatelessWidget {
         if (parameter.displayName != null)
           Text(
             parameter.displayName!,
-            style: const TextStyle(
-                fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
           ),
         Expanded(
           child: BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
             buildWhen: (state1, state2) {
-              if (state2 is ParameterChangeState &&
-                  (state2).parameter == parameter ) return true;
+              if (state2 is ParameterChangeState && (state2).parameter == parameter) return true;
               return false;
             },
             builder: (context, state) {
@@ -54,12 +51,9 @@ class ChoiceParameterWidget extends StatelessWidget {
                                   groupValue: subParam,
                                   onChanged: (value) {
                                     parameter.val = subParam;
-                                    Provider.of<ParameterBuildCubit>(context,
-                                            listen: false)
+                                    Provider.of<ParameterBuildCubit>(context, listen: false)
                                         .parameterChanged(parameter);
-                                    Provider.of<ComponentCreationCubit>(context,
-                                            listen: false)
-                                        .changedComponent();
+                                    Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
                                   }),
                               const SizedBox(
                                 width: 5,
@@ -68,10 +62,8 @@ class ChoiceParameterWidget extends StatelessWidget {
                                 Flexible(
                                   child: Text(
                                     subParam.displayName!,
-                                    style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold),
+                                    style:
+                                        const TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                             ],
@@ -127,8 +119,9 @@ class ParameterWidget extends StatelessWidget {
           parameter: parameter as ComplexParameter,
         );
       case ChoiceValueParameter:
-        return ChoiceValueParameterWidget(
-            parameter: parameter as ChoiceValueParameter);
+        return ChoiceValueParameterWidget(parameter: parameter as ChoiceValueParameter);
+      case ChoiceValueListParameter:
+        return ChoiceValueListParameterWidget(parameter: parameter as ChoiceValueListParameter);
       case ListParameter:
         return ListParameterWidget(parameter: parameter as ListParameter);
       case BooleanParameter:
@@ -142,8 +135,7 @@ class ParameterWidget extends StatelessWidget {
 class SimpleParameterWidget extends StatelessWidget {
   final SimpleParameter parameter;
 
-  const SimpleParameterWidget({Key? key, required this.parameter})
-      : super(key: key);
+  const SimpleParameterWidget({Key? key, required this.parameter}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -157,8 +149,7 @@ class SimpleParameterWidget extends StatelessWidget {
             Expanded(
               child: Text(
                 parameter.displayName!,
-                style: AppFontStyle.roboto(14,
-                    color: Colors.black, fontWeight: FontWeight.w500),
+                style: AppFontStyle.roboto(14, color: Colors.black, fontWeight: FontWeight.w500),
               ),
             ),
           const SizedBox(
@@ -183,8 +174,7 @@ class SimpleParameterWidget extends StatelessWidget {
           width: 70,
           child: TextField(
             // key:  parameter.name=='color'?GlobalObjectKey('simple ${parameter.name}'):null,
-            controller: TextEditingController.fromValue(
-                TextEditingValue(text: '${parameter.rawValue ?? ''}')),
+            controller: TextEditingController.fromValue(TextEditingValue(text: '${parameter.rawValue ?? ''}')),
             onChanged: (value) {
               if (value.isNotEmpty) {
                 if (parameter.paramType == ParamType.string) {
@@ -197,33 +187,28 @@ class SimpleParameterWidget extends StatelessWidget {
               } else {
                 parameter.val = null;
               }
-              Provider.of<ComponentCreationCubit>(context, listen: false)
-                  .changedComponent();
+              Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
             },
-            textAlignVertical:  TextAlignVertical.center,
+            textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 10),
                 enabled: true,
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Colors.grey, width: 1.5)),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1.5)),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Colors.grey, width: 1.5)),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1.5)),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: Colors.blueAccent, width: 1.5))),
+                    borderSide: const BorderSide(color: Colors.blueAccent, width: 1.5))),
           ),
         );
       case ParamInputType.longText:
         return SizedBox(
           width: 150,
           child: TextField(
-            controller: TextEditingController.fromValue(
-                TextEditingValue(text: '${parameter.rawValue ?? ''}')),
+            controller: TextEditingController.fromValue(TextEditingValue(text: '${parameter.rawValue ?? ''}')),
             onChanged: (value) {
               if (value.isNotEmpty) {
                 if (parameter.paramType == ParamType.string) {
@@ -236,24 +221,20 @@ class SimpleParameterWidget extends StatelessWidget {
               } else {
                 parameter.val = null;
               }
-              Provider.of<ComponentCreationCubit>(context, listen: false)
-                  .changedComponent();
+              Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
             },
             decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 10),
                 enabled: true,
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Colors.grey, width: 1.5)),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1.5)),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Colors.grey, width: 1.5)),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1.5)),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: Colors.blueAccent, width: 1.5))),
+                    borderSide: const BorderSide(color: Colors.blueAccent, width: 1.5))),
           ),
         );
       case ParamInputType.color:
@@ -273,8 +254,7 @@ class SimpleParameterWidget extends StatelessWidget {
               onColorChanged: (color) {
                 parameter.val = color;
                 setStateForColor(() {});
-                Provider.of<ComponentCreationCubit>(context, listen: false)
-                    .changedComponent();
+                Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
               },
             ),
           );
@@ -288,8 +268,7 @@ class SimpleParameterWidget extends StatelessWidget {
                 value: parameter.rawValue ?? 0,
                 onChanged: (i) {
                   parameter.val = i;
-                  Provider.of<ComponentCreationCubit>(context, listen: false)
-                      .changedComponent();
+                  Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
                   setStateForSlider(() {});
                 }),
           );
@@ -307,8 +286,7 @@ class SimpleParameterWidget extends StatelessWidget {
                   value.readAsBytes().then((bytes) {
                     parameter.val = ImageData(bytes, value.name, value.path);
                     setStateForImage(() {});
-                    Provider.of<ComponentCreationCubit>(context, listen: false)
-                        .changedComponent();
+                    Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
                   });
                 }
               });
@@ -326,7 +304,6 @@ class SimpleParameterWidget extends StatelessWidget {
                   ),
           );
         });
-        break;
     }
   }
 }
@@ -334,15 +311,13 @@ class SimpleParameterWidget extends StatelessWidget {
 class ListParameterWidget extends StatelessWidget {
   final ListParameter parameter;
 
-  const ListParameterWidget({Key? key, required this.parameter})
-      : super(key: key);
+  const ListParameterWidget({Key? key, required this.parameter}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
       buildWhen: (state1, state2) {
-        if (state2 is ParameterChangeState &&
-            (state2).parameter == parameter ) return true;
+        if (state2 is ParameterChangeState && (state2).parameter == parameter) return true;
         return false;
       },
       builder: (context, state) {
@@ -353,10 +328,7 @@ class ListParameterWidget extends StatelessWidget {
                 if (parameter.displayName != null)
                   Text(
                     parameter.displayName!,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
                   ),
                 IconButton(
                   icon: const Icon(
@@ -366,8 +338,7 @@ class ListParameterWidget extends StatelessWidget {
                   ),
                   onPressed: () {
                     parameter.params.add(parameter.parameterGenerator());
-                    Provider.of<ParameterBuildCubit>(context, listen: false)
-                        .parameterChanged(parameter);
+                    Provider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
                   },
                 ),
               ],
@@ -375,8 +346,7 @@ class ListParameterWidget extends StatelessWidget {
             for (int i = 0; i < parameter.params.length; i++)
               Card(
                 elevation: 2,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: Padding(
                   padding: const EdgeInsets.all(10),
                   child: Stack(
@@ -393,9 +363,7 @@ class ListParameterWidget extends StatelessWidget {
                           ),
                           onPressed: () {
                             parameter.params.removeAt(i);
-                            Provider.of<ParameterBuildCubit>(context,
-                                    listen: false)
-                                .parameterChanged(parameter);
+                            Provider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
                           },
                         ),
                       )
@@ -413,8 +381,7 @@ class ListParameterWidget extends StatelessWidget {
 class ChoiceValueParameterWidget extends StatelessWidget {
   final ChoiceValueParameter parameter;
 
-  const ChoiceValueParameterWidget({Key? key, required this.parameter})
-      : super(key: key);
+  const ChoiceValueParameterWidget({Key? key, required this.parameter}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -424,13 +391,11 @@ class ChoiceValueParameterWidget extends StatelessWidget {
         if (parameter.displayName != null)
           Text(
             parameter.displayName!,
-            style: const TextStyle(
-                fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
           ),
         BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
           buildWhen: (state1, state2) {
-            if (state2 is ParameterChangeState &&
-                (state2).parameter == parameter ) return true;
+            if (state2 is ParameterChangeState && (state2).parameter == parameter) return true;
             return false;
           },
           builder: (context, state) {
@@ -446,8 +411,7 @@ class ChoiceValueParameterWidget extends StatelessWidget {
                   selectedItemBuilder: (_, key) {
                     return Text(
                       key,
-                      style:
-                          AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                      style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
                     );
                   },
                   items: parameter.options.keys
@@ -458,8 +422,7 @@ class ChoiceValueParameterWidget extends StatelessWidget {
                             alignment: Alignment.centerLeft,
                             child: Text(
                               e,
-                              style: AppFontStyle.roboto(14,
-                                  fontWeight: FontWeight.w500),
+                              style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
                             ),
                           ),
                         ),
@@ -467,10 +430,71 @@ class ChoiceValueParameterWidget extends StatelessWidget {
                       .toList(),
                   onChanged: (key) {
                     parameter.val = key;
-                    Provider.of<ParameterBuildCubit>(context, listen: false)
-                        .parameterChanged(parameter);
-                    Provider.of<ComponentCreationCubit>(context, listen: false)
-                        .changedComponent();
+                    Provider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
+                    Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
+                  },
+                ));
+          },
+        )
+      ],
+    );
+  }
+}
+
+class ChoiceValueListParameterWidget extends StatelessWidget {
+  final ChoiceValueListParameter parameter;
+
+  const ChoiceValueListParameterWidget({Key? key, required this.parameter}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (parameter.displayName != null)
+          Text(
+            parameter.displayName!,
+            style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+        BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
+          buildWhen: (state1, state2) {
+            if (state2 is ParameterChangeState && (state2).parameter == parameter) return true;
+            return false;
+          },
+          builder: (context, state) {
+            return SizedBox(
+                height: 45,
+                child: DropdownButton<dynamic>(
+                  value: parameter.rawValue,
+                  hint: Text(
+                    'select ${parameter.displayName ?? 'option'}',
+                    style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                  ),
+                  style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                  selectedItemBuilder: (_) {
+                    return parameter.options.map((e) => Text(
+                      e,
+                      style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                    )).toList();
+                  },
+                  items: parameter.options
+                      .map(
+                        (e) => DropdownMenuItem<dynamic>(
+                          value: e,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              e.toString(),
+                              style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (key) {
+                    parameter.val = parameter.options.indexOf(key);
+                    BlocProvider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
+                    BlocProvider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
                   },
                 ));
           },
@@ -483,8 +507,7 @@ class ChoiceValueParameterWidget extends StatelessWidget {
 class ComplexParameterWidget extends StatelessWidget {
   final ComplexParameter parameter;
 
-  const ComplexParameterWidget({Key? key, required this.parameter})
-      : super(key: key);
+  const ComplexParameterWidget({Key? key, required this.parameter}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -497,8 +520,7 @@ class ComplexParameterWidget extends StatelessWidget {
           ),
           Text(
             parameter.displayName!,
-            style: AppFontStyle.roboto(14,
-                color: AppColors.theme.shade700, fontWeight: FontWeight.w800),
+            style: AppFontStyle.roboto(14, color: AppColors.theme.shade700, fontWeight: FontWeight.w800),
           ),
         ],
         const SizedBox(
@@ -520,8 +542,7 @@ class ComplexParameterWidget extends StatelessWidget {
 class BooleanParameterWidget extends StatelessWidget {
   final BooleanParameter parameter;
 
-  const BooleanParameterWidget({Key? key, required this.parameter})
-      : super(key: key);
+  const BooleanParameterWidget({Key? key, required this.parameter}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -534,13 +555,11 @@ class BooleanParameterWidget extends StatelessWidget {
         children: [
           Text(
             parameter.displayName!,
-            style: AppFontStyle.roboto(14,
-                color: Colors.black, fontWeight: FontWeight.w500),
+            style: AppFontStyle.roboto(14, color: Colors.black, fontWeight: FontWeight.w500),
           ),
           BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
             buildWhen: (state1, state2) {
-              if (state2 is ParameterChangeState &&
-                  (state2).parameter == parameter ) return true;
+              if (state2 is ParameterChangeState && (state2).parameter == parameter) return true;
               return false;
             },
             builder: (context, state) {
@@ -548,10 +567,8 @@ class BooleanParameterWidget extends StatelessWidget {
                   value: parameter.val,
                   onToggle: (value) {
                     parameter.val = value;
-                    Provider.of<ParameterBuildCubit>(context, listen: false)
-                        .parameterChanged(parameter);
-                    Provider.of<ComponentCreationCubit>(context, listen: false)
-                        .changedComponent();
+                    Provider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
+                    Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
                   });
             },
           )

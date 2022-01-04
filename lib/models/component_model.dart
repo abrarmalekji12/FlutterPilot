@@ -485,7 +485,6 @@ abstract class Holder extends Component {
   }
 
   @override
-  // TODO: implement type
   int get type => 3;
 
   @override

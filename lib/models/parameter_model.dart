@@ -26,8 +26,7 @@ abstract class Parameter {
       return double.tryParse(info?.fromCode(code) ?? code);
     } else if (T == String) {
       return (info?.fromCode(code) ?? code).replaceAll('\'', '');
-    }
-    else if (T == Color) {
+    } else if (T == Color) {
       final colorString = (info?.fromCode(code) ?? code).replaceAll('Color(', '').replaceAll(')', '');
       return Color(int.parse(colorString));
     }
@@ -72,12 +71,11 @@ abstract class Parameter {
             (this as ChoiceParameter).options.removeAt(0);
           } else {
             (this as ChoiceParameter).options.insert(
-              0,
-              NullParameter(displayName: nullParameterName),
-            );
+                  0,
+                  NullParameter(displayName: nullParameterName),
+                );
           }
-          (this as ChoiceParameter).val = (this as ChoiceParameter)
-              .options[(this as ChoiceParameter).defaultValue];
+          (this as ChoiceParameter).val = (this as ChoiceParameter).options[(this as ChoiceParameter).defaultValue];
           break;
       }
     }
@@ -106,14 +104,15 @@ class SimpleParameter<T> extends Parameter {
 
   late final dynamic Function(T) evaluate;
 
-  SimpleParameter({String? name,
-    required this.paramType,
-    this.defaultValue,
-    this.val,
-    this.inputType = ParamInputType.text,
-    dynamic Function(T)? evaluate,
-    bool required = true,
-    ParameterInfo? info})
+  SimpleParameter(
+      {String? name,
+      required this.paramType,
+      this.defaultValue,
+      this.val,
+      this.inputType = ParamInputType.text,
+      dynamic Function(T)? evaluate,
+      bool required = true,
+      ParameterInfo? info})
       : super(name, info, required) {
     if (evaluate != null) {
       this.evaluate = evaluate;
@@ -171,9 +170,7 @@ class ListParameter extends Parameter {
   final List<Parameter> params = [];
   final Parameter Function() parameterGenerator;
 
-  ListParameter({required String? displayName,
-    ParameterInfo? info,
-    required this.parameterGenerator})
+  ListParameter({required String? displayName, ParameterInfo? info, required this.parameterGenerator})
       : super(displayName, info, false);
 
   @override
@@ -181,9 +178,8 @@ class ListParameter extends Parameter {
     String parametersCode = '[';
     for (final parameter in params) {
       if (parameter.info is InnerObjectParameterInfo) {
-        parameter.withInfo(InnerObjectParameterInfo(
-            innerObjectName:
-            (parameter.info as InnerObjectParameterInfo).innerObjectName));
+        parameter.withInfo(
+            InnerObjectParameterInfo(innerObjectName: (parameter.info as InnerObjectParameterInfo).innerObjectName));
       }
       parametersCode += '${(parameter).code},'.replaceAll(',,', ',');
     }
@@ -222,12 +218,13 @@ class ChoiceValueParameter extends Parameter {
     return null;
   }
 
-  ChoiceValueParameter({String? name,
-    required this.options,
-    required this.defaultValue,
-    bool required = true,
-    this.val,
-    ParameterInfo? info})
+  ChoiceValueParameter(
+      {String? name,
+      required this.options,
+      required this.defaultValue,
+      bool required = true,
+      this.val,
+      ParameterInfo? info})
       : super(name, info, required);
 
   @override
@@ -246,11 +243,53 @@ class ChoiceValueParameter extends Parameter {
   @override
   void fromCode(String code) {
     final paramCode = (info?.fromCode(code) ?? code);
-    val = options.entries
-        .firstWhere((element) => element.value.toString() == paramCode)
-        .key;
+    val = options.entries.firstWhere((element) => element.value.toString() == paramCode).key;
+  }
+}
+
+class ChoiceValueListParameter extends Parameter {
+  final List<dynamic> options;
+  final int? defaultValue;
+  int? val;
+
+  @override
+  get value {
+    if (val != null) {
+      return options[val!];
+    } else if (defaultValue != null) {
+      return options[defaultValue!];
+    }
+    return null;
   }
 
+  ChoiceValueListParameter(
+      {String? name,
+      required this.options,
+      required this.defaultValue,
+      bool required = true,
+      this.val,
+      ParameterInfo? info})
+      : super(name, info, required);
+
+  @override
+  get rawValue {
+    final index=val ?? defaultValue;
+    return index!=null?options[index]:null;
+  }
+
+  @override
+  get code {
+    if (info == null || info is SimpleParameterInfo) {
+      return value.toString();
+    }
+    return info!.code(value.toString());
+  }
+
+  @override
+  void fromCode(String code) {
+    final paramCode = (info?.fromCode(code) ?? code);
+    val = options.firstWhere((element) => element.toString() == paramCode).key;
+  }
 }
 
 class ChoiceParameter extends Parameter {
@@ -259,12 +298,13 @@ class ChoiceParameter extends Parameter {
   Parameter? val;
   String? nullParameterName;
 
-  ChoiceParameter({String? name,
-    required this.options,
-    bool required = true,
-    this.val,
-    this.nullParameterName = 'none',
-    ParameterInfo? info})
+  ChoiceParameter(
+      {String? name,
+      required this.options,
+      bool required = true,
+      this.val,
+      this.nullParameterName = 'none',
+      ParameterInfo? info})
       : super(name, info, required) {
     if (!required) {
       options.insert(
@@ -289,9 +329,7 @@ class ChoiceParameter extends Parameter {
     if (paramCode.isEmpty ||
         (info != null &&
             (info is NamedParameterInfo ||
-                (info is InnerObjectParameterInfo &&
-                    (info as InnerObjectParameterInfo).namedIfHaveAny !=
-                        null)) &&
+                (info is InnerObjectParameterInfo && (info as InnerObjectParameterInfo).namedIfHaveAny != null)) &&
             paramCode == 'null')) {
       return '';
     }
@@ -301,9 +339,8 @@ class ChoiceParameter extends Parameter {
   @override
   void fromCode(String code) {
     final paramCode = (info?.fromCode(code) ?? code);
-    val = options.firstWhere((element) =>
-        paramCode.startsWith('${(element.info as InnerObjectParameterInfo?)
-            ?.innerObjectName}('));
+    val = options.firstWhere(
+        (element) => paramCode.startsWith('${(element.info as InnerObjectParameterInfo?)?.innerObjectName}('));
     logger('VALUE $paramCode');
     val?.fromCode(paramCode);
   }
@@ -313,11 +350,8 @@ class ComplexParameter extends Parameter {
   final List<Parameter> params;
   final dynamic Function(List<Parameter>) evaluate;
 
-  ComplexParameter({String? name,
-    required this.params,
-    required this.evaluate,
-    ParameterInfo? info,
-    bool required = true})
+  ComplexParameter(
+      {String? name, required this.params, required this.evaluate, ParameterInfo? info, bool required = true})
       : super(name, info, required);
 
   @override
@@ -344,7 +378,7 @@ class ComplexParameter extends Parameter {
     int parenthesisCount = 0;
     final List<int> dividers = [-1];
     for (int i = 0; i < paramCodeList.length; i++) {
-      if (paramCodeList[i] == ',' && parenthesisCount==0) {
+      if (paramCodeList[i] == ',' && parenthesisCount == 0) {
         dividers.add(i);
       } else if (paramCodeList[i] == '(') {
         parenthesisCount++;
@@ -355,8 +389,7 @@ class ComplexParameter extends Parameter {
     List<String> parameterCodes = [];
     for (int divideIndex = 0; divideIndex < dividers.length; divideIndex++) {
       if (divideIndex + 1 < dividers.length) {
-        final subCode = paramCodeList.substring(
-            dividers[divideIndex] + 1, dividers[divideIndex + 1]);
+        final subCode = paramCodeList.substring(dividers[divideIndex] + 1, dividers[divideIndex + 1]);
         if (subCode.isNotEmpty) {
           parameterCodes.add(subCode);
         }
@@ -372,13 +405,10 @@ class ComplexParameter extends Parameter {
     for (Parameter parameter in params) {
       if (parameter.info is NamedParameterInfo ||
           (parameter.info is InnerObjectParameterInfo &&
-              (parameter.info as InnerObjectParameterInfo).namedIfHaveAny !=
-                  null)) {
+              (parameter.info as InnerObjectParameterInfo).namedIfHaveAny != null)) {
         for (final paramCode in parameterCodes) {
-          if (paramCode.startsWith('${parameter.info is NamedParameterInfo
-              ? (parameter.info as NamedParameterInfo).name
-              : (parameter.info as InnerObjectParameterInfo)
-              .namedIfHaveAny!}:')) {
+          if (paramCode.startsWith(
+              '${parameter.info is NamedParameterInfo ? (parameter.info as NamedParameterInfo).name : (parameter.info as InnerObjectParameterInfo).namedIfHaveAny!}:')) {
             parameter.fromCode(paramCode);
             break;
           }
@@ -393,11 +423,12 @@ class ConstantValueParameter extends Parameter {
   late String constantValueString;
   ParamType paramType;
 
-  ConstantValueParameter({String? displayName,
-    ParameterInfo? info,
-    String? constantValueInString,
-    required this.constantValue,
-    required this.paramType})
+  ConstantValueParameter(
+      {String? displayName,
+      ParameterInfo? info,
+      String? constantValueInString,
+      required this.constantValue,
+      required this.paramType})
       : super(displayName, info, true) {
     if (constantValueInString != null) {
       constantValueString = constantValueInString;
@@ -415,9 +446,7 @@ class ConstantValueParameter extends Parameter {
       }
       return constantValueString;
     }
-    return info!.code(paramType == ParamType.string
-        ? '\'$constantValueString}\''
-        : constantValueString);
+    return info!.code(paramType == ParamType.string ? '\'$constantValueString}\'' : constantValueString);
   }
 
   @override
@@ -428,14 +457,11 @@ class ConstantValueParameter extends Parameter {
 }
 
 class NullParameter extends Parameter {
-  NullParameter(
-      {String? displayName, ParameterInfo? info, bool required = false})
-      : super(displayName, info, required);
+  NullParameter({String? displayName, ParameterInfo? info, bool required = false}) : super(displayName, info, required);
 
   @override
   String get code {
-    if ((info is InnerObjectParameterInfo &&
-        (info as InnerObjectParameterInfo).namedIfHaveAny == null) ||
+    if ((info is InnerObjectParameterInfo && (info as InnerObjectParameterInfo).namedIfHaveAny == null) ||
         info == null) {
       return 'null';
     }
@@ -453,11 +479,12 @@ class BooleanParameter extends Parameter {
   bool val;
   late final String Function(bool) evaluate;
 
-  BooleanParameter({required String displayName,
-    ParameterInfo? info,
-    required bool required,
-    required this.val,
-    String Function(bool)? evaluate})
+  BooleanParameter(
+      {required String displayName,
+      ParameterInfo? info,
+      required bool required,
+      required this.val,
+      String Function(bool)? evaluate})
       : super(displayName, info, required) {
     if (evaluate == null) {
       this.evaluate = (value) => value.toString();
