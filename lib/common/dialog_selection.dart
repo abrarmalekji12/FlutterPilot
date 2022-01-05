@@ -35,6 +35,9 @@ class _DialogSelectionState extends State<DialogSelection> {
     super.initState();
     data = widget.data;
     //data = Provider.of<AddUserDialogNotifier>(context, listen: false).dataSearch;
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      focusNode.requestFocus();
+    });
   }
 
   @override

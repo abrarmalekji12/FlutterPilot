@@ -340,7 +340,7 @@ class ListParameterWidget extends StatelessWidget {
                   ),
                   onPressed: () {
                     parameter.params.add(parameter.parameterGenerator());
-                    Provider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
+                    BlocProvider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
                   },
                 ),
               ],
@@ -486,8 +486,8 @@ class ChoiceValueListParameterWidget extends StatelessWidget {
                             data: parameter.options.map((e) => e.toString()).toList(),
                             onSelection: (data) {
                               parameter.val = parameter.options.indexOf(data);
-                              Provider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
-                              Provider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
+                              BlocProvider.of<ParameterBuildCubit>(context, listen: false).parameterChanged(parameter);
+                              BlocProvider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
                             },
                           ),
                         );
