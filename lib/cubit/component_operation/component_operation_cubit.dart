@@ -1,59 +1,76 @@
-
-
-import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_builder/models/component_model.dart';
-import 'package:flutter_builder/cubit/component_creation/component_creation_cubit.dart';
-import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
-import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../models/project_model.dart';
+import '../../firestore/firestore_bridge.dart';
+import '../../models/component_model.dart';
+import '../component_creation/component_creation_cubit.dart';
+import '../component_selection/component_selection_cubit.dart';
+import '../visual_box_drawer/visual_box_cubit.dart';
 
 part 'component_operation_state.dart';
 
 class ComponentOperationCubit extends Cubit<ComponentOperationState> {
-  MainExecution mainExecution;
-
-  ComponentOperationCubit(this.mainExecution)
+  FlutterProject? flutterProject;
+  ComponentOperationCubit()
       : super(ComponentOperationInitial());
+
 
   void addedComponent(
       BuildContext context, Component component, Component root) {
-    Provider.of<ComponentCreationCubit>(context, listen: false)
+    BlocProvider.of<ComponentCreationCubit>(context, listen: false)
         .changedComponent();
-    Provider.of<ComponentSelectionCubit>(context, listen: false)
+    BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
         .changeComponentSelection(component, root: root);
-    Provider.of<VisualBoxCubit>(context, listen: false).errorMessage = null;
-
+    BlocProvider.of<VisualBoxCubit>(context, listen: false).errorMessage = null;
+    if (root is CustomComponent) {
+      updateGlobalCustomComponent(root);
+    }
     emit(ComponentUpdatedState());
+  }
+
+  void updateGlobalCustomComponent(CustomComponent customComponent,{String? newName}) {
+   emit(ComponentOperationLoadingState());
+   FireBridge.updateGlobalCustomComponent(customComponent,newName: newName);
+   emit(ComponentOperationInitial());
   }
 
   void removedComponent(
       BuildContext context, Component component, Component root) {
-    Provider.of<ComponentSelectionCubit>(context, listen: false)
+    BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
         .changeComponentSelection(component, root: root);
-    Provider.of<ComponentCreationCubit>(context, listen: false)
+    BlocProvider.of<ComponentCreationCubit>(context, listen: false)
         .changedComponent();
-    Provider.of<VisualBoxCubit>(context, listen: false).errorMessage = null;
+    BlocProvider.of<VisualBoxCubit>(context, listen: false).errorMessage = null;
     emit(ComponentUpdatedState());
   }
 
   void arrangeComponent(
     BuildContext context,
   ) {
-    Provider.of<ComponentCreationCubit>(context, listen: false)
+    BlocProvider.of<ComponentCreationCubit>(context, listen: false)
         .changedComponent();
-    Provider.of<VisualBoxCubit>(context, listen: false).errorMessage = null;
+    BlocProvider.of<VisualBoxCubit>(context, listen: false).errorMessage = null;
     emit(ComponentUpdatedState());
+  }
+
+  void loadCustomComponents() async {
+    emit(ComponentOperationLoadingState());
+    final componentList = await FireBridge.loadAllGlobalCustomComponents();
+    mainExecution.customComponents.addAll(componentList);
+    emit(GlobalComponentLoadedState());
   }
 
   void addCustomComponent(String name, {Component? root}) {
     final component = StatelessComponent(name: name);
     mainExecution.customComponents.add(component);
+    FireBridge.addNewGlobalCustomComponent(component);
     if (root != null) {
-      component.root=root;
-      final instance=component.createInstance(root.parent);
+      component.root = root;
+      final instance = component.createInstance(root.parent);
       replaceChildOfParent(root, instance);
-      root.parent=component;
+      root.parent = null;
+      component.notifyChanged();
     }
     emit(ComponentUpdatedState());
   }
@@ -92,6 +109,9 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       return;
     }
     final parent = component.parent!;
+    if (component is CustomComponent) {
+      component.cloneOf?.objects.remove(component);
+    }
     switch (parent.type) {
       case 2:
         (parent as MultiHolder).removeChild(component);

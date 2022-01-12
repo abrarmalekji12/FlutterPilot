@@ -1,28 +1,26 @@
 import 'dart:html' as html;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/common/custom_animated_dialog.dart';
-import 'package:flutter_builder/common/custom_drop_down.dart';
-import 'package:flutter_builder/common/logger.dart';
-import 'package:flutter_builder/constant/font_style.dart';
-import 'package:flutter_builder/cubit/component_creation/component_creation_cubit.dart';
-import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
-import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
-import 'package:flutter_builder/cubit/parameter_build_cubit/parameter_build_cubit.dart';
-import 'package:flutter_builder/cubit/screen_config/screen_config_cubit.dart';
-import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
-import 'package:flutter_builder/enums.dart';
-import 'package:flutter_builder/screen_model.dart';
-import 'package:flutter_builder/ui/boundary_widget.dart';
-import 'package:flutter_builder/ui/code_view_widget.dart';
-import 'package:flutter_builder/ui/component_selection.dart';
-import 'package:flutter_builder/ui/parameter_ui.dart';
-import 'package:flutter_builder/ui/visual_model.dart';
-import 'package:flutter_builder/ui/visual_painter.dart';
+import 'package:flutter_builder/cubit/flutter_project/flutter_project_cubit.dart';
+import 'package:flutter_builder/firestore/firestore_bridge.dart';
+import '../models/project_model.dart';
+import '../common/custom_animated_dialog.dart';
+import '../common/custom_drop_down.dart';
+import '../common/logger.dart';
+import '../constant/font_style.dart';
+import '../cubit/component_creation/component_creation_cubit.dart';
+import '../cubit/component_operation/component_operation_cubit.dart';
+import '../cubit/component_selection/component_selection_cubit.dart';
+import '../cubit/parameter_build_cubit/parameter_build_cubit.dart';
+import '../cubit/screen_config/screen_config_cubit.dart';
+import '../cubit/visual_box_drawer/visual_box_cubit.dart';
+import '../screen_model.dart';
+import 'boundary_widget.dart';
+import 'code_view_widget.dart';
+import 'parameter_ui.dart';
+import 'package:flutter_overlay_loader/flutter_overlay_loader.dart';
 import 'package:provider/provider.dart';
 
-import '../component_list.dart';
 import '../models/component_model.dart';
 import 'component_tree.dart';
 
@@ -36,7 +34,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final ScrollController propertyScrollController = ScrollController();
   final componentPropertyCubit = ComponentCreationCubit();
-  final componentOperationCubit = ComponentOperationCubit(MainExecution());
+  final componentOperationCubit = ComponentOperationCubit();
+  final flutterProjectCubit = FlutterProjectCubit();
   final ParameterBuildCubit _parameterBuildCubit = ParameterBuildCubit();
   final visualBoxCubit = VisualBoxCubit();
   final screenConfigCubit = ScreenConfigCubit();
@@ -45,12 +44,15 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // FlutterError.onError = onErrorIgnoreOverflowErrors;
-
+    FireBridge.init();
     componentSelectionCubit = ComponentSelectionCubit(
       currentSelected: componentOperationCubit.mainExecution.rootComponent!,
       currentSelectedRoot: componentOperationCubit.mainExecution.rootComponent!,
     );
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      componentOperationCubit.loadCustomComponents();
+    });
+
     html.window.onResize.listen((event) {
       componentPropertyCubit.changedComponent();
     });
@@ -74,9 +76,25 @@ class _HomePageState extends State<HomePage> {
           ],
           child: Row(
             children: [
-              const SizedBox(
-                width: 300,
-                child: ComponentTree(),
+              BlocListener<ComponentOperationCubit, ComponentOperationState>(
+                bloc: componentOperationCubit,
+                listener: (BuildContext context, state) {
+                  switch (state.runtimeType) {
+                    case ComponentOperationLoadingState:
+                      Loader.show(context);
+                      break;
+                    case GlobalComponentLoadedState:
+                      Loader.hide();
+                      break;
+                    case ComponentOperationInitial:
+                      Loader.hide();
+                      break;
+                  }
+                },
+                child: const SizedBox(
+                  width: 300,
+                  child: ComponentTree(),
+                ),
               ),
               Expanded(
                 child: Stack(
@@ -113,18 +131,32 @@ class _HomePageState extends State<HomePage> {
                             height: 20,
                           ),
                           Expanded(
-                            child: BlocProvider(
-                              create: (context) => _parameterBuildCubit,
-                              child: ListView(
-                                controller: propertyScrollController,
-                                children: [
-                                  for (final param in componentSelectionCubit
-                                      .currentSelected.parameters)
-                                    ParameterWidget(
-                                      parameter: param,
-                                    ),
-                                ],
-                              ),
+                            child: BlocListener<ComponentCreationCubit,
+                                ComponentCreationState>(
+                              listener: (context, state) {
+                                if (state is ComponentCreationChangeState &&
+                                    componentSelectionCubit.currentSelectedRoot
+                                        is CustomComponent) {
+                                  componentOperationCubit
+                                      .updateGlobalCustomComponent(
+                                          componentSelectionCubit
+                                                  .currentSelectedRoot
+                                              as CustomComponent);
+                                }
+                              },
+                              child: BlocProvider(
+                                  create: (context) => _parameterBuildCubit,
+                                  child: ListView(
+                                    controller: propertyScrollController,
+                                    children: [
+                                      for (final param
+                                          in componentSelectionCubit
+                                              .currentSelected.parameters)
+                                        ParameterWidget(
+                                          parameter: param,
+                                        ),
+                                    ],
+                                  )),
                             ),
                           ),
                         ],
@@ -145,7 +177,7 @@ class _HomePageState extends State<HomePage> {
       decoration: const BoxDecoration(
           gradient: RadialGradient(colors: [
         Color(0xffd3d3d3),
-            Color(0xffffffff),
+        Color(0xffffffff),
       ], tileMode: TileMode.clamp, radius: 0.9, focalRadius: 0.6)),
       child: Center(
         child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
@@ -171,16 +203,20 @@ class _HomePageState extends State<HomePage> {
                                   .mainExecution.rootComponent!
                                   .searchTappedComponent(event.localPosition);
                               if (tappedComp != null) {
-                                final lastRoot = tappedComp.getCustomComponentRoot();
-                                logger('==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
-                                if(lastRoot!=null&&lastRoot is CustomComponent) {
-                                  final rootClone= lastRoot.getRootClone;
+                                final lastRoot =
+                                    tappedComp.getCustomComponentRoot();
+                                logger(
+                                    '==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
+                                if (lastRoot != null &&
+                                    lastRoot is CustomComponent) {
+                                  final rootClone = lastRoot.getRootClone;
                                   componentSelectionCubit
                                       .changeComponentSelection(
-                                    rootClone.findSameLevelComponent(rootClone, lastRoot, tappedComp),
-                                    root:rootClone,
+                                    CustomComponent.findSameLevelComponent(
+                                        rootClone, lastRoot, tappedComp),
+                                    root: rootClone,
                                   );
-                                }else if(lastRoot!=null){
+                                } else if (lastRoot != null) {
                                   componentSelectionCubit
                                       .changeComponentSelection(
                                     tappedComp,
@@ -234,7 +270,7 @@ class _HomePageState extends State<HomePage> {
     var exception = details.exception;
     if (exception is FlutterError) {
       ifIsOverflowError = !exception.diagnostics.any(
-          (e) => e.value.toString().startsWith("A RenderFlex overflowed by"));
+          (e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
     }
 
     // Ignore if is overflow error.

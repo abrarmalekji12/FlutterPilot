@@ -4,7 +4,9 @@ part of 'component_creation_cubit.dart';
 abstract class ComponentCreationState {}
 
 class ComponentCreationInitial extends ComponentCreationState {}
+class ComponentCreationLoadingState extends ComponentCreationState {
 
+}
 class ComponentCreationChangeState extends ComponentCreationState {
   ComponentCreationChangeState();
 }

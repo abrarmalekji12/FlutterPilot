@@ -1,78 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/code_to_component.dart';
-import 'package:flutter_builder/common/logger.dart';
-import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
-import 'package:flutter_builder/models/parameter_info_model.dart';
-import 'package:flutter_builder/models/parameter_model.dart';
+import '../code_to_component.dart';
+import '../common/logger.dart';
+import '../cubit/visual_box_drawer/visual_box_cubit.dart';
+import '../firestore/firestore_bridge.dart';
+import 'parameter_info_model.dart';
+import 'parameter_model.dart';
 
 import '../component_list.dart';
-class FlutterProject {
-  MainExecution? mainExecution;
-}
-class MainExecution {
-  Component? rootComponent;
-  final List<CustomComponent> customComponents = [];
-
-  MainExecution() {
-    final homePage = StatelessComponent(
-        name: 'HomePage',
-        // root: componentList['Scaffold']!()
-        root: Component.fromCode('''
-        Scaffold(
-        appBar: AppBar(
-        backgroundColor: Color(0xff0000ff),
-        title:Text('Abrar App',
-        ),
-        ),
-        body: Column(
-        children:[
-        Container(
-        width:24,
-        height:34.5,
-        decoration: BoxDecoration(
-        color: Color(0xff0000ff)
-        )
-        )
-        ]
-        ),
-        )        
-        '''
-            .replaceAll('\n', '')
-            .replaceAll(' ', ''))
-
-        );
-    customComponents.add(homePage);
-    setRoot(componentList['MaterialApp']!());
-    (rootComponent as CustomNamedHolder)
-        .updateChildWithKey('home', homePage.createInstance(rootComponent));
-  }
-
-  void setRoot(Component component) {
-    rootComponent = component;
-    component.setParent(null);
-  }
-
-  String code() {
-    String implementationCode = '';
-    if (customComponents.isNotEmpty) {
-      for (final customComponent in customComponents) {
-        implementationCode += '${customComponent.implementationCode()}\n';
-      }
-    }
-    logger('IMPL $implementationCode');
-    return ''' 
-    void main(){
-    runApp(${rootComponent!.code()});
-    } 
-    $implementationCode
-    ''';
-  }
-
-  Widget run(BuildContext context) {
-    return rootComponent!.build(context);
-  }
-}
 
 abstract class Component {
   List<Parameter> parameters;
@@ -696,15 +631,16 @@ abstract class CustomComponent extends Component {
   CustomComponent createInstance(Component? root) {
     final compCopy = clone(root) as CustomComponent;
     objects.add(compCopy);
+
     return compCopy;
   }
 
-  Component findSameLevelComponent(
+  static Component findSameLevelComponent(
       CustomComponent copy, CustomComponent original, Component object) {
     Component? tracer = object;
     final List<List<Parameter>> paramList = [];
     logger('=== FIND FIRST LEVEL');
-    while (tracer != original && tracer != original.root?.parent) {
+    while (tracer != original.root?.parent) {
       logger('TRACER ${tracer?.name}');
       paramList.add(tracer!.parameters);
       tracer = tracer.parent;
@@ -717,7 +653,7 @@ abstract class CustomComponent extends Component {
     return tracer!;
   }
 
-  Component? findChildWithParam(Component component, List<Parameter> params) {
+  static Component? findChildWithParam(final Component component, final List<Parameter> params) {
     switch (component.type) {
       case 3:
         return (component as Holder).child!;

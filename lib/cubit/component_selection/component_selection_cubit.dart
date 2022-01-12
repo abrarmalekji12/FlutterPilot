@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:flutter_builder/common/logger.dart';
 import 'package:meta/meta.dart';
 
 import '../../models/component_model.dart';
@@ -18,6 +19,7 @@ class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
     if (currentSelected != component) {
       currentSelected = component;
       currentSelectedRoot = root;
+      logger('==== ComponentSelectionCubit ** changeComponentSelection == ${component.name} ${root.name}');
       emit(ComponentSelectionChange());
     }
   }

@@ -1,0 +1,12 @@
+part of 'flutter_project_cubit.dart';
+
+@immutable
+abstract class FlutterProjectState {}
+
+class FlutterProjectInitial extends FlutterProjectState {}
+
+class FlutterProjectLoadingState extends FlutterProjectState{
+}
+class FlutterProjectLoadedState extends FlutterProjectState{
+}
+

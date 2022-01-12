@@ -87,7 +87,7 @@ class BoundaryWidget extends StatelessWidget {
 
   void addCustomComponentInstancesBoundary(BuildContext context,
       CustomComponent rootComp, List<Boundary> boundaries) {
-    final comp = rootComp.findSameLevelComponent(
+    final comp = CustomComponent.findSameLevelComponent(
         rootComp,
         (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
             .currentSelectedRoot as CustomComponent),
@@ -97,7 +97,7 @@ class BoundaryWidget extends StatelessWidget {
       boundaries.add(Boundary(comp.boundary!, comp.name));
     } else {
       for (final customComponent in rootComp.objects) {
-        final comp = rootComp.findSameLevelComponent(
+        final comp = CustomComponent.findSameLevelComponent(
             customComponent,
             (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
                 .currentSelectedRoot as CustomComponent),
@@ -109,7 +109,7 @@ class BoundaryWidget extends StatelessWidget {
         final customRoot = customComponent.getLastRoot();
         if (customRoot is CustomComponent) {
           for (final customRootObject in customRoot.objects) {
-            final cloneComp = rootComp.findSameLevelComponent(
+            final cloneComp = CustomComponent.findSameLevelComponent(
                 customRootObject, customRoot, customComponent);
             logger(
                 '=== addCustomComponentInstancesBoundary cloneComp ${cloneComp.name}');

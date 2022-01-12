@@ -65,15 +65,15 @@ class _ComponentTreeState extends State<ComponentTree> {
                           InkWell(
                             borderRadius: BorderRadius.circular(10),
                             onTap: () {
-                              //ADD Custom Widgtes
+                              //ADD Custom Widgets
                               showCustomWidgetRename(
                                   context, 'Enter widget name', (name) {
                                 Get.back();
 
-                                BlocProvider.of<ComponentOperationCubit>(context,
-                                    listen: false)
+                                BlocProvider.of<ComponentOperationCubit>(
+                                        context,
+                                        listen: false)
                                     .addCustomComponent(name);
-
                               });
                             },
                             child: const CircleAvatar(
@@ -141,9 +141,7 @@ class _ComponentTreeState extends State<ComponentTree> {
     CustomDialog.show(
         context,
         GestureDetector(
-          onTap: (){
-
-          },
+          onTap: () {},
           child: Container(
             padding: const EdgeInsets.all(15),
             color: Colors.white,
@@ -223,7 +221,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                     if (ancestor is CustomComponent) {
                       ancestor.notifyChanged();
                     }
-                    Provider.of<ComponentOperationCubit>(context, listen: false)
+                    BlocProvider.of<ComponentOperationCubit>(context,
+                            listen: false)
                         .arrangeComponent(context);
                   },
                   itemBuilder: (BuildContext context, int index) {
@@ -288,7 +287,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                         ComponentModificationMenu(
                             component: component,
                             customNamed: child,
-                            ancestor: ancestor)
+                            ancestor: ancestor),
                       ],
                     ),
                     if (component.childMap[child] != null)
@@ -420,8 +419,7 @@ class ComponentModificationMenu extends StatelessWidget {
                 if (customNamed != null) {
                   (component as CustomNamedHolder)
                       .updateChildWithKey(customNamed!, comp);
-                }
-                else {
+                } else {
                   if (component is Holder) {
                     (component as Holder).updateChild(comp);
                   } else if (component is MultiHolder) {
@@ -430,13 +428,16 @@ class ComponentModificationMenu extends StatelessWidget {
                 }
 
                 comp.setParent(component);
+                if(comp is CustomComponent){
+                  comp.root?.setParent(component);
+                }
                 if (ancestor is CustomComponent) {
                   if (component == ancestor) {
                     (ancestor as CustomComponent).root = comp;
                   }
                   (ancestor as CustomComponent).notifyChanged();
                 }
-                Provider.of<ComponentOperationCubit>(context, listen: false)
+                BlocProvider.of<ComponentOperationCubit>(context, listen: false)
                     .addedComponent(context, comp, ancestor);
               },
                   possibleItems: (customNamed != null &&
@@ -589,7 +590,8 @@ class ComponentModificationMenu extends StatelessWidget {
               if (e == 'create custom widget') {
                 showCustomWidgetRename(context, 'Enter name of widget',
                     (value) {
-                  BlocProvider.of<ComponentOperationCubit>(context, listen: false)
+                  BlocProvider.of<ComponentOperationCubit>(context,
+                          listen: false)
                       .addCustomComponent(value, root: component);
                   Get.back();
                 });
@@ -694,7 +696,7 @@ class ComponentModificationMenu extends StatelessWidget {
         },
         child: BlocProvider<ComponentOperationCubit>(
           create: (context2) =>
-              Provider.of<ComponentOperationCubit>(context, listen: false),
+              BlocProvider.of<ComponentOperationCubit>(context, listen: false),
           child: SelectionDialog(
             possibleItems: possibleItems,
             onSelection: onSelection,
@@ -812,9 +814,12 @@ class ComponentTile extends StatelessWidget {
         BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
             .currentSelected;
     if (component is CustomComponent) {
-      selected = (component as CustomComponent).cloneOf == BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-          .currentSelectedRoot||(component ==BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-          .currentSelected );
+      selected = (component as CustomComponent).cloneOf ==
+              BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+                  .currentSelectedRoot ||
+          (component ==
+              BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+                  .currentSelected);
     } else {
       selected = (selectedComponent == component);
     }
