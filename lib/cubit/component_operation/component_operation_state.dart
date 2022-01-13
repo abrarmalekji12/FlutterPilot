@@ -8,8 +8,9 @@ class ComponentOperationInitial extends ComponentOperationState {}
 class ComponentOperationLoadingState extends ComponentOperationState {
 
 }
-class GlobalComponentLoadedState extends ComponentOperationState {
-  GlobalComponentLoadedState();
+
+class ProjectLoadedState extends ComponentOperationState {
+  ProjectLoadedState();
 }
 class ComponentUpdatedState extends ComponentOperationState {}
 

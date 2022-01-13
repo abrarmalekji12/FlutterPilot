@@ -12,9 +12,8 @@ part 'component_operation_state.dart';
 
 class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   FlutterProject? flutterProject;
-  ComponentOperationCubit()
-      : super(ComponentOperationInitial());
 
+  ComponentOperationCubit() : super(ComponentOperationInitial());
 
   void addedComponent(
       BuildContext context, Component component, Component root) {
@@ -29,11 +28,20 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  void updateGlobalCustomComponent(CustomComponent customComponent,{String? newName}) {
-   emit(ComponentOperationLoadingState());
-   FireBridge.updateGlobalCustomComponent(customComponent,newName: newName);
-   emit(ComponentOperationInitial());
+  void updateGlobalCustomComponent(CustomComponent customComponent,
+      {String? newName}) {
+    emit(ComponentOperationLoadingState());
+    FireBridge.updateGlobalCustomComponent(1,flutterProject!.name,customComponent, newName: newName);
+    emit(ComponentOperationInitial());
   }
+
+  void updateRootComponent(Component component) {
+    emit(ComponentOperationLoadingState());
+    FireBridge.updateRootComponent(1,flutterProject!.name,component);
+    emit(ComponentOperationInitial());
+  }
+
+
 
   void removedComponent(
       BuildContext context, Component component, Component root) {
@@ -54,17 +62,12 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  void loadCustomComponents() async {
-    emit(ComponentOperationLoadingState());
-    final componentList = await FireBridge.loadAllGlobalCustomComponents();
-    mainExecution.customComponents.addAll(componentList);
-    emit(GlobalComponentLoadedState());
-  }
+
 
   void addCustomComponent(String name, {Component? root}) {
     final component = StatelessComponent(name: name);
-    mainExecution.customComponents.add(component);
-    FireBridge.addNewGlobalCustomComponent(component);
+    flutterProject?.customComponents.add(component);
+    FireBridge.addNewGlobalCustomComponent(1,flutterProject!.name,component);
     if (root != null) {
       component.root = root;
       final instance = component.createInstance(root.parent);
@@ -100,7 +103,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     for (CustomComponent component in component.objects) {
       removeComponent(component);
     }
-    mainExecution.customComponents.remove(component);
+    flutterProject?.customComponents.remove(component);
     emit(ComponentUpdatedState());
   }
 

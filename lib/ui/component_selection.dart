@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/component_list.dart';
-import 'package:flutter_builder/constant/font_style.dart';
+import '../component_list.dart';
+import '../constant/font_style.dart';
 
 class ComponentSelection extends StatefulWidget {
   const ComponentSelection({Key? key}) : super(key: key);

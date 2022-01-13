@@ -8,5 +8,7 @@ class FlutterProjectInitial extends FlutterProjectState {}
 class FlutterProjectLoadingState extends FlutterProjectState{
 }
 class FlutterProjectLoadedState extends FlutterProjectState{
+  FlutterProjectLoadedState(this.flutterProject);
+  final FlutterProject flutterProject;
 }
 

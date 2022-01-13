@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/common/logger.dart';
-import 'package:flutter_builder/models/component_model.dart';
-import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
-import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
-import 'package:flutter_builder/cubit/visual_box_drawer/visual_box_cubit.dart';
-import 'package:flutter_builder/ui/visual_model.dart';
-import 'package:flutter_builder/ui/visual_painter.dart';
+import '../common/logger.dart';
+import '../models/component_model.dart';
+import '../cubit/component_operation/component_operation_cubit.dart';
+import '../cubit/component_selection/component_selection_cubit.dart';
+import '../cubit/visual_box_drawer/visual_box_cubit.dart';
+import 'visual_model.dart';
+import 'visual_painter.dart';
 import 'package:provider/provider.dart';
 
 class BoundaryWidget extends StatelessWidget {
@@ -31,7 +31,7 @@ class BoundaryWidget extends StatelessWidget {
                                 null
                             ? Provider.of<ComponentOperationCubit>(context,
                                     listen: false)
-                                .mainExecution
+                            .flutterProject!
                                 .rootComponent!
                                 .boundary!
                             : null),

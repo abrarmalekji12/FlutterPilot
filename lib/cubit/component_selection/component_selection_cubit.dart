@@ -1,5 +1,5 @@
 import 'package:bloc/bloc.dart';
-import 'package:flutter_builder/common/logger.dart';
+import '../../common/logger.dart';
 import 'package:meta/meta.dart';
 
 import '../../models/component_model.dart';
@@ -7,14 +7,15 @@ import '../../models/component_model.dart';
 part 'component_selection_state.dart';
 
 class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
-  Component currentSelected;
-  Component currentSelectedRoot;
+  late Component currentSelected;
+  late Component currentSelectedRoot;
 
-  ComponentSelectionCubit({
-    required this.currentSelected,
-    required this.currentSelectedRoot
-  }) : super(ComponentSelectionInitial());
+  ComponentSelectionCubit() : super(ComponentSelectionInitial());
 
+  void init(Component currentSelected,  Component currentSelectedRoot){
+    this.currentSelected=currentSelected;
+    this.currentSelectedRoot=currentSelectedRoot;
+  }
   void changeComponentSelection(Component component, {required Component root}) {
     if (currentSelected != component) {
       currentSelected = component;

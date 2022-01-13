@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/common/app_button.dart';
-import 'package:flutter_builder/common/app_text_field.dart';
-import 'package:flutter_builder/common/custom_animated_dialog.dart';
-import 'package:flutter_builder/common/custom_popup_menu_button.dart';
-import 'package:flutter_builder/common/logger.dart';
-import 'package:flutter_builder/models/component_model.dart';
-import 'package:flutter_builder/constant/app_colors.dart';
-import 'package:flutter_builder/constant/font_style.dart';
-import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
-import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
-import 'package:flutter_builder/models/parameter_model.dart';
-import 'package:flutter_builder/ui/selection_dialog.dart';
+import '../common/app_button.dart';
+import '../common/app_text_field.dart';
+import '../common/custom_animated_dialog.dart';
+import '../common/custom_popup_menu_button.dart';
+import '../common/logger.dart';
+import '../models/component_model.dart';
+import '../constant/app_colors.dart';
+import '../constant/font_style.dart';
+import '../cubit/component_operation/component_operation_cubit.dart';
+import '../cubit/component_selection/component_selection_cubit.dart';
+import '../models/parameter_model.dart';
+import 'selection_dialog.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
@@ -44,11 +44,11 @@ class _ComponentTreeState extends State<ComponentTree> {
                       child: getSublist(
                           BlocProvider.of<ComponentOperationCubit>(context,
                                   listen: false)
-                              .mainExecution
+                              .flutterProject!
                               .rootComponent!,
                           BlocProvider.of<ComponentOperationCubit>(context,
                                   listen: false)
-                              .mainExecution
+                              .flutterProject!
                               .rootComponent!),
                     ),
                     Padding(
@@ -92,7 +92,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                     for (final CustomComponent comp
                         in Provider.of<ComponentOperationCubit>(context,
                                 listen: false)
-                            .mainExecution
+                            .flutterProject!
                             .customComponents) ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -514,8 +514,8 @@ class ComponentModificationMenu extends StatelessWidget {
         ],
         if (customNamed == null &&
             component !=
-                Provider.of<ComponentOperationCubit>(context, listen: false)
-                    .mainExecution
+                BlocProvider.of<ComponentOperationCubit>(context, listen: false)
+                    .flutterProject!
                     .rootComponent!) ...[
           CustomPopupMenuButton(
             itemBuilder: (context2) {
@@ -565,7 +565,7 @@ class ComponentModificationMenu extends StatelessWidget {
                       component !=
                           BlocProvider.of<ComponentOperationCubit>(context,
                                   listen: false)
-                              .mainExecution
+                              .flutterProject!
                               .rootComponent! // &&   (component.type == 2 && compChildren >= 1)
                   ) {
                 list.add('remove tree');

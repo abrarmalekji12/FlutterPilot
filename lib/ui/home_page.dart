@@ -1,9 +1,8 @@
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/cubit/flutter_project/flutter_project_cubit.dart';
-import 'package:flutter_builder/firestore/firestore_bridge.dart';
-import '../models/project_model.dart';
+import '../cubit/flutter_project/flutter_project_cubit.dart';
+import '../firestore/firestore_bridge.dart';
 import '../common/custom_animated_dialog.dart';
 import '../common/custom_drop_down.dart';
 import '../common/logger.dart';
@@ -39,18 +38,17 @@ class _HomePageState extends State<HomePage> {
   final ParameterBuildCubit _parameterBuildCubit = ParameterBuildCubit();
   final visualBoxCubit = VisualBoxCubit();
   final screenConfigCubit = ScreenConfigCubit();
-  late final ComponentSelectionCubit componentSelectionCubit;
+  final ComponentSelectionCubit componentSelectionCubit =
+      ComponentSelectionCubit();
 
   @override
   void initState() {
     super.initState();
     FireBridge.init();
-    componentSelectionCubit = ComponentSelectionCubit(
-      currentSelected: componentOperationCubit.mainExecution.rootComponent!,
-      currentSelectedRoot: componentOperationCubit.mainExecution.rootComponent!,
-    );
+
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      componentOperationCubit.loadCustomComponents();
+      flutterProjectCubit.loadFlutterProject(
+          componentSelectionCubit, componentOperationCubit);
     });
 
     html.window.onResize.listen((event) {
@@ -73,99 +71,135 @@ class _HomePageState extends State<HomePage> {
             BlocProvider<ScreenConfigCubit>(
                 create: (context) => screenConfigCubit),
             BlocProvider<VisualBoxCubit>(create: (context) => visualBoxCubit),
+            BlocProvider<FlutterProjectCubit>(
+                create: (context) => flutterProjectCubit),
           ],
-          child: Row(
-            children: [
-              BlocListener<ComponentOperationCubit, ComponentOperationState>(
-                bloc: componentOperationCubit,
-                listener: (BuildContext context, state) {
-                  switch (state.runtimeType) {
-                    case ComponentOperationLoadingState:
-                      Loader.show(context);
-                      break;
-                    case GlobalComponentLoadedState:
-                      Loader.hide();
-                      break;
-                    case ComponentOperationInitial:
-                      Loader.hide();
-                      break;
-                  }
-                },
-                child: const SizedBox(
-                  width: 300,
-                  child: ComponentTree(),
-                ),
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    _buildLeftSide(),
-                    const CodeViewerButton(),
-                  ],
-                ),
-              ),
+          child: BlocConsumer<FlutterProjectCubit, FlutterProjectState>(
+            listener: (context, state) {
+              switch (state.runtimeType) {
+                case FlutterProjectLoadingState:
+                  Loader.show(context);
+                  break;
+                case FlutterProjectLoadedState:
+                  Loader.hide();
+                  logger(
+                      'PROJJECT IS NOT NULL? ${componentOperationCubit.flutterProject != null}');
+                  componentOperationCubit.flutterProject =
+                      (state as FlutterProjectLoadedState).flutterProject;
 
-              // const SizedBox(
-              //   width: 200,
-              //   child: ComponentSelection(),
-              // ),
-              SizedBox(
-                width: 300,
-                child: Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: BlocBuilder<ComponentSelectionCubit,
-                      ComponentSelectionState>(
-                    builder: (context, state) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          Text(
-                            componentSelectionCubit.currentSelected.name,
-                            style: AppFontStyle.roboto(18,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          Expanded(
-                            child: BlocListener<ComponentCreationCubit,
-                                ComponentCreationState>(
-                              listener: (context, state) {
-                                if (state is ComponentCreationChangeState &&
-                                    componentSelectionCubit.currentSelectedRoot
-                                        is CustomComponent) {
-                                  componentOperationCubit
-                                      .updateGlobalCustomComponent(
-                                          componentSelectionCubit
-                                                  .currentSelectedRoot
-                                              as CustomComponent);
-                                }
-                              },
-                              child: BlocProvider(
-                                  create: (context) => _parameterBuildCubit,
-                                  child: ListView(
-                                    controller: propertyScrollController,
-                                    children: [
-                                      for (final param
-                                          in componentSelectionCubit
-                                              .currentSelected.parameters)
-                                        ParameterWidget(
-                                          parameter: param,
-                                        ),
-                                    ],
-                                  )),
-                            ),
-                          ),
-                        ],
-                      );
+                  break;
+              }
+            },
+            builder: (context, state) {
+              if (componentOperationCubit.flutterProject == null) {
+                return Container();
+              }
+              if (state is FlutterProjectLoadedState) {
+                componentSelectionCubit.init(
+                    state.flutterProject.rootComponent!,
+                    state.flutterProject.rootComponent!);
+              }
+              return Row(
+                children: [
+                  BlocListener<ComponentOperationCubit,
+                      ComponentOperationState>(
+                    bloc: componentOperationCubit,
+                    listener: (BuildContext context, state) {
+                      switch (state.runtimeType) {
+                        case ComponentOperationLoadingState:
+                          Loader.show(context);
+                          break;
+                        case ProjectLoadedState:
+                          Loader.hide();
+                          break;
+                        case ComponentOperationInitial:
+                          Loader.hide();
+                          break;
+                      }
                     },
+                    child: const SizedBox(
+                      width: 300,
+                      child: ComponentTree(),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        _buildLeftSide(),
+                        const CodeViewerButton(),
+                      ],
+                    ),
+                  ),
+
+                  // const SizedBox(
+                  //   width: 200,
+                  //   child: ComponentSelection(),
+                  // ),
+                  SizedBox(
+                    width: 300,
+                    child: Padding(
+                      padding: const EdgeInsets.all(15),
+                      child: BlocBuilder<ComponentSelectionCubit,
+                          ComponentSelectionState>(
+                        builder: (context, state) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(
+                                height: 20,
+                              ),
+                              Text(
+                                componentSelectionCubit.currentSelected.name,
+                                style: AppFontStyle.roboto(18,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(
+                                height: 20,
+                              ),
+                              Expanded(
+                                child: BlocListener<ComponentCreationCubit,
+                                    ComponentCreationState>(
+                                  listener: (context, state) {
+                                    if (state is ComponentCreationChangeState &&
+                                        componentSelectionCubit
+                                                .currentSelectedRoot
+                                            is CustomComponent) {
+                                      componentOperationCubit
+                                          .updateGlobalCustomComponent(
+                                              componentSelectionCubit
+                                                      .currentSelectedRoot
+                                                  as CustomComponent);
+                                    } else {
+                                      componentOperationCubit
+                                          .updateRootComponent(
+                                              componentSelectionCubit
+                                                  .currentSelectedRoot);
+                                    }
+                                  },
+                                  child: BlocProvider(
+                                      create: (context) => _parameterBuildCubit,
+                                      child: ListView(
+                                        controller: propertyScrollController,
+                                        children: [
+                                          for (final param
+                                              in componentSelectionCubit
+                                                  .currentSelected.parameters)
+                                            ParameterWidget(
+                                              parameter: param,
+                                            ),
+                                        ],
+                                      )),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -200,7 +234,7 @@ class _HomePageState extends State<HomePage> {
                               logger(
                                   '==== onTap --- ${event.localPosition.dx} ${event.localPosition.dy}');
                               final tappedComp = componentOperationCubit
-                                  .mainExecution.rootComponent!
+                                  .flutterProject!.rootComponent!
                                   .searchTappedComponent(event.localPosition);
                               if (tappedComp != null) {
                                 final lastRoot =
@@ -238,7 +272,7 @@ class _HomePageState extends State<HomePage> {
                                         ComponentOperationState>(
                                       listener: (context, state) {},
                                       child: componentOperationCubit
-                                          .mainExecution
+                                          .flutterProject!
                                           .run(context),
                                     ),
                                   ),
@@ -351,10 +385,10 @@ class CodeViewerButton extends StatelessWidget {
             CustomDialog.show(
               context,
               CodeViewerWidget(
-                code:
-                    Provider.of<ComponentOperationCubit>(context, listen: false)
-                        .mainExecution
-                        .code(),
+                code: BlocProvider.of<ComponentOperationCubit>(context,
+                        listen: false)
+                    .flutterProject!
+                    .code(),
               ),
             );
           },

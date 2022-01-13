@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../models/project_model.dart';
 import '../common/logger.dart';
 import '../constant/string_constant.dart';
 import '../models/component_model.dart';
@@ -26,7 +27,8 @@ abstract class FireBridge {
     });
   }
 
-  static void addNewGlobalCustomComponent(CustomComponent customComponent) {
+  static Future<void> addNewGlobalCustomComponent(
+      int userId, String projectName, CustomComponent customComponent) async {
     final String type;
     switch (customComponent.runtimeType) {
       case StatelessComponent:
@@ -36,19 +38,26 @@ abstract class FireBridge {
         type = 'other';
         break;
     }
-    FirebaseFirestore.instance.collection(Strings.kCustomComponents).add({
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(projectName)
+        .add({
       'name': customComponent.name,
       'code': customComponent.root?.code(),
       'type': type
-    }).then((value) {
-      logger('=== FIRE-BRIDGE == addNewGlobalCustomComponent ==');
     });
+
+    logger('=== FIRE-BRIDGE == addNewGlobalCustomComponent ==');
   }
 
-  static void updateGlobalCustomComponent(CustomComponent customComponent,
+  static void updateGlobalCustomComponent(
+      int userId, String projectName, CustomComponent customComponent,
       {String? newName}) async {
     final document = await FirebaseFirestore.instance
-        .collection(Strings.kCustomComponents)
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(projectName)
         .where('name', isEqualTo: customComponent.name)
         .get();
     final documentData = document.docs[0].data();
@@ -62,7 +71,9 @@ abstract class FireBridge {
     }
     if (body.isNotEmpty) {
       FirebaseFirestore.instance
-          .collection(Strings.kCustomComponents)
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(projectName)
           .doc(document.docs[0].id)
           .update(body)
           .then((value) {
@@ -74,34 +85,110 @@ abstract class FireBridge {
     }
   }
 
-  static void deleteGlobalCustomComponent(CustomComponent customComponent) {
-    FirebaseFirestore.instance
-        .collection(Strings.kCustomComponents)
-        .doc(customComponent.name)
-        .delete()
-        .then((value) {
-      logger('=== FIRE-BRIDGE == deleteGlobalCustomComponent ==');
-    });
-  }
-
-  static Future<List<CustomComponent>> loadAllGlobalCustomComponents() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection(Strings.kCustomComponents)
+  static Future<void> deleteGlobalCustomComponent(
+      int userId, String projectName, CustomComponent customComponent) async {
+    final value = await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(projectName)
+        .where('name', isEqualTo: customComponent.name)
         .get();
-    final List<CustomComponent> components = [];
-    for (final doc in snapshot.docs) {
-      final componentBody = doc.data();
-
-      components.add(StatelessComponent(name: componentBody['name'])
-        ..root = componentBody['code'] != null
-            ? Component.fromCode(componentBody['code']!.toString().replaceAll('\n', '').replaceAll(' ', ''))
-            : null);
-    }
-
-    return components;
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(projectName)
+        .doc(value.docs[0].id)
+        .delete();
+    logger('=== FIRE-BRIDGE == deleteGlobalCustomComponent ==');
   }
 
-  static Future<CustomComponent> retrieveComponent(String name) async {
+  static Future<void> saveFlutterProject(
+      int userId, FlutterProject project) async {
+    final List<CustomComponent> components = project.customComponents;
+    final projectInfo = <String, dynamic>{};
+    projectInfo['name'] = project.name;
+    projectInfo['root'] = (project.rootComponent?.code())
+      ?..replaceAll('\n', '').replaceAll(' ', '');
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(project.name)
+        .add(projectInfo);
+    for (final component in components) {
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(project.name)
+          .add({
+        'name': component.name,
+        'code': component.root != null
+            ? (component.root!.code()..replaceAll('\n', '').replaceAll(' ', ''))
+            : null
+      });
+    }
+  }
+
+  static Future<FlutterProject?> loadFlutterProject(
+      int userId, String name) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(name)
+        .get();
+    if (snapshot.size == 0 || snapshot.docs.isEmpty) {
+      return null;
+    }
+    final projectInfo = snapshot.docs.first.data();
+    logger('PROJECT NAME ${projectInfo['name']} ${projectInfo['root']}');
+    final FlutterProject flutterProject = FlutterProject(projectInfo['name']);
+    flutterProject.rootComponent = projectInfo['root'] != null
+        ? Component.fromCode(
+            projectInfo['root'].replaceAll('\n', '').replaceAll(' ', ''))
+        : null;
+    for (final doc in snapshot.docs.sublist(1)) {
+      final componentBody = doc.data();
+      logger('DOCC $componentBody');
+      flutterProject.customComponents.add(
+          StatelessComponent(name: componentBody['name'])
+            ..root = componentBody['code'] != null
+                ? Component.fromCode(componentBody['code']!
+                    .toString()
+                    .replaceAll('\n', '')
+                    .replaceAll(' ', ''))
+                : null);
+    }
+    logger('DONE');
+    return flutterProject;
+  }
+
+  static Future<void> updateRootComponent(
+      int userId, String projectName, Component component) async {
+    final document = await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(projectName)
+        .limit(1)
+        .get();
+    final documentData = document.docs[0].data();
+    final Map<String, dynamic> body = {};
+    final rootCode = component.code();
+    if (documentData['root'] != rootCode) {
+      body['root'] = rootCode;
+    }
+    if (body.isNotEmpty) {
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(projectName)
+          .doc(document.docs[0].id)
+          .update(body);
+
+      logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
+    }
+  }
+
+  static Future<CustomComponent> retrieveComponent(
+      int userId, String projectName, String name) async {
     final snapshot = await FirebaseFirestore.instance.collection(name).get();
     return StatelessComponent(name: name)
       ..root = Component.fromCode(snapshot.docs[0]['code']);
