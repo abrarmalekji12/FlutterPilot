@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../code_to_component.dart';
 import '../common/logger.dart';
 import '../cubit/visual_box_drawer/visual_box_cubit.dart';
-import '../firestore/firestore_bridge.dart';
 import 'parameter_info_model.dart';
 import 'parameter_model.dart';
 
@@ -19,7 +18,10 @@ abstract class Component {
 
   Component(this.name, this.parameters, {this.isConstant = false});
 
-  static Component fromCode(String code) {
+  static Component? fromCode(String? code) {
+    if (code == null) {
+      return null;
+    }
     final name = code.substring(0, code.indexOf('(', 0));
     final comp = componentList[name]!();
 
@@ -38,7 +40,6 @@ abstract class Component {
         }
         if (index != -1) {
           final childCode = parameterCodes.removeAt(index);
-          logger('CHILD CODE $childCode');
           (comp as Holder).updateChild(
               Component.fromCode(childCode.replaceFirst('child:', '')));
         }
@@ -53,13 +54,13 @@ abstract class Component {
         }
         if (index != -1) {
           final childCode = parameterCodes.removeAt(index);
-          logger('CHILD CODE $childCode');
           final code2 = childCode.replaceFirst('children:[', '');
           final List<Component> componentList = [];
+
           final List<String> childrenCodes = CodeToComponent.splitByComma(
               code2.substring(0, code2.length - 1));
           for (final childCode in childrenCodes) {
-            componentList.add(Component.fromCode(childCode)..setParent(comp));
+            componentList.add(Component.fromCode(childCode)!..setParent(comp));
           }
           (comp as MultiHolder).children = componentList;
         }
@@ -72,7 +73,7 @@ abstract class Component {
           final name = parameterCodes[i].substring(0, colonIndex);
           if (nameList.contains(name)) {
             comp.childMap[name] =
-                Component.fromCode(parameterCodes[i].substring(colonIndex + 1))
+                Component.fromCode(parameterCodes[i].substring(colonIndex + 1))!
                   ..setParent(comp);
             nameList.remove(name);
           }
@@ -110,6 +111,10 @@ abstract class Component {
     });
 
     return ComponentWidget(key: GlobalObjectKey(this), child: create(context));
+  }
+
+  void forEach(void Function(Component) work) {
+    work.call(this);
   }
 
   Component getLastRoot() {
@@ -158,6 +163,7 @@ abstract class Component {
     }
     return _root;
   }
+
   Component? getLastCustomComponentRoot() {
     Component? _tracer = this, _root = this;
     final List<Component> tree = [];
@@ -168,7 +174,7 @@ abstract class Component {
       _tracer = _tracer.parent;
     }
     final reversedTree = tree.reversed.toList();
-    for (int i = 0; i < reversedTree.length-1; i++) {
+    for (int i = 0; i < reversedTree.length - 1; i++) {
       final comp = reversedTree[i];
       if (comp is Holder &&
           comp.child is CustomComponent &&
@@ -290,6 +296,14 @@ abstract class MultiHolder extends Component {
     return '$name(\n${middle}children:[\n$childrenCode\n],\n)';
   }
 
+  @override
+  void forEach(void Function(Component) work) {
+    work.call(this);
+    for (final child in children) {
+      child.forEach(work);
+    }
+  }
+
   void addChild(Component component, {int? index}) {
     if (index == null) {
       children.add(component);
@@ -377,6 +391,14 @@ abstract class Holder extends Component {
   }
 
   @override
+  void forEach(void Function(Component) work) {
+    work.call(this);
+    if (child != null) {
+      child!.forEach(work);
+    }
+  }
+
+  @override
   Component? searchTappedComponent(Offset offset) {
     if (boundary?.contains(offset) ?? false) {
       Component? component;
@@ -456,6 +478,21 @@ abstract class CustomNamedHolder extends Component {
       if (entry.value == oldComponent) {
         childMap[entry.key] = component;
         return;
+      }
+    }
+  }
+
+  @override
+  void forEach(void Function(Component) work) {
+    work.call(this);
+    for (final child in childMap.values) {
+      if (child != null) {
+        child.forEach(work);
+      }
+    }
+    for (final children in childrenMap.values) {
+      for (final child in children) {
+        child.forEach(work);
       }
     }
   }
@@ -560,7 +597,13 @@ abstract class CustomComponent extends Component {
   Widget create(BuildContext context) {
     return root?.build(context) ?? Container();
   }
-
+  @override
+  void forEach(void Function(Component) work) {
+    work.call(this);
+    if(root!=null){
+      root!.forEach(work);
+    }
+  }
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
@@ -653,7 +696,8 @@ abstract class CustomComponent extends Component {
     return tracer!;
   }
 
-  static Component? findChildWithParam(final Component component, final List<Parameter> params) {
+  static Component? findChildWithParam(
+      final Component component, final List<Parameter> params) {
     switch (component.type) {
       case 3:
         return (component as Holder).child!;

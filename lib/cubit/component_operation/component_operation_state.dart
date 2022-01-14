@@ -9,8 +9,10 @@ class ComponentOperationLoadingState extends ComponentOperationState {
 
 }
 
-class ProjectLoadedState extends ComponentOperationState {
-  ProjectLoadedState();
+class ComponentLoadBytesState extends ComponentOperationState {
+  ComponentLoadBytesState(this.bytes);
+  final Uint8List? bytes;
 }
+
 class ComponentUpdatedState extends ComponentOperationState {}
 

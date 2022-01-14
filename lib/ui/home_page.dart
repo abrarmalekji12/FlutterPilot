@@ -44,11 +44,9 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    FireBridge.init();
-
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      flutterProjectCubit.loadFlutterProject(
-          componentSelectionCubit, componentOperationCubit);
+    FireBridge.init().then((value) {
+    flutterProjectCubit.loadFlutterProject(
+            componentSelectionCubit, componentOperationCubit);
     });
 
     html.window.onResize.listen((event) {
@@ -82,11 +80,6 @@ class _HomePageState extends State<HomePage> {
                   break;
                 case FlutterProjectLoadedState:
                   Loader.hide();
-                  logger(
-                      'PROJJECT IS NOT NULL? ${componentOperationCubit.flutterProject != null}');
-                  componentOperationCubit.flutterProject =
-                      (state as FlutterProjectLoadedState).flutterProject;
-
                   break;
               }
             },
@@ -108,9 +101,6 @@ class _HomePageState extends State<HomePage> {
                       switch (state.runtimeType) {
                         case ComponentOperationLoadingState:
                           Loader.show(context);
-                          break;
-                        case ProjectLoadedState:
-                          Loader.hide();
                           break;
                         case ComponentOperationInitial:
                           Loader.hide();

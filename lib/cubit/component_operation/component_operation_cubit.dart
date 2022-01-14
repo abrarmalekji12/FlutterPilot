@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_builder/models/other_model.dart';
 import '../../models/project_model.dart';
 import '../../firestore/firestore_bridge.dart';
 import '../../models/component_model.dart';
@@ -35,6 +38,16 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentOperationInitial());
   }
 
+  void uploadImage(ImageData imageData)async{
+    emit(ComponentOperationLoadingState());
+    await FireBridge.uploadImage(1, flutterProject!.name, imageData);
+    emit(ComponentOperationInitial());
+  }
+  void loadImage(ImageData imageData)async{
+    emit(ComponentOperationLoadingState());
+    imageData.bytes=await FireBridge.loadImageBytes(1, flutterProject!.name,imageData.imagePath!);
+    emit(ComponentOperationInitial());
+  }
   void updateRootComponent(Component component) {
     emit(ComponentOperationLoadingState());
     FireBridge.updateRootComponent(1,flutterProject!.name,component);

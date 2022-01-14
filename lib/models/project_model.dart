@@ -1,8 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../common/logger.dart';
 import '../component_list.dart';
-import '../firestore/firestore_bridge.dart';
 
 import 'component_model.dart';
 
@@ -10,6 +11,7 @@ class FlutterProject {
   String name;
   final List<CustomComponent> customComponents = [];
   Component? rootComponent;
+  Map<String,Uint8List> byteCache={};
 
   FlutterProject(this.name);
 
