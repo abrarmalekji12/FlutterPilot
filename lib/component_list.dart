@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/common/logger.dart';
 import 'models/component_model.dart';
 import 'constant/app_colors.dart';
 import 'enums.dart';
@@ -26,6 +25,7 @@ final componentList = {
   'Spacer': () => CSpacer(),
   'Center': () => CCenter(),
   'Align': () => CAlign(),
+  'Positioned': () => CPositioned(),
   'FractionallySizedBox': () => CFractionallySizedBox(),
   'Flexible': () => CFlexible(),
   'Card': () => CCard(),
@@ -294,6 +294,12 @@ class Parameters {
           )
         ],
       );
+
+  static SimpleParameter directionParameter() => SimpleParameter<double>(
+      info: NamedParameterInfo('direction'),
+      name: 'direction',
+      required: false,
+      defaultValue: 0);
 
   static SimpleParameter widthParameter() => SimpleParameter<double>(
       info: NamedParameterInfo('width'),
@@ -577,6 +583,35 @@ class CCenter extends Holder {
       child: child?.build(context),
       widthFactor: parameters[0].value,
       heightFactor: parameters[1].value,
+    );
+  }
+}
+
+class CPositioned extends Holder {
+  CPositioned()
+      : super('Positioned', [
+          Parameters.directionParameter()
+            ..withDisplayName('left')
+            ..withInfo(NamedParameterInfo('left')),
+          Parameters.directionParameter()
+            ..withDisplayName('right')
+            ..withInfo(NamedParameterInfo('right')),
+          Parameters.directionParameter()
+            ..withDisplayName('top')
+            ..withInfo(NamedParameterInfo('top')),
+          Parameters.directionParameter()
+            ..withDisplayName('bottom')
+            ..withInfo(NamedParameterInfo('bottom')),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Positioned(
+      child: child?.build(context) ?? Container(),
+      left: parameters[0].value,
+      right: parameters[1].value,
+      top: parameters[2].value,
+      bottom: parameters[3].value,
     );
   }
 }
@@ -993,7 +1028,8 @@ class CImage extends Component {
 
   @override
   Widget create(BuildContext context) {
-    return parameters[0].value != null&&(parameters[0].value as ImageData).bytes!=null
+    return parameters[0].value != null &&
+            (parameters[0].value as ImageData).bytes != null
         ? Image.memory(
             (parameters[0].value as ImageData).bytes!,
             width: parameters[1].value,
@@ -1001,7 +1037,11 @@ class CImage extends Component {
             color: parameters[3].value,
             fit: parameters[4].value,
           )
-        : Icon(Icons.error,color: Colors.red,size: parameters[1].value,);
+        : Icon(
+            Icons.error,
+            color: Colors.red,
+            size: parameters[1].value,
+          );
   }
 }
 
