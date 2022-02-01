@@ -6,5 +6,5 @@ abstract class ComponentSelectionState {}
 class ComponentSelectionInitial extends ComponentSelectionState {}
 
 class ComponentSelectionChange extends ComponentSelectionState {
-  ComponentSelectionChange();
+  ComponentSelectionChange(int data);
 }

@@ -13,6 +13,11 @@ class ComponentLoadBytesState extends ComponentOperationState {
   ComponentLoadBytesState(this.bytes);
   final Uint8List? bytes;
 }
+class ComponentOperationErrorState extends ComponentOperationState{
+  ComponentOperationErrorState();
+}
 
-class ComponentUpdatedState extends ComponentOperationState {}
+class ComponentUpdatedState extends ComponentOperationState {
+  ComponentUpdatedState();
+}
 

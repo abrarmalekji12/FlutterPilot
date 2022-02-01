@@ -1,9 +1,9 @@
 import 'dart:convert';
+import 'dart:html';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import '../code_to_component.dart';
 import '../models/other_model.dart';
@@ -29,7 +29,7 @@ abstract class FireBridge {
     final FirebaseFirestore fireStore = FirebaseFirestore.instance;
     fireStore
         .collection(customComponent.name)
-        .add({'code': customComponent.root?.code()}).then((value) {
+        .add({'code': customComponent.root?.code(clean: false)}).then((value) {
       logger('=== SAVED ===');
     });
   }
@@ -51,14 +51,14 @@ abstract class FireBridge {
         .collection(projectName)
         .add({
       'name': customComponent.name,
-      'code': customComponent.root?.code(),
+      'code': customComponent.root?.code(clean: false),
       'type': type
     });
 
     logger('=== FIRE-BRIDGE == addNewGlobalCustomComponent ==');
   }
 
-  static void updateGlobalCustomComponent(
+  static Future<void> updateGlobalCustomComponent(
       int userId, String projectName, CustomComponent customComponent,
       {String? newName}) async {
     final document = await FirebaseFirestore.instance
@@ -72,7 +72,7 @@ abstract class FireBridge {
     if (documentData['name'] != (newName ?? customComponent.name)) {
       body['name'] = newName ?? customComponent.name;
     }
-    final rootCode = customComponent.root?.code();
+    final rootCode = customComponent.root?.code(clean: false);
     if (documentData['code'] != rootCode) {
       body['code'] = rootCode;
     }
@@ -114,7 +114,8 @@ abstract class FireBridge {
     final List<CustomComponent> components = project.customComponents;
     final projectInfo = <String, dynamic>{};
     projectInfo['project_name'] = project.name;
-    projectInfo['root'] = CodeToComponent.trim(project.rootComponent?.code());
+    projectInfo['root'] =
+        CodeOperations.trim(project.rootComponent?.code(clean: false));
     projectInfo[Strings.kImages] = [];
     await FirebaseFirestore.instance
         .collection('us$userId')
@@ -129,9 +130,59 @@ abstract class FireBridge {
           .add({
         'name': component.name,
         'code': component.root != null
-            ? (CodeToComponent.trim(component.root!.code()))
+            ? (CodeOperations.trim(component.root!.code(clean: false)))
             : null
       });
+    }
+  }
+
+  static Future<List<FavouriteModel>> loadFavourites(final int userId,
+      {String? projectName}) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot;
+    if (projectName == null) {
+      snapshot = await FirebaseFirestore.instance
+          .collection('us$userId|${Strings.kFavourites}')
+          .get();
+    } else {
+      snapshot = await FirebaseFirestore.instance
+          .collection('us$userId|${Strings.kFavourites}')
+          .where('project_name', isEqualTo: projectName)
+          .get();
+    }
+
+    final List<FavouriteModel> favouriteModels = [];
+    for (final document in snapshot.docs) {
+      final json = document.data();
+      favouriteModels.add(FavouriteModel(
+          Component.fromCode(json['code'])!
+            ..boundary = Rect.fromLTWH(0, 0, json['width'], json['height']),
+          json['project_name']));
+    }
+    return favouriteModels;
+  }
+
+  static Future<void> addToFavourites(
+      int userId, Component component, String projectName) async {
+    await FirebaseFirestore.instance
+        .collection('us$userId|${Strings.kFavourites}')
+        .doc('${DateTime.now().millisecondsSinceEpoch}')
+        .set({
+      'code': CodeOperations.trim(component.code(clean: false)),
+      'id': component.id,
+      'project_name': projectName,
+      'width': component.boundary!.width,
+      'height': component.boundary!.height,
+    });
+  }
+
+  static Future<void> removeFromFavourites(
+      int userId, Component component) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('us$userId|${Strings.kFavourites}')
+        .where('id', isEqualTo: component.id)
+        .get();
+    if (snapshot.docs.isNotEmpty) {
+      await snapshot.docs[0].reference.delete();
     }
   }
 
@@ -142,8 +193,10 @@ abstract class FireBridge {
         .doc(Strings.kFlutterProject)
         .collection(name)
         .get();
-    if (snapshot.size == 0 || snapshot.docs.isEmpty) {
-      return null;
+    if (snapshot.docs.isEmpty||!snapshot.docs[0].exists) {
+      final flutterProject = FlutterProject.createNewProject(name);
+      FireBridge.saveFlutterProject(1, flutterProject);
+      return flutterProject;
     }
     final documents = snapshot.docs;
     final projectInfoDoc =
@@ -154,15 +207,7 @@ abstract class FireBridge {
     final FlutterProject flutterProject =
         FlutterProject(projectInfo['project_name']);
     flutterProject.rootComponent =
-        Component.fromCode(CodeToComponent.trim(projectInfo['root']));
-    final imageList = projectInfo[Strings.kImages];
-    for (final image in imageList) {
-      // final bytes =
-      //     await loadImageBytes(userId, projectInfo['project_name'], imagePath);
-      // if (bytes != null) {
-        flutterProject.byteCache[image['img_name']] = base64Decode(image['bytes']);
-      // }
-    }
+        Component.fromCode(CodeOperations.trim(projectInfo['root']));
     documents.retainWhere((element) => !element.data().containsKey('root'));
     for (final doc in documents) {
       final componentBody = doc.data();
@@ -177,44 +222,51 @@ abstract class FireBridge {
     return flutterProject;
   }
 
+  static Future<Uint8List?> loadImage(
+      int userId, String imgName) async {
+    final QuerySnapshot<Map<String, dynamic>> image;
+      image = await FirebaseFirestore.instance
+          .collection('us$userId|${Strings.kImages}')
+          .where('img_name', isEqualTo: imgName)
+          .get();
+    if (image.docs.isNotEmpty) {
+      return base64Decode(image.docs[0].data()['bytes']);
+    }
+  }
+  static Future<List<ImageData>?> loadAllImages(
+      int userId) async {
+    final QuerySnapshot<Map<String, dynamic>> image;
+    image = await FirebaseFirestore.instance
+        .collection('us$userId|${Strings.kImages}')
+        .get();
+    if (image.docs.isNotEmpty) {
+      final List<ImageData> list=[];
+      for(final doc in image.docs){
+        list.add(ImageData(base64Decode(doc.data()['bytes']), doc.data()['img_name']));
+      }
+    return list;
+    }
+
+  }
   static Future<void> uploadImage(
       int userId, String projectName, ImageData imageData) async {
-    // await FirebaseStorage.instance
-    //     .ref(
-    //         'us$userId/${Strings.kStorage}/${Strings.kImages}/${imageData.imagePath!.replaceAll('.', '__dot__')}')
-    //     .putData(imageData.bytes!);
-    final document = await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .where('project_name', isNull: false)
-        .get();
     await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .doc(document.docs[0].id)
-        .update({
-      Strings.kImages: FieldValue.arrayUnion([
-        {
-          'img_name': imageData.imagePath,
-          'bytes': base64Encode(imageData.bytes!)
-        }
-      ])
+        .collection('us$userId|${Strings.kImages}')
+        .add({
+      'img_name': imageData.imageName,
+      'project_name': projectName,
+      'bytes': base64Encode(imageData.bytes!)
     });
   }
 
-  static Future<Uint8List?> loadImageBytes(
-      int userId, String projectName, String imagePath) async {
-    logger('LOADING ======= $imagePath');
-    final document = await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .where('project_name', isNull: false)
+  static Future<void> removeImage(int userId, String imgName) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('us$userId|${Strings.kImages}')
+        .where('img_name', isEqualTo: imgName)
         .get();
-   // Uint8List? bytes=document.docs[0].data()[Strings.kImages]['bytes']
-    return null;
+    if (snapshot.docs.isNotEmpty) {
+      snapshot.docs[0].reference.delete();
+    }
   }
 
   static Future<void> updateRootComponent(
@@ -224,10 +276,10 @@ abstract class FireBridge {
         .doc(Strings.kFlutterProject)
         .collection(projectName)
         .where('project_name', isNull: false)
-        .get();
+        .get(const GetOptions(source: Source.server));
     final documentData = document.docs[0].data();
     final Map<String, dynamic> body = {};
-    final rootCode = CodeToComponent.trim(component.code());
+    final rootCode = CodeOperations.trim(component.code(clean: false));
     if (documentData['root'] != rootCode) {
       body['root'] = rootCode;
     }
@@ -238,7 +290,6 @@ abstract class FireBridge {
           .collection(projectName)
           .doc(document.docs[0].id)
           .update(body);
-
       logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
     }
   }

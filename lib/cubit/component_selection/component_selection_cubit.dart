@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:bloc/bloc.dart';
 import '../../common/logger.dart';
 import 'package:meta/meta.dart';
@@ -9,6 +11,7 @@ part 'component_selection_state.dart';
 class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
   late Component currentSelected;
   late Component currentSelectedRoot;
+  Component? lastTapped;
 
   ComponentSelectionCubit() : super(ComponentSelectionInitial());
 
@@ -21,7 +24,10 @@ class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
       currentSelected = component;
       currentSelectedRoot = root;
       logger('==== ComponentSelectionCubit ** changeComponentSelection == ${component.name} ${root.name}');
-      emit(ComponentSelectionChange());
+      emit(ComponentSelectionChange(Random.secure().nextInt(1000)));
     }
+  }
+  bool isSelected(Component component){
+    return currentSelected==component;
   }
 }

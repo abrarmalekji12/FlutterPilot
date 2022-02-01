@@ -1,8 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/constant/app_colors.dart';
-import 'package:flutter_builder/constant/font_style.dart';
-import 'package:flutter_builder/ui/visual_model.dart';
+import '../constant/app_colors.dart';
+import 'visual_model.dart';
 
 class BoundaryPainter extends CustomPainter {
   final Paint myPaint = Paint();
@@ -20,20 +18,17 @@ class BoundaryPainter extends CustomPainter {
     myPaint.color = Colors.blueAccent;
     for (final boundary in boundaries) {
       canvas.drawRect(boundary.rect, myPaint);
-      final textPainter = TextPainter(
-        text: TextSpan(
-            text: boundary.name,
-            style: const TextStyle(
-              fontSize: 15,
-              color: AppColors.theme,
-              fontWeight: FontWeight.bold,
-            )), textDirection:  TextDirection.ltr
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, boundary.rect.topLeft.translate(0, -20));
-
+      final span = TextSpan(
+          text: boundary.name,
+          style: const TextStyle(
+            fontSize: 15,
+            color: AppColors.theme,
+            fontWeight: FontWeight.bold,
+          ));
+      TextPainter(text: span, textDirection: TextDirection.ltr)
+        ..layout()
+        ..paint(canvas, boundary.rect.topLeft.translate(0, -20));
     }
-
 
     if (errorBoundary != null) {
       myPaint.color = Colors.red;

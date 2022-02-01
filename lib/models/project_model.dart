@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_builder/models/other_model.dart';
 
 import '../common/logger.dart';
 import '../component_list.dart';
@@ -11,12 +12,13 @@ class FlutterProject {
   String name;
   final List<CustomComponent> customComponents = [];
   Component? rootComponent;
-  Map<String,Uint8List> byteCache={};
+
+  final List<FavouriteModel> favouriteList=[];
 
   FlutterProject(this.name);
 
-  factory FlutterProject.createNewProject() {
-    final FlutterProject flutterProject = FlutterProject('untitled1');
+  factory FlutterProject.createNewProject(String name) {
+    final FlutterProject flutterProject = FlutterProject(name);
     flutterProject.rootComponent = componentList['MaterialApp']!();
     return flutterProject;
   }

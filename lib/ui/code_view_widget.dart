@@ -1,7 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/constant/font_style.dart';
+import '../constant/font_style.dart';
 
 class CodeViewerWidget extends StatelessWidget {
   final String code;

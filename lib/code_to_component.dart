@@ -1,6 +1,6 @@
 import 'common/logger.dart';
 
-abstract class CodeToComponent {
+abstract class CodeOperations {
   static String? trim(String? code) {
     if (code == null) {
       return null;
@@ -19,6 +19,9 @@ abstract class CodeToComponent {
   }
 
   static List<String> splitByComma(String paramCode) {
+    if(paramCode.startsWith('[')&&paramCode.endsWith(']')){
+      paramCode=paramCode.substring(1,paramCode.length-1);
+    }
     int parenthesisCount = 0;
     final List<int> dividers = [-1];
     bool stringQuote=false;
@@ -38,7 +41,6 @@ abstract class CodeToComponent {
         parenthesisCount--;
       }
     }
-    logger('COMMA \n $paramCode \n $dividers \n................');
     final List<String> parameterCodes = [];
     for (int divideIndex = 0; divideIndex < dividers.length; divideIndex++) {
       if (divideIndex + 1 < dividers.length) {

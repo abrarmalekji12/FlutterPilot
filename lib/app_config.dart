@@ -1,4 +1,4 @@
-final appConfig=DevelopmentConfig();
+final appConfig=ProductionConfig();
 
 abstract class AppConfig{
   bool get loggerEnable;
@@ -6,11 +6,9 @@ abstract class AppConfig{
 class DevelopmentConfig extends AppConfig{
   @override
   bool get loggerEnable => true;
-
 }
 
 class ProductionConfig extends AppConfig {
   @override
   bool get loggerEnable => false;
-
 }

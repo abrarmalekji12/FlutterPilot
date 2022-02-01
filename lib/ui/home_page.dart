@@ -1,6 +1,10 @@
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_builder/common/custom_popup_menu_button.dart';
+import 'package:get/get.dart';
+import '../common/responsive/responsive_widget.dart';
+import '../common/context_popup.dart';
 import '../cubit/flutter_project/flutter_project_cubit.dart';
 import '../firestore/firestore_bridge.dart';
 import '../common/custom_animated_dialog.dart';
@@ -16,6 +20,7 @@ import '../cubit/visual_box_drawer/visual_box_cubit.dart';
 import '../screen_model.dart';
 import 'boundary_widget.dart';
 import 'code_view_widget.dart';
+import 'component_selection_dialog.dart';
 import 'parameter_ui.dart';
 import 'package:flutter_overlay_loader/flutter_overlay_loader.dart';
 import 'package:provider/provider.dart';
@@ -24,7 +29,9 @@ import '../models/component_model.dart';
 import 'component_tree.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  final String? projectName;
+
+  const HomePage({Key? key, this.projectName}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -32,7 +39,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ScrollController propertyScrollController = ScrollController();
-  final componentPropertyCubit = ComponentCreationCubit();
+  final componentCreationCubit = ComponentCreationCubit();
   final componentOperationCubit = ComponentOperationCubit();
   final flutterProjectCubit = FlutterProjectCubit();
   final ParameterBuildCubit _parameterBuildCubit = ParameterBuildCubit();
@@ -44,14 +51,63 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    FireBridge.init().then((value) {
-    flutterProjectCubit.loadFlutterProject(
-            componentSelectionCubit, componentOperationCubit);
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      FireBridge.init().then((value) {
+        flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
+            componentOperationCubit, widget.projectName ?? 'untitled1');
+      });
     });
+    html.window.onKeyDown.listen((event) {
+      debugPrint('PRESSED ${event.altKey} ${event.key} ${event.eventPhase}');
+      if (event.altKey) {
+        event.preventDefault();
+        if (event.key == 'f') {
+          componentOperationCubit
+              .toggleFavourites(componentSelectionCubit.currentSelected);
+        } else if (event.key == 'p' &&
+            componentOperationCubit.shouldAddingEnable(
+                componentSelectionCubit.currentSelected,null, null, null)) {
+          final component = componentSelectionCubit.currentSelected;
+          showSelectionDialog(context, (comp) {
+            if (component is Holder) {
+              (component).updateChild(comp);
+            } else if (component is MultiHolder) {
+              (component).addChild(comp);
+            }
+            comp.setParent(component);
+            if (comp is CustomComponent) {
+              comp.root?.setParent(component);
+            }
+            componentCreationCubit.changedComponent();
 
-    html.window.onResize.listen((event) {
-      componentPropertyCubit.changedComponent();
+            componentOperationCubit.addedComponent(
+                comp, componentSelectionCubit.currentSelectedRoot);
+            componentSelectionCubit.changeComponentSelection(component,
+                root: componentSelectionCubit.currentSelectedRoot);
+          });
+        }
+      }
     });
+    html.window.onResize.listen((event) {
+      componentCreationCubit.changedComponent();
+    });
+  }
+
+  void showSelectionDialog(
+      BuildContext context, void Function(Component) onSelection,
+      {List<String>? possibleItems}) {
+    Get.dialog(
+      GestureDetector(
+        onTap: () {
+          Get.back();
+        },
+        child: ComponentSelectionDialog(
+          possibleItems: possibleItems,
+          onSelection: onSelection,
+          componentOperationCubit: componentOperationCubit,
+        ),
+      ),
+    );
   }
 
   @override
@@ -61,7 +117,7 @@ class _HomePageState extends State<HomePage> {
         child: MultiBlocProvider(
           providers: [
             BlocProvider<ComponentCreationCubit>(
-                create: (context) => componentPropertyCubit),
+                create: (context) => componentCreationCubit),
             BlocProvider<ComponentOperationCubit>(
                 create: (context) => componentOperationCubit),
             BlocProvider<ComponentSelectionCubit>(
@@ -71,8 +127,16 @@ class _HomePageState extends State<HomePage> {
             BlocProvider<VisualBoxCubit>(create: (context) => visualBoxCubit),
             BlocProvider<FlutterProjectCubit>(
                 create: (context) => flutterProjectCubit),
+            BlocProvider<ParameterBuildCubit>(
+                create: (context) => _parameterBuildCubit),
           ],
           child: BlocConsumer<FlutterProjectCubit, FlutterProjectState>(
+            buildWhen: (state1, state2) {
+              if (state2 is FlutterProjectLoadingState) {
+                return false;
+              }
+              return true;
+            },
             listener: (context, state) {
               switch (state.runtimeType) {
                 case FlutterProjectLoadingState:
@@ -92,102 +156,10 @@ class _HomePageState extends State<HomePage> {
                     state.flutterProject.rootComponent!,
                     state.flutterProject.rootComponent!);
               }
-              return Row(
-                children: [
-                  BlocListener<ComponentOperationCubit,
-                      ComponentOperationState>(
-                    bloc: componentOperationCubit,
-                    listener: (BuildContext context, state) {
-                      switch (state.runtimeType) {
-                        case ComponentOperationLoadingState:
-                          Loader.show(context);
-                          break;
-                        case ComponentOperationInitial:
-                          Loader.hide();
-                          break;
-                      }
-                    },
-                    child: const SizedBox(
-                      width: 300,
-                      child: ComponentTree(),
-                    ),
-                  ),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        _buildLeftSide(),
-                        const CodeViewerButton(),
-                      ],
-                    ),
-                  ),
-
-                  // const SizedBox(
-                  //   width: 200,
-                  //   child: ComponentSelection(),
-                  // ),
-                  SizedBox(
-                    width: 300,
-                    child: Padding(
-                      padding: const EdgeInsets.all(15),
-                      child: BlocBuilder<ComponentSelectionCubit,
-                          ComponentSelectionState>(
-                        builder: (context, state) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(
-                                height: 20,
-                              ),
-                              Text(
-                                componentSelectionCubit.currentSelected.name,
-                                style: AppFontStyle.roboto(18,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(
-                                height: 20,
-                              ),
-                              Expanded(
-                                child: BlocListener<ComponentCreationCubit,
-                                    ComponentCreationState>(
-                                  listener: (context, state) {
-                                    if (state is ComponentCreationChangeState &&
-                                        componentSelectionCubit
-                                                .currentSelectedRoot
-                                            is CustomComponent) {
-                                      componentOperationCubit
-                                          .updateGlobalCustomComponent(
-                                              componentSelectionCubit
-                                                      .currentSelectedRoot
-                                                  as CustomComponent);
-                                    } else {
-                                      componentOperationCubit
-                                          .updateRootComponent(
-                                              componentSelectionCubit
-                                                  .currentSelectedRoot);
-                                    }
-                                  },
-                                  child: BlocProvider(
-                                      create: (context) => _parameterBuildCubit,
-                                      child: ListView(
-                                        controller: propertyScrollController,
-                                        children: [
-                                          for (final param
-                                              in componentSelectionCubit
-                                                  .currentSelected.parameters)
-                                            ParameterWidget(
-                                              parameter: param,
-                                            ),
-                                        ],
-                                      )),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+              return const ResponsiveWidget(
+                largeScreen: DesktopVisualEditor(),
+                mediumScreen: PrototypeShowcase(),
+                smallScreen: PrototypeShowcase(),
               );
             },
           ),
@@ -196,115 +168,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildLeftSide() {
-    return Container(
-      decoration: const BoxDecoration(
-          gradient: RadialGradient(colors: [
-        Color(0xffd3d3d3),
-        Color(0xffffffff),
-      ], tileMode: TileMode.clamp, radius: 0.9, focalRadius: 0.6)),
-      child: Center(
-        child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
-          builder: (context, state) {
-            return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
-              builder: (context, state) {
-                logger('======== COMPONENT CREATION ');
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const ScreenConfigSelection(),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(30),
-                        child: Transform.scale(
-                          scale: 1,
-                          child: GestureDetector(
-                            onTapDown: (event) {
-                              logger(
-                                  '==== onTap --- ${event.localPosition.dx} ${event.localPosition.dy}');
-                              final tappedComp = componentOperationCubit
-                                  .flutterProject!.rootComponent!
-                                  .searchTappedComponent(event.localPosition);
-                              if (tappedComp != null) {
-                                final lastRoot =
-                                    tappedComp.getCustomComponentRoot();
-                                logger(
-                                    '==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
-                                if (lastRoot != null &&
-                                    lastRoot is CustomComponent) {
-                                  final rootClone = lastRoot.getRootClone;
-                                  componentSelectionCubit
-                                      .changeComponentSelection(
-                                    CustomComponent.findSameLevelComponent(
-                                        rootClone, lastRoot, tappedComp),
-                                    root: rootClone,
-                                  );
-                                } else if (lastRoot != null) {
-                                  componentSelectionCubit
-                                      .changeComponentSelection(
-                                    tappedComp,
-                                    root: lastRoot,
-                                  );
-                                }
-                              }
-                            },
-                            child: Container(
-                              key: const GlobalObjectKey('device window'),
-                              width: screenConfigCubit.screenConfig.width,
-                              height: screenConfigCubit.screenConfig.height,
-                              color: Colors.white,
-                              child: Stack(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(1.0),
-                                    child: BlocListener<ComponentOperationCubit,
-                                        ComponentOperationState>(
-                                      listener: (context, state) {},
-                                      child: componentOperationCubit
-                                          .flutterProject!
-                                          .run(context),
-                                    ),
-                                  ),
-                                  const BoundaryWidget(),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  void onErrorIgnoreOverflowErrors(
-    FlutterErrorDetails details, {
-    bool forceReport = false,
-  }) {
-    bool ifIsOverflowError = false;
-
-    // Detect overflow error.
-    var exception = details.exception;
-    if (exception is FlutterError) {
-      ifIsOverflowError = !exception.diagnostics.any(
-          (e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
-    }
-
-    // Ignore if is overflow error.
-    if (ifIsOverflowError) {
-      logger('Overflow error.');
-      visualBoxCubit.enableError('Error happened');
-    } else {
-      FlutterError.dumpErrorToConsole(details, forceReport: forceReport);
-    }
-  }
+// void onErrorIgnoreOverflowErrors(FlutterErrorDetails details, {
+//   bool forceReport = false,
+// }) {
+//   bool ifIsOverflowError = false;
+//
+//   // Detect overflow error.
+//   var exception = details.exception;
+//   if (exception is FlutterError) {
+//     ifIsOverflowError = !exception.diagnostics.any(
+//             (e) =>
+//             e.value.toString().startsWith('A RenderFlex overflowed by'));
+//   }
+//
+//   // Ignore if is overflow error.
+//   if (ifIsOverflowError) {
+//     logger('Overflow error.');
+//     visualBoxCubit.enableError('Error happened');
+//   } else {
+//     FlutterError.dumpErrorToConsole(details, forceReport: forceReport);
+//   }
+// }
 }
 
 class ScreenConfigSelection extends StatelessWidget {
@@ -313,46 +197,43 @@ class ScreenConfigSelection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = Provider.of<ScreenConfigCubit>(context, listen: false);
+
     return BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
       builder: (context, state) {
-        return Padding(
-          padding: const EdgeInsets.only(left: 30),
-          child: SizedBox(
-            width: 200,
-            height: 50,
-            child: CustomDropdownButton<ScreenConfig>(
-                style: AppFontStyle.roboto(14),
-                value: cubit.screenConfig,
-                hint: null,
-                items: cubit.screenConfigs
-                    .map<CustomDropdownMenuItem<ScreenConfig>>(
-                      (e) => CustomDropdownMenuItem<ScreenConfig>(
-                        value: e,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '${e.name} (${e.width}x${e.height})',
-                            style: AppFontStyle.roboto(14,
-                                fontWeight: FontWeight.w500),
-                          ),
+        return SizedBox(
+          width: 250,
+          height: 45,
+          child: CustomDropdownButton<ScreenConfig>(
+              style: AppFontStyle.roboto(13),
+              value: cubit.screenConfig,
+              hint: null,
+              items: cubit.screenConfigs
+                  .map<CustomDropdownMenuItem<ScreenConfig>>(
+                    (e) => CustomDropdownMenuItem<ScreenConfig>(
+                      value: e,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${e.name} (${e.width}x${e.height})',
+                          style: AppFontStyle.roboto(13,
+                              fontWeight: FontWeight.w500),
                         ),
                       ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  cubit.changeScreenConfig(value);
-                },
-                selectedItemBuilder: (context, config) {
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '${config.name} (${config.width}x${config.height})',
-                      style:
-                          AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
                     ),
-                  );
-                }),
-          ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                cubit.changeScreenConfig(value);
+              },
+              selectedItemBuilder: (context, config) {
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${config.name} (${config.width}x${config.height})',
+                    style: AppFontStyle.roboto(13, fontWeight: FontWeight.w500),
+                  ),
+                );
+              }),
         );
       },
     );
@@ -411,5 +292,312 @@ class CodeViewerButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class PrototypeShowcase extends StatelessWidget {
+  const PrototypeShowcase({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: InkWell(
+              onTap: () {
+                BlocProvider.of<FlutterProjectCubit>(context, listen: false)
+                    .reloadProject(
+                        BlocProvider.of<ComponentSelectionCubit>(context,
+                            listen: false),
+                        BlocProvider.of<ComponentOperationCubit>(context,
+                            listen: false));
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: const Icon(
+                Icons.refresh,
+                color: Colors.black,
+              )),
+        ),
+        const Divider(
+          height: 5,
+          thickness: 0.4,
+        ),
+        Expanded(
+          child: BlocBuilder<FlutterProjectCubit, FlutterProjectState>(
+            buildWhen: (state1, state2) {
+              if (state2 is FlutterProjectLoadingState) {
+                return false;
+              }
+              return true;
+            },
+            builder: (context, state) {
+              if (state is FlutterProjectLoadedState) {
+                return state.flutterProject.run(context);
+              }
+              return Container();
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class DesktopVisualEditor extends StatefulWidget {
+  const DesktopVisualEditor({Key? key}) : super(key: key);
+
+  @override
+  State<DesktopVisualEditor> createState() => _DesktopVisualEditorState();
+}
+
+class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
+  final ScrollController _propertyScrollController = ScrollController();
+  late final ComponentCreationCubit _componentCreationCubit;
+
+  late final ComponentOperationCubit _componentOperationCubit;
+
+  late final ScreenConfigCubit _screenConfigCubit;
+
+  late final ComponentSelectionCubit _componentSelectionCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _componentSelectionCubit =
+        BlocProvider.of<ComponentSelectionCubit>(context, listen: false);
+    _componentOperationCubit =
+        BlocProvider.of<ComponentOperationCubit>(context, listen: false);
+    _screenConfigCubit =
+        BlocProvider.of<ScreenConfigCubit>(context, listen: false);
+    _componentCreationCubit =
+        BlocProvider.of<ComponentCreationCubit>(context, listen: false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: dw(context, 26),
+          child: const ComponentTree(),
+        ),
+        Expanded(
+          child: Stack(
+            children: [
+              CenterMainSide(_componentSelectionCubit, _componentCreationCubit,
+                  _componentOperationCubit, _screenConfigCubit),
+              const CodeViewerButton(),
+            ],
+          ),
+        ),
+        SizedBox(
+          width: dw(context, 30),
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child:
+                BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
+              builder: (context, state) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Text(
+                      _componentSelectionCubit.currentSelected.name,
+                      style:
+                          AppFontStyle.roboto(18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Expanded(
+                      child: BlocListener<ComponentCreationCubit,
+                          ComponentCreationState>(
+                        listener: (context, state) {
+                          if (state is ComponentCreationChangeState &&
+                              _componentSelectionCubit.currentSelectedRoot
+                                  is CustomComponent) {
+                            _componentOperationCubit
+                                .updateGlobalCustomComponent(
+                                    _componentSelectionCubit.currentSelectedRoot
+                                        as CustomComponent);
+                          } else {
+                            _componentOperationCubit.updateRootComponent();
+                          }
+                        },
+                        child: ListView(
+                          controller: _propertyScrollController,
+                          children: [
+                            for (final param in _componentSelectionCubit
+                                .currentSelected.parameters)
+                              ParameterWidget(
+                                parameter: param,
+                              ),
+                            const SizedBox(
+                              height: 100,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class CenterMainSide extends StatelessWidget {
+  final ComponentSelectionCubit _componentSelectionCubit;
+  final ComponentOperationCubit _componentOperationCubit;
+  final ComponentCreationCubit _componentCreationCubit;
+  final ScreenConfigCubit _screenConfigCubit;
+
+  const CenterMainSide(
+    this._componentSelectionCubit,
+    this._componentCreationCubit,
+    this._componentOperationCubit,
+    this._screenConfigCubit, {
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+          gradient: RadialGradient(colors: [
+        Color(0xffd3d3d3),
+        Color(0xffffffff),
+      ], tileMode: TileMode.clamp, radius: 0.9, focalRadius: 0.6)),
+      child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
+        builder: (_, state) {
+          return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
+            builder: (_, state) {
+              logger('======== COMPONENT CREATION ');
+              return Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const ScreenConfigSelection(),
+                    Expanded(
+                      child: LayoutBuilder(builder: (context, constraints) {
+                        final Offset offset =
+                            _screenConfigCubit.getSelectedConfig(constraints);
+                        return FractionallySizedBox(
+                          widthFactor: offset.dx,
+                          heightFactor: offset.dy,
+                          child: GestureDetector(
+                            onSecondaryTapDown: (event) {
+                              onSecondaryTapDown(context, event);
+                            },
+                            onTapDown: onTapDown,
+                            child: Container(
+                              key: const GlobalObjectKey('device window'),
+                              width: _screenConfigCubit.screenConfig.width,
+                              height: _screenConfigCubit.screenConfig.height,
+                              color: Colors.white,
+                              child: Stack(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(1.0),
+                                    child: _componentOperationCubit
+                                        .flutterProject!
+                                        .run(context),
+                                  ),
+                                  const BoundaryWidget(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void onTapDown(TapDownDetails event) {
+    final List<Component> components = [];
+    _componentOperationCubit.flutterProject!.rootComponent!
+        .searchTappedComponent(event.localPosition, components);
+    logger(
+        '==== onTap --- ${event.localPosition.dx} ${event.localPosition.dy} ${components.length}');
+    late final Component? tappedComp;
+    if (components.isNotEmpty) {
+      double? area;
+      int? depth;
+      Component? finalComponent = components.first;
+      for (final component in components) {
+        logger('DEPTH ${component.name} ${component.depth}');
+        final componentArea =
+            component.boundary!.width * component.boundary!.height;
+        if (depth == null ||
+            component.depth! > depth ||
+            (_componentSelectionCubit.lastTapped == finalComponent) ||
+            (depth == component.depth && area! > componentArea)) {
+          depth = component.depth!;
+          area = componentArea;
+          finalComponent = component;
+        }
+      }
+      tappedComp = finalComponent!;
+    } else {
+      tappedComp = null;
+    }
+    if (tappedComp != null) {
+      _componentSelectionCubit.lastTapped = tappedComp;
+      final lastRoot = tappedComp.getCustomComponentRoot();
+      logger('==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
+      if (lastRoot != null && lastRoot is CustomComponent) {
+        final rootClone = lastRoot.getRootClone;
+        _componentSelectionCubit.changeComponentSelection(
+          CustomComponent.findSameLevelComponent(
+              rootClone, lastRoot, tappedComp),
+          root: rootClone,
+        );
+      } else if (lastRoot != null) {
+        _componentSelectionCubit.changeComponentSelection(
+          tappedComp,
+          root: lastRoot,
+        );
+      }
+    }
+  }
+
+  void onSecondaryTapDown(BuildContext context, TapDownDetails event) {
+    if (_componentSelectionCubit.currentSelected.boundary != null) {
+      if (_componentSelectionCubit.currentSelected.boundary!
+          .contains(event.localPosition)) {
+        final ContextPopup contextPopup = ContextPopup();
+        contextPopup.init(
+            child: Material(
+              child: ComponentModificationMenu(
+                component: _componentSelectionCubit.currentSelected,
+                ancestor: _componentSelectionCubit.currentSelectedRoot,
+                componentCreationCubit: _componentCreationCubit,
+                componentOperationCubit: _componentOperationCubit,
+                componentSelectionCubit: _componentSelectionCubit,
+              ),
+            ),
+            offset: event.globalPosition,
+            width: 200,
+            height: 50);
+        contextPopup.show(context, onHide: () {});
+      }
+    }
   }
 }

@@ -11,4 +11,6 @@ class FlutterProjectLoadedState extends FlutterProjectState{
   FlutterProjectLoadedState(this.flutterProject);
   final FlutterProject flutterProject;
 }
+class FlutterProjectErrorState extends FlutterProjectState{
+}
 

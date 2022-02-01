@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_builder/models/parameter_model.dart';
+import 'parameter_model.dart';
 
 class SimpleParameterController{
   final SimpleParameter simpleParameter;

@@ -1,5 +1,9 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get.dart';
+import '../common/responsive/responsive_widget.dart';
+import 'parameter_rule_model.dart';
 import '../code_to_component.dart';
 import '../common/logger.dart';
 import '../cubit/visual_box_drawer/visual_box_cubit.dart';
@@ -9,24 +13,78 @@ import 'parameter_model.dart';
 import '../component_list.dart';
 
 abstract class Component {
+  late List<ParameterRuleModel> paramRules;
   List<Parameter> parameters;
+  final  List<ComponentParameter> componentParameters=[];
   String name;
+  late String id;
   bool isConstant;
   Component? parent;
   Rect? boundary;
   int? depth;
 
-  Component(this.name, this.parameters, {this.isConstant = false});
+  Component(this.name, this.parameters,
+      {this.isConstant = false, List<ParameterRuleModel>? rules}) {
+    paramRules = rules ?? [];
+    id =
+        '${DateTime.now().millisecondsSinceEpoch}${Random().nextDouble().toStringAsFixed(3)}';
+  }
+
+  void addComponentParameters(
+      final List<ComponentParameter> componentParameters) {
+    this.componentParameters.addAll(componentParameters);
+  }
+
+
+  void addRule(ParameterRuleModel ruleModel) {
+    paramRules.add(ruleModel);
+  }
+
+  ParameterRuleModel? validateParameters(final Parameter changedParameter) {
+    if (paramRules.isEmpty) {
+      return null;
+    }
+    for (final rule in paramRules) {
+      if (rule.changedParameter == changedParameter ||
+          rule.anotherParameter == changedParameter) {
+        if (rule.hold()) {
+          return rule;
+        }
+      }
+    }
+    return null;
+  }
+
+  void metaInfoFromCode(final String metaCode) {
+    final list = metaCode.substring(1, metaCode.length - 1).split('|');
+    for (final value in list) {
+      if (value.isNotEmpty) {
+        final fieldList = value.split('=');
+        switch (fieldList[0]) {
+          case 'id':
+            id = fieldList[1];
+            break;
+        }
+      }
+    }
+  }
 
   static Component? fromCode(String? code) {
     if (code == null) {
       return null;
     }
-    final name = code.substring(0, code.indexOf('(', 0));
-    final comp = componentList[name]!();
+    final String name = code.substring(0, code.indexOf('(', 0));
+    final Component comp;
+    if (name.contains('[')) {
+      final index = code.indexOf('[', 0);
+      comp = componentList[name.substring(0, index)]!();
+      comp.metaInfoFromCode(name.substring(index));
+    } else {
+      comp = componentList[name]!();
+    }
 
     final componentCode = code.replaceFirst('$name(', '');
-    final parameterCodes = CodeToComponent.splitByComma(
+    final parameterCodes = CodeOperations.splitByComma(
         componentCode.substring(0, componentCode.length - 1));
 
     switch (comp.type) {
@@ -56,9 +114,8 @@ abstract class Component {
           final childCode = parameterCodes.removeAt(index);
           final code2 = childCode.replaceFirst('children:[', '');
           final List<Component> componentList = [];
-
-          final List<String> childrenCodes = CodeToComponent.splitByComma(
-              code2.substring(0, code2.length - 1));
+          final List<String> childrenCodes =
+              CodeOperations.splitByComma(code2.substring(0, code2.length - 1));
           for (final childCode in childrenCodes) {
             componentList.add(Component.fromCode(childCode)!..setParent(comp));
           }
@@ -106,14 +163,19 @@ abstract class Component {
   }
 
   Widget build(BuildContext context) {
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      _lookForUIChanges(context);
-    });
+    if (ResponsiveWidget.isLargeScreen(context)) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        _lookForUIChanges(context);
+      });
+    }
 
-    return ComponentWidget(key: GlobalObjectKey(this), child: create(context));
+    return ComponentWidget(
+      key: GlobalObjectKey(this),
+      child: create(context),
+    );
   }
 
-  void forEach(void Function(Component) work) {
+  void forEach(void Function(Component) work) async {
     work.call(this);
   }
 
@@ -203,15 +265,16 @@ abstract class Component {
   }
 
   void _lookForUIChanges(BuildContext context) async {
+    if (Get.isDialogOpen ?? false) {
+      return;
+    }
     final RenderBox renderBox =
-        GlobalObjectKey(this).currentContext!.findRenderObject()! as RenderBox;
-    Offset position = renderBox.localToGlobal(Offset.zero,
-        ancestor: const GlobalObjectKey('device window')
-            .currentContext!
-            .findRenderObject());
-    final ancestor = const GlobalObjectKey('device window')
+        GlobalObjectKey(this).currentContext!.findRenderObject() as RenderBox;
+    final ancestorRenderBox = const GlobalObjectKey('device window')
         .currentContext!
         .findRenderObject();
+    Offset position =
+        renderBox.localToGlobal(Offset.zero, ancestor: ancestorRenderBox);
     int sameCount = 0;
     while (sameCount < 5) {
       if ((boundary?.left ?? position.dx) - position.dx < 0.5 &&
@@ -229,41 +292,53 @@ abstract class Component {
       logger(
           '======== COMPONENT VISUAL BOX CHANGED  ${boundary?.width} ${renderBox.size.width} ${boundary?.height} ${renderBox.size.height}');
       await Future.delayed(const Duration(milliseconds: 50));
-      position = renderBox.localToGlobal(Offset.zero, ancestor: ancestor);
+      position =
+          renderBox.localToGlobal(Offset.zero, ancestor: ancestorRenderBox);
     }
   }
 
   Widget create(BuildContext context);
 
-  String code() {
+  String code({bool clean = true}) {
     String middle = '';
-    for (final para in parameters) {
-      final paramCode = para.code;
+    for (final parameter in parameters) {
+      final paramCode = parameter.code;
       if (paramCode.isNotEmpty) {
         middle += '$paramCode,'.replaceAll(',,', ',');
       }
     }
     middle = middle.replaceAll(',', ',\n');
+
+    String name = this.name;
+    if (!clean) {
+      name += '[id=$id]';
+    }
     if (middle.trim().isEmpty) {
       return '$name()';
     }
     return '$name(\n$middle)';
   }
 
-  Component? searchTappedComponent(Offset offset) {
+  void searchTappedComponent(Offset offset, List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
-      return this;
+      components.add(this);
+      return;
     }
-    return null;
   }
 
   void setParent(Component? component) {
     parent = component;
   }
 
-  Component clone(Component? parent) {
+  Component clone(Component? parent, {bool cloneParam = false}) {
     final comp = componentList[name]!();
-    comp.parameters = parameters;
+    if (cloneParam) {
+      for (int i = 0; i < parameters.length; i++) {
+        comp.parameters[i].cloneOf(parameters[i]);
+      }
+    } else {
+      comp.parameters = parameters;
+    }
     comp.parent = parent;
     return comp;
   }
@@ -276,11 +351,12 @@ abstract class Component {
 abstract class MultiHolder extends Component {
   List<Component> children = [];
 
-  MultiHolder(String name, List<Parameter> parameters)
-      : super(name, parameters);
+  MultiHolder(String name, List<Parameter> parameters,
+      {List<ParameterRuleModel>? rules})
+      : super(name, parameters, rules: rules);
 
   @override
-  String code() {
+  String code({bool clean = true}) {
     String middle = '';
     for (final para in parameters) {
       final paramCode = para.code;
@@ -289,9 +365,13 @@ abstract class MultiHolder extends Component {
       }
     }
     middle = middle.replaceAll(',', ',\n');
+    String name = this.name;
+    if (!clean) {
+      name += '[id=$id]';
+    }
     String childrenCode = '';
     for (final Component comp in children) {
-      childrenCode += '${comp.code()},'.replaceAll(',,', ',');
+      childrenCode += '${comp.code(clean: clean)},'.replaceAll(',,', ',');
     }
     return '$name(\n${middle}children:[\n$childrenCode\n],\n)';
   }
@@ -334,21 +414,12 @@ abstract class MultiHolder extends Component {
   }
 
   @override
-  Component? searchTappedComponent(Offset offset) {
+  void searchTappedComponent(Offset offset, List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
-      Component? _component;
-      Component? _depthComponent;
       for (final child in children) {
-        if ((_depthComponent == null ||
-                _component!.depth! > _depthComponent.depth!) &&
-            (_component = child.searchTappedComponent(offset)) != null) {
-          _depthComponent = _component;
-        }
+        child.searchTappedComponent(offset, components);
       }
-      if (_depthComponent != null) {
-        return _depthComponent.searchTappedComponent(offset);
-      }
-      return this;
+      components.add(this);
     }
   }
 
@@ -360,11 +431,18 @@ abstract class MultiHolder extends Component {
   }
 
   @override
-  Component clone(Component? parent) {
+  Component clone(Component? parent, {bool cloneParam = false}) {
     final comp = componentList[name]!() as MultiHolder;
-    comp.parameters = parameters;
+    if (cloneParam) {
+      for (int i = 0; i < parameters.length; i++) {
+        comp.parameters[i].cloneOf(parameters[i]);
+      }
+    } else {
+      comp.parameters = parameters;
+    }
     comp.parent = parent;
-    comp.children = children.map((e) => e.clone(comp)).toList();
+    comp.children =
+        children.map((e) => e.clone(comp, cloneParam: cloneParam)).toList();
     return comp;
   }
 
@@ -379,8 +457,9 @@ abstract class Holder extends Component {
   Component? child;
   bool required;
 
-  Holder(String name, List<Parameter> parameters, {this.required = false})
-      : super(name, parameters);
+  Holder(String name, List<Parameter> parameters,
+      {this.required = false, List<ParameterRuleModel>? rules})
+      : super(name, parameters, rules: rules);
 
   void updateChild(Component? child) {
     this.child?.setParent(null);
@@ -399,18 +478,15 @@ abstract class Holder extends Component {
   }
 
   @override
-  Component? searchTappedComponent(Offset offset) {
+  void searchTappedComponent(Offset offset, List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
-      Component? component;
-      if ((component = child?.searchTappedComponent(offset)) != null) {
-        return component;
-      }
-      return this;
+      child?.searchTappedComponent(offset, components);
+      components.add(this);
     }
   }
 
   @override
-  String code() {
+  String code({bool clean = true}) {
     String middle = '';
     for (final para in parameters) {
       final paramCode = para.code;
@@ -421,6 +497,10 @@ abstract class Holder extends Component {
         }
       }
     }
+    String name = this.name;
+    if (!clean) {
+      name += '[id=$id]';
+    }
     middle = middle.replaceAll(',', ',\n');
     if (child == null) {
       if (!required) {
@@ -429,15 +509,21 @@ abstract class Holder extends Component {
         return '$name(\n${middle}child:Container(),\n)';
       }
     }
-    return '$name(\n${middle}child:${child!.code()}\n)';
+    return '$name(\n${middle}child:${child!.code(clean: clean)}\n)';
   }
 
   @override
-  Component clone(Component? parent) {
+  Component clone(Component? parent, {bool cloneParam = false}) {
     final comp = componentList[name]!() as Holder;
-    comp.parameters = parameters;
+    if (cloneParam) {
+      for (int i = 0; i < parameters.length; i++) {
+        comp.parameters[i].cloneOf(parameters[i]);
+      }
+    } else {
+      comp.parameters = parameters;
+    }
     comp.parent = parent;
-    comp.child = child?.clone(comp);
+    comp.child = child?.clone(comp, cloneParam: cloneParam);
     return comp;
   }
 
@@ -455,8 +541,9 @@ abstract class CustomNamedHolder extends Component {
   late Map<String, List<String>?> selectable;
 
   CustomNamedHolder(String name, List<Parameter> parameters, this.selectable,
-      List<String> childrenMap)
-      : super(name, parameters) {
+      List<String> childrenMap,
+      {List<ParameterRuleModel>? rules})
+      : super(name, parameters, rules: rules) {
     for (final child in selectable.keys) {
       childMap[child] = null;
     }
@@ -498,28 +585,21 @@ abstract class CustomNamedHolder extends Component {
   }
 
   @override
-  Component? searchTappedComponent(Offset offset) {
+  void searchTappedComponent(Offset offset, List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
-      Component? component, depthComponent;
       for (final child in childMap.values) {
         if (child == null) {
           continue;
         }
-        if ((depthComponent == null ||
-                component!.depth! > depthComponent.depth!) &&
-            (component = child.searchTappedComponent(offset)) != null) {
-          depthComponent = component;
-        }
+        child.searchTappedComponent(offset, components);
       }
-      if (depthComponent != null) {
-        return depthComponent.searchTappedComponent(offset);
-      }
-      return this;
+      components.add(this);
+      return;
     }
   }
 
   @override
-  String code() {
+  String code({bool clean = true}) {
     String middle = '';
     for (final para in parameters) {
       final paramCode = para.code;
@@ -531,25 +611,34 @@ abstract class CustomNamedHolder extends Component {
       }
     }
     middle = middle.replaceAll(',', ',\n');
-
+    String name = this.name;
+    if (!clean) {
+      name += '[id=$id]';
+    }
     String childrenCode = '';
     for (final child in childMap.keys) {
       if (childMap[child] != null) {
-        childrenCode += '$child:${childMap[child]!.code()},';
+        childrenCode += '$child:${childMap[child]!.code(clean: clean)},';
       }
     }
     return '$name(\n$middle$childrenCode\n)';
   }
 
   @override
-  Component clone(Component? parent) {
+  Component clone(Component? parent, {bool cloneParam = false}) {
     final comp = componentList[name]!() as CustomNamedHolder;
-    comp.parameters = parameters;
+    if (cloneParam) {
+      for (int i = 0; i < parameters.length; i++) {
+        comp.parameters[i].cloneOf(parameters[i]);
+      }
+    } else {
+      comp.parameters = parameters;
+    }
     comp.parent = parent;
-    comp.childMap =
-        childMap.map((key, value) => MapEntry(key, value?.clone(comp)));
-    comp.childrenMap = childrenMap.map((key, value) =>
-        MapEntry(key, value.map((e) => e.clone(comp)).toList()));
+    comp.childMap = childMap.map((key, value) =>
+        MapEntry(key, value?.clone(comp, cloneParam: cloneParam)));
+    comp.childrenMap = childrenMap.map((key, value) => MapEntry(
+        key, value.map((e) => e.clone(comp, cloneParam: cloneParam)).toList()));
     return comp;
   }
 
@@ -597,13 +686,20 @@ abstract class CustomComponent extends Component {
   Widget create(BuildContext context) {
     return root?.build(context) ?? Container();
   }
+
+  void updateRoot(Component? root) {
+    this.root?.setParent(null);
+    this.root = root;
+  }
+
   @override
   void forEach(void Function(Component) work) {
     work.call(this);
-    if(root!=null){
+    if (root != null) {
       root!.forEach(work);
     }
   }
+
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
@@ -613,9 +709,10 @@ abstract class CustomComponent extends Component {
   }
 
   @override
-  Component? searchTappedComponent(Offset offset) {
+  void searchTappedComponent(Offset offset, List<Component> components) {
     if (root?.boundary?.contains(offset) ?? false) {
-      return root?.searchTappedComponent(offset) ?? this;
+      root?.searchTappedComponent(offset, components);
+      components.add(this);
     }
   }
 
@@ -659,13 +756,19 @@ abstract class CustomComponent extends Component {
   int get childCount => 0;
 
   @override
-  Component clone(Component? parent) {
+  Component clone(Component? parent, {bool cloneParam = false}) {
     final comp2 = StatelessComponent(
       name: name,
     );
     comp2.name = name;
-    comp2.parameters = parameters;
-    comp2.root = root?.clone(parent);
+    if (cloneParam) {
+      for (int i = 0; i < parameters.length; i++) {
+        comp2.parameters[i].cloneOf(parameters[i]);
+      }
+    } else {
+      comp2.parameters = parameters;
+    }
+    comp2.root = root?.clone(parent, cloneParam: cloneParam);
     comp2.cloneOf = this;
 
     return comp2;

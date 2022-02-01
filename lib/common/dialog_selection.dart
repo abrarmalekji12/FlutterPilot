@@ -44,8 +44,6 @@ class _DialogSelectionState extends State<DialogSelection> {
 
   @override
   Widget build(BuildContext context) {
-    // data = Provider.of<AddUserDialogNotifier>(context, listen: false).dataSearch;
-
     return GestureDetector(
       onTap: () {
         if (widget.onDismiss != null) {
@@ -112,7 +110,6 @@ class _DialogSelectionState extends State<DialogSelection> {
                 .where((element) => element.toLowerCase().startsWith(value))
                 .toList();
             setState(() {});
-            //Provider.of<AddUserDialogNotifier>(context, listen: false).onSearch(value);
           },
           hint: 'Search ${widget.title}',
           focusColor: AppColors.theme,
@@ -155,7 +152,6 @@ class DynamicChildListview extends StatelessWidget {
         itemCount: data.length,
         itemBuilder: (context, int index) {
           return ListTile(
-            contentPadding: const EdgeInsets.all(5),
             onTap: () {
               onSelection(data[index]);
               Navigator.pop(context);
@@ -173,7 +169,6 @@ class FixChildListView extends StatelessWidget {
       {Key? key, required this.data, required this.onSelection})
       : super(key: key);
 
-//widget.getChild?.call(data[index])
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -184,7 +179,6 @@ class FixChildListView extends StatelessWidget {
             onSelection(data[index]);
             Navigator.pop(context);
           },
-          contentPadding: const EdgeInsets.all(5),
           title: Text(
             data[index],
             style: AppFontStyle.roboto(14,

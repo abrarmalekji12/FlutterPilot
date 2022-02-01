@@ -1,10 +1,11 @@
-import 'dart:async';
+import 'dart:html' as html;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'common/logger.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 
-import 'component_list.dart';
 import 'constant/app_colors.dart';
 import 'ui/home_page.dart';
 
@@ -19,17 +20,58 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-
+    html.document
+        .addEventListener('contextmenu', (event) => event.preventDefault());
+    // if(!kDebugMode) {
+    //   FlutterError.onError =  (
+    //     FlutterErrorDetails details, {
+    //       bool forceReport = false,
+    //     }) async {
+    //   bool ifIsOverflowError = false;
+    //
+    //   final exception = details.exception;
+    //   if (exception is FlutterError) {
+    //     ifIsOverflowError = !exception.diagnostics
+    //         .any((e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
+    //   }
+    //
+    //   // Ignore if is overflow error.
+    //   if (ifIsOverflowError) {
+    //     print('Overflow error.');
+    //   } else {
+    //     FlutterError.dumpErrorToConsole(details, forceReport: forceReport);
+    //   }
+    // };
+    // }
     return GetMaterialApp(
       title: 'Flutter Visual Builder',
       scrollBehavior: MyCustomScrollBehavior(),
+      onGenerateRoute: onGenerateRoute,
       theme: ThemeData(
           visualDensity: VisualDensity.standard, primaryColor: AppColors.theme),
       home: const HomePage(),
     );
   }
 
-
+  Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    logger('generate route ${settings.name} ${settings.arguments}');
+    if (settings.name!.startsWith('/projects')) {
+      return PageRouteBuilder(
+        pageBuilder: (context, animation1, animation2) {
+          return HomePage(
+            projectName: settings.name!.split('/')[2],
+          );
+        },
+        settings: settings,
+        maintainState: true,
+        opaque: true,
+      );
+    }
+    // If no match is found, [WidgetsApp.onUnknownRoute] handles it.
+    return PageRouteBuilder(pageBuilder: (context, animation1, animation2) {
+      return const HomePage();
+    });
+  }
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {

@@ -9,10 +9,12 @@ part 'screen_config_state.dart';
 
 class ScreenConfigCubit extends Cubit<ScreenConfigState> {
   final List<ScreenConfig> screenConfigs = [
+
+    ScreenConfig('iPad Pro', 1024, 1366),
+    ScreenConfig('iPhone 11 Pro', 1125,2436),
     ScreenConfig('iPad Pro', 2560, 1600),
     ScreenConfig('iPhone 6', 375, 667),
     ScreenConfig('iPhone SE', 320, 568),
-    ScreenConfig('iPad Pro', 1024, 1366),
   ];
 
   late ScreenConfig screenConfig;
@@ -21,18 +23,22 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
     screenConfig=screenConfigs[0];
   }
   
-  double getSelectedConfig(BoxConstraints constraints){
-    if(screenConfig.width<constraints.maxWidth&&screenConfig.height<constraints.maxHeight){
-      screenConfig.scale=1;
+  Offset getSelectedConfig(BoxConstraints constraints){
+    final widthScale=screenConfig.width/constraints.maxWidth;
+    final heightScale=screenConfig.height/constraints.maxHeight;
+    if(widthScale>1&&heightScale>1){
+     if(screenConfig.height>screenConfig.width) {
+       return Offset(screenConfig.width*(constraints.maxHeight/(screenConfig.height*constraints.maxWidth)),1);
+     }
+     return Offset(1, screenConfig.height*(constraints.maxWidth/(constraints.maxHeight*screenConfig.width)));
     }
-    else if(screenConfig.width<screenConfig.height){
-      screenConfig.scale=1;
+    if(widthScale>1){
+      return  Offset(1,constraints.maxHeight * heightScale);
     }
-    else {
-      screenConfig.scale=0.9;
+    if(heightScale>1){
+      return  Offset(constraints.maxWidth * widthScale,1);
     }
-    logger('scale ${screenConfig.scale}');
-    return  screenConfig.scale!;
+    return  Offset(widthScale, heightScale);
 
   }
 

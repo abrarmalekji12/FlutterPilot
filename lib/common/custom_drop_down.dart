@@ -167,10 +167,9 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
   }
 
   double getLeftPosition() {
-    RenderBox renderBox =
+    final RenderBox renderBox =
     globalKey.currentContext!.findRenderObject()! as RenderBox;
-    // buttonSize = renderBox.size;
-    Offset position = renderBox.localToGlobal(Offset.zero);
+    final Offset position = renderBox.localToGlobal(Offset.zero);
     final size=MediaQuery.of(context).size;
     if(position.dx+200>size.width) {
       return size.width-230;
@@ -179,7 +178,7 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
   }
 
   double getWidth() {
-    RenderBox renderBox =
+    final RenderBox renderBox =
     globalKey.currentContext!.findRenderObject()! as RenderBox;
     // buttonSize = renderBox.size;
     return renderBox.size.width;
@@ -196,15 +195,15 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
     return itemsHeight;
   }
   double getTopPosition() {
-    RenderBox renderBox =
+    final RenderBox renderBox =
     globalKey.currentContext!.findRenderObject()! as RenderBox;
     // buttonSize = renderBox.size;
     final size=MediaQuery.of(context).size;
 
-    Offset position = renderBox.localToGlobal(Offset.zero);
+    final Offset position = renderBox.localToGlobal(Offset.zero);
 
-    if(position.dy+renderBox.size.height+(50*widget.items.length)>size.width) {
-      return size.height-(50*widget.items.length);
+    if(position.dy+renderBox.size.height+(50*widget.items.length)>size.height) {
+      return size.height-(50*widget.items.length)>0?size.height-(50*widget.items.length):position.dy;
     }
     return position.dy + renderBox.size.height;
   }

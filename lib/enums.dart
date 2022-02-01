@@ -11,3 +11,7 @@ enum ParamInputType{
   sliderZeroToOne,
   image,
 }
+enum ComponentSaveOperation{
+  updateRootComponent,
+  updateCustom
+}
