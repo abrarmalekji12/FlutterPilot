@@ -180,7 +180,7 @@ class SimpleParameterWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 40,
+      height: parameter.inputType!=ParamInputType.longText?40:null,
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
           color: const Color(0xfff2f2f2),
@@ -202,7 +202,7 @@ class SimpleParameterWidget extends StatelessWidget {
           ),
           Expanded(
             child: Container(
-              height: 35,
+
               alignment: Alignment.centerRight,
               child: _buildInputType(context),
             ),
@@ -217,6 +217,7 @@ class SimpleParameterWidget extends StatelessWidget {
       case ParamInputType.text:
         return SizedBox(
           width: 110,
+          height: 35,
           child: TextField(
             controller: TextEditingController.fromValue(
                 TextEditingValue(text: parameter.compilerEnable!=null&&parameter.compilerEnable!.code.isNotEmpty?parameter.compilerEnable!.code:'${parameter.getValue() ?? ''}')),
@@ -266,8 +267,10 @@ class SimpleParameterWidget extends StatelessWidget {
         );
       case ParamInputType.longText:
         return SizedBox(
-          width: 180,
+          width: 200,
+          height: 60,
           child: TextField(
+            maxLines: 5,
             controller: TextEditingController.fromValue(
                 TextEditingValue(text: '${parameter.rawValue ?? ''}')),
             onChanged: (value) {
@@ -281,6 +284,7 @@ class SimpleParameterWidget extends StatelessWidget {
               Provider.of<ComponentCreationCubit>(context, listen: false)
                   .changedComponent();
             },
+            keyboardType: TextInputType.multiline,
             decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 10),
                 enabled: true,
@@ -301,58 +305,61 @@ class SimpleParameterWidget extends StatelessWidget {
       case ParamInputType.color:
         return StatefulBuilder(builder: (context, setStateForColor) {
           final value = parameter.value;
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!parameter.isRequired)
-                SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: Checkbox(
-                      value: value != null,
-                      onChanged: (b) {
-                        if (b != null) {
-                          if (!b) {
-                            parameter.val = null;
-                          } else {
-                            parameter.val = Colors.transparent;
+          return SizedBox(
+            height: 35,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!parameter.isRequired)
+                  SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: Checkbox(
+                        value: value != null,
+                        onChanged: (b) {
+                          if (b != null) {
+                            if (!b) {
+                              parameter.val = null;
+                            } else {
+                              parameter.val = Colors.transparent;
+                            }
+                            setStateForColor(() {});
+                            BlocProvider.of<ParameterBuildCubit>(context,
+                                    listen: false)
+                                .parameterChanged(context, parameter);
+                            BlocProvider.of<ComponentCreationCubit>(context,
+                                    listen: false)
+                                .changedComponent();
                           }
-                          setStateForColor(() {});
-                          BlocProvider.of<ParameterBuildCubit>(context,
-                                  listen: false)
-                              .parameterChanged(context, parameter);
-                          BlocProvider.of<ComponentCreationCubit>(context,
-                                  listen: false)
-                              .changedComponent();
-                        }
-                      }),
-                ),
-              if (value != null)
-                SizedBox(
-                  width: 15,
-                  child: ColorButton(
-                    color: value,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: parameter.value ?? Colors.transparent,
-                      border: Border.all(color: Colors.black, width: 1),
-                    ),
-                    onColorChanged: (color) {
-                      parameter.val = color;
-                      if (parameter.inputCalculateAs != null) {
-                        parameter.val = parameter.inputCalculateAs!.call(parameter.val!, true);
-                      }
-                      setStateForColor(() {});
-                      BlocProvider.of<ParameterBuildCubit>(context,
-                              listen: false)
-                          .parameterChanged(context, parameter);
-                      BlocProvider.of<ComponentCreationCubit>(context,
-                              listen: false)
-                          .changedComponent();
-                    },
+                        }),
                   ),
-                ),
-            ],
+                if (value != null)
+                  SizedBox(
+                    width: 15,
+                    child: ColorButton(
+                      color: value,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: parameter.value ?? Colors.transparent,
+                        border: Border.all(color: Colors.black, width: 1),
+                      ),
+                      onColorChanged: (color) {
+                        parameter.val = color;
+                        if (parameter.inputCalculateAs != null) {
+                          parameter.val = parameter.inputCalculateAs!.call(parameter.val!, true);
+                        }
+                        setStateForColor(() {});
+                        BlocProvider.of<ParameterBuildCubit>(context,
+                                listen: false)
+                            .parameterChanged(context, parameter);
+                        BlocProvider.of<ComponentCreationCubit>(context,
+                                listen: false)
+                            .changedComponent();
+                      },
+                    ),
+                  ),
+              ],
+            ),
           );
         });
       case ParamInputType.sliderZeroToOne:
@@ -360,6 +367,7 @@ class SimpleParameterWidget extends StatelessWidget {
           final value = parameter.rawValue;
           return SizedBox(
             width: 350,
+            height: 35,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.end,

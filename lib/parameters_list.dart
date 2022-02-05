@@ -914,6 +914,12 @@ class Parameters {
       inputType: ParamInputType.longText,
       required: true);
 
+  static SimpleParameter shortStringParameter() => SimpleParameter<String>(
+      name: 'text',
+      defaultValue: '',
+      inputType: ParamInputType.text,
+      required: true);
+
   static Parameter imageParameter() => SimpleParameter<ImageData>(
       name: 'Choose image',
       required: false,
