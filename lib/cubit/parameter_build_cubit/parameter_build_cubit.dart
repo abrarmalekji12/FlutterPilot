@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../constant/font_style.dart';
 import '../component_selection/component_selection_cubit.dart';
 import '../../models/parameter_model.dart';
@@ -20,10 +21,7 @@ class ParameterBuildCubit extends Cubit<ParameterBuildState> {
       emit(ParameterChangeState(paramRule.changedParameter));
       emit(ParameterChangeState(paramRule.anotherParameter));
       if(paramRule.errorText!=null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(paramRule.errorText!,style: AppFontStyle.roboto(15,color: Colors.black,fontWeight: FontWeight.w500,),textAlign: TextAlign.center,),
-          backgroundColor: AppColors.DADADA,
-      ));
+        Fluttertoast.showToast(msg: paramRule.errorText!,toastLength: Toast.LENGTH_LONG,timeInSecForIosWeb: 3);
       }
     }
     else {

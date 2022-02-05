@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/common/custom_popup_menu_button.dart';
+import '../common/custom_popup_menu_button.dart';
 import 'package:shimmer/shimmer.dart';
 import '../common/app_text_field.dart';
 import '../common/logger.dart';
@@ -15,10 +15,11 @@ import '../models/component_model.dart';
 class ComponentSelectionDialog extends StatefulWidget {
   final List<String>? possibleItems;
   final void Function(Component) onSelection;
+  final bool shouldShowFavourites;
   final ComponentOperationCubit componentOperationCubit;
 
   const ComponentSelectionDialog(
-      {Key? key, this.possibleItems, required this.onSelection,required this.componentOperationCubit})
+      {Key? key, this.possibleItems,this.shouldShowFavourites=true, required this.onSelection,required this.componentOperationCubit})
       : super(key: key);
 
   @override
@@ -30,6 +31,7 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
   String filter = '';
   int selectedIndex = 0;
   List<String> filtered = [];
+  final ScrollController _favouriteScrollController=ScrollController();
   List<CustomComponent> filteredCustomComponents = [];
   final focusNode = FocusNode();
   final componentNames = componentList.keys.toList();
@@ -40,10 +42,12 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    if(widget.shouldShowFavourites) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
        widget. componentOperationCubit
             .loadFavourites();
     });
+    }
   }
 
   @override
@@ -208,6 +212,7 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                     //     itemCount: filteredCustomComponents.length,
                     //   ),
                     // ),
+                    if(widget.shouldShowFavourites) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       child: Text(
@@ -218,105 +223,117 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                     ),
                     Expanded(
                       flex: 6,
-                      child: BlocBuilder<ComponentOperationCubit,
-                          ComponentOperationState>(
-                        bloc: componentOperationCubit,
-                        builder: (context, state) {
-                          if (state is ComponentOperationLoadingState) {
-                            return Shimmer.fromColors(
-                              baseColor: const Color(0xfff2f2f2),
-                              highlightColor: Colors.white,
-                              child: ListView.builder(
-                                itemBuilder: (BuildContext context, int index) {
-                                  return Container(
-                                    height: 100,
-                                    padding: const EdgeInsets.all(10),
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    decoration: BoxDecoration(
-                                        color: const Color(0xfff2f2f2),
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                  );
-                                },
-                                itemCount: 10,
-                              ),
-                            );
-                          }
+                      child: LayoutBuilder(
+                        builder: (context,constraints) {
+                          return BlocBuilder<ComponentOperationCubit,
+                              ComponentOperationState>(
+                            bloc: componentOperationCubit,
+                            builder: (context, state) {
+                              if (state is ComponentOperationLoadingState) {
+                                return Shimmer.fromColors(
+                                  baseColor: const Color(0xfff2f2f2),
+                                  highlightColor: Colors.white,
+                                  child: ListView.builder(
+                                    itemBuilder: (BuildContext context, int index) {
+                                      return Container(
+                                        height: 100,
+                                        padding: const EdgeInsets.all(10),
+                                        margin: const EdgeInsets.only(bottom: 10),
+                                        decoration: BoxDecoration(
+                                            color: const Color(0xfff2f2f2),
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                      );
+                                    },
+                                    itemCount: 10,
+                                  ),
+                                );
+                              }
 
-                          return SingleChildScrollView(
-                            child: Wrap(
-                              children: componentOperationCubit
-                                  .favouriteList.map((model) =>Card(
-                                elevation: 2,
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    InkWell(
-                                      onTap: () {
-                                        widget.onSelection(model
-                                            .component
-                                            .clone(null, cloneParam: true));
-                                        Get.back();
-                                      },
-                                      child: Align(
-                                        alignment: Alignment.center,
-                                        child: Container(
-                                          width: model
-                                              .component
-                                              .boundary!
-                                              .width,
-                                          height: model
-                                              .component
-                                              .boundary!
-                                              .height,
-                                          decoration: BoxDecoration(
-                                              borderRadius:
-                                              BorderRadius.circular(10),
-                                              gradient: const LinearGradient(
-                                                  colors: [
-                                                    Color(0xfff2f2f2),
-                                                    Color(0xffd3d3d3)
-                                                  ],
-                                                  begin: Alignment.topLeft,
-                                                  end:
-                                                  Alignment.bottomRight)),
-                                          child: model
-                                              .component
-                                              .build(context),
-                                        ),
-                                      ),
-                                    ),
-                                    InkWell(
-                                      borderRadius: BorderRadius.circular(10),
-                                      onTap: () {
-                                        componentOperationCubit
-                                            .removeModelFromFavourites(model);
-                                        setState2(() {});
-                                      },
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(5),
-                                        child: CircleAvatar(
-                                          child: Center(
-                                            child: Icon(
-                                              Icons.delete,
-                                              color: Colors.white,
-                                              size: 15,
+                              return SingleChildScrollView(
+                                controller:_favouriteScrollController ,
+                                child: Wrap(
+                                  children: componentOperationCubit
+                                      .favouriteList.map((model) =>Card(
+                                    elevation: 2,
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            widget.onSelection(model
+                                                .component
+                                                .clone(null, cloneParam: true));
+                                            Get.back();
+                                          },
+                                          child: Align(
+                                            alignment: Alignment.center,
+                                            child: IgnorePointer(
+                                              ignoring: true,
+                                              child: Container(
+                                                width: constraints.maxWidth-70>model
+                                                    .component
+                                                    .boundary!
+                                                    .width?model
+                                                    .component
+                                                    .boundary!
+                                                    .width:constraints.maxWidth-70,
+                                                height: model
+                                                    .component
+                                                    .boundary!
+                                                    .height,
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                    BorderRadius.circular(10),
+                                                    gradient: const LinearGradient(
+                                                        colors: [
+                                                          Color(0xfff2f2f2),
+                                                          Color(0xffd3d3d3)
+                                                        ],
+                                                        begin: Alignment.topLeft,
+                                                        end:
+                                                        Alignment.bottomRight)),
+                                                child: model
+                                                    .component
+                                                    .build(context),
+                                              ),
                                             ),
                                           ),
-                                          radius: 10,
-                                          backgroundColor: Colors.red,
                                         ),
-                                      ),
-                                    )
-                                  ],
+                                        InkWell(
+                                          borderRadius: BorderRadius.circular(10),
+                                          onTap: () {
+                                            componentOperationCubit
+                                                .removeModelFromFavourites(model);
+                                            setState2(() {});
+                                          },
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(5),
+                                            child: CircleAvatar(
+                                              child: Center(
+                                                child: Icon(
+                                                  Icons.delete,
+                                                  color: Colors.white,
+                                                  size: 15,
+                                                ),
+                                              ),
+                                              radius: 10,
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ) ).toList(),
                                 ),
-                              ) ).toList(),
-                            ),
+                              );
+                            },
                           );
-                        },
+                        }
                       ),
                     ),
+                ]
                   ],
                 );
               }),

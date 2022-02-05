@@ -3,23 +3,28 @@ import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/models/parameter_model.dart';
+import '../../common/compiler/code_processor.dart';
+import '../../common/undo/revert_work.dart';
+import '../../models/variable_model.dart';
+import '../../models/parameter_model.dart';
 import '../../models/other_model.dart';
 import '../../models/project_model.dart';
 import '../../firestore/firestore_bridge.dart';
 import '../../models/component_model.dart';
 import '../component_creation/component_creation_cubit.dart';
-import '../component_selection/component_selection_cubit.dart';
 import '../visual_box_drawer/visual_box_cubit.dart';
 
 part 'component_operation_state.dart';
 
 class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   FlutterProject? flutterProject;
+  static final CodeProcessor codeProcessor = CodeProcessor();
+  final Map<Component, bool> expandedTree = {};
   final List<FavouriteModel> favouriteList = [];
   Map<String, Uint8List> byteCache = {};
+  final RevertWork revertWork = RevertWork.init();
 
-  ComponentOperationCubit() : super(ComponentOperationInitial());
+  ComponentOperationCubit() : super(ComponentOperationInitial()) {}
 
   void addedComponent(Component component, Component root) {
     if (root is CustomComponent) {
@@ -77,7 +82,17 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   void arrangeComponent(
     BuildContext context,
+    Component component,
+    List<Component> children,
+    int oldIndex,
+    int newIndex,
+    Component ancestor,
   ) {
+    final old = children.removeAt(oldIndex);
+    children.insert(newIndex, old);
+    if (ancestor is CustomComponent) {
+      ancestor.notifyChanged();
+    }
     BlocProvider.of<ComponentCreationCubit>(context, listen: false)
         .changedComponent();
     BlocProvider.of<VisualBoxCubit>(context, listen: false).errorMessage = null;
@@ -127,6 +142,23 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
+  void removeRootComponentFromComponentParameter(
+      ComponentParameter componentParameter, Component component,
+      {bool removeAll = false}) {
+    final index = componentParameter.components.indexOf(component);
+    componentParameter.components.removeAt(index);
+    switch (component.type) {
+      case 1:
+        break;
+      case 3:
+        if ((component as Holder).child != null && !removeAll) {
+          componentParameter.components.insert(index, component.child!);
+        }
+        break;
+    }
+    emit(ComponentUpdatedState());
+  }
+
   void removeComponent(BuildContext context, Component component) {
     if (component.parent == null) {
       return;
@@ -137,7 +169,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
     switch (parent.type) {
       case 2:
-        (parent as MultiHolder).removeChild(component);
+        int index = (parent as MultiHolder).removeChild(component);
         switch (component.type) {
           case 1:
             break;
@@ -147,7 +179,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
             break;
           case 3:
             if ((component as Holder).child != null) {
-              parent.addChild(component.child!);
+              parent.addChild(component.child!, index: index);
             }
             break;
         }
@@ -321,10 +353,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   bool shouldAddingEnable(
-      Component component,ComponentParameter? componentParameter, Component? ancestor, String? customNamed) {
-    if(componentParameter!=null){
-      return !componentParameter.isFull();
-    }
+      Component component, Component? ancestor, String? customNamed) {
     return component is MultiHolder ||
         (component is Holder && component.child == null) ||
         (component.type == 5 &&
@@ -334,4 +363,46 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
             (component as CustomNamedHolder).childMap[customNamed] == null);
   }
 
+  void removeAllComponent(Component component) {
+    final parent = component.parent!;
+    if (component.type == 2) {
+      (component as MultiHolder).children.clear();
+    } else if (component.type == 4) {
+      (component as CustomNamedHolder).childMap.clear();
+      component.childrenMap.clear();
+    }
+    switch (parent.type) {
+      case 2:
+        (parent as MultiHolder).removeChild(component);
+        break;
+      case 3:
+        (parent as Holder).updateChild(null);
+        break;
+      case 4:
+        (parent as CustomNamedHolder).replaceChild(component, null);
+        break;
+      case 5:
+        (parent as CustomComponent).updateRoot(component);
+        break;
+    }
+  }
+
+  Future<void> updateDeviceSelection(String name) async{
+    emit(ComponentOperationLoadingState());
+    await FireBridge.updateDeviceSelection(1, flutterProject!.name, name);
+    emit(ComponentOperationInitial());
+  }
+  Future<void> addVariable(VariableModel variableModel) async {
+    emit(ComponentOperationLoadingState());
+    await FireBridge.addVariable(1, flutterProject!.name,
+        ComponentOperationCubit.codeProcessor.variables[variableModel.name]!);
+    emit(ComponentOperationInitial());
+  }
+
+  Future<void> updateVariable(VariableModel variableModel) async {
+    emit(ComponentOperationLoadingState());
+    await FireBridge.updateVariable(1, flutterProject!.name,
+        ComponentOperationCubit.codeProcessor.variables[variableModel.name]!);
+    emit(ComponentOperationInitial());
+  }
 }

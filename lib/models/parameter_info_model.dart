@@ -7,7 +7,7 @@ abstract class ParameterInfo {
 }
 
 class NamedParameterInfo extends ParameterInfo  {
-  final String name;
+  String name;
 
   NamedParameterInfo(this.name);
 
@@ -36,7 +36,7 @@ class NamedParameterInfo extends ParameterInfo  {
 
 class InnerObjectParameterInfo extends ParameterInfo {
   final String innerObjectName;
-  final String? namedIfHaveAny;
+  String? namedIfHaveAny;
 
   InnerObjectParameterInfo(
       {required this.innerObjectName, this.namedIfHaveAny});

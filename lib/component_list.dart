@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'models/parameter_rule_model.dart';
 import 'parameters_list.dart';
 import 'models/component_model.dart';
@@ -19,9 +18,11 @@ final componentList = {
   'Wrap': () => CWrap(),
   'ListView': () => CListView(),
   'Flex': () => CFlex(),
+  'SingleChildScrollView': () => CSingleChildScrollView(),
   'Padding': () => CPadding(),
   'ClipRRect': () => CClipRRect(),
   'Container': () => CContainer(),
+  'Visibility': () => CVisibility(),
   'Material': () => CMaterial(),
   'Expanded': () => CExpanded(),
   'Spacer': () => CSpacer(),
@@ -34,7 +35,8 @@ final componentList = {
   'SizedBox': () => CSizedBox(),
   'FittedBox': () => CFittedBox(),
   'Text': () => CText(),
-  'Icon':() => CIcon(),
+  'Icon': () => CIcon(),
+  'Switch':()=> CSwitch(),
   'Image.asset': () => CImage(),
   'Image.network': () => CImageNetwork(),
   'CircleAvatar': () => CCircleAvatar(),
@@ -45,16 +47,34 @@ final componentList = {
   'Transform.translate': () => CTransformTranslate(),
   'VerticalDivider': () => CVerticalDivider(),
   'RichText': () => CRichText(),
-  'TextField': () => CTextField()
+  'TextField': () => CTextField(),
+  'TextButton': () => CTextButton(),
+  'OutlinedButton': () => COutlinedButton(),
+  'FloatingActionButton': () => CFloatingActionButton(),
+  'IconButton': () => CIconButton(),
 };
 
 class CMaterialApp extends CustomNamedHolder {
-  CMaterialApp() : super('MaterialApp', [], {'home': null}, []);
+  CMaterialApp() : super('MaterialApp', [
+    Parameters.colorParameter()..withRequired(false),
+    Parameters.textParameter()
+
+      ..withNamedParamInfoAndSameDisplayName('title'),
+  Parameters.themeDataParameter()..withChangeNamed('theme'),
+    Parameters.themeDataParameter()..withChangeNamed('darkTheme')..withDisplayName('Dark Theme'),
+  Parameters.themeModeParameter(),
+  ], {'home': null}, [
+  ]);
 
   @override
   Widget create(BuildContext context) {
     return MaterialApp(
       home: childMap['home']?.build(context),
+      color: parameters[0].value,
+      title: parameters[1].value,
+      theme: parameters[2].value,
+      darkTheme: parameters[3].value,
+      themeMode: parameters[4].value,
     );
   }
 }
@@ -62,14 +82,29 @@ class CMaterialApp extends CustomNamedHolder {
 class CRichText extends Component {
   CRichText()
       : super('RichText', [
-          Parameters.textSpanParameter()
-            ..withInfo(InnerObjectParameterInfo(
-                innerObjectName: 'TextSpan', namedIfHaveAny: 'text'))
-        ]);
+    Parameters.textSpanParameter()
+      ..withInfo(InnerObjectParameterInfo(
+          innerObjectName: 'TextSpan', namedIfHaveAny: 'text'))
+  ]);
 
   @override
   Widget create(BuildContext context) {
     return RichText(text: parameters[0].value);
+  }
+}
+
+class CSwitch extends Component {
+  CSwitch()
+      : super('Switch', [
+    Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('value'),
+
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Switch(onChanged: (bool value) {
+
+    }, value: parameters[0].value,);
   }
 }
 
@@ -86,8 +121,8 @@ class CExpanded extends Holder {
 class CSpacer extends Component {
   CSpacer()
       : super('Spacer', [
-          Parameters.flexParameter(),
-        ]);
+    Parameters.flexParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -100,9 +135,9 @@ class CSpacer extends Component {
 class CCenter extends Holder {
   CCenter()
       : super('Center', [
-          Parameters.widthFactorParameter(),
-          Parameters.heightFactorParameter(),
-        ]);
+    Parameters.widthFactorParameter(),
+    Parameters.heightFactorParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -117,19 +152,19 @@ class CCenter extends Holder {
 class CPositioned extends Holder {
   CPositioned()
       : super('Positioned', [
-          Parameters.directionParameter()
-            ..withDisplayName('left')
-            ..withInfo(NamedParameterInfo('left')),
-          Parameters.directionParameter()
-            ..withDisplayName('right')
-            ..withInfo(NamedParameterInfo('right')),
-          Parameters.directionParameter()
-            ..withDisplayName('top')
-            ..withInfo(NamedParameterInfo('top')),
-          Parameters.directionParameter()
-            ..withDisplayName('bottom')
-            ..withInfo(NamedParameterInfo('bottom')),
-        ]);
+    Parameters.directionParameter()
+      ..withDisplayName('left')
+      ..withInfo(NamedParameterInfo('left')),
+    Parameters.directionParameter()
+      ..withDisplayName('right')
+      ..withInfo(NamedParameterInfo('right')),
+    Parameters.directionParameter()
+      ..withDisplayName('top')
+      ..withInfo(NamedParameterInfo('top')),
+    Parameters.directionParameter()
+      ..withDisplayName('bottom')
+      ..withInfo(NamedParameterInfo('bottom')),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -146,10 +181,10 @@ class CPositioned extends Holder {
 class CAlign extends Holder {
   CAlign()
       : super('Align', [
-          Parameters.alignmentParameter(),
-          Parameters.widthFactorParameter(),
-          Parameters.heightFactorParameter(),
-        ]);
+    Parameters.alignmentParameter(),
+    Parameters.widthFactorParameter(),
+    Parameters.heightFactorParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -162,13 +197,36 @@ class CAlign extends Holder {
   }
 }
 
+class CSingleChildScrollView extends Holder {
+  CSingleChildScrollView()
+      : super('SingleChildScrollView', [
+    Parameters.axisParameter()
+      ..withNamedParamInfoAndSameDisplayName('scrollDirection')
+      ..withDefaultValue('vertical'),
+    Parameters.paddingParameter()
+      ..withRequired(false)
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: parameters[0].value,
+      padding: parameters[1].value,
+      child: child?.build(context),
+      controller: initScrollController(context),
+    );
+  }
+}
+
 class CFractionallySizedBox extends Holder {
   CFractionallySizedBox()
       : super('FractionallySizedBox', [
-          Parameters.widthFactorParameter()..withDefaultValue(1),
-          Parameters.heightFactorParameter()..withDefaultValue(1),
-          Parameters.alignmentParameter()
-        ]);
+    Parameters.widthFactorParameter()
+      ..withDefaultValue(1),
+    Parameters.heightFactorParameter()
+      ..withDefaultValue(1),
+    Parameters.alignmentParameter()
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -193,15 +251,31 @@ class CFlexible extends Holder {
   }
 }
 
+class CVisibility extends Holder {
+  CVisibility()
+      : super('Visibility', [
+    Parameters.enableParameter()
+      ..withNamedParamInfoAndSameDisplayName('visible'),
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Visibility(
+      visible: parameters[0].value,
+      child: child?.build(context) ?? Container(),
+    );
+  }
+}
+
 class COpacity extends Holder {
   COpacity()
       : super('Opacity', [
-          Parameters.widthFactorParameter()
-            ..withInfo(NamedParameterInfo('opacity'))
-            ..withDefaultValue(1)
-            ..withDisplayName('opacity')
-            ..withRequired(true),
-        ]);
+    Parameters.widthFactorParameter()
+      ..withInfo(NamedParameterInfo('opacity'))
+      ..withDefaultValue(1)
+      ..withDisplayName('opacity')
+      ..withRequired(true),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -215,8 +289,8 @@ class COpacity extends Holder {
 class CTransformRotate extends Holder {
   CTransformRotate()
       : super('Transform.rotate', [
-          Parameters.angleParameter(),
-        ]);
+    Parameters.angleParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -230,11 +304,11 @@ class CTransformRotate extends Holder {
 class CTransformScale extends Holder {
   CTransformScale()
       : super('Transform.scale', [
-          Parameters.widthFactorParameter()
-            ..withDefaultValue(1)
-            ..withNamedParamInfoAndSameDisplayName('scale')
-            ..withRequired(true),
-        ]);
+    Parameters.widthFactorParameter()
+      ..withDefaultValue(1)
+      ..withNamedParamInfoAndSameDisplayName('scale')
+      ..withRequired(true),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -248,8 +322,8 @@ class CTransformScale extends Holder {
 class CTransformTranslate extends Holder {
   CTransformTranslate()
       : super('Transform.translate', [
-          Parameters.offsetParameter(),
-        ]);
+    Parameters.offsetParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -263,23 +337,25 @@ class CTransformTranslate extends Holder {
 class CDivider extends Component {
   CDivider()
       : super(
-          'Divider',
-          [
-            Parameters.colorParameter()..withDefaultValue(AppColors.grey),
-            Parameters.heightParameter()..withDefaultValue(20),
-            Parameters.thicknessParameter(),
-            Parameters.heightParameter()
-              ..withDefaultValue(0)
-              ..withDisplayName('indent')
-              ..withInfo(NamedParameterInfo('indent'))
-              ..withRequired(false),
-            Parameters.heightParameter()
-              ..withDefaultValue(0)
-              ..withDisplayName('end-indent')
-              ..withInfo(NamedParameterInfo('endIndent'))
-              ..withRequired(false)
-          ],
-        );
+    'Divider',
+    [
+      Parameters.colorParameter()
+        ..withDefaultValue(AppColors.grey),
+      Parameters.heightParameter()
+        ..withDefaultValue(20),
+      Parameters.thicknessParameter(),
+      Parameters.heightParameter()
+        ..withDefaultValue(0)
+        ..withDisplayName('indent')
+        ..withInfo(NamedParameterInfo('indent'))
+        ..withRequired(false),
+      Parameters.heightParameter()
+        ..withDefaultValue(0)
+        ..withDisplayName('end-indent')
+        ..withInfo(NamedParameterInfo('endIndent'))
+        ..withRequired(false)
+    ],
+  );
 
   @override
   Widget create(BuildContext context) {
@@ -296,23 +372,25 @@ class CDivider extends Component {
 class CVerticalDivider extends Component {
   CVerticalDivider()
       : super(
-          'VerticalDivider',
-          [
-            Parameters.colorParameter()..withDefaultValue(AppColors.grey),
-            Parameters.widthParameter()..withDefaultValue(20),
-            Parameters.thicknessParameter(),
-            Parameters.heightParameter()
-              ..withDefaultValue(0)
-              ..withDisplayName('indent')
-              ..withInfo(NamedParameterInfo('indent'))
-              ..withRequired(false),
-            Parameters.heightParameter()
-              ..withDefaultValue(0)
-              ..withDisplayName('end-indent')
-              ..withInfo(NamedParameterInfo('endIndent'))
-              ..withRequired(false)
-          ],
-        );
+    'VerticalDivider',
+    [
+      Parameters.colorParameter()
+        ..withDefaultValue(AppColors.grey),
+      Parameters.widthParameter()
+        ..withDefaultValue(20),
+      Parameters.thicknessParameter(),
+      Parameters.heightParameter()
+        ..withDefaultValue(0)
+        ..withDisplayName('indent')
+        ..withInfo(NamedParameterInfo('indent'))
+        ..withRequired(false),
+      Parameters.heightParameter()
+        ..withDefaultValue(0)
+        ..withDisplayName('end-indent')
+        ..withInfo(NamedParameterInfo('endIndent'))
+        ..withRequired(false)
+    ],
+  );
 
   @override
   Widget create(BuildContext context) {
@@ -329,16 +407,17 @@ class CVerticalDivider extends Component {
 class CCard extends Holder {
   CCard()
       : super('Card', [
-          Parameters.colorParameter()..withDefaultValue(AppColors.white),
-          Parameters.shapeBorderParameter(),
-          Parameters.elevationParameter(),
-          Parameters.marginParameter(),
-          Parameters.colorParameter()
-            ..withDisplayName('shadowColor')
-            ..withInfo(
-              NamedParameterInfo('shadowColor'),
-            ),
-        ]);
+    Parameters.colorParameter()
+      ..withDefaultValue(AppColors.white),
+    Parameters.shapeBorderParameter(),
+    Parameters.elevationParameter(),
+    Parameters.marginParameter(),
+    Parameters.colorParameter()
+      ..withDisplayName('shadowColor')
+      ..withInfo(
+        NamedParameterInfo('shadowColor'),
+      ),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -355,15 +434,15 @@ class CCard extends Holder {
 class CAppBar extends CustomNamedHolder {
   CAppBar()
       : super('AppBar', [
-          Parameters.colorParameter()
-            ..withDefaultValue(const Color(0xff0000ff))
-            ..withDisplayName('background-color')
-            ..withInfo(NamedParameterInfo('backgroundColor')),
-          Parameters.toolbarHeight
-        ], {
-          'title': null,
-          'leading': null,
-        }, []);
+    Parameters.colorParameter()
+      ..withDefaultValue(const Color(0xff0000ff))
+      ..withDisplayName('background-color')
+      ..withInfo(NamedParameterInfo('backgroundColor')),
+    Parameters.toolbarHeight
+  ], {
+    'title': null,
+    'leading': null,
+  }, []);
 
   @override
   Widget create(BuildContext context) {
@@ -378,33 +457,33 @@ class CAppBar extends CustomNamedHolder {
 class CScaffold extends CustomNamedHolder {
   CScaffold()
       : super('Scaffold', [
-          Parameters.colorParameter()
-            ..withDisplayName('background-color')
-            ..withDefaultValue(const Color(0xffffffff))
-            ..withInfo(NamedParameterInfo('backgroundColor')),
-          BooleanParameter(
-            required: false,
-            val: false,
-            displayName: 'resize to avoid bottom inset',
-            info: NamedParameterInfo('resizeToAvoidBottomInset'),
-          ),
-        ], {
-          'appBar': ['AppBar'],
-          'body': null,
-          'floatingActionButton': null,
-          'bottomNavigationBar': null,
-          'bottomSheet': null,
-        }, [
-          'actions'
-        ]);
+    Parameters.colorParameter()
+      ..withDisplayName('background-color')
+      ..withDefaultValue(const Color(0xffffffff))
+      ..withInfo(NamedParameterInfo('backgroundColor')),
+    BooleanParameter(
+      required: false,
+      val: false,
+      displayName: 'resize to avoid bottom inset',
+      info: NamedParameterInfo('resizeToAvoidBottomInset'),
+    ),
+  ], {
+    'appBar': ['AppBar'],
+    'body': null,
+    'floatingActionButton': null,
+    'bottomNavigationBar': null,
+    'bottomSheet': null,
+  }, [
+    'actions'
+  ]);
 
   @override
   Widget create(BuildContext context) {
     return Scaffold(
       appBar: childMap['appBar'] != null
           ? PreferredSize(
-              child: childMap['appBar']!.build(context),
-              preferredSize: Size(-1, childMap['appBar']!.parameters[1].value))
+          child: childMap['appBar']!.build(context),
+          preferredSize: Size(-1, childMap['appBar']!.parameters[1].value))
           : null,
       body: childMap['body']?.build(context),
       backgroundColor: parameters[0].value,
@@ -419,10 +498,10 @@ class CScaffold extends CustomNamedHolder {
 class CRow extends MultiHolder {
   CRow()
       : super('Row', [
-          Parameters.mainAxisAlignmentParameter(),
-          Parameters.crossAxisAlignmentParameter(),
-          Parameters.mainAxisSizeParameter()
-        ]);
+    Parameters.mainAxisAlignmentParameter(),
+    Parameters.crossAxisAlignmentParameter(),
+    Parameters.mainAxisSizeParameter()
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -438,10 +517,10 @@ class CRow extends MultiHolder {
 class CColumn extends MultiHolder {
   CColumn()
       : super('Column', [
-          Parameters.mainAxisAlignmentParameter(),
-          Parameters.crossAxisAlignmentParameter(),
-          Parameters.mainAxisSizeParameter()
-        ]);
+    Parameters.mainAxisAlignmentParameter(),
+    Parameters.crossAxisAlignmentParameter(),
+    Parameters.mainAxisSizeParameter()
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -457,18 +536,19 @@ class CColumn extends MultiHolder {
 class CWrap extends MultiHolder {
   CWrap()
       : super('Wrap', [
-          Parameters.wrapAlignmentParameter(),
-          Parameters.wrapCrossAxisAlignmentParameter(),
-          Parameters.axisParameter()..withDefaultValue('horizontal'),
-          Parameters.widthParameter()
-            ..withDefaultValue(0.0)
-            ..withRequired(true)
-            ..withNamedParamInfoAndSameDisplayName('spacing'),
-          Parameters.widthParameter()
-            ..withDefaultValue(0.0)
-            ..withRequired(true)
-            ..withNamedParamInfoAndSameDisplayName('runSpacing'),
-        ]);
+    Parameters.wrapAlignmentParameter(),
+    Parameters.wrapCrossAxisAlignmentParameter(),
+    Parameters.axisParameter()
+      ..withDefaultValue('horizontal'),
+    Parameters.widthParameter()
+      ..withDefaultValue(0.0)
+      ..withRequired(true)
+      ..withNamedParamInfoAndSameDisplayName('spacing'),
+    Parameters.widthParameter()
+      ..withDefaultValue(0.0)
+      ..withRequired(true)
+      ..withNamedParamInfoAndSameDisplayName('runSpacing'),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -486,13 +566,15 @@ class CWrap extends MultiHolder {
 class CStack extends MultiHolder {
   CStack()
       : super('Stack', [
-          Parameters.alignmentParameter(),
-        ]);
+    Parameters.alignmentParameter(),
+    Parameters.stackFitParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
     return Stack(
       alignment: parameters[0].value,
+      fit: parameters[1].value,
       children: children.map((e) => e.build(context)).toList(),
     );
   }
@@ -501,15 +583,15 @@ class CStack extends MultiHolder {
 class CListView extends MultiHolder {
   CListView()
       : super('ListView', [
-          Parameters.paddingParameter(),
-          Parameters.axisParameter()
-            ..withInfo(NamedParameterInfo('scrollDirection')),
-          BooleanParameter(
-              displayName: 'reverse',
-              required: true,
-              val: false,
-              info: NamedParameterInfo('reverse'))
-        ]);
+    Parameters.paddingParameter(),
+    Parameters.axisParameter()
+      ..withInfo(NamedParameterInfo('scrollDirection')),
+    BooleanParameter(
+        displayName: 'reverse',
+        required: true,
+        val: false,
+        info: NamedParameterInfo('reverse'))
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -518,6 +600,7 @@ class CListView extends MultiHolder {
       padding: parameters[0].value,
       scrollDirection: parameters[1].value,
       reverse: parameters[2].value,
+      controller: initScrollController(context),
     );
   }
 }
@@ -525,11 +608,11 @@ class CListView extends MultiHolder {
 class CFlex extends MultiHolder {
   CFlex()
       : super('Flex', [
-          Parameters.mainAxisAlignmentParameter(),
-          Parameters.crossAxisAlignmentParameter(),
-          Parameters.mainAxisSizeParameter(),
-          Parameters.axisParameter()
-        ]);
+    Parameters.mainAxisAlignmentParameter(),
+    Parameters.crossAxisAlignmentParameter(),
+    Parameters.mainAxisSizeParameter(),
+    Parameters.axisParameter()
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -545,7 +628,9 @@ class CFlex extends MultiHolder {
 
 class CPadding extends Holder {
   CPadding()
-      : super('Padding', [Parameters.paddingParameter()..withRequired(true)]);
+      : super('Padding', [Parameters.paddingParameter()
+    ..withRequired(true)
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -559,7 +644,9 @@ class CPadding extends Holder {
 class CClipRRect extends Holder {
   CClipRRect()
       : super('ClipRRect',
-            [Parameters.borderRadiusParameter()..withRequired(true)]);
+      [Parameters.borderRadiusParameter()
+        ..withRequired(true)
+      ]);
 
   @override
   Widget create(BuildContext context) {
@@ -573,16 +660,16 @@ class CClipRRect extends Holder {
 class CCircleAvatar extends Holder {
   CCircleAvatar()
       : super('CircleAvatar', [
-          Parameters.radiusParameter(),
-          Parameters.backgroundColorParameter(),
-          Parameters.foregroundColorParameter(),
-          // Parameters.radiusParameter()
-          //   ..withDisplayName('minimum radius')
-          //   ..withInfo(NamedParameterInfo('minRadius')),
-          // Parameters.radiusParameter()
-          //   ..withDisplayName('maximum radius')
-          //   ..withInfo(NamedParameterInfo('maxRadius')),
-        ]);
+    Parameters.radiusParameter(),
+    Parameters.backgroundColorParameter(),
+    Parameters.foregroundColorParameter(),
+    // Parameters.radiusParameter()
+    //   ..withDisplayName('minimum radius')
+    //   ..withInfo(NamedParameterInfo('minRadius')),
+    // Parameters.radiusParameter()
+    //   ..withDisplayName('maximum radius')
+    //   ..withInfo(NamedParameterInfo('maxRadius')),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -597,16 +684,88 @@ class CCircleAvatar extends Holder {
   }
 }
 
+class COutlinedButton extends Holder {
+  COutlinedButton()
+      : super('OutlinedButton', [Parameters.buttonStyleParameter()]);
+
+  @override
+  Widget create(BuildContext context) {
+    return OutlinedButton(
+      onPressed: () {},
+      child: child?.build(context) ?? Container(),
+      style: parameters[0].value,
+    );
+  }
+}
+
+class CFloatingActionButton extends Holder {
+  CFloatingActionButton()
+      : super('FloatingActionButton', [
+    Parameters.backgroundColorParameter(),
+    Parameters.foregroundColorParameter(),
+    Parameters.elevationParameter(),
+    Parameters.enableParameter()
+      ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
+    Parameters.textParameter()
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('tooltip'),
+    Parameters.elevationParameter()
+      ..withNamedParamInfoAndSameDisplayName('hoverElevation'),
+    Parameters.elevationParameter()
+      ..withNamedParamInfoAndSameDisplayName('focusElevation'),
+    Parameters.colorParameter()
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('hoverColor'),
+    Parameters.colorParameter()
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('focusColor'),
+    Parameters.colorParameter()
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('splashColor'),
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: () {},
+      child: child?.build(context) ?? Container(),
+      backgroundColor: parameters[0].value,
+      foregroundColor: parameters[1].value,
+      elevation: parameters[2].value,
+      enableFeedback: parameters[3].value,
+      tooltip: parameters[4].value,
+      hoverElevation: parameters[5].value,
+      focusElevation: parameters[6].value,
+      hoverColor: parameters[7].value,
+      focusColor: parameters[8].value,
+      splashColor: parameters[9].value,
+    );
+  }
+}
+
+class CTextButton extends Holder {
+  CTextButton() : super('TextButton', [Parameters.buttonStyleParameter()]);
+
+  @override
+  Widget create(BuildContext context) {
+    return TextButton(
+      onPressed: () {},
+      child: child?.build(context) ?? Container(),
+      style: parameters[0].value,
+    );
+  }
+}
+
 class CContainer extends Holder {
   CContainer()
       : super('Container', [
-          Parameters.paddingParameter(),
-          Parameters.widthParameter(),
-          Parameters.heightParameter(),
-          Parameters.marginParameter(),
-          Parameters.alignmentParameter(),
-          Parameters.decorationParameter()
-        ], rules: []) {
+    Parameters.paddingParameter(),
+    Parameters.widthParameter(),
+    Parameters.heightParameter(),
+    Parameters.marginParameter(),
+    Parameters.alignmentParameter(),
+    Parameters.decorationParameter()
+  ], rules: []) {
     addRule(ParameterRuleModel(
         changedParameter: (parameters[5] as ComplexParameter).params[5],
         anotherParameter: (parameters[5] as ComplexParameter).params[1],
@@ -644,9 +803,11 @@ class CContainer extends Holder {
 class CSizedBox extends Holder {
   CSizedBox()
       : super('SizedBox', [
-          Parameters.widthParameter()..withDefaultValue(50),
-          Parameters.heightParameter()..withDefaultValue(50),
-        ]);
+    Parameters.widthParameter()
+      ..withDefaultValue(50),
+    Parameters.heightParameter()
+      ..withDefaultValue(50),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -661,9 +822,9 @@ class CSizedBox extends Holder {
 class CFittedBox extends Holder {
   CFittedBox()
       : super('FittedBox', [
-          Parameters.boxFitParameter(),
-          Parameters.alignmentParameter(),
-        ]);
+    Parameters.boxFitParameter(),
+    Parameters.alignmentParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -678,8 +839,9 @@ class CFittedBox extends Holder {
 class CMaterial extends Holder {
   CMaterial()
       : super('Material', [
-          Parameters.colorParameter()..withDefaultValue(const Color(0x00000000))
-        ]);
+    Parameters.colorParameter()
+      ..withDefaultValue(const Color(0x00000000))
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -693,10 +855,10 @@ class CMaterial extends Holder {
 class CText extends Component {
   CText()
       : super('Text', [
-          Parameters.textParameter(),
-          Parameters.googleFontTextStyleParameter(),
-          Parameters.textAlignParameter(),
-        ]);
+    Parameters.textParameter(),
+    Parameters.googleFontTextStyleParameter(),
+    Parameters.textAlignParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -711,14 +873,15 @@ class CText extends Component {
 class CImageNetwork extends Component {
   CImageNetwork()
       : super('Image.network', [
-          Parameters.textParameter()..withDisplayName('url'),
-          Parameters.widthParameter(),
-          Parameters.heightParameter(),
-          Parameters.boxFitParameter(),
-          Parameters.colorParameter()
-            ..withDefaultValue(null)
-            ..withRequired(false),
-        ]);
+    Parameters.textParameter()
+      ..withDisplayName('url'),
+    Parameters.widthParameter(),
+    Parameters.heightParameter(),
+    Parameters.boxFitParameter(),
+    Parameters.colorParameter()
+      ..withDefaultValue(null)
+      ..withRequired(false),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -731,15 +894,19 @@ class CImageNetwork extends Component {
     );
   }
 }
+
 class CIcon extends Component {
   CIcon()
       : super('Icon', [
     Parameters.iconParameter(),
-    Parameters.widthParameter()..withNamedParamInfoAndSameDisplayName('size'),
+    Parameters.widthParameter()
+      ..withNamedParamInfoAndSameDisplayName('size'),
     Parameters.colorParameter()
       ..withDefaultValue(null)
       ..withRequired(false),
-    Parameters.textParameter()..withRequired(false)..withNamedParamInfoAndSameDisplayName('semanticLabel')
+    Parameters.textParameter()
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('semanticLabel')
   ]);
 
   @override
@@ -756,57 +923,121 @@ class CIcon extends Component {
 class CImage extends Component {
   CImage()
       : super('Image.asset', [
-          Parameters.imageParameter(),
-          Parameters.widthParameter(),
-          Parameters.heightParameter(),
-          Parameters.colorParameter()
-            ..withDefaultValue(null)
-            ..withRequired(false),
-          Parameters.boxFitParameter(),
-        ]);
+    Parameters.imageParameter(),
+    Parameters.widthParameter(),
+    Parameters.heightParameter(),
+    Parameters.colorParameter()
+      ..withDefaultValue(null)
+      ..withRequired(false),
+    Parameters.boxFitParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
     return parameters[0].value != null &&
-            (parameters[0].value as ImageData).bytes != null
+        (parameters[0].value as ImageData).bytes != null
         ? Image.memory(
-            (parameters[0].value as ImageData).bytes!,
-            width: parameters[1].value,
-            height: parameters[2].value,
-            color: parameters[3].value,
-            fit: parameters[4].value,
-          )
+      (parameters[0].value as ImageData).bytes!,
+      width: parameters[1].value,
+      height: parameters[2].value,
+      color: parameters[3].value,
+      fit: parameters[4].value,
+    )
         : Icon(
-            Icons.error,
-            color: Colors.red,
-            size: parameters[1].value,
-          );
+      Icons.error,
+      color: Colors.red,
+      size: parameters[1].value,
+    );
+  }
+}
+
+class CIconButton extends Component {
+  CIconButton()
+      : super('IconButton', [
+    ComponentParameter(
+      multiple: false,
+      info: NamedParameterInfo('icon'),
+    ),
+    Parameters.widthParameter()
+      ..withDefaultValue(24)
+      ..withRequired(true)
+      ..withNamedParamInfoAndSameDisplayName('iconSize'),
+    Parameters.colorParameter()
+      ..withDefaultValue(AppColors.black),
+    Parameters.colorParameter()
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('splashColor'),
+    Parameters.colorParameter()
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('hoverColor'),
+    Parameters.colorParameter()
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('highlightColor'),
+    Parameters.colorParameter()
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('focusColor'),
+    Parameters.enableParameter()
+      ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
+    Parameters.alignmentParameter(),
+    Parameters.paddingParameter()
+      ..withRequired(true),
+    Parameters.textParameter()
+      ..withNamedParamInfoAndSameDisplayName('tooltip')
+  ]) {
+    addComponentParameters([parameters[0] as ComponentParameter]);
+  }
+
+  @override
+  Widget create(BuildContext context) {
+    initComponentParameters(context);
+    return IconButton(
+      icon: (parameters[0] as ComponentParameter).build() ?? Container(),
+      iconSize: parameters[1].value,
+      color: parameters[2].value,
+      splashColor: parameters[3].value,
+      hoverColor: parameters[4].value,
+      highlightColor: parameters[5].value,
+      focusColor: parameters[6].value,
+      enableFeedback: parameters[7].value,
+      alignment: parameters[8].value,
+      padding: parameters[9].value,
+      tooltip: parameters[10].value,
+      onPressed: () {},
+    );
   }
 }
 
 class CTextField extends Component {
   CTextField()
       : super('TextField', [
-          Parameters.googleFontTextStyleParameter(),
-          BooleanParameter(
-              required: true,
-              val: false,
-              info: NamedParameterInfo('readOnly'),
-              displayName: 'readOnly'),
-          Parameters.inputDecorationParameter(Get.context!),
-
-        ]){
-    addComponentParameters([(parameters[2] as ComplexParameter).params[10] as ComponentParameter]);
+    Parameters.googleFontTextStyleParameter(),
+    BooleanParameter(
+        required: true,
+        val: false,
+        info: NamedParameterInfo('readOnly'),
+        displayName: 'readOnly'),
+    Parameters.inputDecorationParameter(),
+    Parameters.flexParameter()
+      ..withNamedParamInfoAndSameDisplayName('maxLength')
+      ..withRequired(false)
+  ]) {
+    addComponentParameters([
+      (parameters[2] as ComplexParameter).params[10] as ComponentParameter,
+      (parameters[2] as ComplexParameter).params[11] as ComponentParameter,
+      (parameters[2] as ComplexParameter).params[12] as ComponentParameter,
+    ]);
   }
 
   @override
   Widget create(BuildContext context) {
+    initComponentParameters(context);
     return IgnorePointer(
       ignoring: true,
       child: TextField(
         style: parameters[0].value,
         readOnly: parameters[1].value,
         decoration: parameters[2].value,
+        maxLength: parameters[3].value,
       ),
     );
   }

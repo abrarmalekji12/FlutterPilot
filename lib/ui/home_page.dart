@@ -1,12 +1,14 @@
 import 'dart:html' as html;
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/common/custom_popup_menu_button.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'variable_ui.dart';
+import '../common/custom_popup_menu_button.dart';
 import 'package:get/get.dart';
 import '../common/responsive/responsive_widget.dart';
 import '../common/context_popup.dart';
 import '../cubit/flutter_project/flutter_project_cubit.dart';
-import '../firestore/firestore_bridge.dart';
 import '../common/custom_animated_dialog.dart';
 import '../common/custom_drop_down.dart';
 import '../common/logger.dart';
@@ -52,39 +54,16 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      FireBridge.init().then((value) {
-        flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
-            componentOperationCubit, widget.projectName ?? 'untitled1');
-      });
+      flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
+          componentOperationCubit, widget.projectName ?? 'untitled12');
     });
     html.window.onKeyDown.listen((event) {
-      debugPrint('PRESSED ${event.altKey} ${event.key} ${event.eventPhase}');
+      // debugPrint('PRESSED ${event.altKey} ${event.key} ${event.eventPhase}');
       if (event.altKey) {
         event.preventDefault();
         if (event.key == 'f') {
           componentOperationCubit
               .toggleFavourites(componentSelectionCubit.currentSelected);
-        } else if (event.key == 'p' &&
-            componentOperationCubit.shouldAddingEnable(
-                componentSelectionCubit.currentSelected,null, null, null)) {
-          final component = componentSelectionCubit.currentSelected;
-          showSelectionDialog(context, (comp) {
-            if (component is Holder) {
-              (component).updateChild(comp);
-            } else if (component is MultiHolder) {
-              (component).addChild(comp);
-            }
-            comp.setParent(component);
-            if (comp is CustomComponent) {
-              comp.root?.setParent(component);
-            }
-            componentCreationCubit.changedComponent();
-
-            componentOperationCubit.addedComponent(
-                comp, componentSelectionCubit.currentSelectedRoot);
-            componentSelectionCubit.changeComponentSelection(component,
-                root: componentSelectionCubit.currentSelectedRoot);
-          });
         }
       }
     });
@@ -124,7 +103,7 @@ class _HomePageState extends State<HomePage> {
                 create: (context) => componentSelectionCubit),
             BlocProvider<ScreenConfigCubit>(
                 create: (context) => screenConfigCubit),
-            BlocProvider<VisualBoxCubit>(create: (context) => visualBoxCubit),
+            BlocProvider<VisualBoxCubit>(create: (_) => visualBoxCubit),
             BlocProvider<FlutterProjectCubit>(
                 create: (context) => flutterProjectCubit),
             BlocProvider<ParameterBuildCubit>(
@@ -142,8 +121,24 @@ class _HomePageState extends State<HomePage> {
                 case FlutterProjectLoadingState:
                   Loader.show(context);
                   break;
+                case FlutterProjectErrorState:
+                  Loader.hide();
+                  Fluttertoast.showToast(
+                      msg: (state as FlutterProjectErrorState).message ??
+                          'Something went wrong',
+                      timeInSecForIosWeb: 3);
+                  break;
                 case FlutterProjectLoadedState:
                   Loader.hide();
+                  if (componentOperationCubit.flutterProject!.device != null) {
+                    final config = screenConfigCubit.screenConfigs
+                        .firstWhereOrNull((element) =>
+                            element.name ==
+                            componentOperationCubit.flutterProject!.device);
+                    if (config != null) {
+                      screenConfigCubit.changeScreenConfig(config);
+                    }
+                  }
                   break;
               }
             },
@@ -158,7 +153,7 @@ class _HomePageState extends State<HomePage> {
               }
               return const ResponsiveWidget(
                 largeScreen: DesktopVisualEditor(),
-                mediumScreen: PrototypeShowcase(),
+                mediumScreen: DesktopVisualEditor(),
                 smallScreen: PrototypeShowcase(),
               );
             },
@@ -224,6 +219,8 @@ class ScreenConfigSelection extends StatelessWidget {
                   .toList(),
               onChanged: (value) {
                 cubit.changeScreenConfig(value);
+                BlocProvider.of<ComponentOperationCubit>(context, listen: false)
+                    .updateDeviceSelection(value.name);
               },
               selectedItemBuilder: (context, config) {
                 return Align(
@@ -240,56 +237,96 @@ class ScreenConfigSelection extends StatelessWidget {
   }
 }
 
-class CodeViewerButton extends StatelessWidget {
-  const CodeViewerButton({Key? key}) : super(key: key);
+class ToolbarButtons extends StatefulWidget {
+  const ToolbarButtons({Key? key}) : super(key: key);
+
+  @override
+  State<ToolbarButtons> createState() => _ToolbarButtonsState();
+}
+
+class _ToolbarButtonsState extends State<ToolbarButtons> {
+  bool variableBoxOpen = false;
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.topRight,
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: InkWell(
-          highlightColor: Colors.blueAccent.shade200,
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            CustomDialog.show(
-              context,
-              CodeViewerWidget(
-                code: BlocProvider.of<ComponentOperationCubit>(context,
-                        listen: false)
-                    .flutterProject!
-                    .code(),
-              ),
-            );
-          },
-          child: Card(
-            shape: RoundedRectangleBorder(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: InkWell(
+              highlightColor: Colors.blueAccent.shade200,
               borderRadius: BorderRadius.circular(8),
-            ),
-            color: Colors.blueAccent,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.code,
-                    color: Colors.white,
+              onTap: () {
+                CustomDialog.show(
+                  context,
+                  CodeViewerWidget(
+                    code: BlocProvider.of<ComponentOperationCubit>(context,
+                            listen: false)
+                        .flutterProject!
+                        .code(),
                   ),
-                  const SizedBox(
-                    width: 10,
+                );
+              },
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                color: Colors.blueAccent,
+                child: Padding(
+                  padding: const EdgeInsets.all(5),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.code,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Text(
+                        'view code',
+                        style: AppFontStyle.roboto(14, color: Colors.white),
+                      )
+                    ],
                   ),
-                  Text(
-                    'view code',
-                    style: AppFontStyle.roboto(16, color: Colors.white),
-                  )
-                ],
+                ),
               ),
             ),
           ),
-        ),
+          Container(
+            width: 350,
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      variableBoxOpen = !variableBoxOpen;
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.all(10),
+                    child: Text(
+                      variableBoxOpen ? 'Hide' : 'Show Variables',
+                      style: AppFontStyle.roboto(15,
+                          color: Colors.black, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+                if (variableBoxOpen) const VariableBox()
+              ],
+            ),
+          )
+        ],
       ),
     );
   }
@@ -379,7 +416,7 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
     return Row(
       children: [
         SizedBox(
-          width: dw(context, 26),
+          width: dw(context, 23),
           child: const ComponentTree(),
         ),
         Expanded(
@@ -387,12 +424,12 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
             children: [
               CenterMainSide(_componentSelectionCubit, _componentCreationCubit,
                   _componentOperationCubit, _screenConfigCubit),
-              const CodeViewerButton(),
+              const ToolbarButtons(),
             ],
           ),
         ),
         SizedBox(
-          width: dw(context, 30),
+          width: dw(context, 25),
           child: Padding(
             padding: const EdgeInsets.all(15),
             child:
@@ -489,31 +526,34 @@ class CenterMainSide extends StatelessWidget {
                     const ScreenConfigSelection(),
                     Expanded(
                       child: LayoutBuilder(builder: (context, constraints) {
-                        final Offset offset =
-                            _screenConfigCubit.getSelectedConfig(constraints);
-                        return FractionallySizedBox(
-                          widthFactor: offset.dx,
-                          heightFactor: offset.dy,
-                          child: GestureDetector(
-                            onSecondaryTapDown: (event) {
-                              onSecondaryTapDown(context, event);
-                            },
-                            onTapDown: onTapDown,
-                            child: Container(
-                              key: const GlobalObjectKey('device window'),
-                              width: _screenConfigCubit.screenConfig.width,
-                              height: _screenConfigCubit.screenConfig.height,
-                              color: Colors.white,
-                              child: Stack(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(1.0),
-                                    child: _componentOperationCubit
-                                        .flutterProject!
-                                        .run(context),
-                                  ),
-                                  const BoundaryWidget(),
-                                ],
+                        return FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: SizedBox(
+                            width: _screenConfigCubit.screenConfig.width,
+                            height: _screenConfigCubit.screenConfig.height,
+                            // widthFactor: offset.dx,
+                            // heightFactor: offset.dy,
+                            child: GestureDetector(
+                              onSecondaryTapDown: (event) {
+                                onSecondaryTapDown(context, event);
+                              },
+                              onTapDown: onTapDown,
+                              child: Container(
+                                key: const GlobalObjectKey('device window'),
+                                // width: _screenConfigCubit.screenConfig.width,
+                                // height: _screenConfigCubit.screenConfig.height,
+                                color: Colors.white,
+                                child: Stack(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(1.0),
+                                      child: _componentOperationCubit
+                                          .flutterProject!
+                                          .run(context),
+                                    ),
+                                    const BoundaryWidget(),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

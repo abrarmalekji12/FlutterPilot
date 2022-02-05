@@ -26,7 +26,7 @@ abstract class CodeOperations {
     final List<int> dividers = [-1];
     bool stringQuote=false;
     for (int i = 0; i < paramCode.length; i++) {
-      if(paramCode[i]=='\''){
+      if(paramCode[i]=='\''||paramCode[i]=='`'){
         stringQuote=!stringQuote;
       }
       if(stringQuote){

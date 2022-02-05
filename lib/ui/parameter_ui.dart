@@ -216,13 +216,28 @@ class SimpleParameterWidget extends StatelessWidget {
     switch (parameter.inputType) {
       case ParamInputType.text:
         return SizedBox(
-          width: 70,
+          width: 110,
           child: TextField(
             controller: TextEditingController.fromValue(
-                TextEditingValue(text: '${parameter.getValue() ?? ''}')),
+                TextEditingValue(text: parameter.compilerEnable!=null&&parameter.compilerEnable!.code.isNotEmpty?parameter.compilerEnable!.code:'${parameter.getValue() ?? ''}')),
             onChanged: (value) {
               if (value.isNotEmpty) {
-                parameter.setValue(value);
+                if (parameter.compilerEnable != null) {
+                  final result = ComponentOperationCubit.codeProcessor
+                      .process(value.toString());
+                  debugPrint('RESULT IS $value $result');
+                  if (result != null) {
+                    parameter.compilerEnable!.code=value;
+                    parameter.val = result;
+                    if (parameter.inputCalculateAs != null) {
+                      parameter.val = parameter.inputCalculateAs!.call(parameter.val!, true);
+                    }
+                  } else {
+                    return;
+                  }
+                } else {
+                  parameter.setValue(value);
+                }
               } else {
                 parameter.val = null;
               }
@@ -251,7 +266,7 @@ class SimpleParameterWidget extends StatelessWidget {
         );
       case ParamInputType.longText:
         return SizedBox(
-          width: 150,
+          width: 180,
           child: TextField(
             controller: TextEditingController.fromValue(
                 TextEditingValue(text: '${parameter.rawValue ?? ''}')),
@@ -324,6 +339,9 @@ class SimpleParameterWidget extends StatelessWidget {
                     ),
                     onColorChanged: (color) {
                       parameter.val = color;
+                      if (parameter.inputCalculateAs != null) {
+                        parameter.val = parameter.inputCalculateAs!.call(parameter.val!, true);
+                      }
                       setStateForColor(() {});
                       BlocProvider.of<ParameterBuildCubit>(context,
                               listen: false)

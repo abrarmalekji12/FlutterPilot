@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_builder/models/operation_model.dart';
 import 'common/logger.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -79,32 +80,70 @@ class Parameters {
         ],
       );
 
-  static ComplexParameter inputDecorationParameter(BuildContext context) => ComplexParameter(
+  static ComplexParameter inputDecorationParameter() => ComplexParameter(
           params: [
             Parameters.paddingParameter()
               ..withRequired(true)
               ..withNamedParamInfoAndSameDisplayName('contentPadding'),
             Parameters.textParameter()
+              ..withDefaultValue(null)
+              ..withRequired(false)
               ..withNamedParamInfoAndSameDisplayName('labelText'),
             Parameters.textParameter()
+              ..withDefaultValue(null)
+              ..withRequired(false)
               ..withNamedParamInfoAndSameDisplayName('helperText'),
             Parameters.textParameter()
+              ..withDefaultValue(null)
+              ..withRequired(false)
               ..withNamedParamInfoAndSameDisplayName('hintText'),
-            Parameters.textStyleParameter()
+            Parameters.googleFontTextStyleParameter()
               ..withInnerNamedParamInfoAndDisplayName(
-                  'labelStyle', 'TextStyle'),
-            Parameters.textStyleParameter()
+                  'labelStyle', 'GoogleFonts.getFont'),
+            Parameters.googleFontTextStyleParameter()
               ..withInnerNamedParamInfoAndDisplayName(
-                  'helperStyle', 'TextStyle'),
-            Parameters.textStyleParameter()
-              ..withInnerNamedParamInfoAndDisplayName('hintStyle', 'TextStyle'),
+                  'helperStyle', 'GoogleFonts.getFont'),
+            Parameters.googleFontTextStyleParameter()
+              ..withInnerNamedParamInfoAndDisplayName(
+                  'hintStyle', 'GoogleFonts.getFont'),
             Parameters.textParameter()
+              ..withDefaultValue(null)
+              ..withRequired(false)
               ..withNamedParamInfoAndSameDisplayName('errorText'),
-            Parameters.textStyleParameter()
+            Parameters.googleFontTextStyleParameter()
               ..withInnerNamedParamInfoAndDisplayName(
-                  'errorStyle', 'TextStyle'),
+                  'errorStyle', 'GoogleFonts.getFont'),
             Parameters.inputBorderParameter(),
-            ComponentParameter(multiple: false, info: NamedParameterInfo('icon'))
+            ComponentParameter(
+              multiple: false,
+              info: NamedParameterInfo('icon'),
+            ),
+            ComponentParameter(
+              multiple: false,
+              info: NamedParameterInfo('prefixIcon'),
+            ),
+            ComponentParameter(
+              multiple: false,
+              info: NamedParameterInfo('suffixIcon'),
+            ),
+            Parameters.colorParameter()
+              ..withNamedParamInfoAndSameDisplayName('iconColor'),
+            Parameters.textParameter()
+              ..withNamedParamInfoAndSameDisplayName('prefixText'),
+            Parameters.googleFontTextStyleParameter()
+              ..withInnerNamedParamInfoAndDisplayName(
+                  'prefixStyle', 'GoogleFonts.getFont'),
+            Parameters.textParameter()
+              ..withNamedParamInfoAndSameDisplayName('suffixText'),
+            Parameters.googleFontTextStyleParameter()
+              ..withInnerNamedParamInfoAndDisplayName(
+                  'suffixStyle', 'GoogleFonts.getFont'),
+            Parameters.inputBorderParameter()
+              ..withNamedParamInfoAndSameDisplayName('enabledBorder'),
+            Parameters.colorParameter()
+              ..withNamedParamInfoAndSameDisplayName('fillColor')
+              ..withRequired(false),
+            Parameters.enableParameter()
           ],
           evaluate: (params) {
             return InputDecoration(
@@ -118,7 +157,17 @@ class Parameters {
               errorText: params[7].value,
               errorStyle: params[8].value,
               border: params[9].value,
-              icon: (params[10] as ComponentParameter).build(context)
+              icon: (params[10] as ComponentParameter).build(),
+              prefixIcon: (params[11] as ComponentParameter).build(),
+              suffixIcon: (params[12] as ComponentParameter).build(),
+              iconColor: params[13].value,
+              prefixText: params[14].value,
+              prefixStyle: params[15].value,
+              suffixText: params[16].value,
+              suffixStyle: params[17].value,
+              enabledBorder: params[18].value,
+              fillColor: params[19].value,
+              enabled: params[20].value,
             );
           },
           info: InnerObjectParameterInfo(
@@ -187,7 +236,7 @@ class Parameters {
           borderParameter(),
           gradientParameter(),
           boxShadowListParameter(),
-          boxShapeParameter()
+          boxShapeParameter(),
         ],
         name: 'decoration',
         evaluate: (params) {
@@ -257,6 +306,8 @@ class Parameters {
         'centerLeft': Alignment.centerLeft,
         'center': Alignment.center,
         'centerRight': Alignment.centerRight,
+        'topCenter': Alignment.topCenter,
+        'bottomCenter': Alignment.bottomCenter,
         'topLeft': Alignment.topLeft,
         'topRight': Alignment.topRight,
         'bottomLeft': Alignment.bottomLeft,
@@ -265,13 +316,34 @@ class Parameters {
       defaultValue: 'center',
       info: NamedParameterInfo('alignment'));
 
+  static Parameter tileModeParameter() => ChoiceValueParameter(
+      name: 'tile-mode',
+      options: {
+        'clamp': TileMode.clamp,
+        'mirror': TileMode.mirror,
+        'decal': TileMode.decal,
+        'repeated': TileMode.repeated,
+      },
+      defaultValue: 'clamp',
+      info: NamedParameterInfo('tileMode'));
+
+  static Parameter stackFitParameter() => ChoiceValueParameter(
+      name: 'fit',
+      options: {
+        'expand': StackFit.expand,
+        'loose': StackFit.loose,
+        'passThrough': StackFit.passthrough,
+      },
+      defaultValue: 'loose',
+      info: NamedParameterInfo('alignment'));
+
   static Parameter iconParameter() => ChoiceValueParameter(
       name: 'Choose icon',
-      getCode: (key){
+      getCode: (key) {
         return 'Icons.$key';
       },
-      fromCodeToKey: (code){
-        return code.substring(code.indexOf('.')+1);
+      fromCodeToKey: (code) {
+        return code.substring(code.indexOf('.') + 1);
       },
       options: {
         'close': Icons.close,
@@ -297,12 +369,18 @@ class Parameters {
         'notifications': Icons.notifications,
         'wifi': Icons.wifi,
         'comment_rounded': Icons.comment_rounded,
-        'apps':Icons.apps,
-        'arrow_drop_down_rounded':Icons.arrow_drop_down_rounded,
-        'visibility_rounded':Icons.visibility_rounded,
-        'visibility_off':Icons.visibility_off,
-        'star':Icons.star,
-        'star_border':Icons.star_border,
+        'apps': Icons.apps,
+        'arrow_drop_down_rounded': Icons.arrow_drop_down_rounded,
+        'visibility_rounded': Icons.visibility_rounded,
+        'visibility_off': Icons.visibility_off,
+        'star': Icons.star,
+        'star_border': Icons.star_border,
+        'person': Icons.person,
+        'done': Icons.done,
+        'lock': Icons.lock,
+        'mail': Icons.mail,
+        'mail_outline': Icons.mail_outline,
+        'work': Icons.work,
       },
       defaultValue: 'close',
       required: true);
@@ -351,12 +429,64 @@ class Parameters {
         info: NamedParameterInfo('color'),
       );
 
+
+  static ComplexParameter themeDataParameter() => ComplexParameter(
+          params: [
+            Parameters.backgroundColorParameter(),
+            Parameters.colorParameter()
+              ..withRequired(false)
+              ..inputCalculateAs=((color,forward)=>(color as Color).withAlpha(255))
+              ..withNamedParamInfoAndSameDisplayName('primaryColor'),
+            Parameters.colorParameter()
+              ..withRequired(false)
+              ..withNamedParamInfoAndSameDisplayName('secondaryHeaderColor'),
+            Parameters.colorParameter()
+              ..withRequired(false)
+              ..withNamedParamInfoAndSameDisplayName('primaryColorLight'),
+            Parameters.colorParameter()
+              ..withRequired(false)
+              ..withNamedParamInfoAndSameDisplayName('primaryColorDark'),
+            Parameters.colorParameter()
+              ..withRequired(false)
+              ..withNamedParamInfoAndSameDisplayName('cardColor'),
+            Parameters.colorParameter()
+              ..withRequired(false)
+              ..withNamedParamInfoAndSameDisplayName('focusColor'),
+            Parameters.colorParameter()
+              ..withRequired(false)
+              ..withNamedParamInfoAndSameDisplayName('hoverColor'),
+            Parameters.colorParameter()
+              ..withRequired(false)
+              ..withNamedParamInfoAndSameDisplayName('splashColor'),
+            Parameters.colorParameter()
+              ..withRequired(false)
+              ..withNamedParamInfoAndSameDisplayName('hintColor'),
+          ],
+          evaluate: (params) {
+            return ThemeData(
+              backgroundColor: params[0].value,
+              primaryColor: params[1].value,
+              secondaryHeaderColor: params[2].value,
+              primaryColorLight: params[3].value,
+              primaryColorDark: params[4].value,
+              cardColor: params[5].value,
+              focusColor:params[6].value ,
+              hoverColor: params[7].value,
+              splashColor: params[8].value,
+              hintColor: params[9].value,
+             );
+          },
+      name: 'Theme',
+          info: InnerObjectParameterInfo(innerObjectName: 'ThemeData'));
+
   static SimpleParameter backgroundColorParameter() => colorParameter()
     ..withDisplayName('background-color')
+    ..withRequired(false)
     ..withInfo(NamedParameterInfo('backgroundColor'));
 
   static SimpleParameter foregroundColorParameter() => colorParameter()
     ..withDisplayName('foreground-color')
+    ..withRequired(false)
     ..withInfo(NamedParameterInfo('foregroundColor'));
 
   static wrapAlignmentParameter() => ChoiceValueParameter(
@@ -383,7 +513,16 @@ class Parameters {
         info: NamedParameterInfo('crossAxisAlignment'),
         defaultValue: 'start',
       );
-
+  static themeModeParameter() => ChoiceValueParameter(
+    name: 'theme Mode',
+    options: {
+      'light': ThemeMode.light,
+      'dark': ThemeMode.dark,
+      'system': ThemeMode.system,
+    },
+    info: NamedParameterInfo('themeMode'),
+    defaultValue: 'system',
+  );
   static mainAxisAlignmentParameter() => ChoiceValueParameter(
         name: 'mainAxisAlignment',
         options: {
@@ -481,6 +620,7 @@ class Parameters {
   static gradientParameter() => ChoiceParameter(
           options: [
             linearGradientParameter(),
+            radialGradientParameter(),
           ],
           name: 'gradient',
           required: false,
@@ -491,20 +631,45 @@ class Parameters {
             colorListParameter(),
             alignmentParameter()..withNamedParamInfoAndSameDisplayName('begin'),
             alignmentParameter()..withNamedParamInfoAndSameDisplayName('end'),
-            doubleListParameter()..withNamedParamInfoAndSameDisplayName('stops')
+            doubleListParameter()
+              ..withNamedParamInfoAndSameDisplayName('stops'),
+            tileModeParameter()
           ],
           name: 'linear gradient',
           info: InnerObjectParameterInfo(innerObjectName: 'LinearGradient'),
           evaluate: (params) {
-            logger('HIIII  ${params[0].value}');
             return LinearGradient(
-                colors: params[0].value,
-                begin: params[1].value,
-                end: params[2].value,
-                stops: params[3].value
-                // tileMode: params[3].value,
-                // stops: params[4].value,
-                );
+              colors: params[0].value,
+              begin: params[1].value,
+              end: params[2].value,
+              stops: params[3].value,
+              tileMode: params[4].value,
+            );
+          });
+
+  static radialGradientParameter() => ComplexParameter(
+          params: [
+            colorListParameter(),
+            radiusParameter()
+              ..withDefaultValue(0.5)
+              ..withRequired(true),
+            doubleListParameter()
+              ..withNamedParamInfoAndSameDisplayName('stops'),
+            alignmentParameter()
+              ..withNamedParamInfoAndSameDisplayName('center'),
+            tileModeParameter()
+          ],
+          name: 'radial gradient',
+          info: InnerObjectParameterInfo(innerObjectName: 'RadialGradient'),
+          evaluate: (params) {
+            logger('HIIII  ${params[0].value}');
+            return RadialGradient(
+              colors: params[0].value,
+              radius: params[1].value,
+              stops: params[2].value,
+              center: params[3].value,
+              tileMode: params[4].value,
+            );
           });
 
   static Parameter boxShadowParameter() => ComplexParameter(
@@ -532,6 +697,7 @@ class Parameters {
   static Parameter boxShadowListParameter() => ListParameter<BoxShadow>(
         parameterGenerator: () => boxShadowParameter(),
         displayName: 'box-shadow',
+        required: false,
         info: NamedParameterInfo('boxShadow'),
       );
 
@@ -540,7 +706,10 @@ class Parameters {
         initialParams: [
           colorParameter()
             ..withInfo(null)
-            ..withDefaultValue(AppColors.black)
+            ..withDefaultValue(AppColors.black),
+          colorParameter()
+            ..withInfo(null)
+            ..withDefaultValue(AppColors.white)
         ],
         parameterGenerator: () => colorParameter()..withInfo(null),
         info: NamedParameterInfo('colors'),
@@ -739,7 +908,7 @@ class Parameters {
           info: InnerObjectParameterInfo(
               innerObjectName: 'TextSpan', namedIfHaveAny: 'children'));
 
-  static Parameter textParameter() => SimpleParameter<String>(
+  static SimpleParameter textParameter() => SimpleParameter<String>(
       name: 'text',
       defaultValue: '',
       inputType: ParamInputType.longText,
@@ -767,6 +936,21 @@ class Parameters {
         });
   }
 
+  static BooleanParameter italicParameter() => BooleanParameter(
+        displayName: 'italic',
+        required: false,
+        val: false,
+        evaluate: (val) => val ? 'FontStyle.italic' : 'FontStyle.normal',
+        info: NamedParameterInfo('fontStyle'),
+      );
+
+  static BooleanParameter enableParameter() => BooleanParameter(
+        displayName: 'enable',
+        required: true,
+        val: true,
+        info: NamedParameterInfo('enabled'),
+      );
+
   static Parameter textStyleParameter() => ComplexParameter(
         info: InnerObjectParameterInfo(
             innerObjectName: 'TextStyle', namedIfHaveAny: 'textStyle'),
@@ -793,13 +977,7 @@ class Parameters {
             name: 'fontWeight',
             info: NamedParameterInfo('fontWeight'),
           ),
-          BooleanParameter(
-            displayName: 'italic',
-            required: false,
-            val: false,
-            evaluate: (val) => val ? 'FontStyle.italic' : 'FontStyle.normal',
-            info: NamedParameterInfo('fontStyle'),
-          ),
+          italicParameter()
         ],
         name: 'Style',
         evaluate: (params) {
@@ -818,4 +996,43 @@ class Parameters {
       evaluate: (params) {
         return GoogleFonts.getFont(params[0].value, textStyle: params[1].value);
       });
+
+  static ComplexParameter materialStatePropertyParameter<T>(
+          Parameter parameter, String named) =>
+      ComplexParameter(
+          params: [parameter],
+          evaluate: (params) {
+            return MaterialStateProperty.all<T>(params[0].value);
+          },
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'MaterialStateProperty.all',
+              namedIfHaveAny: named));
+
+  static buttonStyleParameter() => ComplexParameter(
+          params: [
+            materialStatePropertyParameter<Color?>(
+                backgroundColorParameter()..withChangeNamed(null),
+                'backgroundColor'),
+            materialStatePropertyParameter<Color?>(
+                foregroundColorParameter()..withChangeNamed(null),
+                'foregroundColor'),
+            alignmentParameter(),
+            materialStatePropertyParameter<TextStyle>(
+                googleFontTextStyleParameter()..withChangeNamed(null),
+                'textStyle'),
+            materialStatePropertyParameter<EdgeInsets?>(
+                paddingParameter()..withChangeNamed(null), 'padding'),
+            materialStatePropertyParameter<BorderSide?>(
+                borderSideParameter()..withChangeNamed(null), 'side')
+          ],
+          evaluate: (params) {
+            return ButtonStyle(
+              backgroundColor: params[0].value,
+              foregroundColor: params[1].value,
+              alignment: params[2].value,
+              textStyle: params[3].value,
+              padding: params[4].value,
+              side: params[5].value,
+            );
+          });
 }

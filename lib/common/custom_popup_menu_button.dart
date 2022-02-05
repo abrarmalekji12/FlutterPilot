@@ -183,7 +183,7 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
   }
   double getCalculatedHeight() {
     final size=MediaQuery.of(context).size;
-    final itemsHeight=_itemCount*60.0;
+    final itemsHeight=_itemCount*40.0;
     final topPosition=getTopPosition();
     if(topPosition+itemsHeight>size.height){
       return size.height-(topPosition);

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import '../common/responsive/responsive_widget.dart';
 import 'parameter_rule_model.dart';
@@ -15,7 +16,7 @@ import '../component_list.dart';
 abstract class Component {
   late List<ParameterRuleModel> paramRules;
   List<Parameter> parameters;
-  final  List<ComponentParameter> componentParameters=[];
+  final List<ComponentParameter> componentParameters = [];
   String name;
   late String id;
   bool isConstant;
@@ -35,9 +36,17 @@ abstract class Component {
     this.componentParameters.addAll(componentParameters);
   }
 
-
   void addRule(ParameterRuleModel ruleModel) {
     paramRules.add(ruleModel);
+  }
+
+  void initComponentParameters(final BuildContext context) {
+    if (!(Get.isDialogOpen ?? false)) {
+      for (var element in componentParameters) {
+        element.visualBoxCubit =
+            BlocProvider.of<VisualBoxCubit>(context, listen: false);
+      }
+    }
   }
 
   ParameterRuleModel? validateParameters(final Parameter changedParameter) {
@@ -69,6 +78,15 @@ abstract class Component {
     }
   }
 
+  ScrollController initScrollController(BuildContext context) {
+    return ScrollController()
+      ..addListener(() {
+        forEach((Component component) {
+          component.lookForUIChanges(context);
+        });
+      });
+  }
+
   static Component? fromCode(String? code) {
     if (code == null) {
       return null;
@@ -77,9 +95,22 @@ abstract class Component {
     final Component comp;
     if (name.contains('[')) {
       final index = code.indexOf('[', 0);
-      comp = componentList[name.substring(0, index)]!();
+      final compName = name.substring(0, index);
+      if (!componentList.containsKey(compName)) {
+        Fluttertoast.showToast(
+            msg:
+                'No widget with name $compName found, please clear cookies and reload App.');
+        return null;
+      }
+      comp = componentList[compName]!();
       comp.metaInfoFromCode(name.substring(index));
     } else {
+      if (!componentList.containsKey(name)) {
+        Fluttertoast.showToast(
+            msg:
+                'No widget with name $name found, please clear cookies and reload App.');
+        return null;
+      }
       comp = componentList[name]!();
     }
 
@@ -125,6 +156,7 @@ abstract class Component {
       case 4:
         final List<String> nameList =
             (comp as CustomNamedHolder).childMap.keys.toList();
+        final removeList = [];
         for (int i = 0; i < parameterCodes.length; i++) {
           final colonIndex = parameterCodes[i].indexOf(':');
           final name = parameterCodes[i].substring(0, colonIndex);
@@ -133,7 +165,11 @@ abstract class Component {
                 Component.fromCode(parameterCodes[i].substring(colonIndex + 1))!
                   ..setParent(comp);
             nameList.remove(name);
+            removeList.add(parameterCodes[i]);
           }
+        }
+        for (int i = 0; i < removeList.length; i++) {
+          parameterCodes.remove(removeList[i]);
         }
         break;
       case 1:
@@ -165,7 +201,7 @@ abstract class Component {
   Widget build(BuildContext context) {
     if (ResponsiveWidget.isLargeScreen(context)) {
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-        _lookForUIChanges(context);
+        lookForUIChanges(context);
       });
     }
 
@@ -175,8 +211,17 @@ abstract class Component {
     );
   }
 
-  void forEach(void Function(Component) work) async {
+  void forEach(final void Function(Component) work) async {
     work.call(this);
+    forEachInComponentParameter(work);
+  }
+
+  void forEachInComponentParameter(final void Function(Component) work) {
+    for (final ComponentParameter componentParameter in componentParameters) {
+      for (final component in componentParameter.components) {
+        work.call(component);
+      }
+    }
   }
 
   Component getLastRoot() {
@@ -264,7 +309,7 @@ abstract class Component {
     return _root;
   }
 
-  void _lookForUIChanges(BuildContext context) async {
+  void lookForUIChanges(BuildContext context) async {
     if (Get.isDialogOpen ?? false) {
       return;
     }
@@ -302,12 +347,14 @@ abstract class Component {
   String code({bool clean = true}) {
     String middle = '';
     for (final parameter in parameters) {
-      final paramCode = parameter.code;
+      final paramCode = parameter.code(clean);
       if (paramCode.isNotEmpty) {
         middle += '$paramCode,'.replaceAll(',,', ',');
+        if (clean) {
+          middle += '\n';
+        }
       }
     }
-    middle = middle.replaceAll(',', ',\n');
 
     String name = this.name;
     if (!clean) {
@@ -321,6 +368,11 @@ abstract class Component {
 
   void searchTappedComponent(Offset offset, List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
+      for (final compParam in componentParameters) {
+        for (final comp in compParam.components) {
+          comp.searchTappedComponent(offset, components);
+        }
+      }
       components.add(this);
       return;
     }
@@ -359,12 +411,15 @@ abstract class MultiHolder extends Component {
   String code({bool clean = true}) {
     String middle = '';
     for (final para in parameters) {
-      final paramCode = para.code;
+      final paramCode = para.code(clean);
       if (paramCode.isNotEmpty) {
         middle += '$paramCode,'.replaceAll(',,', ',');
+        if (clean) {
+          middle += '\n';
+        }
       }
     }
-    middle = middle.replaceAll(',', ',\n');
+
     String name = this.name;
     if (!clean) {
       name += '[id=$id]';
@@ -382,6 +437,8 @@ abstract class MultiHolder extends Component {
     for (final child in children) {
       child.forEach(work);
     }
+
+    forEachInComponentParameter(work);
   }
 
   void addChild(Component component, {int? index}) {
@@ -399,14 +456,14 @@ abstract class MultiHolder extends Component {
   int removeChild(Component component) {
     final index = children.indexOf(component);
     component.setParent(null);
-    children.remove(component);
+    children.removeAt(index);
     return index;
   }
 
   void replaceChild(Component old, Component component) {
     component.setParent(this);
     final index = children.indexOf(old);
-    children.remove(old);
+    children.removeAt(index);
     children.insert(index, component);
     if (component is CustomComponent) {
       component.root?.parent = this;
@@ -418,6 +475,11 @@ abstract class MultiHolder extends Component {
     if (boundary?.contains(offset) ?? false) {
       for (final child in children) {
         child.searchTappedComponent(offset, components);
+      }
+      for (final compParam in componentParameters) {
+        for (final comp in compParam.components) {
+          comp.searchTappedComponent(offset, components);
+        }
       }
       components.add(this);
     }
@@ -469,18 +531,30 @@ abstract class Holder extends Component {
     }
   }
 
+  void addComponent(Component? component) {
+    child = component;
+    component?.setParent(child);
+  }
+
   @override
   void forEach(void Function(Component) work) {
     work.call(this);
     if (child != null) {
       child!.forEach(work);
     }
+
+    forEachInComponentParameter(work);
   }
 
   @override
   void searchTappedComponent(Offset offset, List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
       child?.searchTappedComponent(offset, components);
+      for (final compParam in componentParameters) {
+        for (final comp in compParam.components) {
+          comp.searchTappedComponent(offset, components);
+        }
+      }
       components.add(this);
     }
   }
@@ -489,11 +563,14 @@ abstract class Holder extends Component {
   String code({bool clean = true}) {
     String middle = '';
     for (final para in parameters) {
-      final paramCode = para.code;
+      final paramCode = para.code(clean);
       if (paramCode.isNotEmpty) {
-        final paramCode = para.code;
+        final paramCode = para.code(clean);
         if (paramCode.isNotEmpty) {
           middle += '$paramCode,'.replaceAll(',,', ',');
+          if (clean) {
+            middle += '\n';
+          }
         }
       }
     }
@@ -501,7 +578,6 @@ abstract class Holder extends Component {
     if (!clean) {
       name += '[id=$id]';
     }
-    middle = middle.replaceAll(',', ',\n');
     if (child == null) {
       if (!required) {
         return '$name(\n$middle\n),';
@@ -582,6 +658,8 @@ abstract class CustomNamedHolder extends Component {
         child.forEach(work);
       }
     }
+
+    forEachInComponentParameter(work);
   }
 
   @override
@@ -602,15 +680,17 @@ abstract class CustomNamedHolder extends Component {
   String code({bool clean = true}) {
     String middle = '';
     for (final para in parameters) {
-      final paramCode = para.code;
+      final paramCode = para.code(clean);
       if (paramCode.isNotEmpty) {
-        final paramCode = para.code;
+        final paramCode = para.code(clean);
         if (paramCode.isNotEmpty) {
           middle += '$paramCode,'.replaceAll(',,', ',');
+          if (clean) {
+            middle += '\n';
+          }
         }
       }
     }
-    middle = middle.replaceAll(',', ',\n');
     String name = this.name;
     if (!clean) {
       name += '[id=$id]';
@@ -618,7 +698,8 @@ abstract class CustomNamedHolder extends Component {
     String childrenCode = '';
     for (final child in childMap.keys) {
       if (childMap[child] != null) {
-        childrenCode += '$child:${childMap[child]!.code(clean: clean)},';
+        childrenCode += '$child:${childMap[child]!.code(clean: clean)},'
+            .replaceAll(',,', ',');
       }
     }
     return '$name(\n$middle$childrenCode\n)';
@@ -698,12 +779,14 @@ abstract class CustomComponent extends Component {
     if (root != null) {
       root!.forEach(work);
     }
+
+    forEachInComponentParameter(work);
   }
 
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      _lookForUIChanges(context);
+      lookForUIChanges(context);
     });
     return ComponentWidget(key: GlobalObjectKey(this), child: create(context));
   }
