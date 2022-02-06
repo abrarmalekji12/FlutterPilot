@@ -199,7 +199,7 @@ abstract class Component {
   }
 
   Widget build(BuildContext context) {
-    if (ResponsiveWidget.isLargeScreen(context)) {
+    if (!ResponsiveWidget.isSmallScreen(context)) {
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
       });

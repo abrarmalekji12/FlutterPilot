@@ -31,9 +31,11 @@ import '../models/component_model.dart';
 import 'component_tree.dart';
 
 class HomePage extends StatefulWidget {
-  final String? projectName;
+  final String projectName;
+  final int userId;
 
-  const HomePage({Key? key, this.projectName}) : super(key: key);
+  const HomePage({Key? key, required this.projectName, required this.userId})
+      : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -43,7 +45,7 @@ class _HomePageState extends State<HomePage> {
   final ScrollController propertyScrollController = ScrollController();
   final componentCreationCubit = ComponentCreationCubit();
   final componentOperationCubit = ComponentOperationCubit();
-  final flutterProjectCubit = FlutterProjectCubit();
+  late final FlutterProjectCubit flutterProjectCubit;
   final ParameterBuildCubit _parameterBuildCubit = ParameterBuildCubit();
   final visualBoxCubit = VisualBoxCubit();
   final screenConfigCubit = ScreenConfigCubit();
@@ -53,9 +55,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    flutterProjectCubit = FlutterProjectCubit(widget.userId);
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
-          componentOperationCubit, widget.projectName ?? 'untitled12');
+      flutterProjectCubit.loadFlutterProject(
+          componentSelectionCubit, componentOperationCubit, widget.projectName);
     });
     html.window.onKeyDown.listen((event) {
       // debugPrint('PRESSED ${event.altKey} ${event.key} ${event.eventPhase}');
@@ -316,7 +319,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                         borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.all(10),
                     child: Text(
-                      variableBoxOpen ? 'Hide' : 'Show Variables',
+                      variableBoxOpen ? 'Hide' : 'Variables',
                       style: AppFontStyle.roboto(15,
                           color: Colors.black, fontWeight: FontWeight.w500),
                     ),
@@ -531,8 +534,6 @@ class CenterMainSide extends StatelessWidget {
                           child: SizedBox(
                             width: _screenConfigCubit.screenConfig.width,
                             height: _screenConfigCubit.screenConfig.height,
-                            // widthFactor: offset.dx,
-                            // heightFactor: offset.dy,
                             child: GestureDetector(
                               onSecondaryTapDown: (event) {
                                 onSecondaryTapDown(context, event);
@@ -540,8 +541,6 @@ class CenterMainSide extends StatelessWidget {
                               onTapDown: onTapDown,
                               child: Container(
                                 key: const GlobalObjectKey('device window'),
-                                // width: _screenConfigCubit.screenConfig.width,
-                                // height: _screenConfigCubit.screenConfig.height,
                                 color: Colors.white,
                                 child: Stack(
                                   children: [

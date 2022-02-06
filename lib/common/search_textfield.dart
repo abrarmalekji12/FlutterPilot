@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/constant/app_colors.dart';
-import 'package:flutter_builder/constant/font_style.dart';
-import 'package:flutter_builder/constant/string_constant.dart';
+import '../constant/app_colors.dart';
+import '../constant/font_style.dart';
+import '../constant/string_constant.dart';
 
 class SearchTextField extends StatefulWidget {
   final FocusNode focusNode;

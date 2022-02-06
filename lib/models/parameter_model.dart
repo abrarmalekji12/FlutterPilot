@@ -31,6 +31,9 @@ abstract class Parameter {
   void cloneOf(Parameter parameter) {
     if (parameter is SimpleParameter) {
       (this as SimpleParameter).val = parameter.val;
+      if(parameter.compilerEnable!=null) {
+        (this as SimpleParameter).compilerEnable!.code=parameter.compilerEnable!.code;
+      }
     } else if (parameter is ChoiceParameter) {
       for (int i = 0; i < (this as ChoiceParameter).options.length; i++) {
         (this as ChoiceParameter).options[i].cloneOf(parameter.options[i]);

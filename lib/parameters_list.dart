@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/models/operation_model.dart';
+import 'models/operation_model.dart';
 import 'common/logger.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -231,7 +231,7 @@ class Parameters {
 
   static ComplexParameter decorationParameter() => ComplexParameter(
         params: [
-          colorParameter(),
+          colorParameter()..withRequired(false),
           borderRadiusParameter(),
           borderParameter(),
           gradientParameter(),
@@ -474,6 +474,7 @@ class Parameters {
               hoverColor: params[7].value,
               splashColor: params[8].value,
               hintColor: params[9].value,
+              visualDensity: VisualDensity.comfortable
              );
           },
       name: 'Theme',
@@ -793,6 +794,7 @@ class Parameters {
   static ChoiceParameter borderSideParameter() => ChoiceParameter(
         info: NamedParameterInfo('borderSide'),
         required: true,
+        name: 'Border',
         options: [
           ConstantValueParameter(
               displayName: 'none',
@@ -1029,7 +1031,7 @@ class Parameters {
             materialStatePropertyParameter<EdgeInsets?>(
                 paddingParameter()..withChangeNamed(null), 'padding'),
             materialStatePropertyParameter<BorderSide?>(
-                borderSideParameter()..withChangeNamed(null), 'side')
+                borderSideParameter()..withChangeNamed(null), 'side'),
           ],
           evaluate: (params) {
             return ButtonStyle(

@@ -1,8 +1,7 @@
 import 'package:cyclop/cyclop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/ui/image_selection.dart';
-import '../common/logger.dart';
+import 'image_selection.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../common/app_switch.dart';
 import '../common/custom_drop_down.dart';
@@ -14,7 +13,6 @@ import '../cubit/parameter_build_cubit/parameter_build_cubit.dart';
 import '../models/other_model.dart';
 import '../models/parameter_model.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../enums.dart';
@@ -173,41 +171,47 @@ class ParameterWidget extends StatelessWidget {
 
 class SimpleParameterWidget extends StatelessWidget {
   final SimpleParameter parameter;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _textEditingController=TextEditingController();
 
-  const SimpleParameterWidget({Key? key, required this.parameter})
-      : super(key: key);
+  SimpleParameterWidget({Key? key, required this.parameter}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: parameter.inputType!=ParamInputType.longText?40:null,
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-          color: const Color(0xfff2f2f2),
-          borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.all(3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (parameter.displayName != null)
-            Expanded(
-              child: Text(
-                parameter.displayName!,
-                style: AppFontStyle.roboto(14,
-                    color: Colors.black, fontWeight: FontWeight.w500),
+    return Form(
+      key: _formKey,
+      child: Container(
+        height: parameter.inputType != ParamInputType.longText &&
+                parameter.inputType != ParamInputType.text
+            ? 40
+            : null,
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+            color: const Color(0xfff2f2f2),
+            borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(3),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (parameter.displayName != null)
+              Expanded(
+                child: Text(
+                  parameter.displayName!,
+                  style: AppFontStyle.roboto(14,
+                      color: Colors.black, fontWeight: FontWeight.w500),
+                ),
               ),
+            const SizedBox(
+              width: 20,
             ),
-          const SizedBox(
-            width: 20,
-          ),
-          Expanded(
-            child: Container(
-
-              alignment: Alignment.centerRight,
-              child: _buildInputType(context),
-            ),
-          )
-        ],
+            Expanded(
+              child: Container(
+                alignment: Alignment.centerRight,
+                child: _buildInputType(context),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -215,31 +219,60 @@ class SimpleParameterWidget extends StatelessWidget {
   Widget _buildInputType(BuildContext context) {
     switch (parameter.inputType) {
       case ParamInputType.text:
+        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+          _textEditingController.text='';
+          _textEditingController.text=parameter.compilerEnable != null &&
+              parameter.compilerEnable!.code.isNotEmpty
+              ? parameter.compilerEnable!.code
+              : '${parameter.getValue() ?? ''}';
+        });
         return SizedBox(
           width: 110,
-          height: 35,
-          child: TextField(
-            controller: TextEditingController.fromValue(
-                TextEditingValue(text: parameter.compilerEnable!=null&&parameter.compilerEnable!.code.isNotEmpty?parameter.compilerEnable!.code:'${parameter.getValue() ?? ''}')),
+          // height: 35,
+          child: TextFormField(
+            validator: (value) {
+              if (value == null) {
+                return '';
+              }
+              final result =
+                  ComponentOperationCubit.codeProcessor.process(value);
+              debugPrint('RESULT IS $value $result');
+              if (result != null) {
+                parameter.compilerEnable!.code = value;
+                parameter.val = result;
+                if (parameter.inputCalculateAs != null) {
+                  parameter.val =
+                      parameter.inputCalculateAs!.call(parameter.val!, true);
+                }
+                BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                    .parameterChanged(context, parameter);
+                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                    .changedComponent();
+                return null;
+              }
+              return '';
+            },
+            buildCounter: parameter.compilerEnable==null?null:(
+              BuildContext context, {
+              required int currentLength,
+              required int? maxLength,
+              required bool isFocused,
+            }) {
+              return Text('${parameter.val}',style: AppFontStyle.roboto(13,fontWeight: FontWeight.w500,color: Colors.blueAccent),);
+            },
+            controller: _textEditingController,
             onChanged: (value) {
               if (value.isNotEmpty) {
                 if (parameter.compilerEnable != null) {
-                  final result = ComponentOperationCubit.codeProcessor
-                      .process(value.toString());
-                  debugPrint('RESULT IS $value $result');
-                  if (result != null) {
-                    parameter.compilerEnable!.code=value;
-                    parameter.val = result;
-                    if (parameter.inputCalculateAs != null) {
-                      parameter.val = parameter.inputCalculateAs!.call(parameter.val!, true);
-                    }
-                  } else {
-                    return;
-                  }
+                  _formKey.currentState!.validate();
+                  return;
                 } else {
                   parameter.setValue(value);
                 }
               } else {
+                if (parameter.compilerEnable != null) {
+                  parameter.compilerEnable!.code = '';
+                }
                 parameter.val = null;
               }
               BlocProvider.of<ParameterBuildCubit>(context, listen: false)
@@ -249,8 +282,10 @@ class SimpleParameterWidget extends StatelessWidget {
             },
             textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                 enabled: true,
+                errorText: null,
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide:
@@ -270,7 +305,7 @@ class SimpleParameterWidget extends StatelessWidget {
           width: 200,
           height: 60,
           child: TextField(
-            maxLines: 5,
+            maxLines: 3,
             controller: TextEditingController.fromValue(
                 TextEditingValue(text: '${parameter.rawValue ?? ''}')),
             onChanged: (value) {
@@ -286,7 +321,8 @@ class SimpleParameterWidget extends StatelessWidget {
             },
             keyboardType: TextInputType.multiline,
             decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 enabled: true,
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -346,7 +382,8 @@ class SimpleParameterWidget extends StatelessWidget {
                       onColorChanged: (color) {
                         parameter.val = color;
                         if (parameter.inputCalculateAs != null) {
-                          parameter.val = parameter.inputCalculateAs!.call(parameter.val!, true);
+                          parameter.val = parameter.inputCalculateAs!
+                              .call(parameter.val!, true);
                         }
                         setStateForColor(() {});
                         BlocProvider.of<ParameterBuildCubit>(context,

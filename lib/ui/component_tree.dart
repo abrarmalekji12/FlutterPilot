@@ -481,7 +481,7 @@ class MultipleChildWidget extends StatelessWidget {
       case 1:
         double height = 35;
         for (final compParam in component.componentParameters) {
-          height += 35;
+          height += 30;
           for (final comp in compParam.components) {
             height += getCalculatedHeight(comp);
           }
@@ -495,7 +495,7 @@ class MultipleChildWidget extends StatelessWidget {
           height += getCalculatedHeight(comp);
         }
         for (final compParam in component.componentParameters) {
-          height += 35;
+          height += 30;
           for (final comp in compParam.components) {
             height += getCalculatedHeight(comp);
           }
@@ -505,7 +505,7 @@ class MultipleChildWidget extends StatelessWidget {
       case 3:
         double height = 35;
         for (final compParam in component.componentParameters) {
-          height += 35;
+          height += 30;
           for (final comp in compParam.components) {
             height += getCalculatedHeight(comp);
           }
@@ -519,6 +519,12 @@ class MultipleChildWidget extends StatelessWidget {
             in (component as CustomNamedHolder).childMap.values) {
           height += 40;
           if (comp != null) {
+            height += getCalculatedHeight(comp);
+          }
+        }
+        for (final compParam in component.componentParameters) {
+          height += 30;
+          for (final comp in compParam.components) {
             height += getCalculatedHeight(comp);
           }
         }
@@ -862,8 +868,8 @@ class ComponentModificationMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final favourite = componentOperationCubit.isFavourite(component) &&
-        !componentParameterOperation;
+    final favourite = customNamed==null&&!componentParameterOperation&&componentOperationCubit.isFavourite(component);
+
     final components =
         componentList.map((key, value) => MapEntry(key, value()));
     return Container(

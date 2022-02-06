@@ -24,7 +24,7 @@ class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
       currentSelected = component;
       currentSelectedRoot = root;
       logger('==== ComponentSelectionCubit ** changeComponentSelection == ${component.name} ${root.name}');
-      emit(ComponentSelectionChange(Random.secure().nextInt(1000)));
+      emit(ComponentSelectionChange());
     }
   }
   bool isSelected(Component component){

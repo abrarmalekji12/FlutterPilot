@@ -27,8 +27,8 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
 
   ScreenConfigCubit() : super(ScreenConfigInitial()) {
     screenConfig = screenConfigs[0];
-    ComponentOperationCubit.codeProcessor.variables['dw']=VariableModel('dw',screenConfig.width , true, 'device width',assignmentCode: 'MediaQuery.of(context).size.width');
-    ComponentOperationCubit.codeProcessor.variables['dh']=VariableModel('dh',screenConfig.height , true, 'device height',assignmentCode: 'MediaQuery.of(context).size.height');
+    ComponentOperationCubit.codeProcessor.variables['dw']=VariableModel('dw',screenConfig.width , true, 'device width',assignmentCode: 'MediaQuery.of(context).size.width',deletable: false);
+    ComponentOperationCubit.codeProcessor.variables['dh']=VariableModel('dh',screenConfig.height , true, 'device height',assignmentCode: 'MediaQuery.of(context).size.height',deletable: false);
   }
 
   Offset getSelectedConfig(BoxConstraints constraints) {

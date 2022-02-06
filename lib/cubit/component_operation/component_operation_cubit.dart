@@ -38,7 +38,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentOperationLoadingState());
     try {
       await FireBridge.updateGlobalCustomComponent(
-          1, flutterProject!.name, customComponent,
+          flutterProject!.userId, flutterProject!.name, customComponent,
           newName: newName);
       emit(ComponentOperationInitial());
     } on Exception {
@@ -48,20 +48,20 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   Future<List<ImageData>?> loadAllImages() async {
     emit(ComponentOperationLoadingState());
-    final imageList = await FireBridge.loadAllImages(1);
+    final imageList = await FireBridge.loadAllImages(flutterProject!.userId);
     emit(ComponentOperationInitial());
     return imageList;
   }
 
   void uploadImage(ImageData imageData) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.uploadImage(1, flutterProject!.name, imageData);
+    await FireBridge.uploadImage(flutterProject!.userId, flutterProject!.name, imageData);
     emit(ComponentOperationInitial());
   }
 
   Future<void> deleteImage(String imgName) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.removeImage(1, imgName);
+    await FireBridge.removeImage(flutterProject!.userId, imgName);
     emit(ComponentOperationInitial());
   }
 
@@ -69,7 +69,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentOperationLoadingState());
     try {
       await FireBridge.updateRootComponent(
-          1, flutterProject!.name, flutterProject!.rootComponent!);
+          flutterProject!.userId, flutterProject!.name, flutterProject!.rootComponent!);
       emit(ComponentOperationInitial());
     } on Exception {
       emit(ComponentOperationErrorState());
@@ -102,7 +102,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   void addCustomComponent(String name, {Component? root}) {
     final component = StatelessComponent(name: name);
     flutterProject?.customComponents.add(component);
-    FireBridge.addNewGlobalCustomComponent(1, flutterProject!.name, component);
+    FireBridge.addNewGlobalCustomComponent(flutterProject!.userId, flutterProject!.name, component);
     if (root != null) {
       component.root = root;
       final instance = component.createInstance(root.parent);
@@ -278,7 +278,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> loadFavourites({String? projectName}) async {
     emit(ComponentOperationLoadingState());
     final favouriteComponentList =
-        await FireBridge.loadFavourites(1, projectName: projectName);
+        await FireBridge.loadFavourites(flutterProject!.userId, projectName: projectName);
 
     if (projectName != null) {
       flutterProject!.favouriteList.clear();
@@ -297,7 +297,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
     for (final imageData in imageDataList) {
       if (!byteCache.containsKey(imageData.imageName!)) {
-        imageData.bytes = await FireBridge.loadImage(1, imageData.imageName!);
+        imageData.bytes = await FireBridge.loadImage(flutterProject!.userId, imageData.imageName!);
         if (imageData.bytes != null) {
           byteCache[imageData.imageName!] = imageData.bytes!;
         }
@@ -315,7 +315,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
           ..id = component.id
           ..boundary = component.boundary,
         flutterProject!.name));
-    await FireBridge.addToFavourites(1, component, flutterProject!.name);
+    await FireBridge.addToFavourites(flutterProject!.userId, component, flutterProject!.name);
     emit(ComponentUpdatedState());
   }
 
@@ -328,7 +328,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         break;
       }
     }
-    await FireBridge.removeFromFavourites(1, model.component);
+    await FireBridge.removeFromFavourites(
+        flutterProject!.userId, model.component);
     emit(ComponentUpdatedState());
   }
 
@@ -348,7 +349,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       }
     }
 
-    await FireBridge.removeFromFavourites(1, component);
+    await FireBridge.removeFromFavourites(flutterProject!.userId, component);
     emit(ComponentUpdatedState());
   }
 
@@ -387,21 +388,25 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
   }
 
-  Future<void> updateDeviceSelection(String name) async{
+  Future<void> updateDeviceSelection(String name) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.updateDeviceSelection(1, flutterProject!.name, name);
+    await FireBridge.updateDeviceSelection(
+        flutterProject!.userId, flutterProject!.name, name);
     emit(ComponentOperationInitial());
   }
+
   Future<void> addVariable(VariableModel variableModel) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.addVariable(1, flutterProject!.name,
-        ComponentOperationCubit.codeProcessor.variables[variableModel.name]!);
+    await FireBridge.addVariable(flutterProject!.userId, flutterProject!.name,
+        variableModel);
     emit(ComponentOperationInitial());
   }
 
   Future<void> updateVariable(VariableModel variableModel) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.updateVariable(1, flutterProject!.name,
+    await FireBridge.updateVariable(
+        flutterProject!.userId,
+        flutterProject!.name,
         ComponentOperationCubit.codeProcessor.variables[variableModel.name]!);
     emit(ComponentOperationInitial());
   }

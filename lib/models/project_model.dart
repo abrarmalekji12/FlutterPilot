@@ -9,16 +9,17 @@ import 'component_model.dart';
 
 class FlutterProject {
   String name;
+  final int userId;
   final String? device;
   final List<VariableModel> variables=[];
   final List<CustomComponent> customComponents = [];
   Component? rootComponent;
   final List<FavouriteModel> favouriteList = [];
 
-  FlutterProject(this.name,{this.device});
+  FlutterProject(this.name,this.userId,{this.device});
 
-  factory FlutterProject.createNewProject(String name) {
-    final FlutterProject flutterProject = FlutterProject(name);
+  factory FlutterProject.createNewProject(String name,int userId) {
+    final FlutterProject flutterProject = FlutterProject(name,userId);
     flutterProject.rootComponent = componentList['MaterialApp']!();
     return flutterProject;
   }

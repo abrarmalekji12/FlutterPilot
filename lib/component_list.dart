@@ -50,8 +50,10 @@ final componentList = {
   'VerticalDivider': () => CVerticalDivider(),
   'RichText': () => CRichText(),
   'TextField': () => CTextField(),
+  'InkWell': () => CInkWell(),
   'TextButton': () => CTextButton(),
   'OutlinedButton': () => COutlinedButton(),
+  'ElevatedButton': () => CElevatedButton(),
   'FloatingActionButton': () => CFloatingActionButton(),
   'IconButton': () => CIconButton(),
 };
@@ -59,7 +61,10 @@ final componentList = {
 class CMaterialApp extends CustomNamedHolder {
   CMaterialApp()
       : super('MaterialApp', [
-          Parameters.colorParameter()..withRequired(false),
+          Parameters.colorParameter()
+            ..inputCalculateAs =
+                ((color, forward) => (color as Color).withAlpha(255))
+            ..withRequired(false),
           Parameters.textParameter()
             ..withNamedParamInfoAndSameDisplayName('title'),
           Parameters.themeDataParameter()..withChangeNamed('theme'),
@@ -517,10 +522,7 @@ class CAppBar extends CustomNamedHolder {
 class CScaffold extends CustomNamedHolder {
   CScaffold()
       : super('Scaffold', [
-          Parameters.colorParameter()
-            ..withDisplayName('background-color')
-            ..withDefaultValue(const Color(0xffffffff))
-            ..withInfo(NamedParameterInfo('backgroundColor')),
+          Parameters.backgroundColorParameter(),
           BooleanParameter(
             required: false,
             val: false,
@@ -749,6 +751,57 @@ class COutlinedButton extends Holder {
       onPressed: () {},
       child: child?.build(context) ?? Container(),
       style: parameters[0].value,
+    );
+  }
+}
+
+class CElevatedButton extends Holder {
+  CElevatedButton()
+      : super('ElevatedButton', [
+          Parameters.buttonStyleParameter(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () {},
+      child: child?.build(context) ?? Container(),
+      style: parameters[0].value,
+    );
+  }
+}
+
+class CInkWell extends Holder {
+  CInkWell()
+      : super('InkWell', [
+          Parameters.enableParameter()
+            ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
+          Parameters.colorParameter()
+            ..withRequired(false)
+            ..withNamedParamInfoAndSameDisplayName('hoverColor'),
+          Parameters.colorParameter()
+            ..withRequired(false)
+            ..withNamedParamInfoAndSameDisplayName('focusColor'),
+          Parameters.colorParameter()
+            ..withRequired(false)
+            ..withNamedParamInfoAndSameDisplayName('splashColor'),
+          Parameters.colorParameter()
+            ..withRequired(false)
+            ..withNamedParamInfoAndSameDisplayName('highlightColor'),
+          Parameters.borderRadiusParameter(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return InkWell(
+      onTap: () {},
+      child: child?.build(context) ?? Container(),
+      enableFeedback: parameters[0].value,
+      hoverColor: parameters[1].value,
+      focusColor: parameters[2].value,
+      splashColor: parameters[3].value,
+      highlightColor: parameters[4].value,
+      borderRadius: parameters[5].value,
     );
   }
 }

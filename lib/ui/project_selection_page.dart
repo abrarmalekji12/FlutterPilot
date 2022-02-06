@@ -9,24 +9,26 @@ import '../cubit/flutter_project/flutter_project_cubit.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProjectSelectionPage extends StatefulWidget {
-  const ProjectSelectionPage({Key? key}) : super(key: key);
+  final int userId;
+
+  const ProjectSelectionPage({Key? key, required this.userId})
+      : super(key: key);
 
   @override
   _ProjectSelectionPageState createState() => _ProjectSelectionPageState();
 }
 
 class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
-  final _flutterProjectCubit = FlutterProjectCubit();
+  late final FlutterProjectCubit _flutterProjectCubit;
   List<FlutterProject> _flutterProjects = [];
   final TextEditingController _textEditingController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _flutterProjectCubit = FlutterProjectCubit(widget.userId);
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      FireBridge.init().then((value) {
-        _flutterProjectCubit.loadFlutterProjectList();
-      });
+      _flutterProjectCubit.loadFlutterProjectList();
     });
   }
 
@@ -49,6 +51,9 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                   _flutterProjects =
                       (state as FlutterProjectsLoadedState).flutterProjectList;
                   setState(() {});
+                  break;
+                case FlutterProjectLoadedState:
+                  _flutterProjects.add((state as FlutterProjectLoadedState).flutterProject);
                   break;
                 case FlutterProjectErrorState:
                   AppLoader.hide();
@@ -177,9 +182,13 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                   _flutterProjectCubit
                                       .createNewProject(name)
                                       .then((value) {
-                                    Get.to(() => HomePage(
+                                        _textEditingController.text='';
+
+                                    Get.to(() =>
+                                        HomePage(
                                           projectName: name,
-                                        ));
+                                          userId: widget.userId,
+                                        ), routeName: 'projects/$name');
                                   });
                                 }
                               },
@@ -198,7 +207,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.center,
+                                    CrossAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.max,
                                     children: [
                                       const Icon(
@@ -247,75 +256,39 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                           height: 40,
                         ),
                         Expanded(
-                          child: Wrap(
-                            children: _flutterProjects.map((project) => InkWell(
-                              onTap: () {
-                                Get.to(() => HomePage(
-                                  projectName:
-                                  project.name,
-                                ));
-                              },
-                              child: Container(
-                                width: 200,
-                                  height: 100,
-                                  margin: const EdgeInsets.only(right: 20),
-                                  padding: const EdgeInsets.all(10),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xffffffff),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: const Color(0xff3d4eaf),
-                                      width: 3,
-                                    ),
-                                    gradient: const RadialGradient(
-                                      colors: [
-                                        Color(0xffffffff),
-                                        Color(0xfff2f2f2),
-                                        Color(0xffffffff),
-                                      ],
-                                      radius: 6,
-                                      center: Alignment.center,
-                                      tileMode: TileMode.clamp,
-                                    ),
-                                    shape: BoxShape.rectangle,
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.max,
-                                    children: [
-                                      Text(
+                          child: SingleChildScrollView(
+                            child: Wrap(
+                              children: _flutterProjects
+                                  .map((project) =>
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        right: 10, bottom: 10),
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Get.to(() =>
+                                            HomePage(
+                                              projectName: project.name,
+                                              userId: widget.userId,
+                                            ), routeName: 'projects/${project
+                                            .name}');
+                                      },
+                                      child: Text(
                                         project.name,
                                         style: GoogleFonts.getFont(
                                           'Roboto',
                                           textStyle: const TextStyle(
                                             fontSize: 18,
-                                            color: Color(0xff000000),
+                                            color: Colors.white,
                                             fontWeight: FontWeight.w500,
                                             fontStyle: FontStyle.normal,
                                           ),
                                         ),
                                         textAlign: TextAlign.left,
                                       ),
-                                      Text(
-                                        'last worked on Yesterday',
-                                        style: GoogleFonts.getFont(
-                                          'Roboto',
-                                          textStyle: const TextStyle(
-                                            fontSize: 15,
-                                            color: Color(0xff2e2e2e),
-                                            fontWeight: FontWeight.w600,
-                                            fontStyle: FontStyle.normal,
-                                          ),
-                                        ),
-                                        textAlign: TextAlign.left,
-                                      ),
-                                    ],
-                                  )),
-                            )).toList(growable: false),
+                                    ),
+                                  ))
+                                  .toList(growable: false),
+                            ),
                           ),
                         ),
                       ],

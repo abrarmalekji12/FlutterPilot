@@ -1,7 +1,9 @@
 import 'package:bloc/bloc.dart';
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_builder/common/logger.dart';
-import 'package:flutter_builder/models/other_model.dart';
+import '../../models/variable_model.dart';
+import '../../common/logger.dart';
+import '../../models/other_model.dart';
 import '../component_operation/component_operation_cubit.dart';
 import '../component_selection/component_selection_cubit.dart';
 import '../../firestore/firestore_bridge.dart';
@@ -12,13 +14,14 @@ part 'flutter_project_state.dart';
 
 class FlutterProjectCubit extends Cubit<FlutterProjectState> {
   final List<FlutterProject> projects = [];
+  final int userId;
 
-  FlutterProjectCubit() : super(FlutterProjectInitial());
+  FlutterProjectCubit(this.userId) : super(FlutterProjectInitial());
 
   Future<void> loadFlutterProjectList() async {
     emit(FlutterProjectLoadingState());
     try {
-      final projects = await FireBridge.loadAllFlutterProjects(1);
+      final projects = await FireBridge.loadAllFlutterProjects(userId);
       emit(FlutterProjectsLoadedState(projects));
     } on Exception {
       emit(FlutterProjectErrorState());
@@ -27,8 +30,13 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
 
   Future<void> createNewProject(final String name) async {
     emit(FlutterProjectLoadingState());
-    final flutterProject = FlutterProject.createNewProject(name);
-    await FireBridge.saveFlutterProject(1, flutterProject);
+    final flutterProject = FlutterProject.createNewProject(name,userId);
+    flutterProject.variables.addAll([
+      VariableModel('tabletWidthLimit', 1200, false, 'maximum width tablet can have',deletable: false),
+      VariableModel('phoneWidthLimit', 900, false, 'maximum width phone can have',deletable: false)
+    ]);
+    await FireBridge.saveFlutterProject(userId, flutterProject);
+   
     emit(FlutterProjectLoadedState(flutterProject));
   }
 
@@ -45,7 +53,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
     emit(FlutterProjectLoadingState());
     try {
       final FlutterProject? flutterProject =
-          await FireBridge.loadFlutterProject(1, projectName);
+          await FireBridge.loadFlutterProject(userId, projectName);
 
       if (flutterProject == null) {
         emit(FlutterProjectErrorState());
@@ -63,7 +71,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           if (!componentOperationCubit.byteCache
               .containsKey(imageData.imageName!)) {
             imageData.bytes =
-                await FireBridge.loadImage(1, imageData.imageName!);
+                await FireBridge.loadImage(userId, imageData.imageName!);
             if (imageData.bytes != null) {
               componentOperationCubit.byteCache[imageData.imageName!] =
                   imageData.bytes!;
@@ -78,6 +86,15 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           flutterProject.rootComponent!, flutterProject.rootComponent!);
 
       componentOperationCubit.flutterProject = flutterProject;
+      if(flutterProject.variables.firstWhereOrNull((e)=>e.name=='tabletWidthLimit')==null){
+       componentOperationCubit.addVariable(
+           VariableModel('tabletWidthLimit', 1200, false, 'maximum width tablet can have',deletable: false)
+       );
+       componentOperationCubit.addVariable(
+           VariableModel('phoneWidthLimit', 900, false, 'maximum width phone can have',deletable: false)
+       );
+
+      }
       await componentOperationCubit.loadFavourites(
           projectName: flutterProject.name);
       emit(FlutterProjectLoadedState(flutterProject));

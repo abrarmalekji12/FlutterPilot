@@ -5,6 +5,8 @@ import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
 import 'package:flutter_builder/cubit/component_creation/component_creation_cubit.dart';
 import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
+import 'package:flutter_builder/cubit/component_selection/component_selection_cubit.dart';
+import 'package:flutter_builder/cubit/parameter_build_cubit/parameter_build_cubit.dart';
 import 'package:flutter_builder/firestore/firestore_bridge.dart';
 import 'package:flutter_builder/models/variable_model.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -137,6 +139,9 @@ class _VariableBoxState extends State<VariableBox> {
                         BlocProvider.of<ComponentCreationCubit>(context,
                                 listen: false)
                             .changedComponent();
+                        BlocProvider.of<ComponentSelectionCubit>(context,
+                                listen: false)
+                            .emit(ComponentSelectionChange());
                         setState(() {});
                       },
                       icon: const Icon(
@@ -181,51 +186,53 @@ class _VariableBoxState extends State<VariableBox> {
                             ),
                           ),
                         ),
-                        Expanded(
-                          child: !variables[i].value.runtimeAssigned
-                              ? TextField(
-                                  controller: TextEditingController.fromValue(
-                                      TextEditingValue(
-                                          text: '${variables[i].value.value}')),
-                                  onChanged: (value) {
-                                    final num = double.tryParse(value);
-                                    if (num != null) {
-                                      ComponentOperationCubit
+                        if (!variables[i].value.runtimeAssigned)
+                          Expanded(
+                            child: TextField(
+                              controller: TextEditingController.fromValue(
+                                  TextEditingValue(
+                                      text: '${variables[i].value.value}')),
+                              onChanged: (value) {
+                                final num = double.tryParse(value);
+                                if (num != null) {
+                                  ComponentOperationCubit.codeProcessor
+                                      .variables[variables[i].key]!.value = num;
+                                  BlocProvider.of<ComponentOperationCubit>(
+                                          context,
+                                          listen: false)
+                                      .updateVariable(ComponentOperationCubit
                                           .codeProcessor
-                                          .variables[variables[i].key]!
-                                          .value = num;
-                                      BlocProvider.of<ComponentOperationCubit>(
-                                              context,
-                                              listen: false)
-                                          .updateVariable(
-                                              ComponentOperationCubit
-                                                      .codeProcessor.variables[
-                                                  variables[i].key]!);
-
-                                      BlocProvider.of<ComponentCreationCubit>(
-                                              context,
-                                              listen: false)
-                                          .changedComponent();
-                                    }
-                                  },
-                                  decoration: const InputDecoration(
-                                    contentPadding: EdgeInsets.all(5),
-                                    enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.black, width: 1),
-                                    ),
-                                  ),
-                                )
-                              : Align(
-                                  child: Text(
-                                    variables[i].value.description!,
-                                    style: AppFontStyle.roboto(14,
-                                        color: Colors.black),
-                                  ),
-                                  alignment: Alignment.centerRight,
+                                          .variables[variables[i].key]!);
+                                  BlocProvider.of<ComponentCreationCubit>(
+                                          context,
+                                          listen: false)
+                                      .changedComponent();
+                                  BlocProvider.of<ComponentSelectionCubit>(
+                                          context,
+                                          listen: false)
+                                      .emit(ComponentSelectionChange());
+                                }
+                              },
+                              decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.all(5),
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.black, width: 1),
                                 ),
-                        ),
-                        if (!variables[i].value.runtimeAssigned) ...[
+                              ),
+                            ),
+                          ),
+                        if (variables[i].value.description != null)
+                          Expanded(
+                            child: Center(
+                              child: Text(
+                                variables[i].value.description!,
+                                style: AppFontStyle.roboto(12,
+                                    color: Colors.black,fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ),
+                        if (variables[i].value.deletable) ...[
                           const SizedBox(
                             width: 20,
                           ),
@@ -236,6 +243,9 @@ class _VariableBoxState extends State<VariableBox> {
                               BlocProvider.of<ComponentCreationCubit>(context,
                                       listen: false)
                                   .changedComponent();
+                              BlocProvider.of<ComponentSelectionCubit>(context,
+                                      listen: false)
+                                  .emit(ComponentSelectionChange());
                               setState(() {});
                             },
                             icon: const Icon(

@@ -8,6 +8,12 @@ class CodeProcessor {
   late Stack2<double> valueStack;
   late Stack2<int> operatorStack;
   late bool error;
+  final capitalACodeUnit = 'A'.codeUnits.first,
+      smallZCodeUnit = 'z'.codeUnits.first,
+      underScoreCodeUnit = '_'.codeUnits.first;
+  final zeroCodeUnit = '0'.codeUnits.first,
+      nineCodeUnit = '9'.codeUnits.first,
+      dotCodeUnit = '.'.codeUnits.first;
 
   CodeProcessor() {
     operatorStack = Stack2<int>();
@@ -72,25 +78,29 @@ class CodeProcessor {
     valueStack.clear();
     String number = '';
     String variable = '';
-    error=false;
+    error = false;
     for (int n = 0; n < input.length; n++) {
-      if(error){
+      if (error) {
         return null;
       }
       final String nextToken = input[n];
       final ch = nextToken.codeUnits.first;
 
-      if ((ch >= '0'.codeUnits.first && ch <= '9'.codeUnits.first) ||
-          ch == '.'.codeUnits.first) {
+      if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || ch == dotCodeUnit) {
         number += nextToken;
-      } else if ((ch >= 'A'.codeUnits.first && ch <= 'z'.codeUnits.first)) {
+      } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
+          ch == underScoreCodeUnit) {
         variable += nextToken;
       } else {
         if (number.isNotEmpty) {
-          valueStack.push(double.parse(number));
+          final parse = double.tryParse(number);
+          if (parse == null) {
+            return null;
+          }
+          valueStack.push(parse);
           number = '';
         } else if (variable.isNotEmpty) {
-          if(!variables.containsKey(variable)){
+          if (!variables.containsKey(variable)) {
             return null;
           }
           valueStack.push(variables[variable]!.value);
@@ -127,10 +137,14 @@ class CodeProcessor {
       }
     }
     if (number.isNotEmpty) {
-      valueStack.push(double.parse(number));
+      final parse = double.tryParse(number);
+      if (parse == null) {
+        return null;
+      }
+      valueStack.push(parse);
       number = '';
     } else if (variable.isNotEmpty) {
-      if(!variables.containsKey(variable)){
+      if (!variables.containsKey(variable)) {
         return null;
       }
       valueStack.push(variables[variable]!.value);
@@ -161,17 +175,18 @@ class Stack2<E> {
 
   void push(E value) => _list.add(value);
 
-  E? pop() => isNotEmpty?_list.removeLast():null;
+  E? pop() => isNotEmpty ? _list.removeLast() : null;
 
-  E? get peek => isNotEmpty?_list.last:null;
+  E? get peek => isNotEmpty ? _list.last : null;
 
   bool get isEmpty => _list.isEmpty;
 
   bool get isNotEmpty => _list.isNotEmpty;
 
-  void clear(){
+  void clear() {
     _list.clear();
   }
+
   @override
   String toString() => _list.toString();
 }
