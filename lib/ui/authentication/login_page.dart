@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_builder/common/responsive/responsive_widget.dart';
 import '../../common/app_loader.dart';
 import '../../cubit/authentication/authentication_cubit.dart';
 import '../../firestore/firestore_bridge.dart';
@@ -105,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
                     Align(
                         alignment: Alignment.centerRight,
                         child: Container(
-                            width: dw * 0.3,
+                            width: ResponsiveWidget.isLargeScreen(context)?dw* 0.3:dw,
                             alignment: Alignment.center,
                             decoration: const BoxDecoration(
                               color: Color(0xffffffff),
