@@ -44,6 +44,10 @@ class FlutterProject {
       }
     }
 
+    String functionImplementationCode='';
+    for(final function in ComponentOperationCubit.codeProcessor.functions.values){
+      functionImplementationCode+='${function.functionCode}\n';
+    }
     final className=name[0].toUpperCase()+name.substring(1);
     // ${rootComponent!.code()}
     return ''' 
@@ -71,8 +75,9 @@ class FlutterProject {
      Widget build(BuildContext context) {
          $dynamicVariableAssignmentCode
           return ${rootComponent!.code()};
-       } 
-     }
+      }
+      $functionImplementationCode 
+    }
 
     $implementationCode
     ''';

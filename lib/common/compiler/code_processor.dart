@@ -1,10 +1,14 @@
 import 'dart:core';
 
 import 'package:flutter/cupertino.dart';
+import '../../code_to_component.dart';
+import '../../models/function_model.dart';
 import '../../models/variable_model.dart';
 
 class CodeProcessor {
   final Map<String, VariableModel> variables = {};
+  final Map<String, FunctionModel> functions = {};
+
   late Stack2<double> valueStack;
   late Stack2<int> operatorStack;
   late bool error;
@@ -19,6 +23,29 @@ class CodeProcessor {
     operatorStack = Stack2<int>();
     valueStack = Stack2<double>();
     error = false;
+    functions['res']=FunctionModel<double>('res', (arguments){
+      if(variables['dw']!.value>variables['tabletWidthLimit']!.value){
+       return arguments[0];
+      }
+      else if(variables['dw']!.value>variables['phoneWidthLimit']!.value||arguments.length==2){
+        return arguments[1];
+      }
+      else {
+        return arguments[2];
+      }
+    },'''
+    double res(double large,double medium,[double? small]){
+    if(dw>tabletWidthLimit){
+      return large;
+    }
+    else if(dw>phoneWidthLimit||small==null){
+      return medium;
+    }
+    else {
+      return small;
+    }
+  }
+    ''');
   }
 
   void addVariable(String name, VariableModel value) {
@@ -92,6 +119,27 @@ class CodeProcessor {
           ch == underScoreCodeUnit) {
         variable += nextToken;
       } else {
+        if (variable.isNotEmpty && ch == '('.codeUnits[0]) {
+          debugPrint('function time $variable');
+          if(!functions.containsKey(variable)){
+            return null;
+          }
+          int count = 0;
+          for (int m = n + 1; m < input.length; m++) {
+            if (input[m] == '(') {
+              count++;
+            }
+            if (count == 0 && input[m] == ')') {
+              final argument =
+                  CodeOperations.splitByComma(input.substring(n + 1, m));
+              return functions[variable]!
+                  .perform
+                  .call(argument.map((e) => process(e)).toList());
+            } else if (input[m] == ')') {
+              count--;
+            }
+          }
+        }
         if (number.isNotEmpty) {
           final parse = double.tryParse(number);
           if (parse == null) {
