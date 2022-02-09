@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../constant/app_colors.dart';
 import 'visual_model.dart';
 
@@ -30,6 +31,7 @@ class BoundaryPainter extends CustomPainter {
         ..paint(canvas, boundary.rect.topLeft.translate(0, -20));
     }
 
+
     if (errorBoundary != null) {
       myPaint.color = Colors.red;
       canvas.drawRect(errorBoundary!, myPaint);
@@ -38,7 +40,6 @@ class BoundaryPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BoundaryPainter oldDelegate) {
-    return oldDelegate.boundaries != boundaries ||
-        oldDelegate.errorBoundary != errorBoundary;
+    return oldDelegate.boundaries != boundaries || oldDelegate.errorBoundary != errorBoundary;
   }
 }

@@ -61,6 +61,7 @@ final componentList = {
   'ElevatedButton': () => CElevatedButton(),
   'FloatingActionButton': () => CFloatingActionButton(),
   'IconButton': () => CIconButton(),
+  'Placeholder':() => CPlaceholder(),
 };
 
 class CMaterialApp extends CustomNamedHolder {
@@ -116,6 +117,20 @@ class CCheckbox extends Component {
     return Checkbox(
       onChanged: (bool) {},
       value: parameters[0].value,
+    );
+  }
+}
+
+class CPlaceholder extends Component {
+  CPlaceholder()
+      : super('Placeholder', [
+          Parameters.colorParameter(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Placeholder(
+      color: parameters[0].value,
     );
   }
 }
@@ -603,6 +618,7 @@ class CScaffold extends CustomNamedHolder {
         ], {
           'appBar': ['AppBar'],
           'body': null,
+          'drawer': null,
           'floatingActionButton': null,
           'bottomNavigationBar': null,
           'bottomSheet': null,
@@ -618,6 +634,7 @@ class CScaffold extends CustomNamedHolder {
               child: childMap['appBar']!.build(context),
               preferredSize: Size(-1, childMap['appBar']!.parameters[1].value))
           : null,
+      drawer: childMap['drawer']?.build(context),
       body: childMap['body']?.build(context),
       backgroundColor: parameters[0].value,
       floatingActionButton: childMap['floatingActionButton']?.build(context),
