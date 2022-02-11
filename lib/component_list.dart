@@ -62,6 +62,8 @@ final componentList = {
   'FloatingActionButton': () => CFloatingActionButton(),
   'IconButton': () => CIconButton(),
   'Placeholder':() => CPlaceholder(),
+  'TabBar':() => CPlaceholder(),
+  'TabBarView':() => CPlaceholder(),
 };
 
 class CMaterialApp extends CustomNamedHolder {
