@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'ui/authentication/login_page.dart';
+import 'ui/authentication/login.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 
 import 'constant/app_colors.dart';
@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     html.document
         .addEventListener('contextmenu', (event) => event.preventDefault());
-    if(!kDebugMode) {
+    if (!kDebugMode) {
       FlutterError.onError = (
         FlutterErrorDetails details, {
         bool forceReport = false,
@@ -46,13 +46,11 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Visual Builder',
       scrollBehavior: MyCustomScrollBehavior(),
       theme: ThemeData(
-          visualDensity: VisualDensity.adaptivePlatformDensity
-
-          , primaryColor: AppColors.theme),
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          primaryColor: AppColors.theme),
       home: const LoginPage(),
     );
   }
-
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {

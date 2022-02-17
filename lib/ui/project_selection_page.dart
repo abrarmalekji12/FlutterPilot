@@ -53,7 +53,8 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                   setState(() {});
                   break;
                 case FlutterProjectLoadedState:
-                  _flutterProjects.add((state as FlutterProjectLoadedState).flutterProject);
+                  _flutterProjects
+                      .add((state as FlutterProjectLoadedState).flutterProject);
                   break;
                 case FlutterProjectErrorState:
                   AppLoader.hide();
@@ -182,13 +183,15 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                   _flutterProjectCubit
                                       .createNewProject(name)
                                       .then((value) {
-                                        _textEditingController.text='';
-
-                                    Get.to(() =>
-                                        HomePage(
-                                          projectName: name,
-                                          userId: widget.userId,
-                                        ), routeName: 'projects/$name');
+                                    _textEditingController.text = '';
+                                    _flutterProjects.add(
+                                        FlutterProject(name, widget.userId));
+                                    Get.to(
+                                        () => HomePage(
+                                              projectName: name,
+                                              userId: widget.userId,
+                                            ),
+                                        routeName: 'projects/$name');
                                   });
                                 }
                               },
@@ -207,7 +210,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.center,
+                                        CrossAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.max,
                                     children: [
                                       const Icon(
@@ -259,34 +262,34 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                           child: SingleChildScrollView(
                             child: Wrap(
                               children: _flutterProjects
-                                  .map((project) =>
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        right: 10, bottom: 10),
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Get.to(() =>
-                                            HomePage(
-                                              projectName: project.name,
-                                              userId: widget.userId,
-                                            ), routeName: 'projects/${project
-                                            .name}');
-                                      },
-                                      child: Text(
-                                        project.name,
-                                        style: GoogleFonts.getFont(
-                                          'Roboto',
-                                          textStyle: const TextStyle(
-                                            fontSize: 18,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontStyle: FontStyle.normal,
+                                  .map((project) => Padding(
+                                        padding: const EdgeInsets.only(
+                                            right: 10, bottom: 10),
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Get.to(
+                                                () => HomePage(
+                                                      projectName: project.name,
+                                                      userId: widget.userId,
+                                                    ),
+                                                routeName:
+                                                    '/projects/${project.name}');
+                                          },
+                                          child: Text(
+                                            project.name,
+                                            style: GoogleFonts.getFont(
+                                              'Roboto',
+                                              textStyle: const TextStyle(
+                                                fontSize: 18,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w500,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            textAlign: TextAlign.left,
                                           ),
                                         ),
-                                        textAlign: TextAlign.left,
-                                      ),
-                                    ),
-                                  ))
+                                      ))
                                   .toList(growable: false),
                             ),
                           ),

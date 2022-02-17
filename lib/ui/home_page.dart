@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:html' as html;
-import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../runtime_provider.dart';
+import 'build_view/build_view.dart';
 import 'variable_ui.dart';
 import '../common/custom_popup_menu_button.dart';
 import 'package:get/get.dart';
@@ -25,7 +28,6 @@ import 'code_view_widget.dart';
 import 'component_selection_dialog.dart';
 import 'parameter_ui.dart';
 import 'package:flutter_overlay_loader/flutter_overlay_loader.dart';
-import 'package:provider/provider.dart';
 
 import '../models/component_model.dart';
 import 'component_tree.dart';
@@ -42,6 +44,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static StreamSubscription? _streamSubscription;
   final ScrollController propertyScrollController = ScrollController();
   final componentCreationCubit = ComponentCreationCubit();
   final componentOperationCubit = ComponentOperationCubit();
@@ -60,13 +63,32 @@ class _HomePageState extends State<HomePage> {
       flutterProjectCubit.loadFlutterProject(
           componentSelectionCubit, componentOperationCubit, widget.projectName);
     });
-    html.window.onKeyDown.listen((event) {
-      // debugPrint('PRESSED ${event.altKey} ${event.key} ${event.eventPhase}');
-      if (event.altKey) {
+    if (_streamSubscription != null) {
+      _streamSubscription?.cancel();
+    }
+    _streamSubscription = html.window.onKeyDown.listen((event) {
+      if (event.altKey &&
+          componentOperationCubit.flutterProject?.rootComponent != null) {
         event.preventDefault();
         if (event.key == 'f') {
           componentOperationCubit
               .toggleFavourites(componentSelectionCubit.currentSelected);
+        } else if (event.key == 'v') {
+          if (componentOperationCubit.runtimeMode == RuntimeMode.edit) {
+            Get.dialog(
+              BuildView(
+                onDismiss: () {
+                  componentCreationCubit.changedComponent();
+                },
+                componentOperationCubit: componentOperationCubit,
+                screenConfigCubit: screenConfigCubit,
+              ),
+            );
+          } else if (componentOperationCubit.runtimeMode == RuntimeMode.run) {
+            Get.back();
+            componentOperationCubit.runtimeMode = RuntimeMode.edit;
+            componentCreationCubit.changedComponent();
+          }
         }
       }
     });
@@ -190,13 +212,20 @@ class _HomePageState extends State<HomePage> {
 }
 
 class ScreenConfigSelection extends StatelessWidget {
-  const ScreenConfigSelection({Key? key}) : super(key: key);
+  final ScreenConfigCubit? screenConfigCubit;
+  final ComponentOperationCubit? componentOperationCubit;
+
+  const ScreenConfigSelection(
+      {Key? key, this.screenConfigCubit, this.componentOperationCubit})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final cubit = Provider.of<ScreenConfigCubit>(context, listen: false);
+    final cubit = screenConfigCubit ??
+        BlocProvider.of<ScreenConfigCubit>(context, listen: false);
 
     return BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
+      bloc: cubit,
       builder: (context, state) {
         return SizedBox(
           width: 250,
@@ -221,9 +250,13 @@ class ScreenConfigSelection extends StatelessWidget {
                   )
                   .toList(),
               onChanged: (value) {
-                cubit.changeScreenConfig(value);
-                BlocProvider.of<ComponentOperationCubit>(context, listen: false)
-                    .updateDeviceSelection(value.name);
+                if (value != cubit.screenConfig) {
+                  cubit.changeScreenConfig(value);
+                  (componentOperationCubit ??
+                          BlocProvider.of<ComponentOperationCubit>(context,
+                              listen: false))
+                      .updateDeviceSelection(value.name);
+                }
               },
               selectedItemBuilder: (context, config) {
                 return Align(
@@ -257,49 +290,102 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: InkWell(
-              highlightColor: Colors.blueAccent.shade200,
-              borderRadius: BorderRadius.circular(8),
-              onTap: () {
-                CustomDialog.show(
-                  context,
-                  CodeViewerWidget(
-                    code: BlocProvider.of<ComponentOperationCubit>(context,
-                            listen: false)
-                        .flutterProject!
-                        .code(),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InkWell(
+                highlightColor: Colors.blueAccent.shade200,
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  Get.dialog(
+                    BuildView(
+                      onDismiss: () {
+                        BlocProvider.of<ComponentCreationCubit>(context,
+                                listen: false)
+                            .changedComponent();
+                      },
+                      componentOperationCubit:
+                          BlocProvider.of<ComponentOperationCubit>(context,
+                              listen: false),
+                      screenConfigCubit: BlocProvider.of<ScreenConfigCubit>(
+                          context,
+                          listen: false),
+                    ),
+                  );
+                },
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                );
-              },
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                color: Colors.blueAccent,
-                child: Padding(
-                  padding: const EdgeInsets.all(5),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.code,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Text(
-                        'view code',
-                        style: AppFontStyle.roboto(14, color: Colors.white),
-                      )
-                    ],
+                  color: Colors.green.shade500,
+                  child: Padding(
+                    padding: const EdgeInsets.all(5),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.remove_red_eye_rounded,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text(
+                          'view',
+                          style: AppFontStyle.roboto(14, color: Colors.white),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
+              const SizedBox(
+                width: 10,
+              ),
+              InkWell(
+                highlightColor: Colors.blueAccent.shade200,
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  CustomDialog.show(
+                    context,
+                    CodeViewerWidget(
+                      code: BlocProvider.of<ComponentOperationCubit>(context,
+                              listen: false)
+                          .flutterProject!
+                          .code(),
+                    ),
+                  );
+                },
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  color: Colors.blueAccent,
+                  child: Padding(
+                    padding: const EdgeInsets.all(5),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.code,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text(
+                          'view code',
+                          style: AppFontStyle.roboto(14, color: Colors.white),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           Container(
             width: 350,
@@ -328,7 +414,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                 if (variableBoxOpen) const VariableBox()
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -364,19 +450,22 @@ class PrototypeShowcase extends StatelessWidget {
           thickness: 0.4,
         ),
         Expanded(
-          child: BlocBuilder<FlutterProjectCubit, FlutterProjectState>(
-            buildWhen: (state1, state2) {
-              if (state2 is FlutterProjectLoadingState) {
-                return false;
-              }
-              return true;
-            },
-            builder: (context, state) {
-              if (state is FlutterProjectLoadedState) {
-                return state.flutterProject.run(context);
-              }
-              return Container();
-            },
+          child: RuntimeProvider(
+            runtimeMode: RuntimeMode.run,
+            child: BlocBuilder<FlutterProjectCubit, FlutterProjectState>(
+              buildWhen: (state1, state2) {
+                if (state2 is FlutterProjectLoadingState) {
+                  return false;
+                }
+                return true;
+              },
+              builder: (context, state) {
+                if (state is FlutterProjectLoadedState) {
+                  return state.flutterProject.run(context);
+                }
+                return Container();
+              },
+            ),
           ),
         ),
       ],
@@ -509,27 +598,29 @@ class CenterMainSide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
+    return RuntimeProvider(
+      runtimeMode: RuntimeMode.edit,
+      child: Container(
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
           gradient: RadialGradient(colors: [
-        Color(0xffd3d3d3),
-        Color(0xffffffff),
-      ], tileMode: TileMode.clamp, radius: 0.9, focalRadius: 0.6)),
-      child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
-        builder: (_, state) {
-          return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
-            builder: (_, state) {
-              logger('======== COMPONENT CREATION ');
-              return Padding(
-                padding: const EdgeInsets.all(5.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const ScreenConfigSelection(),
-                    Expanded(
-                      child: LayoutBuilder(builder: (context, constraints) {
-                        return FittedBox(
+            Color(0xffd3d3d3),
+            Color(0xffffffff),
+          ], tileMode: TileMode.clamp, radius: 0.9, focalRadius: 0.6),
+        ),
+        child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
+          builder: (_, state) {
+            return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
+              builder: (context, state) {
+                logger('======== COMPONENT CREATION ');
+                return Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const ScreenConfigSelection(),
+                      Expanded(
+                        child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: SizedBox(
                             width: _screenConfigCubit.screenConfig.width,
@@ -539,32 +630,28 @@ class CenterMainSide extends StatelessWidget {
                                 onSecondaryTapDown(context, event);
                               },
                               onTapDown: onTapDown,
-                              child: Container(
+                              child: ColoredBox(
                                 key: const GlobalObjectKey('device window'),
                                 color: Colors.white,
                                 child: Stack(
                                   children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(1.0),
-                                      child: _componentOperationCubit
-                                          .flutterProject!
-                                          .run(context),
-                                    ),
+                                    _componentOperationCubit.flutterProject!
+                                        .run(context),
                                     const BoundaryWidget(),
                                   ],
                                 ),
                               ),
                             ),
                           ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

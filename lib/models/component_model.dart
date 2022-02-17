@@ -2,8 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get.dart';
-import '../common/responsive/responsive_widget.dart';
+import '../runtime_provider.dart';
+import 'data_model.dart';
 import 'parameter_rule_model.dart';
 import '../code_to_component.dart';
 import '../common/logger.dart';
@@ -41,8 +41,8 @@ abstract class Component {
   }
 
   void initComponentParameters(final BuildContext context) {
-    if (!(Get.isDialogOpen ?? false)) {
-      for (var element in componentParameters) {
+    if (RuntimeProvider.of(context) == RuntimeMode.edit) {
+      for (final element in componentParameters) {
         element.visualBoxCubit =
             BlocProvider.of<VisualBoxCubit>(context, listen: false);
       }
@@ -79,12 +79,15 @@ abstract class Component {
   }
 
   ScrollController initScrollController(BuildContext context) {
-    return ScrollController()
-      ..addListener(() {
+    final ScrollController scrollController = ScrollController();
+    if (RuntimeProvider.of(context) == RuntimeMode.edit) {
+      scrollController.addListener(() {
         forEach((Component component) {
           component.lookForUIChanges(context);
         });
       });
+    }
+    return scrollController;
   }
 
   static Component? fromCode(String? code) {
@@ -199,14 +202,16 @@ abstract class Component {
   }
 
   Widget build(BuildContext context) {
-    if (!ResponsiveWidget.isSmallScreen(context)) {
+    if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
       });
     }
 
     return ComponentWidget(
-      key: GlobalObjectKey(this),
+      key: (RuntimeProvider.of(context) != RuntimeMode.edit)
+          ? ObjectKey(this)
+          : GlobalObjectKey(this),
       child: create(context),
     );
   }
@@ -310,9 +315,6 @@ abstract class Component {
   }
 
   void lookForUIChanges(BuildContext context) async {
-    if (Get.isDialogOpen ?? false) {
-      return;
-    }
     final RenderBox renderBox =
         GlobalObjectKey(this).currentContext!.findRenderObject() as RenderBox;
     final ancestorRenderBox = const GlobalObjectKey('device window')
@@ -745,6 +747,11 @@ abstract class CustomNamedHolder extends Component {
   int get childCount => -2;
 }
 
+abstract class BuilderComponent extends Component{
+  BuilderComponent(String name, List<Parameter> parameters) : super(name, parameters);
+  Component? root;
+  List<Model> models=[];
+}
 abstract class CustomComponent extends Component {
   String? extensionName;
   Component? root;
@@ -785,9 +792,11 @@ abstract class CustomComponent extends Component {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      lookForUIChanges(context);
-    });
+    if (RuntimeProvider.of(context) == RuntimeMode.edit) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        lookForUIChanges(context);
+      });
+    }
     return ComponentWidget(key: GlobalObjectKey(this), child: create(context));
   }
 

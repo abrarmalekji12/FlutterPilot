@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../common/compiler/code_processor.dart';
 import '../../common/undo/revert_work.dart';
+import '../../models/data_model.dart';
 import '../../models/variable_model.dart';
 import '../../models/parameter_model.dart';
 import '../../models/other_model.dart';
 import '../../models/project_model.dart';
 import '../../firestore/firestore_bridge.dart';
 import '../../models/component_model.dart';
+import '../../runtime_provider.dart';
 import '../component_creation/component_creation_cubit.dart';
 import '../visual_box_drawer/visual_box_cubit.dart';
 
@@ -20,11 +22,13 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   FlutterProject? flutterProject;
   static final CodeProcessor codeProcessor = CodeProcessor();
   final Map<Component, bool> expandedTree = {};
+  final Map<String, List<Component>> sameComponentCollection = {};
+  RuntimeMode runtimeMode = RuntimeMode.edit;
   final List<FavouriteModel> favouriteList = [];
   Map<String, Uint8List> byteCache = {};
   final RevertWork revertWork = RevertWork.init();
 
-  ComponentOperationCubit() : super(ComponentOperationInitial()) {}
+  ComponentOperationCubit() : super(ComponentOperationInitial());
 
   void addedComponent(Component component, Component root) {
     if (root is CustomComponent) {
@@ -46,6 +50,30 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
   }
 
+  void addInSameComponentList(final Component component,{bool checkForSame=false}) {
+    if (!sameComponentCollection.containsKey(component.name)) {
+      sameComponentCollection[component.name] = [component];
+    } else if (!sameComponentCollection[component.name]!.contains(component)) {
+      if(!checkForSame) {
+        sameComponentCollection[component.name]!.add(component);
+      }
+      else{
+        for(final comp in sameComponentCollection[component.name]!){
+          if(component.code()==comp.code()){
+            return;
+          }
+        }
+        sameComponentCollection[component.name]!.add(component);
+      }
+    }
+  }
+
+  void extractSameTypeComponents(final Component root) {
+    root.forEach((component) {
+      addInSameComponentList(component);
+    });
+  }
+
   Future<List<ImageData>?> loadAllImages() async {
     emit(ComponentOperationLoadingState());
     final imageList = await FireBridge.loadAllImages(flutterProject!.userId);
@@ -55,7 +83,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   void uploadImage(ImageData imageData) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.uploadImage(flutterProject!.userId, flutterProject!.name, imageData);
+    await FireBridge.uploadImage(
+        flutterProject!.userId, flutterProject!.name, imageData);
     emit(ComponentOperationInitial());
   }
 
@@ -68,8 +97,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> updateRootComponent() async {
     emit(ComponentOperationLoadingState());
     try {
-      await FireBridge.updateRootComponent(
-          flutterProject!.userId, flutterProject!.name, flutterProject!.rootComponent!);
+      await FireBridge.updateRootComponent(flutterProject!.userId,
+          flutterProject!.name, flutterProject!.rootComponent!);
       emit(ComponentOperationInitial());
     } on Exception {
       emit(ComponentOperationErrorState());
@@ -102,7 +131,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   void addCustomComponent(String name, {Component? root}) {
     final component = StatelessComponent(name: name);
     flutterProject?.customComponents.add(component);
-    FireBridge.addNewGlobalCustomComponent(flutterProject!.userId, flutterProject!.name, component);
+    FireBridge.addNewGlobalCustomComponent(
+        flutterProject!.userId, flutterProject!.name, component);
     if (root != null) {
       component.root = root;
       final instance = component.createInstance(root.parent);
@@ -277,8 +307,9 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   Future<void> loadFavourites({String? projectName}) async {
     emit(ComponentOperationLoadingState());
-    final favouriteComponentList =
-        await FireBridge.loadFavourites(flutterProject!.userId, projectName: projectName);
+    final favouriteComponentList = await FireBridge.loadFavourites(
+        flutterProject!.userId,
+        projectName: projectName);
 
     if (projectName != null) {
       flutterProject!.favouriteList.clear();
@@ -297,7 +328,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
     for (final imageData in imageDataList) {
       if (!byteCache.containsKey(imageData.imageName!)) {
-        imageData.bytes = await FireBridge.loadImage(flutterProject!.userId, imageData.imageName!);
+        imageData.bytes = await FireBridge.loadImage(
+            flutterProject!.userId, imageData.imageName!);
         if (imageData.bytes != null) {
           byteCache[imageData.imageName!] = imageData.bytes!;
         }
@@ -315,7 +347,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
           ..id = component.id
           ..boundary = component.boundary,
         flutterProject!.name));
-    await FireBridge.addToFavourites(flutterProject!.userId, component, flutterProject!.name);
+    await FireBridge.addToFavourites(
+        flutterProject!.userId, component, flutterProject!.name);
     emit(ComponentUpdatedState());
   }
 
@@ -397,10 +430,17 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   Future<void> addVariable(VariableModel variableModel) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.addVariable(flutterProject!.userId, flutterProject!.name,
-        variableModel);
+    await FireBridge.addVariable(
+        flutterProject!.userId, flutterProject!.name, variableModel);
     emit(ComponentOperationInitial());
   }
+  Future<void> addModel(final Model model) async {
+    emit(ComponentOperationLoadingState());
+    // await FireBridge.addModel(
+    //     flutterProject!.userId, flutterProject!.name, );
+    emit(ComponentOperationInitial());
+  }
+
 
   Future<void> updateVariable(VariableModel variableModel) async {
     emit(ComponentOperationLoadingState());

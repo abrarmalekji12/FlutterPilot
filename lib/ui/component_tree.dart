@@ -991,7 +991,7 @@ class ComponentModificationMenu extends StatelessWidget {
               component !=
                   componentOperationCubit.flutterProject!.rootComponent!) ...[
             CustomPopupMenuButton(
-              itemBuilder: (context2) {
+              itemBuilder: (context) {
                 final list = getTypeComponents(
                         components,
                         customNamed == null && component != ancestor

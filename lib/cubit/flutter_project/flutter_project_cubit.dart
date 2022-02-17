@@ -36,7 +36,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
       VariableModel('phoneWidthLimit', 900, false, 'maximum width phone can have',deletable: false)
     ]);
     await FireBridge.saveFlutterProject(userId, flutterProject);
-   
+   projects.add(flutterProject);
     emit(FlutterProjectLoadedState(flutterProject));
   }
 
@@ -97,6 +97,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
       }
       await componentOperationCubit.loadFavourites(
           projectName: flutterProject.name);
+      componentOperationCubit.extractSameTypeComponents(flutterProject.rootComponent!);
       emit(FlutterProjectLoadedState(flutterProject));
     } on Exception {
       emit(FlutterProjectErrorState(
