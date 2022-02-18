@@ -752,6 +752,23 @@ class Parameters {
               ..withInfo(null)
               ..withDisplayName('Y')
           ]);
+  static ComplexParameter sizeParameter() => ComplexParameter(
+      info: InnerObjectParameterInfo(
+          namedIfHaveAny: 'preferredSize', innerObjectName: 'Size'),
+      name: 'size',
+      evaluate: (params) {
+        return Size(params[0].value, params[1].value);
+      },
+      params: [
+        directionParameter()
+          ..withRequired(true)
+          ..withInfo(null)
+          ..withDisplayName('width'),
+        directionParameter()
+          ..withRequired(true)
+          ..withInfo(null)
+          ..withDisplayName('height')
+      ]);
 
   static SimpleParameter heightParameter() => SimpleParameter<double>(
       info: NamedParameterInfo('height'),

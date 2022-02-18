@@ -37,6 +37,7 @@ final componentList = {
   'Flexible': () => CFlexible(),
   'Card': () => CCard(),
   'SizedBox': () => CSizedBox(),
+  'PreferredSize': () => CPreferredSize(),
   'FittedBox': () => CFittedBox(),
   'Text': () => CText(),
   'Icon': () => CIcon(),
@@ -55,7 +56,7 @@ final componentList = {
   'VerticalDivider': () => CVerticalDivider(),
   'RichText': () => CRichText(),
   'TextField': () => CTextField(),
-  'InputDecorator':()=>CInputDecorator(),
+  'InputDecorator': () => CInputDecorator(),
   'InkWell': () => CInkWell(),
   'Tooltip': () => CTooltip(),
   'TextButton': () => CTextButton(),
@@ -70,11 +71,9 @@ class CMaterialApp extends CustomNamedHolder {
   CMaterialApp()
       : super('MaterialApp', [
           Parameters.colorParameter()
-            ..inputCalculateAs =
-                ((color, forward) => (color as Color).withAlpha(255))
+            ..inputCalculateAs = ((color, forward) => (color as Color).withAlpha(255))
             ..withRequired(false),
-          Parameters.textParameter()
-            ..withNamedParamInfoAndSameDisplayName('title'),
+          Parameters.textParameter()..withNamedParamInfoAndSameDisplayName('title'),
           Parameters.themeDataParameter()..withChangeNamed('theme'),
           Parameters.themeDataParameter()
             ..withChangeNamed('darkTheme')
@@ -101,8 +100,7 @@ class CRichText extends Component {
   CRichText()
       : super('RichText', [
           Parameters.textSpanParameter()
-            ..withInfo(InnerObjectParameterInfo(
-                innerObjectName: 'TextSpan', namedIfHaveAny: 'text'))
+            ..withInfo(InnerObjectParameterInfo(innerObjectName: 'TextSpan', namedIfHaveAny: 'text'))
         ]);
 
   @override
@@ -114,8 +112,7 @@ class CRichText extends Component {
 class CCheckbox extends Component {
   CCheckbox()
       : super('Checkbox', [
-          Parameters.enableParameter()
-            ..withNamedParamInfoAndSameDisplayName('value'),
+          Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('value'),
         ]);
 
   @override
@@ -165,8 +162,7 @@ class CRadio extends Component {
 class CSwitch extends Component {
   CSwitch()
       : super('Switch', [
-          Parameters.enableParameter()
-            ..withNamedParamInfoAndSameDisplayName('value'),
+          Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('value'),
         ]);
 
   @override
@@ -208,8 +204,7 @@ class CExpanded extends Holder {
 
   @override
   Widget create(BuildContext context) {
-    return Expanded(
-        flex: parameters[0].value, child: child?.build(context) ?? Container());
+    return Expanded(flex: parameters[0].value, child: child?.build(context) ?? Container());
   }
 }
 
@@ -400,8 +395,7 @@ class CFlexible extends Holder {
 class CVisibility extends Holder {
   CVisibility()
       : super('Visibility', [
-          Parameters.enableParameter()
-            ..withNamedParamInfoAndSameDisplayName('visible'),
+          Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('visible'),
         ]);
 
   @override
@@ -742,13 +736,8 @@ class CListView extends MultiHolder {
   CListView()
       : super('ListView', [
           Parameters.paddingParameter(),
-          Parameters.axisParameter()
-            ..withInfo(NamedParameterInfo('scrollDirection')),
-          BooleanParameter(
-              displayName: 'reverse',
-              required: true,
-              val: false,
-              info: NamedParameterInfo('reverse'))
+          Parameters.axisParameter()..withInfo(NamedParameterInfo('scrollDirection')),
+          BooleanParameter(displayName: 'reverse', required: true, val: false, info: NamedParameterInfo('reverse'))
         ]);
 
   @override
@@ -785,8 +774,7 @@ class CFlex extends MultiHolder {
 }
 
 class CPadding extends Holder {
-  CPadding()
-      : super('Padding', [Parameters.paddingParameter()..withRequired(true)]);
+  CPadding() : super('Padding', [Parameters.paddingParameter()..withRequired(true)]);
 
   @override
   Widget create(BuildContext context) {
@@ -800,16 +788,12 @@ class CPadding extends Holder {
 class CTooltip extends Holder {
   CTooltip()
       : super('Tooltip', [
-          Parameters.textParameter()
-            ..withNamedParamInfoAndSameDisplayName('message'),
-          Parameters.googleFontTextStyleParameter()
-            ..withNamedParamInfoAndSameDisplayName('textStyle'),
+          Parameters.textParameter()..withNamedParamInfoAndSameDisplayName('message'),
+          Parameters.googleFontTextStyleParameter()..withNamedParamInfoAndSameDisplayName('textStyle'),
           Parameters.paddingParameter(),
           Parameters.marginParameter(),
-          Parameters.enableParameter()
-            ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
-          Parameters.enableParameter()
-            ..withNamedParamInfoAndSameDisplayName('preferBelow'),
+          Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('enableFeedback'),
+          Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('preferBelow'),
         ]);
 
   @override
@@ -827,9 +811,7 @@ class CTooltip extends Holder {
 }
 
 class CClipRRect extends Holder {
-  CClipRRect()
-      : super('ClipRRect',
-            [Parameters.borderRadiusParameter()..withRequired(true)]);
+  CClipRRect() : super('ClipRRect', [Parameters.borderRadiusParameter()..withRequired(true)]);
 
   @override
   Widget create(BuildContext context) {
@@ -868,8 +850,7 @@ class CCircleAvatar extends Holder {
 }
 
 class COutlinedButton extends Holder {
-  COutlinedButton()
-      : super('OutlinedButton', [Parameters.buttonStyleParameter()]);
+  COutlinedButton() : super('OutlinedButton', [Parameters.buttonStyleParameter()]);
 
   @override
   Widget create(BuildContext context) {
@@ -900,8 +881,7 @@ class CElevatedButton extends Holder {
 class CInkWell extends Holder {
   CInkWell()
       : super('InkWell', [
-          Parameters.enableParameter()
-            ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
+          Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('enableFeedback'),
           Parameters.colorParameter()
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('hoverColor'),
@@ -938,15 +918,12 @@ class CFloatingActionButton extends Holder {
           Parameters.backgroundColorParameter(),
           Parameters.foregroundColorParameter(),
           Parameters.elevationParameter(),
-          Parameters.enableParameter()
-            ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
+          Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('enableFeedback'),
           Parameters.textParameter()
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('tooltip'),
-          Parameters.elevationParameter()
-            ..withNamedParamInfoAndSameDisplayName('hoverElevation'),
-          Parameters.elevationParameter()
-            ..withNamedParamInfoAndSameDisplayName('focusElevation'),
+          Parameters.elevationParameter()..withNamedParamInfoAndSameDisplayName('hoverElevation'),
+          Parameters.elevationParameter()..withNamedParamInfoAndSameDisplayName('focusElevation'),
           Parameters.colorParameter()
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('hoverColor'),
@@ -1011,9 +988,7 @@ class CCircularProgressIndicator extends Component {
             evaluate: (params) {
               return AlwaysStoppedAnimation<Color?>(params[0].value);
             },
-            info: InnerObjectParameterInfo(
-                innerObjectName: 'AlwaysStoppedAnimation',
-                namedIfHaveAny: 'valueColor'),
+            info: InnerObjectParameterInfo(innerObjectName: 'AlwaysStoppedAnimation', namedIfHaveAny: 'valueColor'),
           ),
           Parameters.colorParameter(),
           Parameters.backgroundColorParameter(),
@@ -1107,6 +1082,21 @@ class CSizedBox extends Holder {
   }
 }
 
+class CPreferredSize extends Holder {
+  CPreferredSize()
+      : super('PreferredSize', [
+          Parameters.sizeParameter(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return PreferredSize(
+      child: child?.build(context) ?? Container(),
+      preferredSize: parameters[0].value,
+    );
+  }
+}
+
 class CFittedBox extends Holder {
   CFittedBox()
       : super('FittedBox', [
@@ -1125,10 +1115,7 @@ class CFittedBox extends Holder {
 }
 
 class CMaterial extends Holder {
-  CMaterial()
-      : super('Material', [
-          Parameters.colorParameter()..withDefaultValue(const Color(0x00000000))
-        ]);
+  CMaterial() : super('Material', [Parameters.colorParameter()..withDefaultValue(const Color(0x00000000))]);
 
   @override
   Widget create(BuildContext context) {
@@ -1185,8 +1172,7 @@ class CIcon extends Component {
   CIcon()
       : super('Icon', [
           Parameters.iconParameter(),
-          Parameters.widthParameter()
-            ..withNamedParamInfoAndSameDisplayName('size'),
+          Parameters.widthParameter()..withNamedParamInfoAndSameDisplayName('size'),
           Parameters.colorParameter()
             ..withDefaultValue(null)
             ..withRequired(false),
@@ -1220,8 +1206,7 @@ class CImage extends Component {
 
   @override
   Widget create(BuildContext context) {
-    return parameters[0].value != null &&
-            (parameters[0].value as ImageData).bytes != null
+    return parameters[0].value != null && (parameters[0].value as ImageData).bytes != null
         ? Image.memory(
             (parameters[0].value as ImageData).bytes!,
             width: parameters[1].value,
@@ -1261,12 +1246,10 @@ class CIconButton extends Component {
           Parameters.colorParameter()
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('focusColor'),
-          Parameters.enableParameter()
-            ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
+          Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('enableFeedback'),
           Parameters.alignmentParameter(),
           Parameters.paddingParameter()..withRequired(true),
-          Parameters.textParameter()
-            ..withNamedParamInfoAndSameDisplayName('tooltip')
+          Parameters.textParameter()..withNamedParamInfoAndSameDisplayName('tooltip')
         ]) {
     addComponentParameters([parameters[0] as ComponentParameter]);
   }
@@ -1294,13 +1277,18 @@ class CIconButton extends Component {
 class CInputDecorator extends Component {
   CInputDecorator()
       : super('InputDecorator', [
-    Parameters.googleFontTextStyleParameter()..withChangeNamed('baseStyle'),
-    Parameters.inputDecorationParameter(),
-    Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('isEmpty')..val=false,
-
-    Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('isFocused')..val=false,
-    Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('expands')..val=false,
-  ]) {
+          Parameters.googleFontTextStyleParameter()..withChangeNamed('baseStyle'),
+          Parameters.inputDecorationParameter(),
+          Parameters.enableParameter()
+            ..withNamedParamInfoAndSameDisplayName('isEmpty')
+            ..val = false,
+          Parameters.enableParameter()
+            ..withNamedParamInfoAndSameDisplayName('isFocused')
+            ..val = false,
+          Parameters.enableParameter()
+            ..withNamedParamInfoAndSameDisplayName('expands')
+            ..val = false,
+        ]) {
     addComponentParameters([
       (parameters[1] as ComplexParameter).params[10] as ComponentParameter,
       (parameters[1] as ComplexParameter).params[11] as ComponentParameter,
@@ -1325,20 +1313,13 @@ class CTextField extends Component {
   CTextField()
       : super('TextField', [
           Parameters.googleFontTextStyleParameter(),
-          BooleanParameter(
-              required: true,
-              val: false,
-              info: NamedParameterInfo('readOnly'),
-              displayName: 'readOnly'),
+          BooleanParameter(required: true, val: false, info: NamedParameterInfo('readOnly'), displayName: 'readOnly'),
           Parameters.inputDecorationParameter(),
           Parameters.flexParameter()
             ..withNamedParamInfoAndSameDisplayName('maxLength')
             ..withRequired(false),
           BooleanParameter(
-              required: false,
-              val: false,
-              info: NamedParameterInfo('obscureText'),
-              displayName: 'obscure-text'),
+              required: false, val: false, info: NamedParameterInfo('obscureText'), displayName: 'obscure-text'),
         ]) {
     addComponentParameters([
       (parameters[2] as ComplexParameter).params[10] as ComponentParameter,
