@@ -202,18 +202,18 @@ class SimpleParameter<T> extends Parameter {
     if (required) {
       val = defaultValue;
     }
-    if (T == int || T == double) {
+    // if (T == int || T == double) {
       compilerEnable = CompilerEnable();
-    } else {
-      compilerEnable = null;
-    }
+    // } else {
+    //   compilerEnable = null;
+    // }
   }
 
   @override
   dynamic get value {
     if (compilerEnable != null) {
       final result = compilerEnable!.code.isNotEmpty
-          ? ComponentOperationCubit.codeProcessor.process(compilerEnable!.code)
+          ? ComponentOperationCubit.codeProcessor.process<T>(compilerEnable!.code)
           : null;
       if (result != null) {
         val = result as T;
@@ -235,7 +235,7 @@ class SimpleParameter<T> extends Parameter {
   get rawValue {
     if (compilerEnable != null && compilerEnable!.code.isNotEmpty) {
       final result =
-          ComponentOperationCubit.codeProcessor.process(compilerEnable!.code);
+          ComponentOperationCubit.codeProcessor.process<T>(compilerEnable!.code);
       if (result != null) {
         val = result as T;
       }
@@ -324,6 +324,10 @@ class SimpleParameter<T> extends Parameter {
       logger('SIMPLE PARAMETER FROM CODE EXCEPTION');
     }
     return false;
+  }
+
+  process(String value) {
+    return ComponentOperationCubit.codeProcessor.process<T>(value);
   }
 }
 
@@ -901,3 +905,4 @@ class ComponentParameter extends Parameter {
   @override
   get value => components;
 }
+

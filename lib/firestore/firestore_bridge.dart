@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
+import '../models/local_model.dart';
 import '../models/variable_model.dart';
 import '../code_to_component.dart';
 import '../models/other_model.dart';
@@ -130,7 +131,10 @@ abstract class FireBridge {
           .collection(project.name)
           .add({
         'variables': project.variables
-            .map((e) => {'name': e.name, 'value': e.value})
+            .map((e) => e.toJson())
+            .toList(growable: false),
+        'models': project.models
+            .map((e) => e.toJson())
             .toList(growable: false),
         'name': component.name,
         'device': 'iPhone X',
@@ -226,8 +230,6 @@ abstract class FireBridge {
     final projectInfoDoc =
         documents.firstWhere((element) => element.data().containsKey('root'));
     final projectInfo = projectInfoDoc.data();
-    logger(
-        'PROJECT NAME ${projectInfo['project_name']} ${projectInfo['root']}');
 
     final FlutterProject flutterProject = FlutterProject(
         projectInfo['project_name'],userId,
@@ -237,6 +239,10 @@ abstract class FireBridge {
       ComponentOperationCubit.codeProcessor.variables[variableJson['name']] =
           model;
       flutterProject.variables.add(model);
+    }
+    for (final modelJson in projectInfo['models'] ?? []) {
+      final model = LocalModel.fromJson(modelJson);
+      flutterProject.models.add(model);
     }
     try {
       flutterProject.rootComponent =
@@ -265,6 +271,7 @@ abstract class FireBridge {
     if (image.docs.isNotEmpty) {
       return base64Decode(image.docs[0].data()['bytes']);
     }
+    return null;
   }
 
   static Future<List<ImageData>?> loadAllImages(int userId) async {
@@ -280,6 +287,7 @@ abstract class FireBridge {
       }
       return list;
     }
+    return null;
   }
 
   static Future<int?> login(String userName, String password) async {
@@ -317,6 +325,52 @@ abstract class FireBridge {
       snapshot.docs[0].reference.delete();
     }
   }
+  static Future<void> addModel(final int userId, final String projectName,
+      final LocalModel localModel) async {
+    final document = await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(projectName)
+        .where('project_name', isNull: false)
+        .get(const GetOptions(source: Source.server));
+    final Map<String, dynamic> body = {
+      'models': FieldValue.arrayUnion([
+        localModel.toJson()
+      ])
+    };
+
+    if (body.isNotEmpty) {
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(projectName)
+          .doc(document.docs[0].id)
+          .update(body);
+      logger('=== FIRE-BRIDGE == addLocalModel ==');
+    }
+  }
+
+  static Future<void> updateModel(final int userId, final String projectName,
+      final LocalModel localModel) async {
+    final document = await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(projectName)
+        .where('project_name', isNull: false)
+        .get(const GetOptions(source: Source.server));
+    final List<dynamic> models = document.docs[0]['models'];
+    final index=models.indexWhere((element) =>element['name'] == localModel.name);
+    models.removeAt(index);
+    models.insert(index, localModel.toJson());
+    final Map<String, dynamic> body = {'models': models};
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(projectName)
+          .doc(document.docs[0].id)
+          .update(body);
+      debugPrint('=== FIRE-BRIDGE == update variable == $body');
+  }
 
   static Future<void> addVariable(final int userId, final String projectName,
       final VariableModel variableModel) async {
@@ -339,7 +393,7 @@ abstract class FireBridge {
           .collection(projectName)
           .doc(document.docs[0].id)
           .update(body);
-      logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
+      logger('=== FIRE-BRIDGE == addVariable ==');
     }
   }
 

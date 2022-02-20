@@ -172,7 +172,7 @@ class ParameterWidget extends StatelessWidget {
 class SimpleParameterWidget extends StatelessWidget {
   final SimpleParameter parameter;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _textEditingController=TextEditingController();
+  final TextEditingController _textEditingController = TextEditingController();
 
   SimpleParameterWidget({Key? key, required this.parameter}) : super(key: key);
 
@@ -218,24 +218,26 @@ class SimpleParameterWidget extends StatelessWidget {
 
   Widget _buildInputType(BuildContext context) {
     switch (parameter.inputType) {
+      case ParamInputType.longText:
       case ParamInputType.text:
         WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-          _textEditingController.text='';
-          _textEditingController.text=parameter.compilerEnable != null &&
-              parameter.compilerEnable!.code.isNotEmpty
+          _textEditingController.text = '';
+          _textEditingController.text = parameter.compilerEnable != null &&
+                  parameter.compilerEnable!.code.isNotEmpty
               ? parameter.compilerEnable!.code
               : '${parameter.getValue() ?? ''}';
         });
         return SizedBox(
-          width: 110,
-          // height: 35,
+          width: parameter.inputType == ParamInputType.text ? 110 : 200,
+          height: parameter.inputType != ParamInputType.text ? 60 : null,
           child: TextFormField(
+            maxLines: parameter.inputType == ParamInputType.text ? null : 3,
             validator: (value) {
               if (value == null) {
                 return '';
               }
               final result =
-                  ComponentOperationCubit.codeProcessor.process(value);
+                  parameter.process(value);
               debugPrint('RESULT IS $value $result');
               if (result != null) {
                 parameter.compilerEnable!.code = value;
@@ -252,14 +254,21 @@ class SimpleParameterWidget extends StatelessWidget {
               }
               return '';
             },
-            buildCounter: parameter.compilerEnable==null?null:(
-              BuildContext context, {
-              required int currentLength,
-              required int? maxLength,
-              required bool isFocused,
-            }) {
-              return Text('${parameter.val}',style: AppFontStyle.roboto(13,fontWeight: FontWeight.w500,color: Colors.blueAccent),);
-            },
+            buildCounter: parameter.compilerEnable == null
+                ? null
+                : (
+                    BuildContext context, {
+                    required int currentLength,
+                    required int? maxLength,
+                    required bool isFocused,
+                  }) {
+                    return Text(
+                      '${parameter.val}',
+                      style: AppFontStyle.roboto(13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.blueAccent),
+                    );
+                  },
             controller: _textEditingController,
             onChanged: (value) {
               if (value.isNotEmpty) {
@@ -282,48 +291,12 @@ class SimpleParameterWidget extends StatelessWidget {
             },
             textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical:
+                        parameter.inputType == ParamInputType.text ? 0 : 5),
                 enabled: true,
                 errorText: null,
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Colors.grey, width: 1.5)),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Colors.grey, width: 1.5)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: Colors.blueAccent, width: 1.5))),
-          ),
-        );
-      case ParamInputType.longText:
-        return SizedBox(
-          width: 200,
-          height: 60,
-          child: TextField(
-            maxLines: 3,
-            controller: TextEditingController.fromValue(
-                TextEditingValue(text: '${parameter.rawValue ?? ''}')),
-            onChanged: (value) {
-              if (value.isNotEmpty) {
-                parameter.setValue(value);
-              } else {
-                parameter.val = null;
-              }
-              BlocProvider.of<ParameterBuildCubit>(context, listen: false)
-                  .parameterChanged(context, parameter);
-              Provider.of<ComponentCreationCubit>(context, listen: false)
-                  .changedComponent();
-            },
-            keyboardType: TextInputType.multiline,
-            decoration: InputDecoration(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                enabled: true,
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide:

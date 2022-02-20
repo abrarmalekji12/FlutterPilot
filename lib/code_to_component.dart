@@ -8,7 +8,7 @@ abstract class CodeOperations {
     final List<int> outputString = [];
     bool open = false;
     for (int i = 0; i < code.length; i++) {
-      if (code[i] == '\'') {
+      if (code[i] == '\''||code[i]=='`') {
         open = !open;
       } else if (!open && (code[i] == ' ' || code[i] == '\n')) {
         continue;

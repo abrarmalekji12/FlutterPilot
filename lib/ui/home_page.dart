@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:html' as html;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../common/dialog_selection.dart';
+import '../models/builder_component.dart';
 import '../runtime_provider.dart';
 import 'build_view/build_view.dart';
+import 'models_view.dart';
 import 'variable_ui.dart';
 import '../common/custom_popup_menu_button.dart';
 import 'package:get/get.dart';
@@ -281,8 +284,6 @@ class ToolbarButtons extends StatefulWidget {
 }
 
 class _ToolbarButtonsState extends State<ToolbarButtons> {
-  bool variableBoxOpen = false;
-
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -294,6 +295,50 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
+              InkWell(
+                highlightColor: Colors.blueAccent.shade200,
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  CustomDialog.show(
+                    context,
+                    CodeViewerWidget(
+                      code: BlocProvider.of<ComponentOperationCubit>(context,
+                              listen: false)
+                          .flutterProject!
+                          .code(),
+                    ),
+                  );
+                },
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  color: Colors.blueAccent,
+                  child: Padding(
+                    padding: const EdgeInsets.all(5),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.code,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text(
+                          'view code',
+                          style: AppFontStyle.roboto(14, color: Colors.white),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
               InkWell(
                 highlightColor: Colors.blueAccent.shade200,
                 borderRadius: BorderRadius.circular(8),
@@ -341,80 +386,99 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                   ),
                 ),
               ),
-              const SizedBox(
-                width: 10,
-              ),
-              InkWell(
-                highlightColor: Colors.blueAccent.shade200,
-                borderRadius: BorderRadius.circular(8),
-                onTap: () {
-                  CustomDialog.show(
-                    context,
-                    CodeViewerWidget(
-                      code: BlocProvider.of<ComponentOperationCubit>(context,
-                              listen: false)
-                          .flutterProject!
-                          .code(),
-                    ),
-                  );
-                },
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  color: Colors.blueAccent,
-                  child: Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.code,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          'view code',
-                          style: AppFontStyle.roboto(14, color: Colors.white),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
-          Container(
-            width: 350,
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      variableBoxOpen = !variableBoxOpen;
-                    });
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.all(10),
-                    child: Text(
-                      variableBoxOpen ? 'Hide' : 'Variables',
-                      style: AppFontStyle.roboto(15,
-                          color: Colors.black, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ),
-                if (variableBoxOpen) const VariableBox()
-              ],
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              VariableShowHideMenu(),
+              ModelShowHideMenu(),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class VariableShowHideMenu extends StatefulWidget {
+  const VariableShowHideMenu({Key? key}) : super(key: key);
+
+  @override
+  State<VariableShowHideMenu> createState() => _VariableShowHideMenuState();
+}
+
+class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
+  bool _variableBoxOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 350,
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() {
+                _variableBoxOpen = !_variableBoxOpen;
+              });
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                  color: Colors.white, borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                _variableBoxOpen ? 'Hide' : 'Variables',
+                style: AppFontStyle.roboto(15,
+                    color: Colors.black, fontWeight: FontWeight.w500),
+              ),
             ),
           ),
+          if (_variableBoxOpen) const VariableBox()
+        ],
+      ),
+    );
+  }
+}
+
+class ModelShowHideMenu extends StatefulWidget {
+  const ModelShowHideMenu({Key? key}) : super(key: key);
+
+  @override
+  State<ModelShowHideMenu> createState() => _ModelShowHideMenuState();
+}
+
+class _ModelShowHideMenuState extends State<ModelShowHideMenu> {
+  bool _modelBoxOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 450,
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() {
+                _modelBoxOpen = !_modelBoxOpen;
+              });
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                  color: Colors.white, borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                _modelBoxOpen ? 'Hide' : 'Models',
+                style: AppFontStyle.roboto(15,
+                    color: Colors.black, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ),
+          if (_modelBoxOpen) const ModelBox()
         ],
       ),
     );
@@ -541,6 +605,12 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                     const SizedBox(
                       height: 20,
                     ),
+                    if (_componentSelectionCubit.currentSelected
+                        is BuilderComponent)
+                      BuilderComponentSettings(
+                        component: _componentSelectionCubit.currentSelected
+                            as BuilderComponent,
+                      ),
                     Expanded(
                       child: BlocListener<ComponentCreationCubit,
                           ComponentCreationState>(
@@ -577,6 +647,66 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class BuilderComponentSettings extends StatefulWidget {
+  final BuilderComponent component;
+
+  const BuilderComponentSettings({Key? key, required this.component})
+      : super(key: key);
+
+  @override
+  State<BuilderComponentSettings> createState() => _BuilderComponentSettingsState();
+}
+
+class _BuilderComponentSettingsState extends State<BuilderComponentSettings> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          'Attach Model',
+          style: AppFontStyle.roboto(14,fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10,),
+        InkWell(
+          onTap: (){
+            Get.generalDialog(
+              barrierDismissible: false,
+              barrierLabel: 'barrierLabel',
+              barrierColor: Colors.black45,
+              transitionDuration: const Duration(milliseconds: 200),
+              pageBuilder: (context3, animation, secondary) {
+                return Material(
+                  color: Colors.transparent,
+                  child: DialogSelection(
+                    title: 'Choose Model',
+                    data: BlocProvider.of<ComponentOperationCubit>(context,listen: false).models.map((e) => e.name)
+                        .toList(),
+                    onSelection: (data) {
+                       widget.component.model = BlocProvider.of<ComponentOperationCubit>(context,listen: false).models.firstWhere((element) => element.name==data);
+                      BlocProvider.of<ComponentOperationCubit>(context,
+                          listen: false).emit(ComponentUpdatedState());
+                      BlocProvider.of<ComponentCreationCubit>(context,
+                          listen: false)
+                          .changedComponent();
+                      setState(() {
+                        
+                      });
+                    },
+                  ),
+                );
+              },
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            child: Text(widget.component.model?.name??'Choose Model',style: AppFontStyle.roboto(14,fontWeight: FontWeight.w500),),
+          ),
+        )
       ],
     );
   }

@@ -429,13 +429,13 @@ class Parameters {
         info: NamedParameterInfo('color'),
       );
 
-
   static ComplexParameter themeDataParameter() => ComplexParameter(
           params: [
             Parameters.backgroundColorParameter(),
             Parameters.colorParameter()
               ..withRequired(false)
-              ..inputCalculateAs=((color,forward)=>(color as Color).withAlpha(255))
+              ..inputCalculateAs =
+                  ((color, forward) => (color as Color).withAlpha(255))
               ..withNamedParamInfoAndSameDisplayName('primaryColor'),
             Parameters.colorParameter()
               ..withRequired(false)
@@ -464,20 +464,19 @@ class Parameters {
           ],
           evaluate: (params) {
             return ThemeData(
-              backgroundColor: params[0].value,
-              primaryColor: params[1].value,
-              secondaryHeaderColor: params[2].value,
-              primaryColorLight: params[3].value,
-              primaryColorDark: params[4].value,
-              cardColor: params[5].value,
-              focusColor:params[6].value ,
-              hoverColor: params[7].value,
-              splashColor: params[8].value,
-              hintColor: params[9].value,
-              visualDensity: VisualDensity.comfortable
-             );
+                backgroundColor: params[0].value,
+                primaryColor: params[1].value,
+                secondaryHeaderColor: params[2].value,
+                primaryColorLight: params[3].value,
+                primaryColorDark: params[4].value,
+                cardColor: params[5].value,
+                focusColor: params[6].value,
+                hoverColor: params[7].value,
+                splashColor: params[8].value,
+                hintColor: params[9].value,
+                visualDensity: VisualDensity.comfortable);
           },
-      name: 'Theme',
+          name: 'Theme',
           info: InnerObjectParameterInfo(innerObjectName: 'ThemeData'));
 
   static SimpleParameter backgroundColorParameter() => colorParameter()
@@ -514,16 +513,18 @@ class Parameters {
         info: NamedParameterInfo('crossAxisAlignment'),
         defaultValue: 'start',
       );
+
   static themeModeParameter() => ChoiceValueParameter(
-    name: 'theme Mode',
-    options: {
-      'light': ThemeMode.light,
-      'dark': ThemeMode.dark,
-      'system': ThemeMode.system,
-    },
-    info: NamedParameterInfo('themeMode'),
-    defaultValue: 'system',
-  );
+        name: 'theme Mode',
+        options: {
+          'light': ThemeMode.light,
+          'dark': ThemeMode.dark,
+          'system': ThemeMode.system,
+        },
+        info: NamedParameterInfo('themeMode'),
+        defaultValue: 'system',
+      );
+
   static mainAxisAlignmentParameter() => ChoiceValueParameter(
         name: 'mainAxisAlignment',
         options: {
@@ -752,23 +753,24 @@ class Parameters {
               ..withInfo(null)
               ..withDisplayName('Y')
           ]);
+
   static ComplexParameter sizeParameter() => ComplexParameter(
-      info: InnerObjectParameterInfo(
-          namedIfHaveAny: 'preferredSize', innerObjectName: 'Size'),
-      name: 'size',
-      evaluate: (params) {
-        return Size(params[0].value, params[1].value);
-      },
-      params: [
-        directionParameter()
-          ..withRequired(true)
-          ..withInfo(null)
-          ..withDisplayName('width'),
-        directionParameter()
-          ..withRequired(true)
-          ..withInfo(null)
-          ..withDisplayName('height')
-      ]);
+          info: InnerObjectParameterInfo(
+              namedIfHaveAny: 'preferredSize', innerObjectName: 'Size'),
+          name: 'size',
+          evaluate: (params) {
+            return Size(params[0].value, params[1].value);
+          },
+          params: [
+            directionParameter()
+              ..withRequired(true)
+              ..withInfo(null)
+              ..withDisplayName('width'),
+            directionParameter()
+              ..withRequired(true)
+              ..withInfo(null)
+              ..withDisplayName('height')
+          ]);
 
   static SimpleParameter heightParameter() => SimpleParameter<double>(
       info: NamedParameterInfo('height'),
@@ -936,7 +938,7 @@ class Parameters {
   static SimpleParameter shortStringParameter() => SimpleParameter<String>(
       name: 'text',
       defaultValue: '',
-      inputType: ParamInputType.text,
+      inputType: ParamInputType.longText,
       required: true);
 
   static Parameter imageParameter() => SimpleParameter<ImageData>(

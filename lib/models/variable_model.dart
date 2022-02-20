@@ -1,3 +1,5 @@
+import '../ui/models_view.dart';
+
 class VariableModel {
   String name;
   double value;
@@ -20,25 +22,29 @@ class VariableModel {
 
   factory VariableModel.fromJson(Map<String, dynamic> map) {
     return VariableModel(map['name'], map['value'], false, map['description'],
-        deletable: map['deletable']??true);
+        deletable: map['deletable'] ?? true);
   }
 }
 
 class DynamicVariableModel {
   String name;
-  dynamic value;
+  DataType dataType;
   String? description;
-  String? assignmentCode;
-  final bool deletable;
 
-  DynamicVariableModel(this.name, this.value, this.description,
-      {this.assignmentCode, this.deletable = true});
+  DynamicVariableModel(this.name, this.dataType, {this.description = ''});
+
+  factory DynamicVariableModel.fromJson(Map<String, dynamic> json) {
+    return DynamicVariableModel(
+        json['name'],
+        DataType.values
+            .firstWhere((element) => element.name == json['dataType']),
+        description: json['description']);
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      'value': value,
-      'deletable': deletable,
+      'dataType': dataType.name,
       'description': description,
     };
   }

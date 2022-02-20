@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../common/compiler/code_processor.dart';
 import '../../common/undo/revert_work.dart';
 import '../../models/data_model.dart';
+import '../../models/local_model.dart';
 import '../../models/variable_model.dart';
 import '../../models/parameter_model.dart';
 import '../../models/other_model.dart';
@@ -30,6 +31,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   ComponentOperationCubit() : super(ComponentOperationInitial());
 
+  List<LocalModel> get models => flutterProject!.models;
+
   void addedComponent(Component component, Component root) {
     if (root is CustomComponent) {
       updateGlobalCustomComponent(root);
@@ -50,16 +53,16 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
   }
 
-  void addInSameComponentList(final Component component,{bool checkForSame=false}) {
+  void addInSameComponentList(final Component component,
+      {bool checkForSame = false}) {
     if (!sameComponentCollection.containsKey(component.name)) {
       sameComponentCollection[component.name] = [component];
     } else if (!sameComponentCollection[component.name]!.contains(component)) {
-      if(!checkForSame) {
+      if (!checkForSame) {
         sameComponentCollection[component.name]!.add(component);
-      }
-      else{
-        for(final comp in sameComponentCollection[component.name]!){
-          if(component.code()==comp.code()){
+      } else {
+        for (final comp in sameComponentCollection[component.name]!) {
+          if (component.code() == comp.code()) {
             return;
           }
         }
@@ -434,13 +437,20 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         flutterProject!.userId, flutterProject!.name, variableModel);
     emit(ComponentOperationInitial());
   }
-  Future<void> addModel(final Model model) async {
+
+  Future<void> addModel(final LocalModel model) async {
     emit(ComponentOperationLoadingState());
-    // await FireBridge.addModel(
-    //     flutterProject!.userId, flutterProject!.name, );
+    await FireBridge.addModel(
+        flutterProject!.userId, flutterProject!.name, model);
     emit(ComponentOperationInitial());
   }
 
+  Future<void> updateModel(final LocalModel model) async {
+    emit(ComponentOperationLoadingState());
+    await FireBridge.updateModel(
+        flutterProject!.userId, flutterProject!.name, model);
+    emit(ComponentOperationInitial());
+  }
 
   Future<void> updateVariable(VariableModel variableModel) async {
     emit(ComponentOperationLoadingState());

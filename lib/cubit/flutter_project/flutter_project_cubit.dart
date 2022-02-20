@@ -86,6 +86,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           flutterProject.rootComponent!, flutterProject.rootComponent!);
 
       componentOperationCubit.flutterProject = flutterProject;
+
       if(flutterProject.variables.firstWhereOrNull((e)=>e.name=='tabletWidthLimit')==null){
        componentOperationCubit.addVariable(
            VariableModel('tabletWidthLimit', 1200, false, 'maximum width tablet can have',deletable: false)
@@ -97,6 +98,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
       }
       await componentOperationCubit.loadFavourites(
           projectName: flutterProject.name);
+
       componentOperationCubit.extractSameTypeComponents(flutterProject.rootComponent!);
       emit(FlutterProjectLoadedState(flutterProject));
     } on Exception {

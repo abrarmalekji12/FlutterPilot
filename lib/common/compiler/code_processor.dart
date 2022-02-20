@@ -3,13 +3,15 @@ import 'dart:core';
 import 'package:flutter/cupertino.dart';
 import '../../code_to_component.dart';
 import '../../models/function_model.dart';
+import '../../models/local_model.dart';
 import '../../models/variable_model.dart';
 
 class CodeProcessor {
   final Map<String, VariableModel> variables = {};
   final Map<String, FunctionModel> functions = {};
+  final Map<String, dynamic> modelVariables = {};
 
-  late Stack2<double> valueStack;
+  late Stack2<dynamic> valueStack;
   late Stack2<int> operatorStack;
   late bool error;
   final capitalACodeUnit = 'A'.codeUnits.first,
@@ -21,19 +23,18 @@ class CodeProcessor {
 
   CodeProcessor() {
     operatorStack = Stack2<int>();
-    valueStack = Stack2<double>();
+    valueStack = Stack2<dynamic>();
     error = false;
-    functions['res']=FunctionModel<double>('res', (arguments){
-      if(variables['dw']!.value>variables['tabletWidthLimit']!.value){
-       return arguments[0];
-      }
-      else if(variables['dw']!.value>variables['phoneWidthLimit']!.value||arguments.length==2){
+    functions['res'] = FunctionModel<dynamic>('res', (arguments) {
+      if (variables['dw']!.value > variables['tabletWidthLimit']!.value) {
+        return arguments[0];
+      } else if (variables['dw']!.value > variables['phoneWidthLimit']!.value ||
+          arguments.length == 2) {
         return arguments[1];
-      }
-      else {
+      } else {
         return arguments[2];
       }
-    },'''
+    }, '''
     double res(double large,double medium,[double? small]){
     if(dw>tabletWidthLimit){
       return large;
@@ -100,12 +101,36 @@ class CodeProcessor {
     valueStack.push(r);
   }
 
-  double? process(final String input) {
+  String? processString(String code) {
+    while (code.contains('{{') && code.contains('}}')) {
+      final si = code.indexOf('{{'), ei = code.indexOf('}}');
+      if (si + 2 == ei) {
+        return null;
+      }
+      final variableName = code.substring(si + 2, ei);
+      if (variableName.isNotEmpty) {
+        final value = process<String>(variableName, resolve: true);
+        if (value != null) {
+          code = code.replaceAll('{{$variableName}}', value.toString());
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
+    return code;
+  }
+
+  dynamic process<T>(final String input, {bool resolve = false}) {
     operatorStack.clear();
     valueStack.clear();
     String number = '';
     String variable = '';
     error = false;
+    if (T == String && !resolve) {
+      return processString(input);
+    }
     for (int n = 0; n < input.length; n++) {
       if (error) {
         return null;
@@ -118,10 +143,19 @@ class CodeProcessor {
       } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
           ch == underScoreCodeUnit) {
         variable += nextToken;
+      } else if (ch == '"'.codeUnits.first) {
+        if(variable.isEmpty){
+          continue;
+        }
+        if (n - variable.length-1 >= 0 && input[n - variable.length-1] == '"') {
+          return variable;
+        }
+        else{
+          return null;
+        }
       } else {
         if (variable.isNotEmpty && ch == '('.codeUnits[0]) {
-          debugPrint('function time $variable');
-          if(!functions.containsKey(variable)){
+          if (!functions.containsKey(variable)) {
             return null;
           }
           int count = 0;
@@ -132,6 +166,9 @@ class CodeProcessor {
             if (count == 0 && input[m] == ')') {
               final argument =
                   CodeOperations.splitByComma(input.substring(n + 1, m));
+              if(functions[variable]==null){
+                return null;
+              }
               return functions[variable]!
                   .perform
                   .call(argument.map((e) => process(e)).toList());
@@ -148,10 +185,14 @@ class CodeProcessor {
           valueStack.push(parse);
           number = '';
         } else if (variable.isNotEmpty) {
-          if (!variables.containsKey(variable)) {
+          if (variables.containsKey(variable)) {
+            valueStack.push(variables[variable]!.value);
+          } else if (modelVariables.containsKey(variable)) {
+            valueStack.push(modelVariables[variable]!);
+          } else {
             return null;
           }
-          valueStack.push(variables[variable]!.value);
+
           variable = '';
         }
         if (isOperator(ch)) {
@@ -192,10 +233,13 @@ class CodeProcessor {
       valueStack.push(parse);
       number = '';
     } else if (variable.isNotEmpty) {
-      if (!variables.containsKey(variable)) {
+      if (variables.containsKey(variable)) {
+        valueStack.push(variables[variable]!.value);
+      } else if (modelVariables.containsKey(variable)) {
+        valueStack.push(modelVariables[variable]!);
+      } else {
         return null;
       }
-      valueStack.push(variables[variable]!.value);
       variable = '';
     }
     // Empty out the operator stack at the end of the input
@@ -206,7 +250,7 @@ class CodeProcessor {
     }
     // Print the result if no error has been seen.
     if (!error) {
-      final double? result = valueStack.peek;
+      final result = valueStack.peek;
       valueStack.pop();
       if (operatorStack.isNotEmpty || valueStack.isNotEmpty) {
         debugPrint('Expression error.');
@@ -215,6 +259,7 @@ class CodeProcessor {
         return result;
       }
     }
+    return null;
   }
 }
 

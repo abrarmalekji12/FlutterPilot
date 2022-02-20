@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'local_model.dart';
 import 'variable_model.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import 'other_model.dart';
@@ -12,6 +13,7 @@ class FlutterProject {
   final int userId;
   final String? device;
   final List<VariableModel> variables=[];
+  final List<LocalModel> models=[];
   final List<CustomComponent> customComponents = [];
   Component? rootComponent;
   final List<FavouriteModel> favouriteList = [];

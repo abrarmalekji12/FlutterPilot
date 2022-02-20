@@ -378,7 +378,7 @@ class BasicComponentTile extends StatelessWidget {
         child: InkWell(
           onTap: () {
             final component = componentList[entry.value]!();
-            componentOperationCubit.addInSameComponentList(component);
+            componentOperationCubit.addInSameComponentList(component,checkForSame: true);
             widget.onSelection(component);
             Get.back();
           },

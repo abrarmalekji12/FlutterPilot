@@ -1232,6 +1232,7 @@ class ComponentModificationMenu extends StatelessWidget {
     }
     switch (comp.type) {
       case 2:
+      case 2:
         //MultiHolder
         (comp as MultiHolder).children = (oldComponent as MultiHolder).children;
         break;

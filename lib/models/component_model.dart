@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../runtime_provider.dart';
+import 'builder_component.dart';
 import 'data_model.dart';
 import 'parameter_rule_model.dart';
 import '../code_to_component.dart';
@@ -123,18 +124,36 @@ abstract class Component {
 
     switch (comp.type) {
       case 3:
-        int index = -1;
-        for (int i = 0; i < parameterCodes.length; i++) {
-          if (parameterCodes[i].startsWith('child:')) {
-            index = i;
-            break;
+        // if (comp is BuilderComponent) {
+        //   int index = -1;
+        //   for (int i = 0; i < parameterCodes.length; i++) {
+        //     if (parameterCodes[i].startsWith('builder:')) {
+        //       index = i;
+        //       break;
+        //     }
+        //   }
+        //   if (index != -1) {
+        //     final childCode = parameterCodes.removeAt(index);
+        //     final builderCode = childCode.replaceFirst('builder:', '');
+        //     (comp as Holder).updateChild(Component.fromCode(
+        //         builderCode.substring(builderCode.indexOf('return') + 1,
+        //             builderCode.lastIndexOf(';}'))));
+        //   }
+        //   break;
+        // } else {
+          int index = -1;
+          for (int i = 0; i < parameterCodes.length; i++) {
+            if (parameterCodes[i].startsWith('child:')) {
+              index = i;
+              break;
+            }
           }
-        }
-        if (index != -1) {
-          final childCode = parameterCodes.removeAt(index);
-          (comp as Holder).updateChild(
-              Component.fromCode(childCode.replaceFirst('child:', '')));
-        }
+          if (index != -1) {
+            final childCode = parameterCodes.removeAt(index);
+            (comp as Holder).updateChild(
+                Component.fromCode(childCode.replaceFirst('child:', '')));
+          }
+        // }
         break;
       case 2:
         int index = -1;
@@ -747,11 +766,8 @@ abstract class CustomNamedHolder extends Component {
   int get childCount => -2;
 }
 
-abstract class BuilderComponent extends Component{
-  BuilderComponent(String name, List<Parameter> parameters) : super(name, parameters);
-  Component? root;
-  List<Model> models=[];
-}
+
+
 abstract class CustomComponent extends Component {
   String? extensionName;
   Component? root;
