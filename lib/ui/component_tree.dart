@@ -27,6 +27,7 @@ class ComponentTree extends StatefulWidget {
 }
 
 class _ComponentTreeState extends State<ComponentTree> {
+  final ScrollController _scrollController = ScrollController();
   late final ComponentOperationCubit _componentOperationCubit;
   late final ComponentCreationCubit _componentCreationCubit;
   late final ComponentSelectionCubit _componentSelectionCubit;
@@ -123,126 +124,184 @@ class _ComponentTreeState extends State<ComponentTree> {
           ),
         ),
         Expanded(
-          child: BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
-            bloc: _componentOperationCubit,
-            buildWhen: (state1, state2) {
-              debugPrint(
-                  '=== ComponentOperationCubit == buildWhen ${state1.runtimeType} to ${state2.runtimeType}');
-              if (state2 is ComponentUpdatedState) {
-                return true;
-              }
-              return false;
-            },
-            builder: (context, state) {
-              debugPrint(
-                  '=== ComponentOperationCubit == state ${state.runtimeType}');
-              return SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      alignment: Alignment.topLeft,
-                      padding: const EdgeInsets.all(6),
-                      child: SublistWidget(
-                          component: _componentOperationCubit
-                              .flutterProject!.rootComponent!,
-                          ancestor: _componentOperationCubit
-                              .flutterProject!.rootComponent!,
-                          componentSelectionCubit: _componentSelectionCubit,
-                          componentOperationCubit: _componentOperationCubit,
-                          componentCreationCubit: _componentCreationCubit),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Custom Widgets',
-                            style: AppFontStyle.roboto(14,
-                                color: const Color(0xff494949),
-                                fontWeight: FontWeight.bold),
-                          ),
-                          InkWell(
-                            borderRadius: BorderRadius.circular(10),
-                            onTap: () {
-                              //ADD Custom Widgets
-                              showCustomWidgetRename(
-                                  context, 'Enter widget name', (name) {
-                                Get.back();
-
-                                BlocProvider.of<ComponentOperationCubit>(
-                                        context,
-                                        listen: false)
-                                    .addCustomComponent(name);
-                              });
-                            },
-                            child: const CircleAvatar(
-                              radius: 10,
-                              backgroundColor: AppColors.theme,
-                              child: Icon(
-                                Icons.add,
-                                size: 15,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    for (final CustomComponent comp in _componentOperationCubit
-                        .flutterProject!.customComponents) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: AppColors.theme, width: 1.5),
-                                borderRadius: BorderRadius.circular(4)),
-                            padding: const EdgeInsets.all(5),
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            child: Text(
-                              comp.name,
-                              style: AppFontStyle.roboto(15,
-                                  color: AppColors.theme,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          ComponentModificationMenu(
-                            component: comp,
-                            ancestor: comp,
-                            componentOperationCubit: _componentOperationCubit,
-                            componentCreationCubit: _componentCreationCubit,
-                            componentSelectionCubit: _componentSelectionCubit,
-                          )
-                        ],
-                      ),
-                      if (comp.root != null)
-                        Container(
-                          alignment: Alignment.topLeft,
-                          padding: const EdgeInsets.all(10),
-                          child: SublistWidget(
-                              component: comp.root!,
-                              ancestor: comp,
-                              componentSelectionCubit: _componentSelectionCubit,
-                              componentOperationCubit: _componentOperationCubit,
-                              componentCreationCubit: _componentCreationCubit),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: StatefulBuilder(builder: (context, setState2) {
+                    if (!_scrollController.hasListeners) {
+                      _scrollController.addListener(() {
+                        setState2(() {});
+                      });
+                    }
+                    return FractionallySizedBox(
+                      heightFactor: _scrollController.hasClients&&_scrollController.position.maxScrollExtent>0
+                          ? (_scrollController.offset /
+                              _scrollController.position.maxScrollExtent)
+                          : 0,
+                      child: Container(
+                        width: 3,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          color: Colors.blueAccent,
                         ),
-                    ],
-                    const SizedBox(
-                      height: 100,
-                    ),
-                  ],
+
+                      ),
+                    );
+                  }),
                 ),
-              );
-            },
+              ),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: BlocListener<ComponentSelectionCubit,
+                      ComponentSelectionState>(
+                    listener: (context, state) {
+                      if (state is ComponentSelectionChange && state.scroll) {
+                        scrollToSelected();
+                      }
+                    },
+                    child: BlocBuilder<ComponentOperationCubit,
+                        ComponentOperationState>(
+                      bloc: _componentOperationCubit,
+                      buildWhen: (state1, state2) {
+                        debugPrint(
+                            '=== ComponentOperationCubit == buildWhen ${state1.runtimeType} to ${state2.runtimeType}');
+                        if (state2 is ComponentUpdatedState) {
+                          return true;
+                        }
+                        return false;
+                      },
+                      builder: (context, state) {
+                        debugPrint(
+                            '=== ComponentOperationCubit == state ${state.runtimeType}');
+                        return SingleChildScrollView(
+                          controller: _scrollController,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+
+                            children: [
+                              Container(
+                                alignment: Alignment.topLeft,
+                                padding: const EdgeInsets.all(6),
+                                child: SublistWidget(
+                                    component: _componentOperationCubit
+                                        .flutterProject!.rootComponent!,
+                                    ancestor: _componentOperationCubit
+                                        .flutterProject!.rootComponent!,
+                                    componentSelectionCubit:
+                                        _componentSelectionCubit,
+                                    componentOperationCubit:
+                                        _componentOperationCubit,
+                                    componentCreationCubit:
+                                        _componentCreationCubit),
+                              ),
+                              // Padding(
+                              //   padding: const EdgeInsets.all(10),
+                              //   child: Row(
+                              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              //     children: [
+                              //       Text(
+                              //         'Custom Widgets',
+                              //         style: AppFontStyle.roboto(14,
+                              //             color: const Color(0xff494949),
+                              //             fontWeight: FontWeight.bold),
+                              //       ),
+                              //       InkWell(
+                              //         borderRadius: BorderRadius.circular(10),
+                              //         onTap: () {
+                              //           //ADD Custom Widgets
+                              //           showCustomWidgetRename(
+                              //               context, 'Enter widget name', (name) {
+                              //             Get.back();
+                              //
+                              //             BlocProvider.of<ComponentOperationCubit>(
+                              //                     context,
+                              //                     listen: false)
+                              //                 .addCustomComponent(name);
+                              //           });
+                              //         },
+                              //         child: const CircleAvatar(
+                              //           radius: 10,
+                              //           backgroundColor: AppColors.theme,
+                              //           child: Icon(
+                              //             Icons.add,
+                              //             size: 15,
+                              //             color: Colors.white,
+                              //           ),
+                              //         ),
+                              //       ),
+                              //     ],
+                              //   ),
+                              // ),
+                              // for (final CustomComponent comp in _componentOperationCubit
+                              //     .flutterProject!.customComponents) ...[
+                              //   Row(
+                              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              //     children: [
+                              //       Container(
+                              //         decoration: BoxDecoration(
+                              //             border: Border.all(
+                              //                 color: AppColors.theme, width: 1.5),
+                              //             borderRadius: BorderRadius.circular(4)),
+                              //         padding: const EdgeInsets.all(5),
+                              //         margin: const EdgeInsets.symmetric(
+                              //             horizontal: 10, vertical: 5),
+                              //         child: Text(
+                              //           comp.name,
+                              //           style: AppFontStyle.roboto(15,
+                              //               color: AppColors.theme,
+                              //               fontWeight: FontWeight.bold),
+                              //         ),
+                              //       ),
+                              //       ComponentModificationMenu(
+                              //         component: comp,
+                              //         ancestor: comp,
+                              //         componentOperationCubit: _componentOperationCubit,
+                              //         componentCreationCubit: _componentCreationCubit,
+                              //         componentSelectionCubit: _componentSelectionCubit,
+                              //       )
+                              //     ],
+                              //   ),
+                              //   if (comp.root != null)
+                              //     Container(
+                              //       alignment: Alignment.topLeft,
+                              //       padding: const EdgeInsets.all(10),
+                              //       child: SublistWidget(
+                              //           component: comp.root!,
+                              //           ancestor: comp,
+                              //           componentSelectionCubit: _componentSelectionCubit,
+                              //           componentOperationCubit: _componentOperationCubit,
+                              //           componentCreationCubit: _componentCreationCubit),
+                              //     ),
+                              // ],
+                              const SizedBox(
+                                height: 100,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
+  }
+
+  void scrollToSelected() {
+    Scrollable.ensureVisible(
+        GlobalObjectKey(_componentSelectionCubit.currentSelected.uniqueId)
+            .currentContext!,
+        alignment: 0.5,
+        duration: const Duration(milliseconds: 200));
   }
 
   void showCustomWidgetRename(
@@ -437,7 +496,7 @@ class MultipleChildWidget extends StatelessWidget {
           left: BorderSide(width: 0.4, color: Colors.grey),
         ),
       ),
-      height: getCalculatedHeight(component) - 35 + extraHeight,
+      height:( componentOperationCubit.expandedTree[component]??true)?getCalculatedHeight(component) - 35 + extraHeight:extraHeight,
       child: ListView.builder(
         // shrinkWrap: true,
         // restorationId: component.toString(),
@@ -451,13 +510,11 @@ class MultipleChildWidget extends StatelessWidget {
         // },
         itemBuilder: (BuildContext _, int index) {
           return Row(
-            key: GlobalObjectKey(
-                '${children[index].id} ${children[index].parent?.id} reorder'),
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              UpDownButtons(componentOperationCubit, component, ancestor,
-                  children, index),
+              UpDownButtons(componentOperationCubit, componentSelectionCubit,
+                  component, ancestor, children, index),
               Expanded(
                 child: SublistWidget(
                   component: children[index],
@@ -538,10 +595,12 @@ class UpDownButtons extends StatelessWidget {
   final ComponentOperationCubit componentOperationCubit;
   final Component component, ancestor;
   final List<Component> children;
+  final ComponentSelectionCubit _componentSelectionCubit;
   final int index;
 
   const UpDownButtons(
     this.componentOperationCubit,
+    this._componentSelectionCubit,
     this.component,
     this.ancestor,
     this.children,
@@ -556,13 +615,21 @@ class UpDownButtons extends StatelessWidget {
         InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: () {
-            componentOperationCubit.arrangeComponent(
-                context,
-                component,
-                children,
-                index,
-                index - 1 >= 0 ? index - 1 : children.length - 1,
-                ancestor);
+            componentOperationCubit.revertWork.add(
+                [index, index - 1 >= 0 ? index - 1 : children.length - 1], () {
+              componentOperationCubit.arrangeComponent(
+                  context,
+                  component,
+                  children,
+                  index,
+                  index - 1 >= 0 ? index - 1 : children.length - 1,
+                  ancestor);
+              _componentSelectionCubit.changeComponentSelection(component,
+                  root: ancestor);
+            }, (p0) {
+              componentOperationCubit.arrangeComponent(
+                  context, component, children, p0[1], p0[0], ancestor);
+            });
           },
           child: const Icon(
             Icons.arrow_drop_up,
@@ -632,7 +699,7 @@ class _SublistWidgetState extends State<SublistWidget> {
                           .componentOperationCubit
                           .expandedTree[widget.component] ??
                       true));
-                  setState(() {});
+                 setState(() {});
                 },
                 child: Icon(
                   open ? Icons.arrow_drop_down : Icons.arrow_drop_up,
@@ -868,7 +935,9 @@ class ComponentModificationMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final favourite = customNamed==null&&!componentParameterOperation&&componentOperationCubit.isFavourite(component);
+    final favourite = customNamed == null &&
+        !componentParameterOperation &&
+        componentOperationCubit.isFavourite(component);
 
     final components =
         componentList.map((key, value) => MapEntry(key, value()));
@@ -911,14 +980,13 @@ class ComponentModificationMenu extends StatelessWidget {
               onTap: () {
                 //ADDING COMPONENT
                 showSelectionDialog(context, (comp) {
-                 performReversibleOperation(() {
-                   addOperation(component, comp);
-                   componentCreationCubit.changedComponent();
-
-                   componentOperationCubit.addedComponent(comp, ancestor);
-                   componentSelectionCubit.changeComponentSelection(comp,
-                       root: ancestor);
-                 });
+                  performReversibleOperation(() {
+                    addOperation(component, comp);
+                    componentCreationCubit.changedComponent();
+                    componentOperationCubit.addedComponent(comp, ancestor);
+                    componentSelectionCubit.changeComponentSelection(comp,
+                        root: ancestor);
+                  });
                 },
                     possibleItems: (customNamed != null &&
                             (component as CustomNamedHolder)
@@ -967,7 +1035,9 @@ class ComponentModificationMenu extends StatelessWidget {
                         operation.component1,
                         root: ancestor);
                   });
-                },favouritesEnable: false, possibleItems: getSameComponents(components, component));
+                },
+                    favouritesEnable: false,
+                    possibleItems: getSameComponents(components, component));
               },
               child: const Icon(
                 Icons.find_replace_outlined,
@@ -1201,7 +1271,8 @@ class ComponentModificationMenu extends StatelessWidget {
     componentOperationCubit.revertWork.add(operation, work, (p0) {
       final Operation operation = p0;
       componentOperationCubit.flutterProject!.rootComponent =
-          Component.fromCode(operation.code);
+          Component.fromCode(
+              operation.code, componentOperationCubit.flutterProject!);
       componentOperationCubit.emit(ComponentUpdatedState());
       componentOperationCubit.flutterProject!.rootComponent!.forEach((comp) {
         if (comp.name == 'Image.asset') {
@@ -1231,7 +1302,6 @@ class ComponentModificationMenu extends StatelessWidget {
       }
     }
     switch (comp.type) {
-      case 2:
       case 2:
         //MultiHolder
         (comp as MultiHolder).children = (oldComponent as MultiHolder).children;
@@ -1275,7 +1345,7 @@ class ComponentModificationMenu extends StatelessWidget {
 
   void showSelectionDialog(
       BuildContext context, void Function(Component) onSelection,
-      {List<String>? possibleItems,bool favouritesEnable=true}) {
+      {List<String>? possibleItems, bool favouritesEnable = true}) {
     Get.dialog(
       GestureDetector(
         onTap: () {
@@ -1443,9 +1513,10 @@ class ComponentTile extends StatelessWidget {
           hoverColor: const Color(0xffADD8FF),
           onTap: () {
             componentSelectionCubit.changeComponentSelection(component,
-                root: ancestor);
+                root: ancestor, scroll: false);
           },
           child: Container(
+            key: GlobalObjectKey(component.uniqueId),
             height: 30,
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 7),

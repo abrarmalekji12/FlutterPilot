@@ -184,8 +184,10 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                       .createNewProject(name)
                                       .then((value) {
                                     _textEditingController.text = '';
-                                    _flutterProjects.add(
-                                        FlutterProject(name, widget.userId));
+
+                                    setState(() {
+
+                                    });
                                     Get.to(
                                         () => HomePage(
                                               projectName: name,

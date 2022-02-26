@@ -18,9 +18,9 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
     ScreenConfig('iPhone 5/SE', 320, 568),
     ScreenConfig('iPad Pro 11', 834, 1194),
     ScreenConfig('Galaxy Tab S7', 800, 1280),
-    ScreenConfig('Macbook Air', 1280, 800),
-    ScreenConfig('Macbook Pro', 1728, 1085),
-    ScreenConfig('Laptop (15")', 1920, 1080),
+    ScreenConfig('Macbook Air', 1280, 800,scale: 1.25),
+    ScreenConfig('Macbook Pro', 1728, 1085,scale: 1.25),
+    ScreenConfig('Laptop (15")', 1920, 1080,scale: 1.25),
   ];
 
   late ScreenConfig screenConfig;

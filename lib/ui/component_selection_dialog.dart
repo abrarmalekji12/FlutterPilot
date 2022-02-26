@@ -49,7 +49,8 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.shouldShowFavourites) {
+    if (widget.shouldShowFavourites &&
+        widget.componentOperationCubit.favouriteList.isEmpty) {
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         widget.componentOperationCubit.loadFavourites();
       });
@@ -195,11 +196,27 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                     if (widget.shouldShowFavourites) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Text(
-                          'Favourites',
-                          style: AppFontStyle.roboto(14,
-                              color: const Color(0xff494949),
-                              fontWeight: FontWeight.bold),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Favourites',
+                              style: AppFontStyle.roboto(14,
+                                  color: const Color(0xff494949),
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(
+                              width: 20,
+                            ),
+                            InkWell(
+                              onTap: () {
+                                componentOperationCubit.loadFavourites();
+                              },
+                              child: const Icon(
+                                Icons.refresh,
+                                size: 20,
+                              ),
+                            )
+                          ],
                         ),
                       ),
                       Expanded(
@@ -378,7 +395,8 @@ class BasicComponentTile extends StatelessWidget {
         child: InkWell(
           onTap: () {
             final component = componentList[entry.value]!();
-            componentOperationCubit.addInSameComponentList(component,checkForSame: true);
+            componentOperationCubit.addInSameComponentList(component,
+                checkForSame: true);
             widget.onSelection(component);
             Get.back();
           },

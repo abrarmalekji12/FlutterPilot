@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'cubit/authentication/authentication_cubit.dart';
 import 'ui/authentication/login.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 
@@ -22,8 +24,7 @@ class MyApp extends StatelessWidget {
     html.document
         .addEventListener('contextmenu', (event) => event.preventDefault());
     if (!kDebugMode) {
-      FlutterError.onError = (
-        FlutterErrorDetails details, {
+      FlutterError.onError = (FlutterErrorDetails details, {
         bool forceReport = false,
       }) async {
         bool ifIsOverflowError = false;
@@ -42,13 +43,17 @@ class MyApp extends StatelessWidget {
         }
       };
     }
-    return GetMaterialApp(
-      title: 'Flutter Visual Builder',
-      scrollBehavior: MyCustomScrollBehavior(),
-      theme: ThemeData(
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          primaryColor: AppColors.theme),
-      home: const LoginPage(),
+    return BlocProvider(
+
+      create: (context) => AuthenticationCubit(),
+      child: GetMaterialApp(
+        title: 'Flutter Visual Builder',
+        scrollBehavior: MyCustomScrollBehavior(),
+        theme: ThemeData(
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            primaryColor: AppColors.theme),
+        home: const LoginPage(),
+      ),
     );
   }
 }
@@ -56,7 +61,8 @@ class MyApp extends StatelessWidget {
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
   // Override behavior methods and getters like dragDevices
   @override
-  Set<PointerDeviceKind> get dragDevices => {
+  Set<PointerDeviceKind> get dragDevices =>
+      {
         PointerDeviceKind.touch,
         PointerDeviceKind.mouse,
         // etc.

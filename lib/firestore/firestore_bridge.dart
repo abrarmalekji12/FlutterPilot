@@ -130,12 +130,9 @@ abstract class FireBridge {
           .doc(Strings.kFlutterProject)
           .collection(project.name)
           .add({
-        'variables': project.variables
-            .map((e) => e.toJson())
-            .toList(growable: false),
-        'models': project.models
-            .map((e) => e.toJson())
-            .toList(growable: false),
+        'variables':
+            project.variables.map((e) => e.toJson()).toList(growable: false),
+        'models': project.models.map((e) => e.toJson()).toList(growable: false),
         'name': component.name,
         'device': 'iPhone X',
         'code': component.root != null
@@ -169,7 +166,7 @@ abstract class FireBridge {
     for (final document in snapshot.docs) {
       final json = document.data();
       favouriteModels.add(FavouriteModel(
-          Component.fromCode(json['code'])!
+          Component.fromCode(json['code'], null)!
             ..boundary = Rect.fromLTWH(0, 0, json['width'], json['height']),
           json['project_name']));
     }
@@ -201,6 +198,39 @@ abstract class FireBridge {
     }
   }
 
+  static Future<int?> registerUser(String userName, String password) async {
+    final usersMatched=await FirebaseFirestore.instance
+        .collection('users')
+        .where('username', isEqualTo: userName).get();
+    if(usersMatched.docs.isNotEmpty){
+      return null;
+    }
+    final doc = await FirebaseFirestore.instance
+        .collection('userInfo')
+        .doc('count')
+        .get();
+    if (doc.data() == null || !doc.exists) {
+      return null;
+    }
+    await FirebaseFirestore.instance
+        .collection('userInfo')
+        .doc('count')
+        .update({'count': FieldValue.increment(1)});
+    final newUserId = doc.data()!['count']+1;
+    await FirebaseFirestore.instance
+        .collection('users')
+        .add({'username': userName, 'password': password, 'userId': newUserId});
+    await FirebaseFirestore.instance
+        .collection('us$newUserId')
+        .doc(Strings.kFlutterProjectInfo)
+        .set({'projects': []});
+    // await FirebaseFirestore.instance
+    //     .collection('us$newUserId')
+    //     .doc(Strings.kFlutterProject)
+    //     .set({'projects': []});
+    return newUserId;
+  }
+
   static Future<List<FlutterProject>> loadAllFlutterProjects(
     int userId,
   ) async {
@@ -214,7 +244,7 @@ abstract class FireBridge {
     final List<FlutterProject> projectList = [];
     final data = snapshot.data()!;
     for (final projectName in data['projects'] ?? []) {
-      projectList.add(FlutterProject(projectName,userId));
+      projectList.add(FlutterProject(projectName, userId));
     }
     return projectList;
   }
@@ -232,7 +262,7 @@ abstract class FireBridge {
     final projectInfo = projectInfoDoc.data();
 
     final FlutterProject flutterProject = FlutterProject(
-        projectInfo['project_name'],userId,
+        projectInfo['project_name'], userId,
         device: projectInfo['device']);
     for (final variableJson in projectInfo['variables'] ?? []) {
       final model = VariableModel.fromJson(variableJson);
@@ -245,8 +275,8 @@ abstract class FireBridge {
       flutterProject.models.add(model);
     }
     try {
-      flutterProject.rootComponent =
-          Component.fromCode(CodeOperations.trim(projectInfo['root']));
+      flutterProject.rootComponent = Component.fromCode(
+          CodeOperations.trim(projectInfo['root']), flutterProject);
     } on Exception {
       return null;
     }
@@ -256,7 +286,7 @@ abstract class FireBridge {
       flutterProject.customComponents.add(
           StatelessComponent(name: componentBody['name'])
             ..root = componentBody['code'] != null
-                ? Component.fromCode(componentBody['code']!)
+                ? Component.fromCode(componentBody['code']!, flutterProject)
                 : null);
     }
     return flutterProject;
@@ -325,6 +355,7 @@ abstract class FireBridge {
       snapshot.docs[0].reference.delete();
     }
   }
+
   static Future<void> addModel(final int userId, final String projectName,
       final LocalModel localModel) async {
     final document = await FirebaseFirestore.instance
@@ -334,9 +365,7 @@ abstract class FireBridge {
         .where('project_name', isNull: false)
         .get(const GetOptions(source: Source.server));
     final Map<String, dynamic> body = {
-      'models': FieldValue.arrayUnion([
-        localModel.toJson()
-      ])
+      'models': FieldValue.arrayUnion([localModel.toJson()])
     };
 
     if (body.isNotEmpty) {
@@ -359,17 +388,18 @@ abstract class FireBridge {
         .where('project_name', isNull: false)
         .get(const GetOptions(source: Source.server));
     final List<dynamic> models = document.docs[0]['models'];
-    final index=models.indexWhere((element) =>element['name'] == localModel.name);
+    final index =
+        models.indexWhere((element) => element['name'] == localModel.name);
     models.removeAt(index);
     models.insert(index, localModel.toJson());
     final Map<String, dynamic> body = {'models': models};
-      await FirebaseFirestore.instance
-          .collection('us$userId')
-          .doc(Strings.kFlutterProject)
-          .collection(projectName)
-          .doc(document.docs[0].id)
-          .update(body);
-      debugPrint('=== FIRE-BRIDGE == update variable == $body');
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(projectName)
+        .doc(document.docs[0].id)
+        .update(body);
+    debugPrint('=== FIRE-BRIDGE == update variable == $body');
   }
 
   static Future<void> addVariable(final int userId, final String projectName,
@@ -381,9 +411,7 @@ abstract class FireBridge {
         .where('project_name', isNull: false)
         .get(const GetOptions(source: Source.server));
     final Map<String, dynamic> body = {
-      'variables': FieldValue.arrayUnion([
-      variableModel.toJson()
-      ])
+      'variables': FieldValue.arrayUnion([variableModel.toJson()])
     };
 
     if (body.isNotEmpty) {
@@ -463,10 +491,10 @@ abstract class FireBridge {
     }
   }
 
-  static Future<CustomComponent> retrieveComponent(
-      int userId, String projectName, String name) async {
+  static Future<CustomComponent> retrieveComponent(int userId,
+      String projectName, String name, FlutterProject flutterProject) async {
     final snapshot = await FirebaseFirestore.instance.collection(name).get();
     return StatelessComponent(name: name)
-      ..root = Component.fromCode(snapshot.docs[0]['code']);
+      ..root = Component.fromCode(snapshot.docs[0]['code'], flutterProject);
   }
 }

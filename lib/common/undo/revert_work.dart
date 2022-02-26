@@ -17,8 +17,9 @@ class RevertWork {
 
   void add(
       dynamic oldValue, void Function() work, void Function(dynamic) workUndo) {
-    work.call();
+
     _stack.add(Work(oldValue, work, workUndo));
+    work.call();
   }
 
   void revert() {

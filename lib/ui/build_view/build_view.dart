@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../cubit/screen_config/screen_config_cubit.dart';
 import '../../runtime_provider.dart';
+import '../emulation_view.dart';
 import '../home_page.dart';
 
 class BuildView extends StatelessWidget {
@@ -48,14 +49,10 @@ class BuildView extends StatelessWidget {
                             margin: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey, width: 1)),
-                            child: FittedBox(
-                              child: Container(
-                                width: screenConfigCubit.screenConfig.width,
-                                height: screenConfigCubit.screenConfig.height,
-                                color: Colors.white,
-                                child: componentOperationCubit
-                                    .flutterProject!.run(context),
-                              ),
+                            child: EmulationView(
+                              widget:  componentOperationCubit
+                                  .flutterProject!.run(context),
+                              screenConfig: screenConfigCubit.screenConfig,
                             ),
                           );
                         },

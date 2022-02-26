@@ -82,36 +82,36 @@ class _ModelBoxState extends State<ModelBox> {
         child: Container(
           height: 500,
           padding: const EdgeInsets.all(10),
-          child: BlocProvider(
-            create: (context) => _modelCubit,
-            child: BlocConsumer<ModelCubit, ModelState>(
-              listener: (context, state) {
-                if (state is ModelChangedState) {
-                  if (!state.add) {
-                    _componentOperationCubit.updateModel(state.localModel);
-                  } else {
-                    _componentOperationCubit.addModel(state.localModel);
+          child: SingleChildScrollView(
+            child: BlocProvider(
+              create: (context) => _modelCubit,
+              child: BlocConsumer<ModelCubit, ModelState>(
+                listener: (context, state) {
+                  if (state is ModelChangedState) {
+                    if (!state.add) {
+                      _componentOperationCubit.updateModel(state.localModel);
+                    } else {
+                      _componentOperationCubit.addModel(state.localModel);
+                    }
                   }
-                }
-              },
-              builder: (context, state) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Models',
-                      style:
-                          AppFontStyle.roboto(15, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    AddModelTile(),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Expanded(
-                      child: Column(
+                },
+                builder: (context, state) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Models',
+                        style: AppFontStyle.roboto(15,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      AddModelTile(),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Column(
                         children: _componentOperationCubit.models.map((model) {
                           return Container(
                             padding: const EdgeInsets.all(5),
@@ -154,9 +154,7 @@ class _ModelBoxState extends State<ModelBox> {
                           );
                         }).toList(growable: false),
                       ),
-                    ),
-                    Expanded(
-                      child: ListView(
+                      Column(
                         children: _componentOperationCubit.models.map((model) {
                           return Container(
                               padding: const EdgeInsets.all(5),
@@ -175,56 +173,94 @@ class _ModelBoxState extends State<ModelBox> {
                                   const SizedBox(
                                     height: 10,
                                   ),
-                                  ...model.values.map((e) => Column(
-                                        children: e
-                                            .asMap()
-                                            .entries
-                                            .map((value) => Container(
-                                                  padding:
-                                                      const EdgeInsets.all(5),
-                                                  child: Column(
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          Text(
-                                                            model
-                                                                .variables[
-                                                                    value.key]
-                                                                .name,
-                                                            style: AppFontStyle
-                                                                .roboto(13),
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 20,
-                                                          ),
-                                                          Text(
-                                                            value.value
-                                                                .toString(),
-                                                            style: AppFontStyle
-                                                                .roboto(13,
-                                                                    color: AppColors
-                                                                        .theme),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ))
-                                            .toList(),
-                                      ))
+                                  ModelValues(
+                                    model: model,
+                                  )
                                 ],
                               ));
                         }).toList(growable: false),
-                      ),
-                    )
-                  ],
-                );
-              },
+                      )
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
       );
     });
+  }
+}
+
+class ModelValues extends StatelessWidget {
+  final LocalModel model;
+
+  const ModelValues({Key? key, required this.model}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: model.values
+          .asMap()
+          .entries
+          .map((valueList) => Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: valueList.key%2==0?const Color(0xfff2f2f2):const Color(0xfff9f9f9),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Stack(
+                  children: [
+                    Column(
+                      children: valueList.value
+                          .asMap()
+                          .entries
+                          .map((value) => Container(
+                                padding: const EdgeInsets.all(5),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      model.variables[value.key].name,
+                                      style: AppFontStyle.roboto(13),
+                                    ),
+                                    const SizedBox(
+                                      width: 20,
+                                    ),
+                                    Text(
+                                      value.value.toString(),
+                                      style: AppFontStyle.roboto(13,
+                                          color: AppColors.theme),
+                                    ),
+                                  ],
+                                ),
+                              ))
+                          .toList(),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: InkWell(
+                            onTap: () {
+                              model.removeValues(valueList.key);
+                              BlocProvider.of<ModelCubit>(context, listen: false)
+                                  .changed(model);
+                              BlocProvider.of<ComponentCreationCubit>(context,
+                                      listen: false)
+                                  .changedComponent();
+                            },
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                              size: 20,
+                            )),
+                      ),
+                    )
+                  ],
+                ),
+              ))
+          .toList(growable: false),
+    );
   }
 }
 
@@ -263,7 +299,7 @@ class _AddModelValueState extends State<AddModelValue> {
               .entries
               .map(
                 (entry) => SizedBox(
-                  width: 150,
+                  width: 250,
                   height: 50,
                   child: Row(
                     children: [
@@ -288,6 +324,23 @@ class _AddModelValueState extends State<AddModelValue> {
                           ),
                         ),
                       ),
+                      Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: InkWell(
+                            onTap: () {
+                              widget.model.removeVariable(entry.key);
+                              BlocProvider.of<ModelCubit>(context, listen: false)
+                                  .changed(widget.model);
+                              BlocProvider.of<ComponentCreationCubit>(context,
+                                  listen: false)
+                                  .changedComponent();
+                            },
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                              size: 20,
+                            )),
+                      )
                     ],
                   ),
                 ),
@@ -315,6 +368,10 @@ class _AddModelValueState extends State<AddModelValue> {
                   widget.model.values.add(valueList);
                   BlocProvider.of<ModelCubit>(context, listen: false)
                       .changed(widget.model);
+
+                  BlocProvider.of<ComponentCreationCubit>(context,
+                          listen: false)
+                      .changedComponent();
                 }
               },
               child: Text(
@@ -415,8 +472,8 @@ class _AddVariableTileState extends State<AddVariableTile> {
                 //     .addVariable(ComponentOperationCubit
                 //     .codeProcessor.variables[name]!);
 
-                widget.model.variables
-                    .add(DynamicVariableModel(_controller1.text, dataType));
+                widget.model.addVariable(
+                    DynamicVariableModel(_controller1.text, dataType));
                 BlocProvider.of<ComponentCreationCubit>(context, listen: false)
                     .changedComponent();
                 BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
@@ -455,7 +512,7 @@ class AddModelTile extends StatelessWidget {
             child: TextField(
               controller: _controller,
               decoration: const InputDecoration(
-                hintText: 'Name',
+                hintText: 'Enter new model name',
                 contentPadding: EdgeInsets.all(5),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.black, width: 1),
@@ -478,7 +535,7 @@ class AddModelTile extends StatelessWidget {
                 BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
                     .emit(ComponentSelectionChange());
                 BlocProvider.of<ModelCubit>(context, listen: false)
-                    .changed(model,add:true);
+                    .changed(model, add: true);
                 _controller.text = '';
               }
             },

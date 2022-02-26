@@ -19,12 +19,12 @@ class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
     this.currentSelected=currentSelected;
     this.currentSelectedRoot=currentSelectedRoot;
   }
-  void changeComponentSelection(Component component, {required Component root}) {
+  void changeComponentSelection(Component component, {required Component root,bool scroll=true}) {
     if (currentSelected != component) {
       currentSelected = component;
       currentSelectedRoot = root;
       logger('==== ComponentSelectionCubit ** changeComponentSelection == ${component.name} ${root.name}');
-      emit(ComponentSelectionChange());
+      emit(ComponentSelectionChange(scroll: scroll));
     }
   }
   bool isSelected(Component component){

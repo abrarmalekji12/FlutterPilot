@@ -31,8 +31,9 @@ abstract class Parameter {
   void cloneOf(Parameter parameter) {
     if (parameter is SimpleParameter) {
       (this as SimpleParameter).val = parameter.val;
-      if(parameter.compilerEnable!=null) {
-        (this as SimpleParameter).compilerEnable!.code=parameter.compilerEnable!.code;
+      if (parameter.compilerEnable != null) {
+        (this as SimpleParameter).compilerEnable!.code =
+            parameter.compilerEnable!.code;
       }
     } else if (parameter is ChoiceParameter) {
       for (int i = 0; i < (this as ChoiceParameter).options.length; i++) {
@@ -80,10 +81,12 @@ abstract class Parameter {
       return double.tryParse(code);
     } else if (T == String) {
       final codeValue = code;
-      return codeValue
-          .substring(1, codeValue.length - 1)
-          .replaceAll('\\\$', '\$')
-          .replaceAll('__quote__', '\'');
+      final processed =
+          codeValue.replaceAll('\\\$', '\$').replaceAll('__quote__', '\'');
+      if (code.startsWith('\'') && code.endsWith('\'')) {
+        return processed.substring(1, processed.length - 1);
+      }
+      return processed;
     } else if (T == Color) {
       final colorString = code.replaceAll('Color(', '').replaceAll(')', '');
       return Color(int.parse(colorString));
@@ -202,18 +205,15 @@ class SimpleParameter<T> extends Parameter {
     if (required) {
       val = defaultValue;
     }
-    // if (T == int || T == double) {
-      compilerEnable = CompilerEnable();
-    // } else {
-    //   compilerEnable = null;
-    // }
+    compilerEnable = CompilerEnable();
   }
 
   @override
   dynamic get value {
     if (compilerEnable != null) {
       final result = compilerEnable!.code.isNotEmpty
-          ? ComponentOperationCubit.codeProcessor.process<T>(compilerEnable!.code)
+          ? ComponentOperationCubit.codeProcessor
+              .process<T>(compilerEnable!.code)
           : null;
       if (result != null) {
         val = result as T;
@@ -234,8 +234,8 @@ class SimpleParameter<T> extends Parameter {
   @override
   get rawValue {
     if (compilerEnable != null && compilerEnable!.code.isNotEmpty) {
-      final result =
-          ComponentOperationCubit.codeProcessor.process<T>(compilerEnable!.code);
+      final result = ComponentOperationCubit.codeProcessor
+          .process<T>(compilerEnable!.code);
       if (result != null) {
         val = result as T;
       }
@@ -867,10 +867,10 @@ class ComponentParameter extends Parameter {
     if (multiple) {
       final componentCodes = CodeOperations.splitByComma(paramCode);
       for (final compCode in componentCodes) {
-        components.add(Component.fromCode(compCode)!);
+        components.add(Component.fromCode(compCode, null)!);
       }
     } else {
-      components.add(Component.fromCode(paramCode)!);
+      components.add(Component.fromCode(paramCode, null)!);
     }
     return true;
   }
@@ -905,4 +905,3 @@ class ComponentParameter extends Parameter {
   @override
   get value => components;
 }
-

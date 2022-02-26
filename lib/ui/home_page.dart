@@ -8,6 +8,7 @@ import '../common/dialog_selection.dart';
 import '../models/builder_component.dart';
 import '../runtime_provider.dart';
 import 'build_view/build_view.dart';
+import 'emulation_view.dart';
 import 'models_view.dart';
 import 'variable_ui.dart';
 import '../common/custom_popup_menu_button.dart';
@@ -659,7 +660,8 @@ class BuilderComponentSettings extends StatefulWidget {
       : super(key: key);
 
   @override
-  State<BuilderComponentSettings> createState() => _BuilderComponentSettingsState();
+  State<BuilderComponentSettings> createState() =>
+      _BuilderComponentSettingsState();
 }
 
 class _BuilderComponentSettingsState extends State<BuilderComponentSettings> {
@@ -669,11 +671,13 @@ class _BuilderComponentSettingsState extends State<BuilderComponentSettings> {
       children: [
         Text(
           'Attach Model',
-          style: AppFontStyle.roboto(14,fontWeight: FontWeight.bold),
+          style: AppFontStyle.roboto(14, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 10,),
+        const SizedBox(
+          height: 10,
+        ),
         InkWell(
-          onTap: (){
+          onTap: () {
             Get.generalDialog(
               barrierDismissible: false,
               barrierLabel: 'barrierLabel',
@@ -684,18 +688,24 @@ class _BuilderComponentSettingsState extends State<BuilderComponentSettings> {
                   color: Colors.transparent,
                   child: DialogSelection(
                     title: 'Choose Model',
-                    data: BlocProvider.of<ComponentOperationCubit>(context,listen: false).models.map((e) => e.name)
+                    data: BlocProvider.of<ComponentOperationCubit>(context,
+                            listen: false)
+                        .models
+                        .map((e) => e.name)
                         .toList(),
                     onSelection: (data) {
-                       widget.component.model = BlocProvider.of<ComponentOperationCubit>(context,listen: false).models.firstWhere((element) => element.name==data);
+                      widget.component.model =
+                          BlocProvider.of<ComponentOperationCubit>(context,
+                                  listen: false)
+                              .models
+                              .firstWhere((element) => element.name == data);
                       BlocProvider.of<ComponentOperationCubit>(context,
-                          listen: false).emit(ComponentUpdatedState());
+                              listen: false)
+                          .emit(ComponentUpdatedState());
                       BlocProvider.of<ComponentCreationCubit>(context,
-                          listen: false)
+                              listen: false)
                           .changedComponent();
-                      setState(() {
-                        
-                      });
+                      setState(() {});
                     },
                   ),
                 );
@@ -704,7 +714,10 @@ class _BuilderComponentSettingsState extends State<BuilderComponentSettings> {
           },
           child: Container(
             padding: const EdgeInsets.all(10),
-            child: Text(widget.component.model?.name??'Choose Model',style: AppFontStyle.roboto(14,fontWeight: FontWeight.w500),),
+            child: Text(
+              widget.component.model?.name ?? 'Choose Model',
+              style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+            ),
           ),
         )
       ],
@@ -746,33 +759,29 @@ class CenterMainSide extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const ScreenConfigSelection(),
                       Expanded(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: SizedBox(
-                            width: _screenConfigCubit.screenConfig.width,
-                            height: _screenConfigCubit.screenConfig.height,
-                            child: GestureDetector(
-                              onSecondaryTapDown: (event) {
-                                onSecondaryTapDown(context, event);
-                              },
-                              onTapDown: onTapDown,
-                              child: ColoredBox(
-                                key: const GlobalObjectKey('device window'),
-                                color: Colors.white,
-                                child: Stack(
-                                  children: [
-                                    _componentOperationCubit.flutterProject!
-                                        .run(context),
-                                    const BoundaryWidget(),
-                                  ],
-                                ),
+                        child: EmulationView(
+                          widget: GestureDetector(
+                            onSecondaryTapDown: (event) {
+                              onSecondaryTapDown(context, event);
+                            },
+                            onTapDown: onTapDown,
+                            child: ColoredBox(
+                              key: const GlobalObjectKey('device window'),
+                              color: Colors.white,
+                              child: Stack(
+                                children: [
+                                  _componentOperationCubit.flutterProject!
+                                      .run(context),
+                                  const BoundaryWidget(),
+                                ],
                               ),
                             ),
                           ),
+                          screenConfig: _screenConfigCubit.screenConfig,
                         ),
                       ),
                     ],

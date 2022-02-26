@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
 import '../runtime_provider.dart';
 import 'builder_component.dart';
 import 'data_model.dart';
@@ -13,6 +14,7 @@ import 'parameter_info_model.dart';
 import 'parameter_model.dart';
 
 import '../component_list.dart';
+import 'project_model.dart';
 
 abstract class Component {
   late List<ParameterRuleModel> paramRules;
@@ -20,6 +22,7 @@ abstract class Component {
   final List<ComponentParameter> componentParameters = [];
   String name;
   late String id;
+  late final String uniqueId;
   bool isConstant;
   Component? parent;
   Rect? boundary;
@@ -30,6 +33,7 @@ abstract class Component {
     paramRules = rules ?? [];
     id =
         '${DateTime.now().millisecondsSinceEpoch}${Random().nextDouble().toStringAsFixed(3)}';
+    uniqueId = name + id + Random().nextDouble().toStringAsFixed(3);
   }
 
   void addComponentParameters(
@@ -65,7 +69,8 @@ abstract class Component {
     return null;
   }
 
-  void metaInfoFromCode(final String metaCode) {
+  void metaInfoFromCode(
+      final String metaCode, final FlutterProject? flutterProject) {
     final list = metaCode.substring(1, metaCode.length - 1).split('|');
     for (final value in list) {
       if (value.isNotEmpty) {
@@ -73,6 +78,10 @@ abstract class Component {
         switch (fieldList[0]) {
           case 'id':
             id = fieldList[1];
+            break;
+          case 'model':
+            (this as BuilderComponent).model = flutterProject?.models
+                .firstWhereOrNull((element) => element.name == fieldList[1]);
             break;
         }
       }
@@ -88,10 +97,12 @@ abstract class Component {
         });
       });
     }
+
     return scrollController;
   }
 
-  static Component? fromCode(String? code) {
+  static Component? fromCode(
+      String? code, final FlutterProject? flutterProject) {
     if (code == null) {
       return null;
     }
@@ -107,7 +118,7 @@ abstract class Component {
         return null;
       }
       comp = componentList[compName]!();
-      comp.metaInfoFromCode(name.substring(index));
+      comp.metaInfoFromCode(name.substring(index), flutterProject);
     } else {
       if (!componentList.containsKey(name)) {
         Fluttertoast.showToast(
@@ -124,23 +135,24 @@ abstract class Component {
 
     switch (comp.type) {
       case 3:
-        // if (comp is BuilderComponent) {
-        //   int index = -1;
-        //   for (int i = 0; i < parameterCodes.length; i++) {
-        //     if (parameterCodes[i].startsWith('builder:')) {
-        //       index = i;
-        //       break;
-        //     }
-        //   }
-        //   if (index != -1) {
-        //     final childCode = parameterCodes.removeAt(index);
-        //     final builderCode = childCode.replaceFirst('builder:', '');
-        //     (comp as Holder).updateChild(Component.fromCode(
-        //         builderCode.substring(builderCode.indexOf('return') + 1,
-        //             builderCode.lastIndexOf(';}'))));
-        //   }
-        //   break;
-        // } else {
+        if (comp is BuilderComponent) {
+          int index = -1;
+          for (int i = 0; i < parameterCodes.length; i++) {
+            if (parameterCodes[i].startsWith('builder:')) {
+              index = i;
+              break;
+            }
+          }
+          if (index != -1) {
+            final childCode = parameterCodes.removeAt(index);
+            final builderCode = childCode.replaceFirst('builder:', '');
+            comp.updateChild(Component.fromCode(
+                builderCode.substring(builderCode.indexOf('return') + 6,
+                    builderCode.lastIndexOf(';')),
+                flutterProject));
+          }
+          break;
+        } else {
           int index = -1;
           for (int i = 0; i < parameterCodes.length; i++) {
             if (parameterCodes[i].startsWith('child:')) {
@@ -150,10 +162,10 @@ abstract class Component {
           }
           if (index != -1) {
             final childCode = parameterCodes.removeAt(index);
-            (comp as Holder).updateChild(
-                Component.fromCode(childCode.replaceFirst('child:', '')));
+            (comp as Holder).updateChild(Component.fromCode(
+                childCode.replaceFirst('child:', ''), flutterProject));
           }
-        // }
+        }
         break;
       case 2:
         int index = -1;
@@ -170,7 +182,8 @@ abstract class Component {
           final List<String> childrenCodes =
               CodeOperations.splitByComma(code2.substring(0, code2.length - 1));
           for (final childCode in childrenCodes) {
-            componentList.add(Component.fromCode(childCode)!..setParent(comp));
+            componentList.add(Component.fromCode(childCode, flutterProject)!
+              ..setParent(comp));
           }
           (comp as MultiHolder).children = componentList;
         }
@@ -183,9 +196,9 @@ abstract class Component {
           final colonIndex = parameterCodes[i].indexOf(':');
           final name = parameterCodes[i].substring(0, colonIndex);
           if (nameList.contains(name)) {
-            comp.childMap[name] =
-                Component.fromCode(parameterCodes[i].substring(colonIndex + 1))!
-                  ..setParent(comp);
+            comp.childMap[name] = Component.fromCode(
+                parameterCodes[i].substring(colonIndex + 1), flutterProject)!
+              ..setParent(comp);
             nameList.remove(name);
             removeList.add(parameterCodes[i]);
           }
@@ -568,12 +581,28 @@ abstract class Holder extends Component {
   }
 
   @override
-  void searchTappedComponent(Offset offset, List<Component> components) {
+  void searchTappedComponent(final Offset offset, List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
-      child?.searchTappedComponent(offset, components);
+      if (this is BuilderComponent) {
+        // for(final comp in
+        // (this as BuilderComponent).builtList){
+        //   final len=components.length;
+        //  comp.searchTappedComponent(offset, components);
+        //  if(len!=components.length){
+        //    components.ad
+        //    break;
+        //  }
+        // }
+      } else {
+        child?.searchTappedComponent(offset, components);
+      }
       for (final compParam in componentParameters) {
         for (final comp in compParam.components) {
+          final len=components.length;
           comp.searchTappedComponent(offset, components);
+          if(len!=components.length){
+            break;
+          }
         }
       }
       components.add(this);
@@ -585,14 +614,11 @@ abstract class Holder extends Component {
     String middle = '';
     for (final para in parameters) {
       final paramCode = para.code(clean);
-      if (paramCode.isNotEmpty) {
-        final paramCode = para.code(clean);
         if (paramCode.isNotEmpty) {
           middle += '$paramCode,'.replaceAll(',,', ',');
           if (clean) {
             middle += '\n';
           }
-        }
       }
     }
     String name = this.name;
@@ -765,8 +791,6 @@ abstract class CustomNamedHolder extends Component {
   @override
   int get childCount => -2;
 }
-
-
 
 abstract class CustomComponent extends Component {
   String? extensionName;

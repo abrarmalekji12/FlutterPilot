@@ -1,3 +1,4 @@
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,23 +10,23 @@ import '../../common/app_loader.dart';
 import '../../cubit/authentication/authentication_cubit.dart';
 import '../../firestore/firestore_bridge.dart';
 import '../project_selection_page.dart';
-import 'register_page.dart';
+import 'login.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _RegisterPageState createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   static const double tabletWidthLimit = 1200;
   static const double phoneWidthLimit = 900;
   static const double pd = 10;
-  final GlobalKey<FormState> _formKey = GlobalKey();
-  late final AuthenticationCubit _authenticationCubit;
   final TextEditingController _userNameController = TextEditingController(),
       _passwordController = TextEditingController();
+  late final AuthenticationCubit _authenticationCubit;
+  final GlobalKey<FormState> _formKey = GlobalKey();
 
   late double dw;
   late double dh;
@@ -33,13 +34,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _authenticationCubit =
-        BlocProvider.of<AuthenticationCubit>(context, listen: false);
+    _authenticationCubit=BlocProvider.of<AuthenticationCubit>(context,listen: false);
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      _authenticationCubit.authViewModel.userName = 'Abrar';
-      _authenticationCubit.authViewModel.password = 'passwor';
-      _userNameController.text = 'Abrar';
-      _passwordController.text = 'passwor';
       AppLoader.show(context);
       FireBridge.init().then((value) {
         AppLoader.hide();
@@ -59,11 +55,10 @@ class _LoginPageState extends State<LoginPage> {
         } else if (state is AuthSuccessState) {
           AppLoader.hide();
           Get.off(
-            () => ProjectSelectionPage(
+                () => ProjectSelectionPage(
               userId: state.userId,
             ),
-            routeName: '/projects',
-          );
+            routeName: '/projects',);
         } else if (state is AuthFailedState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
@@ -107,7 +102,8 @@ class _LoginPageState extends State<LoginPage> {
                                 padding: const EdgeInsets.all(30),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                                   mainAxisSize: MainAxisSize.max,
                                   children: [
                                     Image.asset(
@@ -120,9 +116,9 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                     Column(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.start,
+                                      MainAxisAlignment.start,
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
@@ -145,32 +141,34 @@ class _LoginPageState extends State<LoginPage> {
                                           text: TextSpan(
                                             children: [
                                               TextSpan(
-                                                text: 'If you are new/',
+                                                text: 'Already having account? /',
                                                 style: GoogleFonts.getFont(
                                                   'Roboto',
                                                   textStyle: const TextStyle(
                                                     fontSize: 15,
                                                     color: Color(0xff9c9da2),
-                                                    fontWeight: FontWeight.w500,
-                                                    fontStyle: FontStyle.normal,
+                                                    fontWeight:
+                                                    FontWeight.w500,
+                                                    fontStyle:
+                                                    FontStyle.normal,
                                                   ),
                                                 ),
                                               ),
                                               TextSpan(
-                                                recognizer:
-                                                    TapGestureRecognizer()
-                                                      ..onTap = () {
-                                                        Get.off(() =>
-                                                            const RegisterPage());
-                                                      },
-                                                text: ' Create New',
+                                                text: ' Login',
+                                                recognizer: TapGestureRecognizer()..onTap=(){
+                                                  Get.off(() =>
+                                                  const LoginPage());
+                                                },
                                                 style: GoogleFonts.getFont(
                                                   'Lato',
                                                   textStyle: const TextStyle(
                                                     fontSize: 17,
                                                     color: Color(0xff1a1b26),
-                                                    fontWeight: FontWeight.w600,
-                                                    fontStyle: FontStyle.normal,
+                                                    fontWeight:
+                                                    FontWeight.w600,
+                                                    fontStyle:
+                                                    FontStyle.normal,
                                                   ),
                                                 ),
                                               ),
@@ -182,179 +180,50 @@ class _LoginPageState extends State<LoginPage> {
                                     const SizedBox(
                                       height: 30,
                                     ),
-                                    Container(
-                                        height: 60,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xfffdce84),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          shape: BoxShape.rectangle,
-                                        ),
-                                        child: TextFormField(
-                                          controller: _userNameController,
-                                          style: GoogleFonts.getFont(
-                                            'Roboto',
-                                            textStyle: const TextStyle(
-                                              fontSize: 19,
-                                              color: Color(0xffffffff),
-                                              fontWeight: FontWeight.w400,
-                                              fontStyle: FontStyle.normal,
-                                            ),
-                                          ),
-                                          onChanged: (value) {
-                                            _authenticationCubit
-                                                .authViewModel.userName = value;
-                                          },
-                                          validator: (value) {
-                                            return value!.length < 5
-                                                ? 'Invalid username'
-                                                : null;
-                                          },
-                                          readOnly: false,
-                                          decoration: InputDecoration(
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                              horizontal: 20,
-                                              vertical: 5,
-                                            ),
-                                            labelText: 'Your Name',
-                                            labelStyle: GoogleFonts.getFont(
-                                              'Roboto',
-                                              textStyle: const TextStyle(
-                                                fontSize: 19,
-                                                color: Color(0xffffffff),
-                                                fontWeight: FontWeight.w600,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            helperStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xff000000),
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            hintStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xff000000),
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            errorStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xff000000),
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            border: UnderlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(0),
-                                              borderSide: BorderSide.none,
-                                            ),
-                                            suffixIcon: const Padding(
-                                                padding: EdgeInsets.only(
-                                                  top: 0,
-                                                  left: 0,
-                                                  bottom: 0,
-                                                  right: 10,
-                                                ),
-                                                child: CircleAvatar(
-                                                    radius: 10,
-                                                    backgroundColor:
-                                                        Color(0xffffffff),
-                                                    foregroundColor:
-                                                        Color(0xffffffff),
-                                                    child: Icon(
-                                                      Icons.person,
-                                                      color: Color(0xff3b403f),
-                                                    ))),
-                                            iconColor: const Color(0xffffffff),
-                                            prefixText: '',
-                                            prefixStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xff000000),
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            suffixText: '',
-                                            suffixStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xff000000),
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            enabledBorder: UnderlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(0),
-                                              borderSide: BorderSide.none,
-                                            ),
-                                            fillColor: const Color(0xfffdce84),
-                                            enabled: true,
-                                          ),
-                                        )),
-                                    const SizedBox(
-                                      height: 20,
-                                    ),
                                     Form(
                                       key: _formKey,
                                       child: Container(
                                           height: 60,
                                           alignment: Alignment.center,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xfff5f5f5),
+                                            color: const Color(0xfffdce84),
                                             borderRadius:
-                                                BorderRadius.circular(10),
+                                            BorderRadius.circular(10),
                                             shape: BoxShape.rectangle,
                                           ),
                                           child: TextFormField(
-                                            controller: _passwordController,
-                                            obscureText: true,
-                                            onChanged: (value) {
-                                              _authenticationCubit.authViewModel
-                                                  .password = value;
-                                            },
-                                            validator: (value) {
-                                              return value!.length < 5
-                                                  ? 'Invalid password'
-                                                  : null;
-                                            },
+                                            controller: _userNameController,
                                             style: GoogleFonts.getFont(
                                               'Roboto',
                                               textStyle: const TextStyle(
                                                 fontSize: 19,
-                                                color: Color(0xffababa9),
+                                                color: Color(0xffffffff),
                                                 fontWeight: FontWeight.w400,
                                                 fontStyle: FontStyle.normal,
                                               ),
                                             ),
+                                            validator: (value) {
+                                              return value!.length < 5
+                                                  ? 'Invalid username'
+                                                  : null;
+                                            },
+                                            onChanged: (value) {
+                                              _authenticationCubit
+                                                  .authViewModel.userName = value;
+                                            },
                                             readOnly: false,
                                             decoration: InputDecoration(
                                               contentPadding:
-                                                  const EdgeInsets.symmetric(
+                                              const EdgeInsets.symmetric(
                                                 horizontal: 20,
                                                 vertical: 5,
                                               ),
-                                              labelText: 'Password',
+                                              labelText: 'Your Name',
                                               labelStyle: GoogleFonts.getFont(
                                                 'Roboto',
                                                 textStyle: const TextStyle(
                                                   fontSize: 19,
-                                                  color: Color(0xffababa9),
+                                                  color: Color(0xffffffff),
                                                   fontWeight: FontWeight.w600,
                                                   fontStyle: FontStyle.normal,
                                                 ),
@@ -388,11 +257,29 @@ class _LoginPageState extends State<LoginPage> {
                                               ),
                                               border: UnderlineInputBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(0),
+                                                BorderRadius.circular(0),
                                                 borderSide: BorderSide.none,
                                               ),
+                                              suffixIcon: const Padding(
+                                                  padding: EdgeInsets.only(
+                                                    top: 0,
+                                                    left: 0,
+                                                    bottom: 0,
+                                                    right: 10,
+                                                  ),
+                                                  child: CircleAvatar(
+                                                      radius: 10,
+                                                      backgroundColor:
+                                                      Color(0xffffffff),
+                                                      foregroundColor:
+                                                      Color(0xffffffff),
+                                                      child: Icon(
+                                                        Icons.person,
+                                                        color:
+                                                        Color(0xff3b403f),
+                                                      ))),
                                               iconColor:
-                                                  const Color(0xffffffff),
+                                              const Color(0xffffffff),
                                               prefixText: '',
                                               prefixStyle: GoogleFonts.getFont(
                                                 'ABeeZee',
@@ -414,17 +301,132 @@ class _LoginPageState extends State<LoginPage> {
                                                 ),
                                               ),
                                               enabledBorder:
-                                                  UnderlineInputBorder(
+                                              UnderlineInputBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(0),
+                                                BorderRadius.circular(0),
                                                 borderSide: BorderSide.none,
                                               ),
                                               fillColor:
-                                                  const Color(0xfffdce84),
+                                              const Color(0xfffdce84),
                                               enabled: true,
                                             ),
                                           )),
                                     ),
+                                    const SizedBox(
+                                      height: 20,
+                                    ),
+                                    Container(
+                                        height: 60,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xfff5f5f5),
+                                          borderRadius:
+                                          BorderRadius.circular(10),
+                                          shape: BoxShape.rectangle,
+                                        ),
+                                        child: TextFormField(
+                                          controller: _passwordController,
+                                          obscureText: true,
+                                          validator: (value) {
+                                            return value!.length < 5
+                                                ? 'Invalid password'
+                                                : null;
+                                          },
+                                          onChanged: (value) {
+                                            _authenticationCubit.authViewModel
+                                                .password = value;
+                                          },
+                                          style: GoogleFonts.getFont(
+                                            'Roboto',
+                                            textStyle: const TextStyle(
+                                              fontSize: 19,
+                                              color: Color(0xffababa9),
+                                              fontWeight: FontWeight.w400,
+                                              fontStyle: FontStyle.normal,
+                                            ),
+                                          ),
+                                          readOnly: false,
+                                          decoration: InputDecoration(
+                                            contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                              vertical: 5,
+                                            ),
+                                            labelText: 'Password',
+                                            labelStyle: GoogleFonts.getFont(
+                                              'Roboto',
+                                              textStyle: const TextStyle(
+                                                fontSize: 19,
+                                                color: Color(0xffababa9),
+                                                fontWeight: FontWeight.w600,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            helperStyle: GoogleFonts.getFont(
+                                              'ABeeZee',
+                                              textStyle: const TextStyle(
+                                                fontSize: 13,
+                                                color: Color(0xff000000),
+                                                fontWeight: FontWeight.w400,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            hintStyle: GoogleFonts.getFont(
+                                              'ABeeZee',
+                                              textStyle: const TextStyle(
+                                                fontSize: 13,
+                                                color: Color(0xff000000),
+                                                fontWeight: FontWeight.w400,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            errorStyle: GoogleFonts.getFont(
+                                              'ABeeZee',
+                                              textStyle: const TextStyle(
+                                                fontSize: 13,
+                                                color: Color(0xff000000),
+                                                fontWeight: FontWeight.w400,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            border: UnderlineInputBorder(
+                                              borderRadius:
+                                              BorderRadius.circular(0),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            iconColor:
+                                            const Color(0xffffffff),
+                                            prefixText: '',
+                                            prefixStyle: GoogleFonts.getFont(
+                                              'ABeeZee',
+                                              textStyle: const TextStyle(
+                                                fontSize: 13,
+                                                color: Color(0xff000000),
+                                                fontWeight: FontWeight.w400,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            suffixText: '',
+                                            suffixStyle: GoogleFonts.getFont(
+                                              'ABeeZee',
+                                              textStyle: const TextStyle(
+                                                fontSize: 13,
+                                                color: Color(0xff000000),
+                                                fontWeight: FontWeight.w400,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            enabledBorder:
+                                            UnderlineInputBorder(
+                                              borderRadius:
+                                              BorderRadius.circular(0),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            fillColor:
+                                            const Color(0xfffdce84),
+                                            enabled: true,
+                                          ),
+                                        )),
                                     const SizedBox(
                                       height: 30,
                                     ),
@@ -464,7 +466,7 @@ class _LoginPageState extends State<LoginPage> {
                                     InkWell(
                                       onTap: () {
                                         if (_formKey.currentState?.validate()??false) {
-                                          _authenticationCubit.login(
+                                          _authenticationCubit.register(
                                               _authenticationCubit
                                                   .authViewModel.userName,
                                               _authenticationCubit
@@ -477,11 +479,11 @@ class _LoginPageState extends State<LoginPage> {
                                         decoration: BoxDecoration(
                                           color: const Color(0xffb12341),
                                           borderRadius:
-                                              BorderRadius.circular(10),
+                                          BorderRadius.circular(10),
                                           shape: BoxShape.rectangle,
                                         ),
                                         child: Text(
-                                          'Log in',
+                                          'Register Now',
                                           style: GoogleFonts.getFont(
                                             'Roboto',
                                             textStyle: const TextStyle(
@@ -500,18 +502,18 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                     Center(
                                         child: Text(
-                                      'Skip Now',
-                                      style: GoogleFonts.getFont(
-                                        'ABeeZee',
-                                        textStyle: const TextStyle(
-                                          fontSize: 16,
-                                          color: Color(0xff464646),
-                                          fontWeight: FontWeight.w500,
-                                          fontStyle: FontStyle.normal,
-                                        ),
-                                      ),
-                                      textAlign: TextAlign.left,
-                                    )),
+                                          'Skip Now',
+                                          style: GoogleFonts.getFont(
+                                            'ABeeZee',
+                                            textStyle: const TextStyle(
+                                              fontSize: 16,
+                                              color: Color(0xff464646),
+                                              fontWeight: FontWeight.w500,
+                                              fontStyle: FontStyle.normal,
+                                            ),
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        )),
                                   ],
                                 ))))),
               ],

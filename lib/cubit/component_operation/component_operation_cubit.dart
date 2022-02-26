@@ -319,7 +319,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       flutterProject!.favouriteList.addAll(favouriteComponentList);
     } else {
       favouriteList.clear();
-      favouriteList.addAll(favouriteComponentList);
+      favouriteList.addAll(favouriteComponentList.reversed);
     }
     final List<ImageData> imageDataList = [];
     for (final FavouriteModel model in favouriteComponentList) {

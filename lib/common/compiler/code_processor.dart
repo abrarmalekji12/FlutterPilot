@@ -236,7 +236,7 @@ class CodeProcessor {
       if (variables.containsKey(variable)) {
         valueStack.push(variables[variable]!.value);
       } else if (modelVariables.containsKey(variable)) {
-        valueStack.push(modelVariables[variable]!);
+        valueStack.push(modelVariables[variable]??'null');
       } else {
         return null;
       }
