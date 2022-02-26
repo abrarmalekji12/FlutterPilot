@@ -1,4 +1,4 @@
-import 'dart:html' as html;
+// import 'dart:html' as html;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -21,8 +21,8 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    html.document
-        .addEventListener('contextmenu', (event) => event.preventDefault());
+    // html.document
+    //     .addEventListener('contextmenu', (event) => event.preventDefault());
     if (!kDebugMode) {
       FlutterError.onError = (FlutterErrorDetails details, {
         bool forceReport = false,

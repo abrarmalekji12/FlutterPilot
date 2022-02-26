@@ -1,6 +1,5 @@
 import 'dart:async';
-import 'dart:html' as html;
-import 'package:flutter/cupertino.dart';
+// import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -70,35 +69,35 @@ class _HomePageState extends State<HomePage> {
     if (_streamSubscription != null) {
       _streamSubscription?.cancel();
     }
-    _streamSubscription = html.window.onKeyDown.listen((event) {
-      if (event.altKey &&
-          componentOperationCubit.flutterProject?.rootComponent != null) {
-        event.preventDefault();
-        if (event.key == 'f') {
-          componentOperationCubit
-              .toggleFavourites(componentSelectionCubit.currentSelected);
-        } else if (event.key == 'v') {
-          if (componentOperationCubit.runtimeMode == RuntimeMode.edit) {
-            Get.dialog(
-              BuildView(
-                onDismiss: () {
-                  componentCreationCubit.changedComponent();
-                },
-                componentOperationCubit: componentOperationCubit,
-                screenConfigCubit: screenConfigCubit,
-              ),
-            );
-          } else if (componentOperationCubit.runtimeMode == RuntimeMode.run) {
-            Get.back();
-            componentOperationCubit.runtimeMode = RuntimeMode.edit;
-            componentCreationCubit.changedComponent();
-          }
-        }
-      }
-    });
-    html.window.onResize.listen((event) {
-      componentCreationCubit.changedComponent();
-    });
+    // _streamSubscription = html.window.onKeyDown.listen((event) {
+    //   if (event.altKey &&
+    //       componentOperationCubit.flutterProject?.rootComponent != null) {
+    //     event.preventDefault();
+    //     if (event.key == 'f') {
+    //       componentOperationCubit
+    //           .toggleFavourites(componentSelectionCubit.currentSelected);
+    //     } else if (event.key == 'v') {
+    //       if (componentOperationCubit.runtimeMode == RuntimeMode.edit) {
+    //         Get.dialog(
+    //           BuildView(
+    //             onDismiss: () {
+    //               componentCreationCubit.changedComponent();
+    //             },
+    //             componentOperationCubit: componentOperationCubit,
+    //             screenConfigCubit: screenConfigCubit,
+    //           ),
+    //         );
+    //       } else if (componentOperationCubit.runtimeMode == RuntimeMode.run) {
+    //         Get.back();
+    //         componentOperationCubit.runtimeMode = RuntimeMode.edit;
+    //         componentCreationCubit.changedComponent();
+    //       }
+    //     }
+    //   }
+    // });
+    // html.window.onResize.listen((event) {
+    //   componentCreationCubit.changedComponent();
+    // });
   }
 
   void showSelectionDialog(

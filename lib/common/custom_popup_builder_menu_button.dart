@@ -1,4 +1,4 @@
-import 'dart:html' as html;
+// import 'dart:html' as html;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -115,11 +115,11 @@ class _CustomPopupMenuBuilderButtonState extends State<CustomPopupMenuBuilderBut
       );
     });
 
-    html.window.onResize.listen((event) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-        overlayEntry?.markNeedsBuild();
-      });
-    });
+    // html.window.onResize.listen((event) {
+    //   WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    //     overlayEntry?.markNeedsBuild();
+    //   });
+    // });
   }
 
   @override
