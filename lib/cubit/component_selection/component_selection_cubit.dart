@@ -1,33 +1,32 @@
-import 'dart:math';
 
 import 'package:bloc/bloc.dart';
-import '../../common/logger.dart';
 import 'package:meta/meta.dart';
 
 import '../../models/component_model.dart';
+import '../../models/component_selection.dart';
 
 part 'component_selection_state.dart';
 
 class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
-  late Component currentSelected;
+  late ComponentSelectionModel currentSelected;
   late Component currentSelectedRoot;
   Component? lastTapped;
 
   ComponentSelectionCubit() : super(ComponentSelectionInitial());
 
-  void init(Component currentSelected,  Component currentSelectedRoot){
+  void init(ComponentSelectionModel currentSelected,  Component currentSelectedRoot){
     this.currentSelected=currentSelected;
     this.currentSelectedRoot=currentSelectedRoot;
   }
-  void changeComponentSelection(Component component, {required Component root,bool scroll=true}) {
+  void changeComponentSelection(ComponentSelectionModel component, {required Component root,bool scroll=true}) {
     if (currentSelected != component) {
       currentSelected = component;
       currentSelectedRoot = root;
-      logger('==== ComponentSelectionCubit ** changeComponentSelection == ${component.name} ${root.name}');
+      // logger('==== ComponentSelectionCubit ** changeComponentSelection == ${component.name} ${root.name}');
       emit(ComponentSelectionChange(scroll: scroll));
     }
   }
-  bool isSelected(Component component){
-    return currentSelected==component;
+  bool isSelectedInTree(Component component){
+    return currentSelected.treeSelection.contains(component);
   }
 }

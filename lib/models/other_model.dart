@@ -17,5 +17,6 @@ class FavouriteModel{
   final Component component;
   final String projectName;
 
+
   FavouriteModel(this.component, this.projectName);
 }

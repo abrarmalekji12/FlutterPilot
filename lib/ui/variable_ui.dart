@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../common/custom_popup_menu_button.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/component_creation/component_creation_cubit.dart';
@@ -18,6 +19,7 @@ class VariableBox extends StatefulWidget {
 class _VariableBoxState extends State<VariableBox> {
   final TextEditingController _controller1 = TextEditingController(),
       _controller2 = TextEditingController();
+  final ScrollController _scrollController=ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class _VariableBoxState extends State<VariableBox> {
         elevation: 5,
         color: Colors.white,
         child: Container(
-          height: 500,
+          height: dh(context, 100)-70,
           padding: const EdgeInsets.all(10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -154,6 +156,7 @@ class _VariableBoxState extends State<VariableBox> {
               ),
               Expanded(
                 child: ListView.builder(
+                  controller: _scrollController,
                   itemBuilder: (context, i) {
                     return Row(
                       children: [

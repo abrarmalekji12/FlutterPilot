@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
+import '../ui/models_view.dart';
 import 'variable_model.dart';
 
 class LocalModel {
@@ -23,6 +24,42 @@ class LocalModel {
 
   get listVariableName => '${name.toLowerCase()}List';
 
+  String get implementationCode {
+    return '''
+    class $name{\n${variables.map((e) => 'final ${getDartDataType(e.dataType)} ${e.name};').join('\n')}\n$name( ${variables.map((e) => 'this.${e.name}').join(',')});
+    }
+    ''';
+  }
+
+  String get declarationCode {
+    return '''
+    List<$name> $listVariableName = [
+    ${values.map((e) => '$name(${e.map((value) => valueToCode(value)).join(',')})').join(',\n')}
+    ];
+    ''';
+  }
+  String valueToCode(dynamic value){
+  switch(value.runtimeType){
+    case double :
+    case int :
+      return '$value';
+    case String :
+      return '\'$value\'';
+  }
+  return '$value';
+  }
+
+  String getDartDataType(final DataType dataType){
+    switch(dataType){
+
+      case DataType.int:
+        return 'int';
+      case DataType.double:
+        return 'double';
+      case DataType.string:
+        return 'String';
+    }
+  }
   toJson() {
     final valueList = [];
     for (final value in values) {

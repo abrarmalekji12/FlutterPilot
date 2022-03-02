@@ -5,7 +5,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import '../runtime_provider.dart';
 import 'builder_component.dart';
-import 'data_model.dart';
 import 'parameter_rule_model.dart';
 import '../code_to_component.dart';
 import '../common/logger.dart';
@@ -132,7 +131,6 @@ abstract class Component {
     final componentCode = code.replaceFirst('$name(', '');
     final parameterCodes = CodeOperations.splitByComma(
         componentCode.substring(0, componentCode.length - 1));
-
     switch (comp.type) {
       case 3:
         if (comp is BuilderComponent) {
@@ -378,18 +376,20 @@ abstract class Component {
 
   Widget create(BuildContext context);
 
-  String code({bool clean = true}) {
+
+  String parametersCode(bool clean){
     String middle = '';
     for (final parameter in parameters) {
       final paramCode = parameter.code(clean);
       if (paramCode.isNotEmpty) {
-        middle += '$paramCode,'.replaceAll(',,', ',');
-        if (clean) {
-          middle += '\n';
-        }
+        middle  += '${clean?'  ':''}$paramCode,${clean?'\n':''}'.replaceAll(',,', ',');
       }
     }
+    return middle;
 
+  }
+  String code({bool clean = true}) {
+    final middle=parametersCode(clean);
     String name = this.name;
     if (!clean) {
       name += '[id=$id]';
@@ -443,16 +443,8 @@ abstract class MultiHolder extends Component {
 
   @override
   String code({bool clean = true}) {
-    String middle = '';
-    for (final para in parameters) {
-      final paramCode = para.code(clean);
-      if (paramCode.isNotEmpty) {
-        middle += '$paramCode,'.replaceAll(',,', ',');
-        if (clean) {
-          middle += '\n';
-        }
-      }
-    }
+
+    final middle=parametersCode(clean);
 
     String name = this.name;
     if (!clean) {
@@ -581,18 +573,17 @@ abstract class Holder extends Component {
   }
 
   @override
-  void searchTappedComponent(final Offset offset, List<Component> components) {
+  void searchTappedComponent(final Offset offset, final List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
       if (this is BuilderComponent) {
-        // for(final comp in
-        // (this as BuilderComponent).builtList){
-        //   final len=components.length;
-        //  comp.searchTappedComponent(offset, components);
-        //  if(len!=components.length){
-        //    components.ad
-        //    break;
-        //  }
-        // }
+        for(final comp in
+        (this as BuilderComponent).builtList){
+          final len=components.length;
+         comp.searchTappedComponent(offset, components);
+         if(len!=components.length){
+           break;
+         }
+        }
       } else {
         child?.searchTappedComponent(offset, components);
       }
@@ -611,23 +602,15 @@ abstract class Holder extends Component {
 
   @override
   String code({bool clean = true}) {
-    String middle = '';
-    for (final para in parameters) {
-      final paramCode = para.code(clean);
-        if (paramCode.isNotEmpty) {
-          middle += '$paramCode,'.replaceAll(',,', ',');
-          if (clean) {
-            middle += '\n';
-          }
-      }
-    }
+
+    final middle=parametersCode(clean);
     String name = this.name;
     if (!clean) {
       name += '[id=$id]';
     }
     if (child == null) {
       if (!required) {
-        return '$name(\n$middle\n),';
+        return '$name(\n$middle\n)';
       } else {
         return '$name(\n${middle}child:Container(),\n)';
       }
@@ -725,19 +708,8 @@ abstract class CustomNamedHolder extends Component {
 
   @override
   String code({bool clean = true}) {
-    String middle = '';
-    for (final para in parameters) {
-      final paramCode = para.code(clean);
-      if (paramCode.isNotEmpty) {
-        final paramCode = para.code(clean);
-        if (paramCode.isNotEmpty) {
-          middle += '$paramCode,'.replaceAll(',,', ',');
-          if (clean) {
-            middle += '\n';
-          }
-        }
-      }
-    }
+
+    final middle=parametersCode(clean);
     String name = this.name;
     if (!clean) {
       name += '[id=$id]';

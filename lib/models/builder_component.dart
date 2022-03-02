@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../component_list.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
+import '../parameters_list.dart';
 import 'component_model.dart';
 import 'local_model.dart';
 import 'parameter_model.dart';
-import 'variable_model.dart';
 
 abstract class BuilderComponent extends Holder {
   LocalModel? model;
@@ -14,8 +14,16 @@ abstract class BuilderComponent extends Holder {
   BuilderComponent(String name, List<Parameter> parameters)
       : super(name, parameters);
 
-  Widget builder(BuildContext context, int index) {
+  @override
+  Component clone(Component? parent, {bool cloneParam = false}) {
+    return (super.clone(parent, cloneParam: cloneParam) as BuilderComponent)
+      ..model = model;
+  }
 
+  Widget builder(BuildContext context, int index) {
+    if (child == null) {
+      return Container();
+    }
     for (int i = 0; i < (model?.variables.length ?? 0); i++) {
       ComponentOperationCubit.codeProcessor
           .modelVariables[model!.variables[i].name] = model!.values[index][i];
@@ -24,7 +32,7 @@ abstract class BuilderComponent extends Holder {
     ComponentOperationCubit.codeProcessor.modelVariables['count'] =
         model!.values.length;
     final component = child!.clone(this);
-    final widget = (component.create(context));
+    final widget = (component.build(context));
     if (index < builtList.length) {
       builtList.removeAt(index);
       builtList.insert(index, component);
@@ -33,7 +41,6 @@ abstract class BuilderComponent extends Holder {
     }
 
     return widget;
-
   }
 
   void init() {
@@ -50,16 +57,8 @@ abstract class BuilderComponent extends Holder {
 
   @override
   String code({bool clean = true}) {
-    String middle = '';
-    for (final para in parameters) {
-      final paramCode = para.code(clean);
-      if (paramCode.isNotEmpty) {
-        middle += '$paramCode,'.replaceAll(',,', ',');
-        if (clean) {
-          middle += '\n';
-        }
-      }
-    }
+
+    final middle=parametersCode(clean);
     String itemCode =
         child?.code(clean: clean) ?? CContainer().code(clean: clean);
     String name = this.name;
@@ -89,8 +88,8 @@ abstract class BuilderComponent extends Holder {
           String innerArea = itemCode.substring(gotIndex, start);
           if (model != null && model!.variables.isNotEmpty) {
             for (final variable in model!.variables) {
-              innerArea=innerArea.replaceAll(
-                  variable.name, '${model!.listVariableName}[index].${variable.name}');
+              innerArea = innerArea.replaceAll(variable.name,
+                  '${model!.listVariableName}[index].${variable.name}');
               // if (!usedVariables.contains(variable)) {
               //   usedVariables.add(variable);
               // }
@@ -121,19 +120,28 @@ class CListViewBuilder extends BuilderComponent {
     init();
     return ListView.builder(
       itemBuilder: (context, index) {
-
         return builder(context, index);
       },
       itemCount: count,
     );
   }
+}
 
-// @override
-// String code({bool clean = true}) {
-//   return '''$name(
-//       builder: (context,index){
-//       return ${child?.code() ?? CContainer().code(clean: clean)};
-//       }
-//       ),''';
-// }
+class CGridViewBuilder extends BuilderComponent {
+  CGridViewBuilder()
+      : super('GridView.Builder', [
+          Parameters.sliverDelegate(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    init();
+    return GridView.builder(
+      itemBuilder: (context, index) {
+        return builder(context, index);
+      },
+      itemCount: count,
+      gridDelegate: parameters[0].value,
+    );
+  }
 }

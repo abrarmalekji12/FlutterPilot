@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../common/compiler/code_processor.dart';
 import '../../common/undo/revert_work.dart';
-import '../../models/data_model.dart';
 import '../../models/local_model.dart';
 import '../../models/variable_model.dart';
 import '../../models/parameter_model.dart';
@@ -50,6 +49,36 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       emit(ComponentOperationInitial());
     } on Exception {
       emit(ComponentOperationErrorState());
+    }
+  }
+
+  void addOperation(Component component, Component comp, Component ancestor,
+      {bool componentParameterOperation = false,
+      ComponentParameter? componentParameter,
+      String? customNamed}) {
+    if (componentParameterOperation) {
+      componentParameter!.addComponent(comp);
+    } else if (customNamed != null) {
+      (component as CustomNamedHolder).updateChildWithKey(customNamed, comp);
+    } else {
+      if (component is Holder) {
+        component.updateChild(comp);
+      } else if (component is MultiHolder) {
+        component.addChild(comp);
+      }
+    }
+
+    if (componentParameter == null) {
+      comp.setParent(component);
+      if (comp is CustomComponent) {
+        comp.root?.setParent(component);
+      }
+      if (ancestor is CustomComponent) {
+        if (component == ancestor) {
+          ancestor.root = comp;
+        }
+        ancestor.notifyChanged();
+      }
     }
   }
 
@@ -169,7 +198,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   void deleteCustomComponent(BuildContext context, CustomComponent component) {
     for (CustomComponent component in component.objects) {
-      removeComponent(context, component);
+      removeComponentAndRefresh(context, component);
     }
     flutterProject?.customComponents.remove(component);
     emit(ComponentUpdatedState());
@@ -192,7 +221,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  void removeComponent(BuildContext context, Component component) {
+  void removeComponent(Component component) {
     if (component.parent == null) {
       return;
     }
@@ -286,6 +315,10 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
             (parent).root = null;
         }
     }
+  }
+
+  void removeComponentAndRefresh(BuildContext context, Component component) {
+    removeComponent(component);
     emit(ComponentUpdatedState());
   }
 

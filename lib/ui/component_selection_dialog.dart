@@ -256,6 +256,9 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                                   child: Wrap(
                                     children: componentOperationCubit
                                         .favouriteList
+                                        .where((element) => element.projectName
+                                            .toLowerCase()
+                                            .contains(filter))
                                         .map((model) => FavouriteWidget(
                                             model, constraints, setState2,
                                             componentOperationCubit:
@@ -317,24 +320,58 @@ class FavouriteWidget extends StatelessWidget {
             },
             child: Align(
               alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.all(5),
-                child: IgnorePointer(
-                  ignoring: true,
-                  child: Container(
-                    width: constraints.maxWidth - 70 >
-                            model.component.boundary!.width
-                        ? model.component.boundary!.width
-                        : constraints.maxWidth - 70,
-                    height: model.component.boundary!.height,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      gradient: const LinearGradient(
-                          colors: [Color(0xfff2f2f2), Color(0xffd3d3d3)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight),
+              child: Tooltip(
+                preferBelow: false,
+                waitDuration: const Duration(milliseconds: 600),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.all(10),
+                richMessage: TextSpan(children: [
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'from',
+                        style: AppFontStyle.roboto(12,
+                            fontWeight: FontWeight.w600, color: Colors.blueAccent),
+                      ),
+                      TextSpan(
+                          text: ' ${model.projectName}\n',
+                          style: AppFontStyle.roboto(12,
+                              fontWeight: FontWeight.w600, color: Colors.black))
+                    ],
+                  ),
+                  TextSpan(
+                    text: model.component.code(),
+                    style: AppFontStyle.roboto(11, fontWeight: FontWeight.w500),
+                  ),
+                ]),
+                child: Padding(
+                  padding: const EdgeInsets.all(5),
+                  child: IgnorePointer(
+                    ignoring: true,
+                    child: SizedBox(
+                      width: 180,
+                      height: 180,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: Container(
+                          width: constraints.maxWidth - 70 >
+                                  model.component.boundary!.width
+                              ? model.component.boundary!.width
+                              : constraints.maxWidth - 70,
+                          height: model.component.boundary!.height,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            gradient: const LinearGradient(
+                                colors: [Color(0xfff2f2f2), Color(0xffd3d3d3)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight),
+                          ),
+                          child: model.component.build(context),
+                        ),
+                      ),
                     ),
-                    child: model.component.build(context),
                   ),
                 ),
               ),
@@ -406,12 +443,17 @@ class BasicComponentTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  entry.value,
-                  style: AppFontStyle.roboto(12,
-                      color: Colors.black, fontWeight: FontWeight.w500),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      entry.value,
+                      overflow: TextOverflow.fade,
+                      style: AppFontStyle.roboto(12,
+                          color: Colors.black, fontWeight: FontWeight.w500),
+                    ),
+                  ),
                 ),
-                const Spacer(),
                 if (componentOperationCubit.sameComponentCollection
                         .containsKey(entry.value) &&
                     (componentOperationCubit

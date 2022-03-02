@@ -1,10 +1,13 @@
 import 'dart:async';
-// import 'dart:html' as html;
+
+import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../common/dialog_selection.dart';
+import '../constant/app_colors.dart';
 import '../models/builder_component.dart';
+import '../models/component_selection.dart';
 import '../runtime_provider.dart';
 import 'build_view/build_view.dart';
 import 'emulation_view.dart';
@@ -69,35 +72,35 @@ class _HomePageState extends State<HomePage> {
     if (_streamSubscription != null) {
       _streamSubscription?.cancel();
     }
-    // _streamSubscription = html.window.onKeyDown.listen((event) {
-    //   if (event.altKey &&
-    //       componentOperationCubit.flutterProject?.rootComponent != null) {
-    //     event.preventDefault();
-    //     if (event.key == 'f') {
-    //       componentOperationCubit
-    //           .toggleFavourites(componentSelectionCubit.currentSelected);
-    //     } else if (event.key == 'v') {
-    //       if (componentOperationCubit.runtimeMode == RuntimeMode.edit) {
-    //         Get.dialog(
-    //           BuildView(
-    //             onDismiss: () {
-    //               componentCreationCubit.changedComponent();
-    //             },
-    //             componentOperationCubit: componentOperationCubit,
-    //             screenConfigCubit: screenConfigCubit,
-    //           ),
-    //         );
-    //       } else if (componentOperationCubit.runtimeMode == RuntimeMode.run) {
-    //         Get.back();
-    //         componentOperationCubit.runtimeMode = RuntimeMode.edit;
-    //         componentCreationCubit.changedComponent();
-    //       }
-    //     }
-    //   }
-    // });
-    // html.window.onResize.listen((event) {
-    //   componentCreationCubit.changedComponent();
-    // });
+    _streamSubscription = html.window.onKeyDown.listen((event) {
+      if (event.altKey &&
+          componentOperationCubit.flutterProject?.rootComponent != null) {
+        event.preventDefault();
+        if (event.key == 'f') {
+          componentOperationCubit.toggleFavourites(
+              componentSelectionCubit.currentSelected.propertySelection);
+        } else if (event.key == 'v') {
+          if (componentOperationCubit.runtimeMode == RuntimeMode.edit) {
+            Get.dialog(
+              BuildView(
+                onDismiss: () {
+                  componentCreationCubit.changedComponent();
+                },
+                componentOperationCubit: componentOperationCubit,
+                screenConfigCubit: screenConfigCubit,
+              ),
+            );
+          } else if (componentOperationCubit.runtimeMode == RuntimeMode.run) {
+            Get.back();
+            componentOperationCubit.runtimeMode = RuntimeMode.edit;
+            componentCreationCubit.changedComponent();
+          }
+        }
+      }
+    });
+    html.window.onResize.listen((event) {
+      componentCreationCubit.changedComponent();
+    });
   }
 
   void showSelectionDialog(
@@ -176,7 +179,8 @@ class _HomePageState extends State<HomePage> {
               }
               if (state is FlutterProjectLoadedState) {
                 componentSelectionCubit.init(
-                    state.flutterProject.rootComponent!,
+                    ComponentSelectionModel.unique(
+                        state.flutterProject.rootComponent!),
                     state.flutterProject.rootComponent!);
               }
               return const ResponsiveWidget(
@@ -288,113 +292,100 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.topRight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              InkWell(
-                highlightColor: Colors.blueAccent.shade200,
+          InkWell(
+            highlightColor: Colors.blueAccent.shade200,
+            borderRadius: BorderRadius.circular(8),
+            onTap: () {
+              CustomDialog.show(
+                context,
+                CodeViewerWidget(
+                  code: BlocProvider.of<ComponentOperationCubit>(context,
+                          listen: false)
+                      .flutterProject!
+                      .code(),
+                ),
+              );
+            },
+            child: Card(
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                onTap: () {
-                  CustomDialog.show(
-                    context,
-                    CodeViewerWidget(
-                      code: BlocProvider.of<ComponentOperationCubit>(context,
-                              listen: false)
-                          .flutterProject!
-                          .code(),
+              ),
+              color: Colors.blueAccent,
+              child: Padding(
+                padding: const EdgeInsets.all(5),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.code,
+                      color: Colors.white,
                     ),
-                  );
-                },
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  color: Colors.blueAccent,
-                  child: Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.code,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          'view code',
-                          style: AppFontStyle.roboto(14, color: Colors.white),
-                        )
-                      ],
+                    const SizedBox(
+                      width: 10,
                     ),
-                  ),
+                    Text(
+                      'view code',
+                      style: AppFontStyle.roboto(14, color: Colors.white),
+                    )
+                  ],
                 ),
               ),
-              const SizedBox(
-                width: 10,
-              ),
-              InkWell(
-                highlightColor: Colors.blueAccent.shade200,
-                borderRadius: BorderRadius.circular(8),
-                onTap: () {
-                  Get.dialog(
-                    BuildView(
-                      onDismiss: () {
-                        BlocProvider.of<ComponentCreationCubit>(context,
-                                listen: false)
-                            .changedComponent();
-                      },
-                      componentOperationCubit:
-                          BlocProvider.of<ComponentOperationCubit>(context,
-                              listen: false),
-                      screenConfigCubit: BlocProvider.of<ScreenConfigCubit>(
-                          context,
-                          listen: false),
-                    ),
-                  );
-                },
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  color: Colors.green.shade500,
-                  child: Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.remove_red_eye_rounded,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          'view',
-                          style: AppFontStyle.roboto(14, color: Colors.white),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              VariableShowHideMenu(),
-              ModelShowHideMenu(),
-            ],
-          )
+          const SizedBox(
+            width: 10,
+          ),
+          InkWell(
+            highlightColor: Colors.blueAccent.shade200,
+            borderRadius: BorderRadius.circular(8),
+            onTap: () {
+              Get.dialog(
+                BuildView(
+                  onDismiss: () {
+                    BlocProvider.of<ComponentCreationCubit>(context,
+                            listen: false)
+                        .changedComponent();
+                  },
+                  componentOperationCubit:
+                      BlocProvider.of<ComponentOperationCubit>(context,
+                          listen: false),
+                  screenConfigCubit: BlocProvider.of<ScreenConfigCubit>(context,
+                      listen: false),
+                ),
+              );
+            },
+            child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              color: Colors.green.shade500,
+              child: Padding(
+                padding: const EdgeInsets.all(5),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.remove_red_eye_rounded,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      'view',
+                      style: AppFontStyle.roboto(14, color: Colors.white),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -413,32 +404,43 @@ class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 350,
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          InkWell(
-            onTap: () {
-              setState(() {
-                _variableBoxOpen = !_variableBoxOpen;
-              });
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_variableBoxOpen)
+          TweenAnimationBuilder(
+            tween: Tween<double>(begin: 1, end: 0),
+            builder: (context, double value, _) {
+              return Transform.translate(
+                offset: Offset(0, value * (-300)),
+                child: const SizedBox(
+                  width: 350,
+                  child: VariableBox(),
+                ),
+              );
             },
-            child: Container(
-              decoration: BoxDecoration(
-                  color: Colors.white, borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.all(10),
-              child: Text(
-                _variableBoxOpen ? 'Hide' : 'Variables',
-                style: AppFontStyle.roboto(15,
-                    color: Colors.black, fontWeight: FontWeight.w500),
-              ),
+            duration: const Duration(milliseconds: 200),
+          ),
+        InkWell(
+          onTap: () {
+            setState(() {
+              _variableBoxOpen = !_variableBoxOpen;
+            });
+          },
+          child: Container(
+            decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(10)),
+            padding: const EdgeInsets.all(10),
+            child: Text(
+              'Variables',
+              style: AppFontStyle.roboto(15,
+                  color: _variableBoxOpen ? AppColors.theme : Colors.black,
+                  fontWeight: FontWeight.w500),
             ),
           ),
-          if (_variableBoxOpen) const VariableBox()
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -456,11 +458,25 @@ class _ModelShowHideMenuState extends State<ModelShowHideMenu> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 450,
       padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_modelBoxOpen)
+            TweenAnimationBuilder(
+              tween: Tween<double>(begin: 1, end: 0),
+              builder: (context, double value, _) {
+                return Transform.translate(
+                  offset: Offset(0, value * (-300)),
+                  child: const SizedBox(
+                    width: 450,
+                    child: ModelBox(),
+                  ),
+                );
+              },
+              duration: const Duration(milliseconds: 200),
+            ),
           InkWell(
             onTap: () {
               setState(() {
@@ -472,13 +488,13 @@ class _ModelShowHideMenuState extends State<ModelShowHideMenu> {
                   color: Colors.white, borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.all(10),
               child: Text(
-                _modelBoxOpen ? 'Hide' : 'Models',
+                'Models',
                 style: AppFontStyle.roboto(15,
-                    color: Colors.black, fontWeight: FontWeight.w500),
+                    color: _modelBoxOpen ? AppColors.theme : Colors.black,
+                    fontWeight: FontWeight.w500),
               ),
             ),
           ),
-          if (_modelBoxOpen) const ModelBox()
         ],
       ),
     );
@@ -581,6 +597,16 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
               CenterMainSide(_componentSelectionCubit, _componentCreationCubit,
                   _componentOperationCubit, _screenConfigCubit),
               const ToolbarButtons(),
+              const Positioned(
+                top: 50,
+                right: 0,
+                child: VariableShowHideMenu(),
+              ),
+              const Positioned(
+                top: 90,
+                right: 0,
+                child: ModelShowHideMenu(),
+              )
             ],
           ),
         ),
@@ -598,17 +624,18 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                       height: 20,
                     ),
                     Text(
-                      _componentSelectionCubit.currentSelected.name,
+                      _componentSelectionCubit
+                          .currentSelected.propertySelection.name,
                       style:
                           AppFontStyle.roboto(18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(
                       height: 20,
                     ),
-                    if (_componentSelectionCubit.currentSelected
+                    if (_componentSelectionCubit.currentSelected.propertySelection
                         is BuilderComponent)
                       BuilderComponentSettings(
-                        component: _componentSelectionCubit.currentSelected
+                        component: _componentSelectionCubit.currentSelected.propertySelection
                             as BuilderComponent,
                       ),
                     Expanded(
@@ -630,7 +657,7 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                           controller: _propertyScrollController,
                           children: [
                             for (final param in _componentSelectionCubit
-                                .currentSelected.parameters)
+                                .currentSelected.propertySelection.parameters)
                               ParameterWidget(
                                 parameter: param,
                               ),
@@ -826,31 +853,34 @@ class CenterMainSide extends StatelessWidget {
       _componentSelectionCubit.lastTapped = tappedComp;
       final lastRoot = tappedComp.getCustomComponentRoot();
       logger('==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
-      if (lastRoot != null && lastRoot is CustomComponent) {
-        final rootClone = lastRoot.getRootClone;
-        _componentSelectionCubit.changeComponentSelection(
-          CustomComponent.findSameLevelComponent(
-              rootClone, lastRoot, tappedComp),
-          root: rootClone,
-        );
-      } else if (lastRoot != null) {
-        _componentSelectionCubit.changeComponentSelection(
-          tappedComp,
-          root: lastRoot,
-        );
+      if (lastRoot != null) {
+        if (lastRoot is CustomComponent) {
+          final rootClone = lastRoot.getRootClone;
+          _componentSelectionCubit.changeComponentSelection(
+            ComponentSelectionModel.unique(
+                CustomComponent.findSameLevelComponent(
+                    rootClone, lastRoot, tappedComp)),
+            root: rootClone,
+          );
+        } else {
+          _componentSelectionCubit.changeComponentSelection(
+            ComponentSelectionModel.unique(tappedComp),
+            root: lastRoot,
+          );
+        }
       }
     }
   }
 
   void onSecondaryTapDown(BuildContext context, TapDownDetails event) {
-    if (_componentSelectionCubit.currentSelected.boundary != null) {
-      if (_componentSelectionCubit.currentSelected.boundary!
-          .contains(event.localPosition)) {
+    for (final component
+        in _componentSelectionCubit.currentSelected.visualSelection) {
+      if (component.boundary?.contains(event.localPosition) ?? false) {
         final ContextPopup contextPopup = ContextPopup();
         contextPopup.init(
             child: Material(
               child: ComponentModificationMenu(
-                component: _componentSelectionCubit.currentSelected,
+                component: component,
                 ancestor: _componentSelectionCubit.currentSelectedRoot,
                 componentCreationCubit: _componentCreationCubit,
                 componentOperationCubit: _componentOperationCubit,

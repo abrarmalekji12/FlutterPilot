@@ -31,7 +31,7 @@ class BoundaryWidget extends StatelessWidget {
                                 null
                             ? Provider.of<ComponentOperationCubit>(context,
                                     listen: false)
-                            .flutterProject!
+                                .flutterProject!
                                 .rootComponent!
                                 .boundary!
                             : null),
@@ -44,85 +44,92 @@ class BoundaryWidget extends StatelessWidget {
   }
 
   List<Boundary> getAllBoundaries(BuildContext context) {
-    final List<Boundary> boundaries = [];
-    if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-        .currentSelected is CustomComponent) {
-      if ((BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-                  .currentSelected as CustomComponent)
-              .root
-              ?.boundary !=
-          null) {
-        boundaries.add(Boundary(
-            (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-                    .currentSelected as CustomComponent)
-                .root!
-                .boundary!,
-            BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-                .currentSelected
-                .name));
-      }
-    } else if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-        .currentSelectedRoot is CustomComponent) {
-      final rootComp =
-          BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-              .currentSelectedRoot as CustomComponent;
-      addCustomComponentInstancesBoundary(context, rootComp, boundaries);
-    } else if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-            .currentSelected
-            .boundary !=
-        null) {
-      boundaries.add(
-        Boundary(
-            BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-                .currentSelected
-                .boundary!,
-            BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-                .currentSelected
-                .name),
-      );
-    }
-    logger('==== BOUNDARY ${boundaries.length}');
-    return boundaries;
+    return BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+        .currentSelected
+        .visualSelection.where((element) => element.boundary!=null)
+        .map<Boundary>((e) => Boundary(e.boundary!, e.name))
+        .toList(growable: false);
   }
-
-  void addCustomComponentInstancesBoundary(BuildContext context,
-      CustomComponent rootComp, List<Boundary> boundaries) {
-    final comp = CustomComponent.findSameLevelComponent(
-        rootComp,
-        (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-            .currentSelectedRoot as CustomComponent),
-        BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-            .currentSelected);
-    if (comp.boundary != null) {
-      boundaries.add(Boundary(comp.boundary!, comp.name));
-    } else {
-      for (final customComponent in rootComp.objects) {
-        final comp = CustomComponent.findSameLevelComponent(
-            customComponent,
-            (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-                .currentSelectedRoot as CustomComponent),
-            BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-                .currentSelected);
-        if (comp.boundary != null) {
-          boundaries.add(Boundary(comp.boundary!, comp.name));
-        }
-        final customRoot = customComponent.getLastRoot();
-        if (customRoot is CustomComponent) {
-          for (final customRootObject in customRoot.objects) {
-            final cloneComp = CustomComponent.findSameLevelComponent(
-                customRootObject, customRoot, customComponent);
-            logger(
-                '=== addCustomComponentInstancesBoundary cloneComp ${cloneComp.name}');
-
-            addCustomComponentInstancesBoundary(
-                context, cloneComp as CustomComponent, boundaries);
-          }
-          // addCustomComponentInstancesBoundary(context,customRoot)
-        }
-        // if(customRoot !=null )
-        logger(
-            '=== addCustomComponentInstancesBoundary CUSTOM ROOT ${customRoot.name}');
-      }
-    }
-  }
+// List<Boundary> getAllBoundaries(BuildContext context) {
+//   final List<Boundary> boundaries = [];
+//   if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//       .currentSelected is CustomComponent) {
+//     if ((BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//                 .currentSelected as CustomComponent)
+//             .root
+//             ?.boundary !=
+//         null) {
+//       boundaries.add(Boundary(
+//           (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//                   .currentSelected as CustomComponent)
+//               .root!
+//               .boundary!,
+//           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//               .currentSelected
+//               .));
+//     }
+//   } else if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//       .currentSelectedRoot is CustomComponent) {
+//     final rootComp =
+//         BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//             .currentSelectedRoot as CustomComponent;
+//     addCustomComponentInstancesBoundary(context, rootComp, boundaries);
+//   } else if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//           .currentSelected
+//           .boundary !=
+//       null) {
+//     boundaries.add(
+//       Boundary(
+//           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//               .currentSelected
+//               .boundary!,
+//           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//               .currentSelected
+//               .name),
+//     );
+//   }
+//   logger('==== BOUNDARY ${boundaries.length}');
+//   return boundaries;
+// }
+//
+// void addCustomComponentInstancesBoundary(BuildContext context,
+//     CustomComponent rootComp, List<Boundary> boundaries) {
+//   final comp = CustomComponent.findSameLevelComponent(
+//       rootComp,
+//       (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//           .currentSelectedRoot as CustomComponent),
+//       BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//           .currentSelected);
+//   if (comp.boundary != null) {
+//     boundaries.add(Boundary(comp.boundary!, comp.name));
+//   } else {
+//     for (final customComponent in rootComp.objects) {
+//       final comp = CustomComponent.findSameLevelComponent(
+//           customComponent,
+//           (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//               .currentSelectedRoot as CustomComponent),
+//           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//               .currentSelected);
+//       if (comp.boundary != null) {
+//         boundaries.add(Boundary(comp.boundary!, comp.name));
+//       }
+//       final customRoot = customComponent.getLastRoot();
+//       if (customRoot is CustomComponent) {
+//         for (final customRootObject in customRoot.objects) {
+//           final cloneComp = CustomComponent.findSameLevelComponent(
+//               customRootObject, customRoot, customComponent);
+//           logger(
+//               '=== addCustomComponentInstancesBoundary cloneComp ${cloneComp.name}');
+//
+//           addCustomComponentInstancesBoundary(
+//               context, cloneComp as CustomComponent, boundaries);
+//         }
+//         // addCustomComponentInstancesBoundary(context,customRoot)
+//       }
+//       // if(customRoot !=null )
+//       logger(
+//           '=== addCustomComponentInstancesBoundary CUSTOM ROOT ${customRoot.name}');
+//     }
+//   }
+// }
 }

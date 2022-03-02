@@ -5,30 +5,28 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../common/extension_util.dart';
 import '../../common/app_loader.dart';
-import '../../common/password_box.dart';
 import '../../cubit/authentication/authentication_cubit.dart';
 import '../../firestore/firestore_bridge.dart';
+import 'package:flutter_builder/common/extension_util.dart';
 import '../project_selection_page.dart';
+import 'login.dart';
 import 'register_page.dart';
-import 'reset_password.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+class ResetPasswordPage extends StatefulWidget {
+  const ResetPasswordPage({Key? key}) : super(key: key);
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _ResetPasswordPageState createState() => _ResetPasswordPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _ResetPasswordPageState extends State<ResetPasswordPage> {
   static const double tabletWidthLimit = 1200;
   static const double phoneWidthLimit = 900;
   static const double pd = 10;
   final GlobalKey<FormState> _formKey = GlobalKey();
   late final AuthenticationCubit _authenticationCubit;
-  final TextEditingController _userNameController = TextEditingController(),
-      _passwordController = TextEditingController();
+  final TextEditingController _userNameController = TextEditingController();
 
   late double dw;
   late double dh;
@@ -40,11 +38,6 @@ class _LoginPageState extends State<LoginPage> {
         BlocProvider.of<AuthenticationCubit>(context, listen: false);
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       _userNameController.text = _authenticationCubit.authViewModel.userName;
-      _passwordController.text = _authenticationCubit.authViewModel.password;
-      AppLoader.show(context);
-      FireBridge.init().then((value) {
-        AppLoader.hide();
-      });
     });
   }
 
@@ -60,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
         } else if (state is AuthSuccessState) {
           AppLoader.hide();
           Get.off(
-            () => ProjectSelectionPage(
+                () => ProjectSelectionPage(
               userId: state.userId,
             ),
             routeName: '/projects',
@@ -68,7 +61,13 @@ class _LoginPageState extends State<LoginPage> {
         } else if (state is AuthFailedState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
-        } else if (state is AuthErrorState) {
+        }
+        else if(state is AuthResetPasswordSuccessState){
+          AppLoader.hide();
+          Fluttertoast.showToast(msg: 'Please check your email box.', timeInSecForIosWeb: 3);
+          Get.off(()=>const LoginPage());
+        }
+        else if (state is AuthErrorState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
         }
@@ -98,8 +97,9 @@ class _LoginPageState extends State<LoginPage> {
                 Align(
                     alignment: Alignment.centerRight,
                     child: Form(
-                      key: _formKey,
+
                       autovalidateMode: AutovalidateMode.onUserInteraction,
+                      key: _formKey,
                       child: Container(
                           padding: const EdgeInsets.all(0),
                           width: res(dw * 0.3, dw),
@@ -114,8 +114,7 @@ class _LoginPageState extends State<LoginPage> {
                                   padding: const EdgeInsets.all(30),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.max,
                                     children: [
                                       Image.asset(
@@ -128,9 +127,9 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                       Column(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.start,
+                                        MainAxisAlignment.start,
                                         crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
@@ -159,30 +158,26 @@ class _LoginPageState extends State<LoginPage> {
                                                     textStyle: const TextStyle(
                                                       fontSize: 15,
                                                       color: Color(0xff9c9da2),
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontStyle:
-                                                          FontStyle.normal,
+                                                      fontWeight: FontWeight.w500,
+                                                      fontStyle: FontStyle.normal,
                                                     ),
                                                   ),
                                                 ),
                                                 TextSpan(
                                                   recognizer:
-                                                      TapGestureRecognizer()
-                                                        ..onTap = () {
-                                                          Get.off(() =>
-                                                              const RegisterPage());
-                                                        },
+                                                  TapGestureRecognizer()
+                                                    ..onTap = () {
+                                                      Get.off(() =>
+                                                      const RegisterPage());
+                                                    },
                                                   text: ' Create New',
                                                   style: GoogleFonts.getFont(
                                                     'Lato',
                                                     textStyle: const TextStyle(
                                                       fontSize: 17,
                                                       color: Color(0xff1a1b26),
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontStyle:
-                                                          FontStyle.normal,
+                                                      fontWeight: FontWeight.w600,
+                                                      fontStyle: FontStyle.normal,
                                                     ),
                                                   ),
                                                 ),
@@ -200,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                                           decoration: BoxDecoration(
                                             color: const Color(0xfffdce84),
                                             borderRadius:
-                                                BorderRadius.circular(10),
+                                            BorderRadius.circular(10),
                                             shape: BoxShape.rectangle,
                                           ),
                                           child: TextFormField(
@@ -215,8 +210,8 @@ class _LoginPageState extends State<LoginPage> {
                                               ),
                                             ),
                                             onChanged: (value) {
-                                              _authenticationCubit.authViewModel
-                                                  .userName = value;
+                                              _authenticationCubit
+                                                  .authViewModel.userName = value;
                                             },
                                             validator: (value) {
                                               return (!(value?.isValidEmail()??false))
@@ -226,7 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                                             readOnly: false,
                                             decoration: InputDecoration(
                                               contentPadding:
-                                                  const EdgeInsets.symmetric(
+                                              const EdgeInsets.symmetric(
                                                 horizontal: 20,
                                                 vertical: 5,
                                               ),
@@ -270,7 +265,7 @@ class _LoginPageState extends State<LoginPage> {
                                               ),
                                               border: UnderlineInputBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(0),
+                                                BorderRadius.circular(0),
                                                 borderSide: BorderSide.none,
                                               ),
                                               suffixIcon: const Padding(
@@ -283,16 +278,14 @@ class _LoginPageState extends State<LoginPage> {
                                                   child: CircleAvatar(
                                                       radius: 10,
                                                       backgroundColor:
-                                                          Color(0xffffffff),
+                                                      Color(0xffffffff),
                                                       foregroundColor:
-                                                          Color(0xffffffff),
+                                                      Color(0xffffffff),
                                                       child: Icon(
                                                         Icons.person,
-                                                        color:
-                                                            Color(0xff3b403f),
+                                                        color: Color(0xff3b403f),
                                                       ))),
-                                              iconColor:
-                                                  const Color(0xffffffff),
+                                              iconColor: const Color(0xffffffff),
                                               prefixText: '',
                                               prefixStyle: GoogleFonts.getFont(
                                                 'ABeeZee',
@@ -313,88 +306,28 @@ class _LoginPageState extends State<LoginPage> {
                                                   fontStyle: FontStyle.normal,
                                                 ),
                                               ),
-                                              enabledBorder:
-                                                  UnderlineInputBorder(
+                                              enabledBorder: UnderlineInputBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(0),
+                                                BorderRadius.circular(0),
                                                 borderSide: BorderSide.none,
                                               ),
-                                              fillColor:
-                                                  const Color(0xfffdce84),
+                                              fillColor: const Color(0xfffdce84),
                                               enabled: true,
                                             ),
                                           )),
                                       const SizedBox(
                                         height: 20,
                                       ),
-                                      Container(
-                                        height: 60,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xfff5f5f5),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          shape: BoxShape.rectangle,
-                                        ),
-                                        child: PasswordBox(
-                                          controller: _passwordController,
-                                          onChanged: (value) {
-                                            _authenticationCubit
-                                                .authViewModel.password = value;
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        height: 30,
-                                      ),
-                                      RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: 'Forgot Password?',
-                                              style: GoogleFonts.getFont(
-                                                'Roboto',
-                                                textStyle: const TextStyle(
-                                                  fontSize: 15,
-                                                  color: Color(0xff9c9da2),
-                                                  fontWeight: FontWeight.w500,
-                                                  fontStyle: FontStyle.normal,
-                                                ),
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: ' Reset Now',
-                                              recognizer: TapGestureRecognizer()
-                                                ..onTap = () {
-                                                  Get.off(() =>
-                                                      const ResetPasswordPage());
-                                                },
-                                              style: GoogleFonts.getFont(
-                                                'Lato',
-                                                textStyle: const TextStyle(
-                                                  fontSize: 17,
-                                                  color: Color(0xff1a1b26),
-                                                  fontWeight: FontWeight.w600,
-                                                  fontStyle: FontStyle.normal,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+
                                       const SizedBox(
                                         height: 40,
                                       ),
                                       InkWell(
                                         onTap: () {
-                                          if (_formKey.currentState
-                                                  ?.validate() ??
-                                              false) {
-                                            _authenticationCubit.login(
+                                          if (_formKey.currentState?.validate()??false) {
+                                            _authenticationCubit.resetPassword(
                                                 _authenticationCubit
-                                                    .authViewModel.userName,
-                                                _authenticationCubit
-                                                    .authViewModel.password);
+                                                    .authViewModel.userName);
                                           }
                                         },
                                         child: Container(
@@ -403,11 +336,11 @@ class _LoginPageState extends State<LoginPage> {
                                           decoration: BoxDecoration(
                                             color: const Color(0xffb12341),
                                             borderRadius:
-                                                BorderRadius.circular(10),
+                                            BorderRadius.circular(10),
                                             shape: BoxShape.rectangle,
                                           ),
                                           child: Text(
-                                            'Log in',
+                                            'Continue',
                                             style: GoogleFonts.getFont(
                                               'Roboto',
                                               textStyle: const TextStyle(
@@ -426,18 +359,18 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                       Center(
                                           child: Text(
-                                        'Skip Now',
-                                        style: GoogleFonts.getFont(
-                                          'ABeeZee',
-                                          textStyle: const TextStyle(
-                                            fontSize: 16,
-                                            color: Color(0xff464646),
-                                            fontWeight: FontWeight.w500,
-                                            fontStyle: FontStyle.normal,
-                                          ),
-                                        ),
-                                        textAlign: TextAlign.left,
-                                      )),
+                                            'Skip Now',
+                                            style: GoogleFonts.getFont(
+                                              'ABeeZee',
+                                              textStyle: const TextStyle(
+                                                fontSize: 16,
+                                                color: Color(0xff464646),
+                                                fontWeight: FontWeight.w500,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            textAlign: TextAlign.left,
+                                          )),
                                     ],
                                   )))),
                     )),

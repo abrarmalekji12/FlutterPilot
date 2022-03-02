@@ -38,12 +38,16 @@ final componentList = <String, Component Function()>{
   'Flexible': () => CFlexible(),
   'Card': () => CCard(),
   'SizedBox': () => CSizedBox(),
+  'SizedBox.expand': () => CSizedBoxExpand(),
+  'SizedBox.shrink': () => CSizedBoxShrink(),
+  'SizedBox.fromSize': () => CSizedBoxFromSize(),
   'PreferredSize': () => CPreferredSize(),
   'FittedBox': () => CFittedBox(),
   'Text': () => CText(),
   'Icon': () => CIcon(),
   'Switch': () => CSwitch(),
   'CircularProgressIndicator': () => CCircularProgressIndicator(),
+  'LinearProgressIndicator': () => CLinearProgressIndicator(),
   'Checkbox': () => CCheckbox(),
   'Radio': () => CRadio(),
   'Image.asset': () => CImage(),
@@ -66,7 +70,8 @@ final componentList = <String, Component Function()>{
   'FloatingActionButton': () => CFloatingActionButton(),
   'IconButton': () => CIconButton(),
   'Placeholder': () => CPlaceholder(),
-  'ListView.Builder': () => CListViewBuilder()
+  'ListView.Builder': () => CListViewBuilder(),
+  'GridView.Builder': () => CGridViewBuilder()
 };
 
 class CMaterialApp extends CustomNamedHolder {
@@ -899,7 +904,16 @@ class CElevatedButton extends Holder {
     );
   }
 }
-
+// class CBottomNavigationBar extends Cu {
+//   CBottomNavigationBar() : super('BottomNavigationBar',[
+//   ]);
+//
+//   @override
+//   Widget create(BuildContext context) {
+//    return BottomNavigationBar(items: parameters[0].value);
+//   }
+//
+// }
 class CInkWell extends Holder {
   CInkWell()
       : super('InkWell', [
@@ -963,6 +977,7 @@ class CFloatingActionButton extends Holder {
 
   @override
   Widget create(BuildContext context) {
+
     return FloatingActionButton(
       onPressed: () {},
       child: child?.build(context) ?? Container(),
@@ -989,6 +1004,47 @@ class CTextButton extends Holder {
       onPressed: () {},
       child: child?.build(context) ?? Container(),
       style: parameters[0].value,
+    );
+  }
+}
+
+class CLinearProgressIndicator extends Component {
+  CLinearProgressIndicator()
+      : super('LinearProgressIndicator', [
+          Parameters.widthParameter()
+            ..withDefaultValue(5)
+            ..withRequired(true)
+            ..withNamedParamInfoAndSameDisplayName('minHeight'),
+          Parameters.widthParameter()
+            ..withDefaultValue(null)
+            ..withRequired(false)
+            ..withNamedParamInfoAndSameDisplayName('value'),
+          ComplexParameter(
+            params: [
+              Parameters.colorParameter()
+                ..withDefaultValue(AppColors.black)
+                ..withChangeNamed(null)
+                ..withDisplayName('loading color')
+            ],
+            evaluate: (params) {
+              return AlwaysStoppedAnimation<Color?>(params[0].value);
+            },
+            info: InnerObjectParameterInfo(
+                innerObjectName: 'AlwaysStoppedAnimation',
+                namedIfHaveAny: 'valueColor'),
+          ),
+          Parameters.colorParameter(),
+          Parameters.backgroundColorParameter(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return LinearProgressIndicator(
+      minHeight: parameters[0].value,
+      value: parameters[1].value,
+      valueColor: parameters[2].value,
+      color: parameters[3].value,
+      backgroundColor: parameters[4].value,
     );
   }
 }
@@ -1107,6 +1163,45 @@ class CSizedBox extends Holder {
       child: child?.build(context),
       width: parameters[0].value,
       height: parameters[1].value,
+    );
+  }
+}
+
+class CSizedBoxShrink extends Holder {
+  CSizedBoxShrink() : super('SizedBox.shrink', []);
+
+  @override
+  Widget create(BuildContext context) {
+    return SizedBox.shrink(
+      child: child?.build(context),
+    );
+  }
+}
+
+class CSizedBoxFromSize extends Holder {
+  CSizedBoxFromSize()
+      : super('SizedBox.fromSize', [
+          Parameters.sizeParameter()
+            ..withNamedParamInfoAndSameDisplayName('size')
+            ..withRequired(false)
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return SizedBox.fromSize(
+      size: parameters[0].value,
+      child: child?.build(context),
+    );
+  }
+}
+
+class CSizedBoxExpand extends Holder {
+  CSizedBoxExpand() : super('SizedBox.expand', []);
+
+  @override
+  Widget create(BuildContext context) {
+    return SizedBox.expand(
+      child: child?.build(context),
     );
   }
 }

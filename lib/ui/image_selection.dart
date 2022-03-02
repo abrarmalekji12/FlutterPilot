@@ -108,11 +108,11 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                     hint: 'Search image..',
                     focusColor: AppColors.theme,
                     onTextChange: (text) {
-                      _searchText = text;
+                      _searchText = text.toLowerCase();
                       setState(() {
                         filteredImageDataList = imageDataList!
                             .where((element) =>
-                                element.imageName!.contains(_searchText))
+                                element.imageName!.toLowerCase().contains(_searchText))
                             .toList();
                       });
                     },
@@ -166,6 +166,17 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                                             child: Image.memory(
                                               filteredImageDataList![index].bytes!,
                                               fit: BoxFit.contain,
+                                            ),
+                                          ),
+                                        ),
+                                        Align(
+                                          alignment: Alignment.bottomCenter,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(
+                                              filteredImageDataList![index].imageName!,
+                                              overflow: TextOverflow.fade,
+                                              style: AppFontStyle.roboto(13,fontWeight: FontWeight.w600,color: Colors.black),
                                             ),
                                           ),
                                         ),

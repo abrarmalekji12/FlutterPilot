@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../common/custom_drop_down.dart';
+import '../common/custom_popup_menu_button.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/component_creation/component_creation_cubit.dart';
@@ -13,48 +14,6 @@ import '../models/variable_model.dart';
 
 enum DataType { int, double, string }
 
-class ModelView extends StatefulWidget {
-  const ModelView({Key? key}) : super(key: key);
-
-  @override
-  _ModelViewState createState() => _ModelViewState();
-}
-
-class _ModelViewState extends State<ModelView> {
-  bool modelBoxOpen = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 350,
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          InkWell(
-            onTap: () {
-              setState(() {
-                modelBoxOpen = !modelBoxOpen;
-              });
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                  color: Colors.white, borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.all(10),
-              child: Text(
-                modelBoxOpen ? 'Hide' : 'Variables',
-                style: AppFontStyle.roboto(15,
-                    color: Colors.black, fontWeight: FontWeight.w500),
-              ),
-            ),
-          ),
-          if (modelBoxOpen) const ModelBox()
-        ],
-      ),
-    );
-  }
-}
-
 class ModelBox extends StatefulWidget {
   const ModelBox({Key? key}) : super(key: key);
 
@@ -65,6 +24,7 @@ class ModelBox extends StatefulWidget {
 class _ModelBoxState extends State<ModelBox> {
   late final ComponentOperationCubit _componentOperationCubit;
   final ModelCubit _modelCubit = ModelCubit();
+  final ScrollController _scrollController=ScrollController();
 
   @override
   void initState() {
@@ -80,9 +40,10 @@ class _ModelBoxState extends State<ModelBox> {
         elevation: 5,
         color: Colors.white,
         child: Container(
-          height: 500,
+          height: dh(context, 100)-130,
           padding: const EdgeInsets.all(10),
           child: SingleChildScrollView(
+            controller: _scrollController,
             child: BlocProvider(
               create: (context) => _modelCubit,
               child: BlocConsumer<ModelCubit, ModelState>(

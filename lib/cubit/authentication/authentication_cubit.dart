@@ -13,28 +13,55 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
   Future<void> login(String userName, String password) async {
     emit(AuthLoadingState());
     try {
-      final id = await FireBridge.login(userName, password);
-      if (id != null) {
-        emit(AuthSuccessState(id));
+      final response = await FireBridge.login(userName, password);
+      if (response.userId != null) {
+        emit(AuthSuccessState(response.userId!));
       } else {
-        emit(AuthFailedState('Wrong Username and/or Password'));
+        emit(AuthFailedState(response.error??''));
       }
-    } on Exception {
-      emit(AuthErrorState('Something went wrong'));
+    } on Exception catch(error){
+      final errorMsg=error.toString();
+      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']')+1)));
+    }
+  }
+
+  Future<void> logout()async{
+    emit(AuthLoadingState());
+    try {
+      await FireBridge.logout();
+      emit(AuthSuccessState(-1));
+    } on Exception catch(error){
+      final errorMsg=error.toString();
+      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']')+1)));
+    }
+  }
+  Future<void> resetPassword(final String userName) async {
+    emit(AuthLoadingState());
+
+    try {
+      final response = await FireBridge.resetPassword(userName);
+      if (response == null) {
+        emit(AuthResetPasswordSuccessState());
+      } else {
+        emit(AuthFailedState(response));
+      }
+    } on Exception catch(error){
+      final errorMsg=error.toString();
+      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']')+1)));
     }
   }
 
   Future<void> register(String userName, String password) async {
     emit(AuthLoadingState());
     try {
-      final id = await FireBridge.registerUser(userName, password);
-      if (id != null) {
-        emit(AuthSuccessState(id));
+      final response = await FireBridge.registerUser(userName, password);
+      if (response.userId != null) {
+        emit(AuthSuccessState(response.userId!));
       } else {
-        emit(AuthFailedState('Username already exists'));
+        emit(AuthFailedState(response.error??''));
       }
-    } on Exception {
-      emit(AuthErrorState('Something went wrong'));
+    } on Exception  catch(error){
+      emit(AuthErrorState(error.toString()));
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../code_to_component.dart';
 import 'local_model.dart';
 import 'variable_model.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -12,16 +13,20 @@ class FlutterProject {
   String name;
   final int userId;
   final String? device;
-  final List<VariableModel> variables=[];
-  final List<LocalModel> models=[];
+  final List<VariableModel> variables = [];
+  final List<LocalModel> models = [];
+  UIScreen? currentScreen;
+  final List<UIScreen> uiScreens = [];
   final List<CustomComponent> customComponents = [];
   Component? rootComponent;
   final List<FavouriteModel> favouriteList = [];
 
-  FlutterProject(this.name,this.userId,{this.device});
+  FlutterProject(this.name, this.userId, {this.device});
 
-  factory FlutterProject.createNewProject(String name,int userId) {
-    final FlutterProject flutterProject = FlutterProject(name,userId);
+  factory FlutterProject.createNewProject(String name, int userId) {
+    final FlutterProject flutterProject = FlutterProject(name, userId);
+    flutterProject.uiScreens.add(UIScreen.mainUI());
+    flutterProject.currentScreen=flutterProject.uiScreens.first;
     flutterProject.rootComponent = componentList['MaterialApp']!();
     return flutterProject;
   }
@@ -34,23 +39,27 @@ class FlutterProject {
       }
     }
     logger('IMPL $implementationCode');
-    String staticVariablesCode='';
-    String dynamicVariablesDefinitionCode='';
-    String dynamicVariableAssignmentCode='';
-    for(final variable in ComponentOperationCubit.codeProcessor.variables.entries){
-      if(!variable.value.runtimeAssigned){
-        staticVariablesCode+='static const double ${variable.key} = ${variable.value.value};\n';
-      }else{
-        dynamicVariablesDefinitionCode+='late double ${variable.key};\n';
-        dynamicVariableAssignmentCode+='${variable.key} = ${variable.value.assignmentCode};\n';
+    String staticVariablesCode = '';
+    String dynamicVariablesDefinitionCode = '';
+    String dynamicVariableAssignmentCode = '';
+    for (final variable
+        in ComponentOperationCubit.codeProcessor.variables.entries) {
+      if (!variable.value.runtimeAssigned) {
+        staticVariablesCode +=
+            'static const double ${variable.key} = ${variable.value.value};\n';
+      } else {
+        dynamicVariablesDefinitionCode += 'late double ${variable.key};\n';
+        dynamicVariableAssignmentCode +=
+            '${variable.key} = ${variable.value.assignmentCode};\n';
       }
     }
 
-    String functionImplementationCode='';
-    for(final function in ComponentOperationCubit.codeProcessor.functions.values){
-      functionImplementationCode+='${function.functionCode}\n';
+    String functionImplementationCode = '';
+    for (final function
+        in ComponentOperationCubit.codeProcessor.functions.values) {
+      functionImplementationCode += '${function.functionCode}\n';
     }
-    final className=name[0].toUpperCase()+name.substring(1);
+    final className = name[0].toUpperCase() + name.substring(1);
     // ${rootComponent!.code()}
     return ''' 
     // copy all the images to assets/images/ folder
@@ -59,7 +68,7 @@ class FlutterProject {
     // google_fonts: ^2.2.0
     import 'package:flutter/material.dart';
     import 'package:google_fonts/google_fonts.dart';
-    
+    ${models.map((e) => e.implementationCode).join('\n')}
     void main(){
     runApp(const $className());
     } 
@@ -71,6 +80,7 @@ class FlutterProject {
     }
 
     class _${className}State extends State<$className> {
+    ${models.map((e) => e.declarationCode).join('\n')}
      $staticVariablesCode
      $dynamicVariablesDefinitionCode
      @override
@@ -95,9 +105,40 @@ class FlutterProject {
   }
 }
 
+class UIScreen {
+  String name;
+  Component? rootComponent;
+  final List<VariableModel> variables = [];
+
+  UIScreen(this.name);
+
+  toJson() => {
+        'name': name,
+        'root': CodeOperations.trim(rootComponent?.code(clean: false)),
+        'variables': variables.map((e) => e.toJson()).toList(growable: false)
+      };
+
+  factory UIScreen.mainUI(){
+    final UIScreen uiScreen=UIScreen('HomePage');
+    uiScreen.rootComponent=componentList['MaterialApp']!();
+    return uiScreen;
+  }
+  factory UIScreen.fromJson(
+      Map<String, dynamic> json, final FlutterProject flutterProject) {
+    return UIScreen(json['name'])
+      ..rootComponent = Component.fromCode(json['root'], flutterProject)
+      ..variables.clear()
+      ..variables.addAll(
+          List.from(json['variables']).map((e) => VariableModel.fromJson(e)));
+  }
+
+  factory UIScreen.otherScreen(final String name) {
+    final UIScreen uiScreen=UIScreen(name);
+    uiScreen.rootComponent=componentList['Scaffold']!();
+    return uiScreen;
+  }
+}
+
 class ProjectGroup {
   List<FlutterProject> projects = [];
 }
-
-
-

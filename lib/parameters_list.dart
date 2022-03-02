@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'models/operation_model.dart';
 import 'common/logger.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -78,6 +77,60 @@ class Parameters {
             },
           ),
         ],
+      );
+
+  static ChoiceParameter sliverDelegate() => ChoiceParameter(
+        options: [
+          ComplexParameter(
+              params: [
+                Parameters.flexParameter()
+                  ..withNamedParamInfoAndSameDisplayName('crossAxisCount')
+                  ..withRequired(true)
+                  ..withDefaultValue(2),
+              ],
+              evaluate: (params) {
+                return SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: params[0].value);
+              },
+              name: 'Fixed cross count',
+              info: InnerObjectParameterInfo(
+                  innerObjectName:
+                      'SliverGridDelegateWithFixedCrossAxisCount')),
+          ComplexParameter(
+              params: [
+                Parameters.widthParameter()
+                  ..withNamedParamInfoAndSameDisplayName('maxCrossAxisExtent')
+                  ..withRequired(true)
+                  ..withDefaultValue(200),
+                Parameters.widthParameter()
+                  ..withNamedParamInfoAndSameDisplayName('mainAxisSpacing')
+                  ..withRequired(true)
+                  ..withDefaultValue(0),
+                Parameters.widthParameter()
+                  ..withNamedParamInfoAndSameDisplayName('mainAxisSpacing')
+                  ..withRequired(true)
+                  ..withDefaultValue(0),
+                Parameters.widthParameter()
+                  ..withNamedParamInfoAndSameDisplayName('childAspectRatio')
+                  ..withRequired(true)
+                  ..withDefaultValue(1),
+
+              ],
+              evaluate: (params) {
+                return SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: params[0].value,
+                  mainAxisSpacing: params[1].value,
+                  crossAxisSpacing: params[2].value,
+                  childAspectRatio: params[3].value,
+                );
+              },
+              name: 'By individual width',
+              info: InnerObjectParameterInfo(
+                  innerObjectName:
+                      'SliverGridDelegateWithFixedCrossAxisCount')),
+        ],
+        required: true,
+        info: NamedParameterInfo('sliverDelegate'),
       );
 
   static ComplexParameter inputDecorationParameter() => ComplexParameter(
@@ -1062,4 +1115,18 @@ class Parameters {
               side: params[5].value,
             );
           });
+static bottomNavigationItem() => ComplexParameter(
+    params: [
+      ComponentParameter(
+        multiple: false,
+        info: NamedParameterInfo('icon'),
+      )
+    ], evaluate: (params){
+  return BottomNavigationBarItem(icon: (params[0] as ComponentParameter).build());
+
+},info: InnerObjectParameterInfo(innerObjectName: 'BottomNavigationBarItem'));
+
+  static bottomNavigationBarItems() => ListParameter( info: NamedParameterInfo('items'), parameterGenerator: () {
+    return bottomNavigationItem();
+  },);
 }

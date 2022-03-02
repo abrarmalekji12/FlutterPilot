@@ -36,9 +36,6 @@ class _SearchTextFieldState extends State<SearchTextField> {
   void initState() {
     super.initState();
 
-    _searchController.addListener(() {
-      widget.onTextChange(_searchController.text);
-    });
   }
 
   @override
@@ -57,6 +54,7 @@ class _SearchTextFieldState extends State<SearchTextField> {
         focusNode: widget.focusNode,
         //textInputAction: TextInputAction.newline,
         maxLines: 1,
+        onChanged: widget.onTextChange,
         autofocus: false,
         style: AppFontStyle.roboto(15, color: Colors.black, fontWeight: FontWeight.w500),
         decoration: InputDecoration(

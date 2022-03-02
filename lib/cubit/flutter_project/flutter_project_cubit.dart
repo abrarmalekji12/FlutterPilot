@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/foundation.dart';
+import '../../models/component_selection.dart';
 import '../../models/variable_model.dart';
 import '../../common/logger.dart';
 import '../../models/other_model.dart';
@@ -30,13 +31,17 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
 
   Future<void> createNewProject(final String name) async {
     emit(FlutterProjectLoadingState());
-    final flutterProject = FlutterProject.createNewProject(name,userId);
+    final flutterProject = FlutterProject.createNewProject(name, userId);
     flutterProject.variables.addAll([
-      VariableModel('tabletWidthLimit', 1200, false, 'maximum width tablet can have',deletable: false),
-      VariableModel('phoneWidthLimit', 900, false, 'maximum width phone can have',deletable: false)
+      VariableModel(
+          'tabletWidthLimit', 1200, false, 'maximum width tablet can have',
+          deletable: false),
+      VariableModel(
+          'phoneWidthLimit', 900, false, 'maximum width phone can have',
+          deletable: false)
     ]);
     await FireBridge.saveFlutterProject(userId, flutterProject);
-   projects.add(flutterProject);
+    projects.add(flutterProject);
     emit(FlutterProjectLoadedState(flutterProject));
   }
 
@@ -83,23 +88,27 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
         }
       }
       componentSelectionCubit.init(
-          flutterProject.rootComponent!, flutterProject.rootComponent!);
+          ComponentSelectionModel.unique(flutterProject.rootComponent!),
+          flutterProject.rootComponent!);
 
       componentOperationCubit.flutterProject = flutterProject;
 
-      if(flutterProject.variables.firstWhereOrNull((e)=>e.name=='tabletWidthLimit')==null){
-       componentOperationCubit.addVariable(
-           VariableModel('tabletWidthLimit', 1200, false, 'maximum width tablet can have',deletable: false)
-       );
-       componentOperationCubit.addVariable(
-           VariableModel('phoneWidthLimit', 900, false, 'maximum width phone can have',deletable: false)
-       );
 
+      if (flutterProject.variables
+              .firstWhereOrNull((e) => e.name == 'tabletWidthLimit') ==
+          null) {
+        componentOperationCubit.addVariable(VariableModel(
+            'tabletWidthLimit', 1200, false, 'maximum width tablet can have',
+            deletable: false));
+        componentOperationCubit.addVariable(VariableModel(
+            'phoneWidthLimit', 900, false, 'maximum width phone can have',
+            deletable: false));
       }
       await componentOperationCubit.loadFavourites(
           projectName: flutterProject.name);
 
-      componentOperationCubit.extractSameTypeComponents(flutterProject.rootComponent!);
+      componentOperationCubit
+          .extractSameTypeComponents(flutterProject.rootComponent!);
       emit(FlutterProjectLoadedState(flutterProject));
     } on Exception {
       emit(FlutterProjectErrorState(

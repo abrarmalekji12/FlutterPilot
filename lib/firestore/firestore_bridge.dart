@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -13,6 +14,7 @@ import '../models/project_model.dart';
 import '../common/logger.dart';
 import '../constant/string_constant.dart';
 import '../models/component_model.dart';
+import '../network/auth_response/auth_response_model.dart';
 
 abstract class FireBridge {
   static Future<void> init() async {
@@ -25,6 +27,8 @@ abstract class FireBridge {
       'messagingSenderId': '357010413683',
       'appId': '1:357010413683:web:851137f5a4916cc6587206'
     }));
+
+    // await Firebase
   }
 
   static void saveComponent(CustomComponent customComponent) {
@@ -114,11 +118,16 @@ abstract class FireBridge {
   static Future<void> saveFlutterProject(
       int userId, FlutterProject project) async {
     final List<CustomComponent> components = project.customComponents;
-    final projectInfo = <String, dynamic>{};
-    projectInfo['project_name'] = project.name;
-    projectInfo['root'] =
-        CodeOperations.trim(project.rootComponent?.code(clean: false));
-    projectInfo[Strings.kImages] = [];
+    final projectInfo = <String, dynamic>{
+      'project_name':project.name,
+      'root': CodeOperations.trim(project.rootComponent?.code(clean: false)),
+      'variables':
+      project.variables.map((e) => e.toJson()).toList(growable: false),
+      'models': project.models.map((e) => e.toJson()).toList(growable: false),
+      'device': 'iPhone X',
+      'screens' : project.uiScreens.map((e) => e.toJson()).toList(growable: false),
+
+    };
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -130,11 +139,8 @@ abstract class FireBridge {
           .doc(Strings.kFlutterProject)
           .collection(project.name)
           .add({
-        'variables':
-            project.variables.map((e) => e.toJson()).toList(growable: false),
-        'models': project.models.map((e) => e.toJson()).toList(growable: false),
+
         'name': component.name,
-        'device': 'iPhone X',
         'code': component.root != null
             ? (CodeOperations.trim(component.root!.code(clean: false)))
             : null
@@ -198,19 +204,20 @@ abstract class FireBridge {
     }
   }
 
-  static Future<int?> registerUser(String userName, String password) async {
-    final usersMatched=await FirebaseFirestore.instance
-        .collection('users')
-        .where('username', isEqualTo: userName).get();
-    if(usersMatched.docs.isNotEmpty){
-      return null;
+  static Future<AuthResponse> registerUser(String userName, String password) async {
+    // final usersMatched=await FirebaseFirestore.instance
+    //     .collection('users')
+    //     .where('username', isEqualTo: userName).get();
+    final user=await FirebaseAuth.instance.createUserWithEmailAndPassword(email: userName, password: password);
+    if(user.user==null){
+      return AuthResponse.right('No user found');
     }
     final doc = await FirebaseFirestore.instance
         .collection('userInfo')
         .doc('count')
         .get();
     if (doc.data() == null || !doc.exists) {
-      return null;
+      return AuthResponse.right('No user data exist');
     }
     await FirebaseFirestore.instance
         .collection('userInfo')
@@ -219,7 +226,7 @@ abstract class FireBridge {
     final newUserId = doc.data()!['count']+1;
     await FirebaseFirestore.instance
         .collection('users')
-        .add({'username': userName, 'password': password, 'userId': newUserId});
+        .add({'username': userName, 'password': password, 'userId': newUserId,'uid': user.user!.uid});
     await FirebaseFirestore.instance
         .collection('us$newUserId')
         .doc(Strings.kFlutterProjectInfo)
@@ -228,7 +235,7 @@ abstract class FireBridge {
     //     .collection('us$newUserId')
     //     .doc(Strings.kFlutterProject)
     //     .set({'projects': []});
-    return newUserId;
+    return AuthResponse.left(newUserId);
   }
 
   static Future<List<FlutterProject>> loadAllFlutterProjects(
@@ -274,6 +281,14 @@ abstract class FireBridge {
       final model = LocalModel.fromJson(modelJson);
       flutterProject.models.add(model);
     }
+    for (final modelJson in projectInfo['screens'] ?? []) {
+      final screen = UIScreen.fromJson(modelJson,flutterProject);
+      flutterProject.uiScreens.add(screen);
+    }
+    if(flutterProject.uiScreens.isNotEmpty){
+      flutterProject.currentScreen=flutterProject.uiScreens.first;
+    }
+
     try {
       flutterProject.rootComponent = Component.fromCode(
           CodeOperations.trim(projectInfo['root']), flutterProject);
@@ -319,20 +334,28 @@ abstract class FireBridge {
     }
     return null;
   }
+  static Future<String?> resetPassword(String userName) async {
+    final response=await FirebaseAuth.instance.sendPasswordResetEmail(email: userName);
+    return null;
+  }
 
-  static Future<int?> login(String userName, String password) async {
+  static Future<AuthResponse> login(String userName, String password) async {
+    final loginResponse=await FirebaseAuth.instance.signInWithEmailAndPassword(email: userName, password: password);
+    if(loginResponse.user==null){
+      return AuthResponse.right('Registration failed');
+    }
     final response = await FirebaseFirestore.instance
         .collection('users')
-        .where('username', isEqualTo: userName)
-        .where('password', isEqualTo: password)
+        .where('uid', isEqualTo: loginResponse.user!.uid)
+        // .where('password', isEqualTo: password)
         .get();
     debugPrint(
         'LOGIN $userName $password ${response.docs.length} ${response.docs.isNotEmpty ? response.docs[0].data() : 'empty'}');
     if (response.docs.isEmpty || !response.docs[0].exists) {
-      return null;
+      return AuthResponse.right('Something went wrong, Please check your internet');
     }
     final data = response.docs[0].data();
-    return data['userId'];
+    return AuthResponse.left(data['userId']);
   }
 
   static Future<void> uploadImage(
@@ -496,5 +519,9 @@ abstract class FireBridge {
     final snapshot = await FirebaseFirestore.instance.collection(name).get();
     return StatelessComponent(name: name)
       ..root = Component.fromCode(snapshot.docs[0]['code'], flutterProject);
+  }
+
+  static Future<void> logout() async {
+    await FirebaseAuth.instance.signOut();
   }
 }

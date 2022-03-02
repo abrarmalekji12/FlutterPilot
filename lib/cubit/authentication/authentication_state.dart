@@ -18,6 +18,9 @@ class AuthSuccessState extends AuthenticationState{
   final int userId;
   AuthSuccessState(this.userId);
 }
+class AuthResetPasswordSuccessState extends AuthenticationState{
+  AuthResetPasswordSuccessState();
+}
 
 class AuthFailedState extends AuthenticationState{
   final String message;

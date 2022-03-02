@@ -1,8 +1,11 @@
-// import 'dart:html' as html;
+import 'dart:html' as html;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_builder/common/search_textfield.dart';
 import 'package:get/get.dart';
+
+import '../constant/app_colors.dart';
 
 class CustomPopupMenuButton<T> extends StatefulWidget {
   final List<CustomPopupMenuItem> Function(BuildContext) itemBuilder;
@@ -30,8 +33,12 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
   GlobalKey globalKey = GlobalKey();
   OverlayEntry? overlayEntry;
   bool expanded = false;
+  late List<CustomPopupMenuItem> allItems,filteredItems;
+
+  final FocusNode _searchFocusNode=FocusNode();
   late int _itemCount;
-@override
+  String _searchText='';
+  @override
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
@@ -43,6 +50,13 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
     // TODO: implement initState
     super.initState();
     overlayEntry = OverlayEntry(builder: (context) {
+      allItems=widget
+          .itemBuilder(context);
+
+      filteredItems = allItems
+          .where((element) =>
+          element.value.toLowerCase().contains(_searchText))
+          .toList();
       return GestureDetector(
         onTap: () {
           overlayEntry?.remove();
@@ -66,47 +80,67 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
                         scale: value,
                         child: Transform.translate(
                           offset: Offset(0, -100 * (1 - value)),
-                          child: SizedBox(
-                            width: 180,
-                            height: getCalculatedHeight(),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Card(
-                                elevation: 5,
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: SingleChildScrollView(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: widget
-                                        .itemBuilder(context)
-                                        .map((e) => InkWell(
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(8.0),
-                                                child: e,
-                                              ),
-                                              onTap: () {
-                                                widget.onSelected(e.value);
-                                                overlayEntry?.remove();
+                          child: StatefulBuilder(
+                            builder: (context,setStateForMenu) {
+                              return SizedBox(
+                                width: 180,
+                                height: getCalculatedHeight(),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Card(
+                                    elevation: 5,
+                                    color: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        SearchTextField(
+                                          hint: 'Search ..',
+                                          focusColor: AppColors.theme,
+                                          onTextChange: (text) {
+                                            _searchText = text.toLowerCase();
+                                            setStateForMenu(() {
 
-                                                setState(() {
-                                                  expanded = false;
-                                                });
-                                              },
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              splashColor: Colors.grey,
-                                            ))
-                                        .toList(),
+                                            });
+                                          },
+                                          focusNode: _searchFocusNode..requestFocus(),
+                                        ),
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children:
+                                                  filteredItems.map((e) => InkWell(
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets.all(8.0),
+                                                          child: e,
+                                                        ),
+                                                        onTap: () {
+                                                          widget.onSelected(e.value);
+                                                          overlayEntry?.remove();
+
+                                                          setState(() {
+                                                            expanded = false;
+                                                          });
+                                                        },
+                                                        borderRadius:
+                                                            BorderRadius.circular(10),
+                                                        splashColor: Colors.grey,
+                                                      ))
+                                                  .toList(),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            }
                           ),
                         ),
                       );
@@ -117,11 +151,11 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
         ),
       );
     });
-    // html.window.onResize.listen((event) {
-    //   WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-    //     overlayEntry?.markNeedsBuild();
-    //   });
-    // });
+    html.window.onResize.listen((event) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        overlayEntry?.markNeedsBuild();
+      });
+    });
   }
 
   @override
@@ -183,7 +217,7 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
   }
   double getCalculatedHeight() {
     final size=MediaQuery.of(context).size;
-    final itemsHeight=_itemCount*40.0;
+    final itemsHeight=allItems.length*40.0 + 50;
     final topPosition=getTopPosition();
     if(topPosition+itemsHeight>size.height){
       return size.height-(topPosition);

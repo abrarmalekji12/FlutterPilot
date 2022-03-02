@@ -12,14 +12,14 @@ class EmulationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return LayoutBuilder(builder: (context, constraints) {
-      return Transform.scale(
-        scale: screenConfig.scale,
+      return FittedBox(
         child: SizedBox(
-          width: constraints.maxWidth* (2-screenConfig.scale),
-          height: constraints.maxWidth * (2-screenConfig.scale),
+          width: screenConfig.width*(2-screenConfig.scale),
+          height: screenConfig.height*(2-screenConfig.scale),
           child: FittedBox(
-            fit: BoxFit.scaleDown,
+            fit: BoxFit.fill,
             child: SizedBox(
               width: screenConfig.width,
               height: screenConfig.height,

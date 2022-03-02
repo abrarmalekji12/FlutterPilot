@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import '../../constant/font_style.dart';
 import '../component_selection/component_selection_cubit.dart';
 import '../../models/parameter_model.dart';
 
@@ -16,7 +14,7 @@ class ParameterBuildCubit extends Cubit<ParameterBuildState> {
     final selectedComponent =
         BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
             .currentSelected;
-    final paramRule=selectedComponent.validateParameters(parameter);
+    final paramRule=selectedComponent.propertySelection.validateParameters(parameter);
     if(paramRule!=null){
       emit(ParameterChangeState(paramRule.changedParameter));
       emit(ParameterChangeState(paramRule.anotherParameter));
