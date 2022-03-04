@@ -255,7 +255,7 @@ class CodeProcessor {
       if (operatorStack.isNotEmpty || valueStack.isNotEmpty) {
         debugPrint('Expression error.');
       } else {
-        debugPrint('The result is $input = $result');
+        // debugPrint('The result is $input = $result');
         return result;
       }
     }

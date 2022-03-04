@@ -64,10 +64,20 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
         emit(FlutterProjectErrorState());
         return;
       }
-      logger('ROOT COMPP ${flutterProject.rootComponent != null} ');
+
       if (flutterProject.rootComponent != null) {
         final List<ImageData> imageDataList = [];
+        componentOperationCubit.flutterProject = flutterProject;
+        await componentOperationCubit.loadFavourites();
+        final idList = componentOperationCubit.flutterProject!.favouriteList
+            .map((e) => e.component.id)
+            .toList();
         flutterProject.rootComponent!.forEach((component) async {
+          final index = idList.indexOf(component.id);
+          if (index >= 0) {
+            flutterProject.favouriteList[index] =
+                FavouriteModel(component, projectName);
+          }
           if (component.name == 'Image.asset') {
             imageDataList.add((component.parameters[0].value as ImageData));
           }
@@ -91,9 +101,6 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           ComponentSelectionModel.unique(flutterProject.rootComponent!),
           flutterProject.rootComponent!);
 
-      componentOperationCubit.flutterProject = flutterProject;
-
-
       if (flutterProject.variables
               .firstWhereOrNull((e) => e.name == 'tabletWidthLimit') ==
           null) {
@@ -104,11 +111,9 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
             'phoneWidthLimit', 900, false, 'maximum width phone can have',
             deletable: false));
       }
-      await componentOperationCubit.loadFavourites(
-          projectName: flutterProject.name);
-
       componentOperationCubit
           .extractSameTypeComponents(flutterProject.rootComponent!);
+
       emit(FlutterProjectLoadedState(flutterProject));
     } on Exception {
       emit(FlutterProjectErrorState(

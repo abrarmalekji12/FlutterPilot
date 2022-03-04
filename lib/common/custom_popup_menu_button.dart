@@ -52,7 +52,6 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
     overlayEntry = OverlayEntry(builder: (context) {
       allItems=widget
           .itemBuilder(context);
-
       filteredItems = allItems
           .where((element) =>
           element.value.toLowerCase().contains(_searchText))
@@ -169,6 +168,7 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
         splashColor: Colors.grey,
         onTap: () {
           if (!(overlayEntry?.mounted ?? false)) {
+            _searchText='';
             Overlay.of(context)?.insert(overlayEntry!);
             setState(() {
               expanded = true;

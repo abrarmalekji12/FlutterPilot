@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import '../cubit/component_operation/component_operation_cubit.dart';
 import '../runtime_provider.dart';
 import 'builder_component.dart';
 import 'parameter_rule_model.dart';
@@ -382,7 +383,38 @@ abstract class Component {
     for (final parameter in parameters) {
       final paramCode = parameter.code(clean);
       if (paramCode.isNotEmpty) {
-        middle  += '${clean?'  ':''}$paramCode,${clean?'\n':''}'.replaceAll(',,', ',');
+        middle  += '$paramCode,${clean?'\n':''}'.replaceAll(',,', ',');
+      }
+    }
+    if(clean) {
+      int start = 0;
+      int gotIndex = -1;
+      while (start < middle.length) {
+        if (gotIndex == -1) {
+          start = middle.indexOf('{{', start);
+          if (start == -1) {
+            break;
+          }
+          start += 2;
+          gotIndex = start;
+        } else {
+          start = middle.indexOf('}}', start);
+          if (start == -1) {
+            break;
+          }
+          String innerArea = middle.substring(gotIndex, start);
+          if (ComponentOperationCubit.codeProcessor.variables.isNotEmpty) {
+            // for (final variable in ComponentOperationCubit.codeProcessor.variables.values) {
+            //   innerArea = innerArea.replaceAll(variable.name,
+            //       '${variable!}[index].${variable.name}');
+            // }
+            middle = middle.replaceRange(
+                gotIndex - 2, start + 2, '\${$innerArea}');
+            gotIndex = -1;
+            start += 2;
+            continue;
+          }
+        }
       }
     }
     return middle;
@@ -463,7 +495,6 @@ abstract class MultiHolder extends Component {
     for (final child in children) {
       child.forEach(work);
     }
-
     forEachInComponentParameter(work);
   }
 

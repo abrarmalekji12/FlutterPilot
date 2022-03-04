@@ -49,12 +49,6 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.shouldShowFavourites &&
-        widget.componentOperationCubit.favouriteList.isEmpty) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-        widget.componentOperationCubit.loadFavourites();
-      });
-    }
   }
 
   @override
@@ -320,56 +314,29 @@ class FavouriteWidget extends StatelessWidget {
             },
             child: Align(
               alignment: Alignment.center,
-              child: Tooltip(
-                preferBelow: false,
-                waitDuration: const Duration(milliseconds: 600),
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.all(10),
-                richMessage: TextSpan(children: [
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'from',
-                        style: AppFontStyle.roboto(12,
-                            fontWeight: FontWeight.w600, color: Colors.blueAccent),
-                      ),
-                      TextSpan(
-                          text: ' ${model.projectName}\n',
-                          style: AppFontStyle.roboto(12,
-                              fontWeight: FontWeight.w600, color: Colors.black))
-                    ],
-                  ),
-                  TextSpan(
-                    text: model.component.code(),
-                    style: AppFontStyle.roboto(11, fontWeight: FontWeight.w500),
-                  ),
-                ]),
-                child: Padding(
-                  padding: const EdgeInsets.all(5),
-                  child: IgnorePointer(
-                    ignoring: true,
-                    child: SizedBox(
-                      width: 180,
-                      height: 180,
-                      child: FittedBox(
-                        fit: BoxFit.contain,
-                        child: Container(
-                          width: constraints.maxWidth - 70 >
-                                  model.component.boundary!.width
-                              ? model.component.boundary!.width
-                              : constraints.maxWidth - 70,
-                          height: model.component.boundary!.height,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            gradient: const LinearGradient(
-                                colors: [Color(0xfff2f2f2), Color(0xffd3d3d3)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight),
-                          ),
-                          child: model.component.build(context),
+              child: Padding(
+                padding: const EdgeInsets.all(5),
+                child: IgnorePointer(
+                  ignoring: true,
+                  child: SizedBox(
+                    width: 180,
+                    height: 180,
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: Container(
+                        width: constraints.maxWidth - 70 >
+                                model.component.boundary!.width
+                            ? model.component.boundary!.width
+                            : constraints.maxWidth - 70,
+                        height: model.component.boundary!.height,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          gradient: const LinearGradient(
+                              colors: [Color(0xfff2f2f2), Color(0xffd3d3d3)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight),
                         ),
+                        child: model.component.build(context),
                       ),
                     ),
                   ),
@@ -432,8 +399,7 @@ class BasicComponentTile extends StatelessWidget {
         child: InkWell(
           onTap: () {
             final component = componentList[entry.value]!();
-            componentOperationCubit.addInSameComponentList(component,
-                checkForSame: true);
+            componentOperationCubit.addInSameComponentList(component);
             widget.onSelection(component);
             Get.back();
           },

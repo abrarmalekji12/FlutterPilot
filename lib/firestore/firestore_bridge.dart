@@ -267,7 +267,6 @@ abstract class FireBridge {
     final projectInfoDoc =
         documents.firstWhere((element) => element.data().containsKey('root'));
     final projectInfo = projectInfoDoc.data();
-
     final FlutterProject flutterProject = FlutterProject(
         projectInfo['project_name'], userId,
         device: projectInfo['device']);
@@ -288,11 +287,11 @@ abstract class FireBridge {
     if(flutterProject.uiScreens.isNotEmpty){
       flutterProject.currentScreen=flutterProject.uiScreens.first;
     }
-
     try {
       flutterProject.rootComponent = Component.fromCode(
           CodeOperations.trim(projectInfo['root']), flutterProject);
     } on Exception {
+
       return null;
     }
     documents.retainWhere((element) => !element.data().containsKey('root'));

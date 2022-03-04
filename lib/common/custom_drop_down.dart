@@ -39,6 +39,7 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
     super.initState();
     // selected = widget.value;
     overlayEntry = OverlayEntry(builder: (context) {
+
       return GestureDetector(
         onTap: () {
           overlayEntry?.remove();

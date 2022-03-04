@@ -538,6 +538,7 @@ class ComponentParameterWidget extends StatelessWidget {
       required this.componentCreationCubit})
       : super(key: key);
 
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -839,12 +840,19 @@ class _SublistWidgetState extends State<SublistWidget> {
                 },
                 onAccept: (object) {
                   debugPrint('ACCEPTED $object');
+                performReversibleOperation(() {
                   BlocProvider.of<ComponentOperationCubit>(context,
-                          listen: false)
-                      .removeComponent(object as Component);
+                      listen: false)
+                      .removeComponentAndRefresh(context, object as Component);
                   BlocProvider.of<ComponentOperationCubit>(context,
-                          listen: false)
+                      listen: false)
                       .addOperation(widget.component, object, widget.ancestor);
+                  BlocProvider.of<ComponentCreationCubit>(context,
+                      listen: false)
+                      .changedComponent();
+                  BlocProvider.of<ComponentSelectionCubit>(context,
+                      listen: false).changeComponentSelection(ComponentSelectionModel.unique(object), root: widget.ancestor);
+                });
                 },
                 builder: (context, list1, list2) {
                   return ComponentTile(
@@ -897,10 +905,17 @@ class _SublistWidgetState extends State<SublistWidget> {
                 return true;
               }, onAccept: (object) {
                 debugPrint('ACCEPTED $object');
+              performReversibleOperation(() {
                 BlocProvider.of<ComponentOperationCubit>(context, listen: false)
                     .removeComponent(object as Component);
                 BlocProvider.of<ComponentOperationCubit>(context, listen: false)
                     .addOperation(widget.component, object, widget.ancestor);
+                BlocProvider.of<ComponentCreationCubit>(context,
+                    listen: false)
+                    .changedComponent();
+                BlocProvider.of<ComponentSelectionCubit>(context,
+                    listen: false).changeComponentSelection(ComponentSelectionModel.unique(object), root: widget.ancestor);
+              });
               }, builder: (context, list1, list2) {
                 return ComponentTile(
                   component: widget.component,
@@ -1051,12 +1066,43 @@ class _SublistWidgetState extends State<SublistWidget> {
           ComponentParameterWidget(
               component: widget.component,
               ancestor: widget.ancestor,
-              componentOperationCubit: widget.componentOperationCubit,
               componentSelectionCubit: widget.componentSelectionCubit,
+              componentOperationCubit: widget.componentOperationCubit,
               componentCreationCubit: widget.componentCreationCubit)
       ],
     );
   }
+  void performReversibleOperation(void Function() work) {
+    final operation = Operation(
+        CodeOperations.trim(widget.componentOperationCubit
+            .flutterProject!.rootComponent!
+            .code(clean: false))!,
+        widget. componentSelectionCubit.currentSelected.treeSelection.first.id);
+    widget. componentOperationCubit.revertWork.add(operation, work, (p0) {
+      final Operation operation = p0;
+      widget. componentOperationCubit.flutterProject!.rootComponent =
+          Component.fromCode(
+              operation.code, widget.componentOperationCubit.flutterProject!);
+      widget.componentOperationCubit.emit(ComponentUpdatedState());
+      widget.componentOperationCubit.flutterProject!.rootComponent!.forEach((comp) {
+        if (comp.name == 'Image.asset') {
+          final imageData = (comp.parameters[0].value as ImageData);
+          if (widget.componentOperationCubit.byteCache
+              .containsKey(imageData.imageName)) {
+            imageData.bytes =
+            widget.componentOperationCubit.byteCache[imageData.imageName];
+          }
+        }
+        if (comp.id == operation.selectedId) {
+          widget. componentSelectionCubit.changeComponentSelection(
+              ComponentSelectionModel.unique(comp),
+              root: widget.ancestor);
+        }
+      });
+      widget.componentCreationCubit.changedComponent();
+    });
+  }
+
 }
 
 class ComponentModificationMenu extends StatelessWidget {
@@ -1451,6 +1497,34 @@ class ComponentModificationMenu extends StatelessWidget {
       componentCreationCubit.changedComponent();
     });
   }
+
+  // void performReversibleOperation(void Function() work) {
+  //   componentOperationCubit.revertWork.add(
+  //       Operation2(
+  //           componentOperationCubit.flutterProject!.rootComponent!
+  //               .clone(null, cloneParam: true),
+  //           componentOperationCubit.flutterProject!.rootComponent!.uniqueId),
+  //       work, (p0) {
+  //     componentOperationCubit.flutterProject!.rootComponent = (p0 as Operation2).component;
+  //     componentOperationCubit.emit(ComponentUpdatedState());
+  //     componentOperationCubit.flutterProject!.rootComponent!.forEach((comp) {
+  //       if (comp.name == 'Image.asset') {
+  //         final imageData = (comp.parameters[0].value as ImageData);
+  //         if (componentOperationCubit.byteCache
+  //             .containsKey(imageData.imageName)) {
+  //           imageData.bytes =
+  //               componentOperationCubit.byteCache[imageData.imageName];
+  //         }
+  //       }
+  //       if (comp.id == (p0).selectedId) {
+  //         componentSelectionCubit.changeComponentSelection(
+  //             ComponentSelectionModel.unique(comp),
+  //             root: ancestor);
+  //       }
+  //     });
+  //     componentCreationCubit.changedComponent();
+  //   });
+  // }
 
   void replaceWith(Component oldComponent, Component comp) {
     for (final source in oldComponent.parameters) {

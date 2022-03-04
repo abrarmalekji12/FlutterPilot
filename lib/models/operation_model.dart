@@ -25,7 +25,13 @@ final String selectedId;
   Operation(this.code,this.selectedId);
 
 }
+class Operation2 {
+  final Component component;
+  final String selectedId;
 
+  Operation2(this.component,this.selectedId);
+
+}
 class CompilerEnable{
   String code='';
 }

@@ -82,21 +82,18 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
   }
 
-  void addInSameComponentList(final Component component,
-      {bool checkForSame = false}) {
+  void addInSameComponentList(final Component component) {
     if (!sameComponentCollection.containsKey(component.name)) {
       sameComponentCollection[component.name] = [component];
     } else if (!sameComponentCollection[component.name]!.contains(component)) {
-      if (!checkForSame) {
-        sameComponentCollection[component.name]!.add(component);
-      } else {
-        for (final comp in sameComponentCollection[component.name]!) {
-          if (component.code() == comp.code()) {
-            return;
-          }
+      final componentCode = component.code();
+      for (final comp in sameComponentCollection[component.name]!) {
+        if (component.id == comp.id ||
+            (component.name == comp.name && componentCode == comp.code())) {
+          return;
         }
-        sameComponentCollection[component.name]!.add(component);
       }
+      sameComponentCollection[component.name]!.add(component);
     }
   }
 
@@ -323,14 +320,12 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   bool isFavourite(final Component component) {
-    bool favourite = false;
     for (final favouriteComp in flutterProject!.favouriteList) {
       if (favouriteComp.component.id == component.id) {
-        favourite = true;
-        break;
+        return true;
       }
     }
-    return favourite;
+    return false;
   }
 
   void toggleFavourites(final Component component) {
@@ -341,19 +336,20 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
   }
 
-  Future<void> loadFavourites({String? projectName}) async {
+  Future<void> loadFavourites() async {
     emit(ComponentOperationLoadingState());
-    final favouriteComponentList = await FireBridge.loadFavourites(
-        flutterProject!.userId,
-        projectName: projectName);
-
-    if (projectName != null) {
-      flutterProject!.favouriteList.clear();
-      flutterProject!.favouriteList.addAll(favouriteComponentList);
-    } else {
-      favouriteList.clear();
-      favouriteList.addAll(favouriteComponentList.reversed);
+    final favouriteComponentList =
+        await FireBridge.loadFavourites(flutterProject!.userId);
+    favouriteList.clear();
+    favouriteList.addAll(favouriteComponentList.reversed);
+    flutterProject!.favouriteList.clear();
+    for (final model in favouriteList) {
+      if (model.projectName == flutterProject!.name) {
+        flutterProject!.favouriteList.add(model);
+      }
+      addInSameComponentList(model.component);
     }
+
     final List<ImageData> imageDataList = [];
     for (final FavouriteModel model in favouriteComponentList) {
       model.component.forEach((component) {
@@ -378,11 +374,17 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   void addToFavourites(final Component component) async {
     emit(ComponentOperationLoadingState());
-    flutterProject!.favouriteList.add(FavouriteModel(
+    final model=FavouriteModel(
         component.clone(null, cloneParam: true)
           ..id = component.id
           ..boundary = component.boundary,
-        flutterProject!.name));
+        flutterProject!.name);
+    flutterProject!.favouriteList.add(model);
+    if (favouriteList.isNotEmpty) {
+      favouriteList.insert(0, model);
+    } else {
+      favouriteList.add(model);
+    }
     await FireBridge.addToFavourites(
         flutterProject!.userId, component, flutterProject!.name);
     emit(ComponentUpdatedState());
