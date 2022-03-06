@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
-import '../app_config.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../models/local_model.dart';
 import '../models/variable_model.dart';
@@ -19,7 +18,6 @@ import '../network/auth_response/auth_response_model.dart';
 
 abstract class FireBridge {
   static Future<void> init() async {
-
     // await Firebase.initializeApp(
     //     options: FirebaseOptions.fromMap(const {
     //   'apiKey': 'AIzaSyBCYM-y341AVf0v-Ix6dq7UXhnDbIFjwOk',
@@ -32,15 +30,13 @@ abstract class FireBridge {
 
     await Firebase.initializeApp(
         options: FirebaseOptions.fromMap(const {
-          'apiKey': 'AIzaSyDOJQUOBFfomuLrYK6oCXr8-uJMXo-AByg',
-          'authDomain': 'flutter-visual-builder-2.firebaseapp.com',
-          'projectId': 'flutter-visual-builder-2',
-          'storageBucket': 'flutter-visual-builder-2.appspot.com',
-          'messagingSenderId': '1087783488343',
-          'appId': '1:1087783488343:web:efb618e6387c69e3a88c12'
-        }));
-
-
+      'apiKey': 'AIzaSyDOJQUOBFfomuLrYK6oCXr8-uJMXo-AByg',
+      'authDomain': 'flutter-visual-builder-2.firebaseapp.com',
+      'projectId': 'flutter-visual-builder-2',
+      'storageBucket': 'flutter-visual-builder-2.appspot.com',
+      'messagingSenderId': '1087783488343',
+      'appId': '1:1087783488343:web:efb618e6387c69e3a88c12'
+    }));
   }
 
   static void saveComponent(CustomComponent customComponent) {
@@ -131,27 +127,38 @@ abstract class FireBridge {
       int userId, FlutterProject project) async {
     final List<CustomComponent> components = project.customComponents;
     final projectInfo = <String, dynamic>{
-      'project_name':project.name,
+      'project_name': project.name,
       'root': CodeOperations.trim(project.rootComponent?.code(clean: false)),
-      'variables':
-      project.variables.map((e) => e.toJson()).toList(growable: false),
-      'models': project.models.map((e) => e.toJson()).toList(growable: false),
+      // 'variables':
+      //     project.variables.map((e) => e.toJson()).toList(growable: false),
+      // 'models': project.models.map((e) => e.toJson()).toList(growable: false),
       'device': 'iPhone X',
-      // 'screens' : project.uiScreens.map((e) => e.toJson()).toList(growable: false),
-
+      'current_screen': 'HomePage',
+      'main_screen': 'HomePage',
     };
-    await FirebaseFirestore.instance
+    final response = await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
         .collection(project.name)
         .add(projectInfo);
+    final jsonList =
+        project.uiScreens.map((e) => e.toJson()).toList(growable: false);
+    for (final screenJson in jsonList) {
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(project.name)
+          .doc(screenJson['name'])
+          .set(screenJson);
+    }
+
+    project.docId = response.id;
     for (final component in components) {
       await FirebaseFirestore.instance
           .collection('us$userId')
           .doc(Strings.kFlutterProject)
           .collection(project.name)
           .add({
-
         'name': component.name,
         'code': component.root != null
             ? (CodeOperations.trim(component.root!.code(clean: false)))
@@ -216,12 +223,14 @@ abstract class FireBridge {
     }
   }
 
-  static Future<AuthResponse> registerUser(String userName, String password) async {
+  static Future<AuthResponse> registerUser(
+      String userName, String password) async {
     // final usersMatched=await FirebaseFirestore.instance
     //     .collection('users')
     //     .where('username', isEqualTo: userName).get();
-    final user=await FirebaseAuth.instance.createUserWithEmailAndPassword(email: userName, password: password);
-    if(user.user==null){
+    final user = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(email: userName, password: password);
+    if (user.user == null) {
       return AuthResponse.right('No user found');
     }
     final doc = await FirebaseFirestore.instance
@@ -235,10 +244,13 @@ abstract class FireBridge {
         .collection('userInfo')
         .doc('count')
         .update({'count': FieldValue.increment(1)});
-    final newUserId = doc.data()!['count']+1;
-    await FirebaseFirestore.instance
-        .collection('users')
-        .add({'username': userName, 'password': password, 'userId': newUserId,'uid': user.user!.uid});
+    final newUserId = doc.data()!['count'] + 1;
+    await FirebaseFirestore.instance.collection('users').add({
+      'username': userName,
+      'password': password,
+      'userId': newUserId,
+      'uid': user.user!.uid
+    });
     await FirebaseFirestore.instance
         .collection('us$newUserId')
         .doc(Strings.kFlutterProjectInfo)
@@ -263,7 +275,7 @@ abstract class FireBridge {
     final List<FlutterProject> projectList = [];
     final data = snapshot.data()!;
     for (final projectName in data['projects'] ?? []) {
-      projectList.add(FlutterProject(projectName, userId));
+      projectList.add(FlutterProject(projectName, userId, null));
     }
     return projectList;
   }
@@ -276,45 +288,57 @@ abstract class FireBridge {
         .collection(name)
         .get();
     final documents = snapshot.docs;
-    final projectInfoDoc =
-        documents.firstWhere((element) => element.data().containsKey('root'));
+    final projectInfoDoc = documents
+        .firstWhere((element) => element.data().containsKey('project_name'));
     final projectInfo = projectInfoDoc.data();
     final FlutterProject flutterProject = FlutterProject(
-        projectInfo['project_name'], userId,
+        projectInfo['project_name'], userId, projectInfoDoc.id,
         device: projectInfo['device']);
-    for (final variableJson in projectInfo['variables'] ?? []) {
-      final model = VariableModel.fromJson(variableJson);
-      ComponentOperationCubit.codeProcessor.variables[variableJson['name']] =
-          model;
-      flutterProject.variables.add(model);
-    }
-    for (final modelJson in projectInfo['models'] ?? []) {
-      final model = LocalModel.fromJson(modelJson);
-      flutterProject.models.add(model);
-    }
+    // for (final modelJson in projectInfo['models'] ?? []) {
+    //   final model = LocalModel.fromJson(modelJson);
+    //   flutterProject.models.add(model);
+    // }
+    documents
+        .retainWhere((element) => !element.data().containsKey('project_name'));
+
     // for (final modelJson in projectInfo['screens'] ?? []) {
-    //   final screen = UIScreen.fromJson(modelJson,flutterProject);
+    //   final screen = UIScreen.fromJson(modelJson, flutterProject);
     //   flutterProject.uiScreens.add(screen);
     // }
-    // if(flutterProject.uiScreens.isNotEmpty){
-    //   flutterProject.currentScreen=flutterProject.uiScreens.first;
-    // }
-    try {
-      flutterProject.rootComponent = Component.fromCode(
-          CodeOperations.trim(projectInfo['root']), flutterProject);
-    } on Exception {
 
-      return null;
+    for (final screenDoc in documents) {
+      final screen = UIScreen.fromJson(screenDoc.data(), flutterProject);
+      flutterProject.uiScreens.add(screen);
     }
-    documents.retainWhere((element) => !element.data().containsKey('root'));
-    for (final doc in documents) {
-      final componentBody = doc.data();
-      flutterProject.customComponents.add(
-          StatelessComponent(name: componentBody['name'])
-            ..root = componentBody['code'] != null
-                ? Component.fromCode(componentBody['code']!, flutterProject)
-                : null);
+
+    if (projectInfo['current_screen'] != null) {
+      for (final screen in flutterProject.uiScreens) {
+        if (screen.name == projectInfo['main_screen']) {
+          flutterProject.mainScreen = screen;
+        }
+        if (screen.name == projectInfo['current_screen']) {
+          flutterProject.currentScreen = screen;
+        }
+      }
+    } else {
+      if (flutterProject.uiScreens.isNotEmpty) {
+        flutterProject.currentScreen = flutterProject.uiScreens.first;
+      } else {
+        flutterProject.uiScreens.add(UIScreen.mainUI());
+        flutterProject.currentScreen = flutterProject.uiScreens.first;
+        addUIScreen(userId, flutterProject, flutterProject.currentScreen);
+      }
+
+      flutterProject.mainScreen = flutterProject.uiScreens.first;
     }
+    // for (final doc in documents) {
+    //    final componentBody = doc.data();
+    //    flutterProject.customComponents.add(
+    //        StatelessComponent(name: componentBody['name'])
+    //          ..root = componentBody['code'] != null
+    //              ? Component.fromCode(componentBody['code']!, flutterProject)
+    //              : null);
+    //  }
     return flutterProject;
   }
 
@@ -345,14 +369,17 @@ abstract class FireBridge {
     }
     return null;
   }
+
   static Future<String?> resetPassword(String userName) async {
-    final response=await FirebaseAuth.instance.sendPasswordResetEmail(email: userName);
+    final response =
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: userName);
     return null;
   }
 
   static Future<AuthResponse> login(String userName, String password) async {
-    final loginResponse=await FirebaseAuth.instance.signInWithEmailAndPassword(email: userName, password: password);
-    if(loginResponse.user==null){
+    final loginResponse = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: userName, password: password);
+    if (loginResponse.user == null) {
       return AuthResponse.right('Registration failed');
     }
     final response = await FirebaseFirestore.instance
@@ -363,7 +390,8 @@ abstract class FireBridge {
     debugPrint(
         'LOGIN $userName $password ${response.docs.length} ${response.docs.isNotEmpty ? response.docs[0].data() : 'empty'}');
     if (response.docs.isEmpty || !response.docs[0].exists) {
-      return AuthResponse.right('Something went wrong, Please check your internet');
+      return AuthResponse.right(
+          'Something went wrong, Please check your internet');
     }
     final data = response.docs[0].data();
     return AuthResponse.left(data['userId']);
@@ -390,145 +418,133 @@ abstract class FireBridge {
     }
   }
 
-  static Future<void> addModel(final int userId, final String projectName,
+  static Future<void> addModel(final int userId, final FlutterProject project,
       final LocalModel localModel) async {
-    final document = await FirebaseFirestore.instance
+    await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .where('project_name', isNull: false)
-        .get(const GetOptions(source: Source.server));
-    final Map<String, dynamic> body = {
+        .collection(project.name)
+        .doc(project.currentScreen.name)
+        .update({
       'models': FieldValue.arrayUnion([localModel.toJson()])
-    };
-
-    if (body.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('us$userId')
-          .doc(Strings.kFlutterProject)
-          .collection(projectName)
-          .doc(document.docs[0].id)
-          .update(body);
-      logger('=== FIRE-BRIDGE == addLocalModel ==');
-    }
+    });
+    logger('=== FIRE-BRIDGE == addLocalModel ==');
+    // }
   }
 
-  static Future<void> updateModel(final int userId, final String projectName,
-      final LocalModel localModel) async {
-    final document = await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .where('project_name', isNull: false)
-        .get(const GetOptions(source: Source.server));
-    final List<dynamic> models = document.docs[0]['models'];
-    final index =
-        models.indexWhere((element) => element['name'] == localModel.name);
-    models.removeAt(index);
-    models.insert(index, localModel.toJson());
-    final Map<String, dynamic> body = {'models': models};
+  static Future<void> updateModel(final int userId,
+      final FlutterProject project, final LocalModel localModel) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .doc(document.docs[0].id)
-        .update(body);
-    debugPrint('=== FIRE-BRIDGE == update variable == $body');
+        .collection(project.name)
+        .doc(project.currentScreen.name)
+        .update({
+      'models': project.currentScreen.models
+          .map((e) => e.toJson())
+          .toList(growable: false)
+    });
+    debugPrint('=== FIRE-BRIDGE == update variable == ');
   }
 
-  static Future<void> addVariable(final int userId, final String projectName,
-      final VariableModel variableModel) async {
-    final document = await FirebaseFirestore.instance
+  static Future<void> addVariable(final int userId,
+      final FlutterProject project, final VariableModel variableModel) async {
+    await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .where('project_name', isNull: false)
-        .get(const GetOptions(source: Source.server));
-    final Map<String, dynamic> body = {
+        .collection(project.name)
+        .doc(project.currentScreen.name)
+        .update({
       'variables': FieldValue.arrayUnion([variableModel.toJson()])
-    };
-
-    if (body.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('us$userId')
-          .doc(Strings.kFlutterProject)
-          .collection(projectName)
-          .doc(document.docs[0].id)
-          .update(body);
-      logger('=== FIRE-BRIDGE == addVariable ==');
-    }
+    });
+    logger('=== FIRE-BRIDGE == addVariable ==');
   }
 
-  static Future<void> updateVariable(final int userId, final String projectName,
-      final VariableModel variableModel) async {
-    final document = await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .where('project_name', isNull: false)
-        .get(const GetOptions(source: Source.server));
-    final List<dynamic> variables = document.docs[0]['variables'];
-    final variable=variables.firstWhere(
-            (element) => element['name'] == variableModel.name);
-    if(variable['value'] is String){
-      variable['value'] =
-          variableModel.value.toString();
-    }
-    else{
-      variable['value'] = variableModel.value;
-    }
-    final Map<String, dynamic> body = {'variables': variables};
-
-    if (body.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('us$userId')
-          .doc(Strings.kFlutterProject)
-          .collection(projectName)
-          .doc(document.docs[0].id)
-          .update(body);
-      logger('=== FIRE-BRIDGE == update variable ==');
-    }
-  }
-
-  static Future<void> updateDeviceSelection(
-      int userId, String projectName, String device) async {
-    final document = await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .where('project_name', isNull: false)
-        .get(const GetOptions(source: Source.server));
+  static Future<void> updateVariable(final int userId,
+      final FlutterProject project, final VariableModel variableModel) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
-        .collection(projectName)
-        .doc(document.docs[0].id)
+        .collection(project.name)
+        .doc(project.currentScreen.name)
+        .update({
+      'variables': project.currentScreen.variables
+          .map((e) => e.toJson())
+          .toList(growable: false)
+    });
+    logger('=== FIRE-BRIDGE == update variable ==');
+  }
+
+  static Future<void> updateDeviceSelection(final int userId,
+      final FlutterProject project, final String device) async {
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(project.name)
+        .doc(project.docId)
         .update({'device': device});
   }
 
-  static Future<void> updateRootComponent(
-      int userId, String projectName, Component component) async {
-    final document = await FirebaseFirestore.instance
+  static Future<void> updateCurrentScreen(
+      int userId, final FlutterProject project) async {
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(project.name)
+        .doc(project.docId)
+        .update({'current_screen': project.currentScreen.name});
+  }
+
+  // static Future<void> updateRootComponent(
+  //     int userId, String projectName, Component component) async {
+  //   final document = await FirebaseFirestore.instance
+  //       .collection('us$userId')
+  //       .doc(Strings.kFlutterProject)
+  //       .collection(projectName)
+  //       .where('project_name', isNull: false)
+  //       .get(const GetOptions(source: Source.server));
+  //   final documentData = document.docs[0].data();
+  //   final Map<String, dynamic> body = {};
+  //   final rootCode = CodeOperations.trim(component.code(clean: false));
+  //   if (documentData['root'] != rootCode) {
+  //     body['root'] = rootCode;
+  //   }
+  //   if (body.isNotEmpty) {
+  //     await FirebaseFirestore.instance
+  //         .collection('us$userId')
+  //         .doc(Strings.kFlutterProject)
+  //         .collection(projectName)
+  //         .doc(document.docs[0].id)
+  //         .update(body);
+  //     logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
+  //   }
+  // }
+  //
+
+  static Future<void> addUIScreen(final int userId,
+      final FlutterProject project, final UIScreen uiScreen) async {
+    final screen = uiScreen.toJson();
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(project.name)
+        .doc(uiScreen.name)
+        .set(screen);
+    logger('=== FIRE-BRIDGE == addUIScreen ==');
+  }
+
+  static Future<void> updateScreenRootComponent(
+      final int userId,
+      final String projectName,
+      final UIScreen uiScreen,
+      final Component component) async {
+    await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
         .collection(projectName)
-        .where('project_name', isNull: false)
-        .get(const GetOptions(source: Source.server));
-    final documentData = document.docs[0].data();
-    final Map<String, dynamic> body = {};
-    final rootCode = CodeOperations.trim(component.code(clean: false));
-    if (documentData['root'] != rootCode) {
-      body['root'] = rootCode;
-    }
-    if (body.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('us$userId')
-          .doc(Strings.kFlutterProject)
-          .collection(projectName)
-          .doc(document.docs[0].id)
-          .update(body);
-      logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
-    }
+        .doc(uiScreen.name)
+        .update({'root': CodeOperations.trim(component.code(clean: false))});
+    logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
   }
 
   static Future<CustomComponent> retrieveComponent(int userId,

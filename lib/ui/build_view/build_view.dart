@@ -51,7 +51,7 @@ class BuildView extends StatelessWidget {
                                 border: Border.all(color: Colors.grey, width: 1)),
                             child: EmulationView(
                               widget:  componentOperationCubit
-                                  .flutterProject!.run(context),
+                                  .flutterProject!.run(context,navigator: true),
                               screenConfig: screenConfigCubit.screenConfig,
                             ),
                           );

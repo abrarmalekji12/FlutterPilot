@@ -11,3 +11,5 @@ abstract class Strings {
 const wEmailRegex =
     "^[a-zA-Z0-9.a-zA-Z0-9.!#\$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+.[a-zA-Z]+";
 const minPasswordLength = 6;
+
+const navigationKey='device navigation';

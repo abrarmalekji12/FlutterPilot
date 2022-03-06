@@ -9,7 +9,6 @@ import '../common/app_button.dart';
 import '../common/app_text_field.dart';
 import '../common/custom_animated_dialog.dart';
 import '../common/custom_popup_menu_button.dart';
-import '../cubit/flutter_project/flutter_project_cubit.dart';
 import '../models/component_model.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
@@ -35,7 +34,6 @@ class _ComponentTreeState extends State<ComponentTree> {
   late final ComponentOperationCubit _componentOperationCubit;
   late final ComponentCreationCubit _componentCreationCubit;
   late final ComponentSelectionCubit _componentSelectionCubit;
-  late final FlutterProjectCubit _flutterProjectCubit;
 
   @override
   void initState() {
@@ -46,8 +44,6 @@ class _ComponentTreeState extends State<ComponentTree> {
         BlocProvider.of<ComponentCreationCubit>(context, listen: false);
     _componentSelectionCubit =
         BlocProvider.of<ComponentSelectionCubit>(context, listen: false);
-    _flutterProjectCubit =
-        BlocProvider.of<FlutterProjectCubit>(context, listen: false);
   }
 
   @override
@@ -59,27 +55,32 @@ class _ComponentTreeState extends State<ComponentTree> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  IconButton(
-                      onPressed: () {
-                        Get.back();
-                      },
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        size: 18,
-                      )),
-                  const SizedBox(
-                    width: 20,
-                  ),
-                  Text(
-                    BlocProvider.of<ComponentOperationCubit>(context,
-                            listen: false)
-                        .flutterProject!
-                        .name,
-                    style: AppFontStyle.roboto(16, fontWeight: FontWeight.bold),
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    IconButton(
+                        onPressed: () {
+                          Get.back();
+                        },
+                        icon: const Icon(
+                          Icons.arrow_back_ios,
+                          size: 18,
+                        )),
+                    const SizedBox(
+                      width: 20,
+                    ),
+                    Expanded(
+                      child: Text(
+                        BlocProvider.of<ComponentOperationCubit>(context,
+                                listen: false)
+                            .flutterProject!
+                            .name,
+                        style: AppFontStyle.roboto(16,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
                 bloc: _componentOperationCubit,
@@ -102,6 +103,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                     );
                   }
                   return Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       if (_componentOperationCubit.revertWork.totalOperations >
                           0)
@@ -130,110 +132,124 @@ class _ComponentTreeState extends State<ComponentTree> {
             ],
           ),
         ),
-        // if (_componentOperationCubit.flutterProject!.uiScreens.isNotEmpty)
-        //   BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
-        //     builder: (context, state) {
-        //       return Padding(
-        //         padding: const EdgeInsets.all(8.0),
-        //         child: Row(
-        //           children: [
-        //             // Expanded(
-        //             //   child: Column(
-        //             //     crossAxisAlignment: CrossAxisAlignment.start,
-        //             //     children: [
-        //             //       Text(
-        //             //         'Screens',
-        //             //         style: AppFontStyle.roboto(13,
-        //             //             color: Colors.black,
-        //             //             fontWeight: FontWeight.w500),
-        //             //       ),
-        //             //       SizedBox(
-        //             //           height: 50,
-        //             //           child: CustomDropdownButton<UIScreen>(
-        //             //               style: AppFontStyle.roboto(13),
-        //             //               value: _componentOperationCubit
-        //             //                   .flutterProject!.currentScreen,
-        //             //               hint: null,
-        //             //               items: _componentOperationCubit
-        //             //                   .flutterProject!.uiScreens
-        //             //                   .map<CustomDropdownMenuItem<UIScreen>>(
-        //             //                     (e) => CustomDropdownMenuItem<UIScreen>(
-        //             //                       value: e,
-        //             //                       child: Align(
-        //             //                         alignment: Alignment.centerLeft,
-        //             //                         child: Text(
-        //             //                           e.name,
-        //             //                           style: AppFontStyle.roboto(13,
-        //             //                               fontWeight: FontWeight.w500),
-        //             //                         ),
-        //             //                       ),
-        //             //                     ),
-        //             //                   )
-        //             //                   .toList(),
-        //             //               onChanged: (value) {
-        //             //                 if (value !=
-        //             //                     _componentOperationCubit
-        //             //                         .flutterProject!.currentScreen) {
-        //             //                   _componentOperationCubit.flutterProject!
-        //             //                       .currentScreen = value;
-        //             //                   _componentOperationCubit
-        //             //                           .flutterProject!.rootComponent =
-        //             //                       _componentOperationCubit
-        //             //                           .flutterProject!
-        //             //                           .currentScreen!
-        //             //                           .rootComponent;
-        //             //                   _componentOperationCubit
-        //             //                       .emit(ComponentUpdatedState());
-        //             //                   _componentSelectionCubit
-        //             //                       .emit(ComponentSelectionChange());
-        //             //                   _componentCreationCubit
-        //             //                       .changedComponent();
-        //             //                 }
-        //             //               },
-        //             //               selectedItemBuilder: (context, config) {
-        //             //                 return Align(
-        //             //                   alignment: Alignment.centerLeft,
-        //             //                   child: Text(
-        //             //                     config.name,
-        //             //                     style: AppFontStyle.roboto(13,
-        //             //                         fontWeight: FontWeight.w500),
-        //             //                   ),
-        //             //                 );
-        //             //               })),
-        //             //     ],
-        //             //   ),
-        //             // ),
-        //             IconButton(
-        //               onPressed: () {
-        //                 showCustomWidgetRename(context, 'Enter Screen Name',
-        //                     (name) {
-        //                   final screen = UIScreen.otherScreen(name);
-        //                   _componentOperationCubit.flutterProject!.uiScreens
-        //                       .add(screen);
-        //                   _componentOperationCubit
-        //                       .flutterProject!.currentScreen = screen;
-        //                   _componentOperationCubit
-        //                           .flutterProject!.rootComponent =
-        //                       _componentOperationCubit
-        //                           .flutterProject!.currentScreen!.rootComponent;
-        //                   _componentOperationCubit
-        //                       .emit(ComponentUpdatedState());
-        //                   _componentSelectionCubit
-        //                       .emit(ComponentSelectionChange());
-        //                   _componentCreationCubit.changedComponent();
-        //                   Get.back();
-        //                 });
-        //               },
-        //               icon: const Icon(
-        //                 Icons.add,
-        //                 color: Colors.blueAccent,
-        //               ),
-        //             )
-        //           ],
-        //         ),
-        //       );
-        //     },
-        //   ),
+        if (_componentOperationCubit.flutterProject!.uiScreens.isNotEmpty) ...[
+          BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
+            builder: (context, state) {
+              return Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: CustomDropdownButton<UIScreen>(
+                                style: AppFontStyle.roboto(13),
+                                value: _componentOperationCubit
+                                    .flutterProject!.currentScreen,
+                                hint: null,
+                                items: _componentOperationCubit
+                                    .flutterProject!.uiScreens
+                                    .map<CustomDropdownMenuItem<UIScreen>>(
+                                      (e) => CustomDropdownMenuItem<UIScreen>(
+                                        value: e,
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: SizedBox(
+                                            height: 25,
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 10),
+                                              child: Text(
+                                                e.name,
+                                                style: AppFontStyle.roboto(13,
+                                                    fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value !=
+                                      _componentOperationCubit
+                                          .flutterProject!.currentScreen) {
+                                    _componentOperationCubit
+                                        .changeProjectScreen(value);
+                                    _componentOperationCubit
+                                        .emit(ComponentUpdatedState());
+                                    _componentSelectionCubit
+                                        .emit(ComponentSelectionChange());
+                                    _componentCreationCubit.changedComponent();
+                                  }
+                                },
+                                selectedItemBuilder: (context, config) {
+                                  return Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      config.name,
+                                      style: AppFontStyle.roboto(13,
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                  );
+                                }),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            showCustomWidgetRename(context, 'Enter Screen Name',
+                                (name) {
+                              final screen = UIScreen.otherScreen(name);
+                              _componentOperationCubit.addUIScreen(screen);
+
+                              _componentSelectionCubit
+                                  .emit(ComponentSelectionChange());
+                              _componentCreationCubit.changedComponent();
+                              Get.back();
+                            });
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.all(10),
+                            child: Icon(
+                              Icons.add,
+                              color: Colors.blueAccent,
+                            ),
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        )
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Checkbox(
+                          onChanged: (value) {
+                            _componentOperationCubit.flutterProject!.mainScreen =
+                                _componentOperationCubit.flutterProject!.currentScreen;
+                            _componentOperationCubit.emit(ComponentUpdatedState());
+                          },
+                          value: _componentOperationCubit.flutterProject!.mainScreen ==
+                              _componentOperationCubit.flutterProject!.currentScreen,
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text(
+                          'Main Screen',
+                          style: AppFontStyle.roboto(15,
+                              color: Colors.black, fontWeight: FontWeight.w500),
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              );
+            },
+          ),
+
+        ],
         Expanded(
           child: Row(
             children: [
@@ -847,7 +863,10 @@ class _SublistWidgetState extends State<SublistWidget> {
                     BlocProvider.of<ComponentOperationCubit>(context,
                             listen: false)
                         .addOperation(
-                            widget.component, object, widget.ancestor,);
+                      widget.component,
+                      object,
+                      widget.ancestor,
+                    );
                     BlocProvider.of<ComponentCreationCubit>(context,
                             listen: false)
                         .changedComponent();
@@ -1090,7 +1109,7 @@ class _SublistWidgetState extends State<SublistWidget> {
         widget.componentSelectionCubit.currentSelected.treeSelection.first.id);
     widget.componentOperationCubit.revertWork.add(operation, work, (p0) {
       final Operation operation = p0;
-      widget.componentOperationCubit.flutterProject!.rootComponent =
+      widget.componentOperationCubit.flutterProject!.setRootComponent =
           Component.fromCode(
               operation.code, widget.componentOperationCubit.flutterProject!);
       widget.componentOperationCubit.emit(ComponentUpdatedState());
@@ -1489,7 +1508,7 @@ class ComponentModificationMenu extends StatelessWidget {
         componentSelectionCubit.currentSelected.treeSelection.first.id);
     componentOperationCubit.revertWork.add(operation, work, (p0) {
       final Operation operation = p0;
-      componentOperationCubit.flutterProject!.rootComponent =
+      componentOperationCubit.flutterProject!.setRootComponent =
           Component.fromCode(
               operation.code, componentOperationCubit.flutterProject!);
       componentOperationCubit.emit(ComponentUpdatedState());

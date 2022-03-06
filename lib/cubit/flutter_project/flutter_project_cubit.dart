@@ -32,7 +32,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
   Future<void> createNewProject(final String name) async {
     emit(FlutterProjectLoadingState());
     final flutterProject = FlutterProject.createNewProject(name, userId);
-    flutterProject.variables.addAll([
+    flutterProject.currentScreen.variables.addAll([
       VariableModel(
           'tabletWidthLimit', 1200, false, 'maximum width tablet can have',DataType.double,
           deletable: false),
@@ -104,7 +104,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           ComponentSelectionModel.unique(flutterProject.rootComponent!),
           flutterProject.rootComponent!);
 
-      if (flutterProject.variables
+      if (flutterProject.currentScreen.variables
               .firstWhereOrNull((e) => e.name == 'tabletWidthLimit') ==
           null) {
         componentOperationCubit.addVariable(VariableModel(
@@ -113,6 +113,10 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
         componentOperationCubit.addVariable(VariableModel(
             'phoneWidthLimit', 900, false, 'maximum width phone can have',DataType.double,
             deletable: false));
+      }
+      for(final variable in flutterProject.currentScreen.variables) {
+        ComponentOperationCubit.codeProcessor.variables[variable.name] =
+          variable;
       }
       componentOperationCubit
           .extractSameTypeComponents(flutterProject.rootComponent!);

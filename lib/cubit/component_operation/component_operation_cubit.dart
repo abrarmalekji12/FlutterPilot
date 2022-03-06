@@ -30,13 +30,25 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   ComponentOperationCubit() : super(ComponentOperationInitial());
 
-  List<LocalModel> get models => flutterProject!.models;
+  List<LocalModel> get models => flutterProject!.currentScreen.models;
 
   void addedComponent(Component component, Component root) {
     if (root is CustomComponent) {
       updateGlobalCustomComponent(root);
     }
     emit(ComponentUpdatedState());
+  }
+
+  void changeProjectScreen(final UIScreen screen) async {
+    flutterProject!.currentScreen = screen;
+    ComponentOperationCubit.codeProcessor.variables
+        .removeWhere((key, value) => value.deletable);
+    for (final variable in screen.variables) {
+      ComponentOperationCubit.codeProcessor.variables[variable.name] = variable;
+    }
+    emit(ComponentOperationLoadingState());
+    await FireBridge.updateCurrentScreen(flutterProject!.userId, flutterProject!);
+    emit(ComponentOperationInitial());
   }
 
   Future<void> updateGlobalCustomComponent(CustomComponent customComponent,
@@ -126,8 +138,25 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> updateRootComponent() async {
     emit(ComponentOperationLoadingState());
     try {
-      await FireBridge.updateRootComponent(flutterProject!.userId,
-          flutterProject!.name, flutterProject!.rootComponent!);
+      await FireBridge.updateScreenRootComponent(
+          flutterProject!.userId,
+          flutterProject!.name,
+          flutterProject!.currentScreen,
+          flutterProject!.rootComponent!);
+      emit(ComponentOperationInitial());
+    } on Exception {
+      emit(ComponentOperationErrorState());
+    }
+  }
+
+  Future<void> addUIScreen(final UIScreen uiScreen) async {
+    flutterProject!.uiScreens.add(uiScreen);
+    changeProjectScreen(uiScreen);
+    emit(ComponentUpdatedState());
+    emit(ComponentOperationLoadingState());
+    try {
+      await FireBridge.addUIScreen(
+          flutterProject!.userId, flutterProject!, uiScreen);
       emit(ComponentOperationInitial());
     } on Exception {
       emit(ComponentOperationErrorState());
@@ -374,7 +403,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   void addToFavourites(final Component component) async {
     emit(ComponentOperationLoadingState());
-    final model=FavouriteModel(
+    final model = FavouriteModel(
         component.clone(null, cloneParam: true)
           ..id = component.id
           ..boundary = component.boundary,
@@ -462,28 +491,29 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> updateDeviceSelection(String name) async {
     emit(ComponentOperationLoadingState());
     await FireBridge.updateDeviceSelection(
-        flutterProject!.userId, flutterProject!.name, name);
+        flutterProject!.userId, flutterProject!, name);
     emit(ComponentOperationInitial());
   }
 
   Future<void> addVariable(VariableModel variableModel) async {
     emit(ComponentOperationLoadingState());
+    flutterProject!.currentScreen.variables.add(variableModel);
     await FireBridge.addVariable(
-        flutterProject!.userId, flutterProject!.name, variableModel);
+        flutterProject!.userId, flutterProject!, variableModel);
     emit(ComponentOperationInitial());
   }
 
   Future<void> addModel(final LocalModel model) async {
     emit(ComponentOperationLoadingState());
     await FireBridge.addModel(
-        flutterProject!.userId, flutterProject!.name, model);
+        flutterProject!.userId, flutterProject!, model);
     emit(ComponentOperationInitial());
   }
 
   Future<void> updateModel(final LocalModel model) async {
     emit(ComponentOperationLoadingState());
     await FireBridge.updateModel(
-        flutterProject!.userId, flutterProject!.name, model);
+        flutterProject!.userId, flutterProject!, model);
     emit(ComponentOperationInitial());
   }
 
@@ -491,7 +521,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentOperationLoadingState());
     await FireBridge.updateVariable(
         flutterProject!.userId,
-        flutterProject!.name,
+        flutterProject!,
         ComponentOperationCubit.codeProcessor.variables[variableModel.name]!);
     emit(ComponentOperationInitial());
   }

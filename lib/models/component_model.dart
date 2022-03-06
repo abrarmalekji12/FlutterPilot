@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../runtime_provider.dart';
+import 'actions/action_model.dart';
 import 'builder_component.dart';
 import 'parameter_rule_model.dart';
 import '../code_to_component.dart';
@@ -80,7 +81,7 @@ abstract class Component {
             id = fieldList[1];
             break;
           case 'model':
-            (this as BuilderComponent).model = flutterProject?.models
+            (this as BuilderComponent).model = flutterProject?.currentScreen.models
                 .firstWhereOrNull((element) => element.name == fieldList[1]);
             break;
         }
@@ -671,6 +672,19 @@ abstract class Holder extends Component {
   int get childCount => 1;
 }
 
+abstract class ClickableHolder extends Holder{
+  final List<ActionModel> actionList=[];
+
+  ClickableHolder(String name, List<Parameter> parameters) : super(name, parameters);
+
+  void perform(BuildContext context){
+    if(RuntimeProvider.of(context) == RuntimeMode.run) {
+      for (final action in actionList) {
+        action.perform(context);
+      }
+    }
+  }
+}
 abstract class CustomNamedHolder extends Component {
   Map<String, Component?> childMap = {};
   Map<String, List<Component>> childrenMap = {};

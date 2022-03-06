@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'common/logger.dart';
@@ -114,7 +115,6 @@ class Parameters {
                   ..withNamedParamInfoAndSameDisplayName('childAspectRatio')
                   ..withRequired(true)
                   ..withDefaultValue(1),
-
               ],
               evaluate: (params) {
                 return SliverGridDelegateWithMaxCrossAxisExtent(
@@ -601,7 +601,7 @@ class Parameters {
           'stretch': CrossAxisAlignment.stretch,
           'baseline': CrossAxisAlignment.baseline,
         },
-        defaultValue: 'start',
+        defaultValue: 'center',
         info: NamedParameterInfo('crossAxisAlignment'),
       );
 
@@ -1115,18 +1115,44 @@ class Parameters {
               side: params[5].value,
             );
           });
-static bottomNavigationItem() => ComplexParameter(
-    params: [
-      ComponentParameter(
-        multiple: false,
-        info: NamedParameterInfo('icon'),
-      )
-    ], evaluate: (params){
-  return BottomNavigationBarItem(icon: (params[0] as ComponentParameter).build());
 
-},info: InnerObjectParameterInfo(innerObjectName: 'BottomNavigationBarItem'));
+  static bottomNavigationItem() => ComplexParameter(
+          params: [
+            ComponentParameter(
+              multiple: false,
+              info: NamedParameterInfo('icon'),
+            )
+          ],
+          evaluate: (params) {
+            return BottomNavigationBarItem(
+                icon: (params[0] as ComponentParameter).build());
+          },
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'BottomNavigationBarItem'));
 
-  static bottomNavigationBarItems() => ListParameter( info: NamedParameterInfo('items'), parameterGenerator: () {
-    return bottomNavigationItem();
-  },);
+  static bottomNavigationBarItems() => ListParameter(
+        info: NamedParameterInfo('items'),
+        parameterGenerator: () {
+          return bottomNavigationItem();
+        },
+      );
+
+  static filterParameter() => ComplexParameter(
+          params: [
+            Parameters.widthParameter()
+
+              ..withRequired(true)
+              ..withDefaultValue(0.1)
+              ..withNamedParamInfoAndSameDisplayName('sigmaX'),
+            Parameters.widthParameter()
+            ..withRequired(true)
+              ..withDefaultValue(0.1)
+              ..withNamedParamInfoAndSameDisplayName('sigmaY')
+          ],
+          evaluate: (params) {
+            return ImageFilter.blur(
+                sigmaX: params[0].value, sigmaY: params[1].value);
+          },
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'ImageFilter.blur', namedIfHaveAny: 'filter'));
 }

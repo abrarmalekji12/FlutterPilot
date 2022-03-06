@@ -2,8 +2,7 @@ import 'dart:html' as html;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/common/search_textfield.dart';
-import 'package:get/get.dart';
+import 'search_textfield.dart';
 
 import '../constant/app_colors.dart';
 
@@ -26,10 +25,10 @@ class CustomPopupMenuButton<T> extends StatefulWidget {
       : super(key: key);
 
   @override
-  _CustomPopupMenuButtonState createState() => _CustomPopupMenuButtonState();
+  _CustomPopupMenuButtonState createState() => _CustomPopupMenuButtonState<T>();
 }
 
-class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
+class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
   GlobalKey globalKey = GlobalKey();
   OverlayEntry? overlayEntry;
   bool expanded = false;
@@ -119,7 +118,7 @@ class _CustomPopupMenuButtonState extends State<CustomPopupMenuButton> {
                                                           child: e,
                                                         ),
                                                         onTap: () {
-                                                          widget.onSelected(e.value);
+                                                          widget.onSelected(e.value as T);
                                                           overlayEntry?.remove();
 
                                                           setState(() {

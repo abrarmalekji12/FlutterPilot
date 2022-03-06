@@ -9,6 +9,7 @@ import '../constant/app_colors.dart';
 import '../models/builder_component.dart';
 import '../models/component_selection.dart';
 import '../runtime_provider.dart';
+import 'action_widgets.dart';
 import 'build_view/build_view.dart';
 import 'emulation_view.dart';
 import 'models_view.dart';
@@ -632,11 +633,17 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                     const SizedBox(
                       height: 20,
                     ),
-                    if (_componentSelectionCubit.currentSelected.propertySelection
-                        is BuilderComponent)
+                    if (_componentSelectionCubit
+                        .currentSelected.propertySelection is BuilderComponent)
                       BuilderComponentSettings(
-                        component: _componentSelectionCubit.currentSelected.propertySelection
-                            as BuilderComponent,
+                        component: _componentSelectionCubit.currentSelected
+                            .propertySelection as BuilderComponent,
+                      ),
+                    if (_componentSelectionCubit
+                        .currentSelected.propertySelection is ClickableHolder)
+                      ActionModelWidget(
+                        component: _componentSelectionCubit.currentSelected
+                            .propertySelection as ClickableHolder,
                       ),
                     Expanded(
                       child: BlocListener<ComponentCreationCubit,

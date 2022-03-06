@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'constant/app_colors.dart';
+import 'constant/string_constant.dart';
 import 'models/builder_component.dart';
 import 'models/component_model.dart';
 import 'models/other_model.dart';
@@ -41,6 +42,7 @@ final componentList = <String, Component Function()>{
   'SizedBox.expand': () => CSizedBoxExpand(),
   'SizedBox.shrink': () => CSizedBoxShrink(),
   'SizedBox.fromSize': () => CSizedBoxFromSize(),
+  'BackdropFilter':()=> CBackdropFilter(),
   'PreferredSize': () => CPreferredSize(),
   'FittedBox': () => CFittedBox(),
   'Text': () => CText(),
@@ -889,7 +891,7 @@ class COutlinedButton extends Holder {
   }
 }
 
-class CElevatedButton extends Holder {
+class CElevatedButton extends ClickableHolder {
   CElevatedButton()
       : super('ElevatedButton', [
           Parameters.buttonStyleParameter(),
@@ -898,7 +900,9 @@ class CElevatedButton extends Holder {
   @override
   Widget create(BuildContext context) {
     return ElevatedButton(
-      onPressed: () {},
+      onPressed: () {
+        perform(context);
+      },
       child: child?.build(context) ?? Container(),
       style: parameters[0].value,
     );
@@ -914,7 +918,7 @@ class CElevatedButton extends Holder {
 //   }
 //
 // }
-class CInkWell extends Holder {
+class CInkWell extends ClickableHolder {
   CInkWell()
       : super('InkWell', [
           Parameters.enableParameter()
@@ -937,7 +941,9 @@ class CInkWell extends Holder {
   @override
   Widget create(BuildContext context) {
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        perform(context);
+      },
       child: child?.build(context) ?? Container(),
       enableFeedback: parameters[0].value,
       hoverColor: parameters[1].value,
@@ -1167,6 +1173,21 @@ class CSizedBox extends Holder {
   }
 }
 
+
+class CBackdropFilter extends Holder {
+  CBackdropFilter()
+      : super('BackdropFilter', [
+        Parameters.filterParameter()
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return BackdropFilter(
+      child: child?.build(context),
+      filter: parameters[0].value,
+    );
+  }
+}
 class CSizedBoxShrink extends Holder {
   CSizedBoxShrink() : super('SizedBox.shrink', []);
 
