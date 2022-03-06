@@ -224,21 +224,22 @@ class _ComponentTreeState extends State<ComponentTree> {
                     ),
                     Row(
                       children: [
-                        Checkbox(
-                          onChanged: (value) {
-                            _componentOperationCubit.flutterProject!.mainScreen =
-                                _componentOperationCubit.flutterProject!.currentScreen;
-                            _componentOperationCubit.emit(ComponentUpdatedState());
-                          },
-                          value: _componentOperationCubit.flutterProject!.mainScreen ==
-                              _componentOperationCubit.flutterProject!.currentScreen,
-                        ),
-                        const SizedBox(
-                          width: 10,
+                        Transform.scale(
+                          scale:0.9,
+                          child: Checkbox(
+                            onChanged: (value) {
+                              _componentOperationCubit.flutterProject!.mainScreen =
+                                  _componentOperationCubit.flutterProject!.currentScreen;
+                              _componentOperationCubit.emit(ComponentUpdatedState());
+                            },
+                            value: _componentOperationCubit.flutterProject!.mainScreen ==
+                                _componentOperationCubit.flutterProject!.currentScreen,
+                            visualDensity: const VisualDensity(horizontal: 4,vertical: 4),
+                          ),
                         ),
                         Text(
                           'Main Screen',
-                          style: AppFontStyle.roboto(15,
+                          style: AppFontStyle.roboto(14,
                               color: Colors.black, fontWeight: FontWeight.w500),
                         )
                       ],
