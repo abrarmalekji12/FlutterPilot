@@ -415,7 +415,7 @@ class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
               return Transform.translate(
                 offset: Offset(0, value * (-300)),
                 child: const SizedBox(
-                  width: 350,
+                  width: 450,
                   child: VariableBox(),
                 ),
               );

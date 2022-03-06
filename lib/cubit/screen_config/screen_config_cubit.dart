@@ -6,6 +6,7 @@ import 'package:flutter_builder/models/variable_model.dart';
 import 'package:meta/meta.dart';
 
 import '../../screen_model.dart';
+import '../../ui/models_view.dart';
 
 part 'screen_config_state.dart';
 
@@ -27,8 +28,8 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
 
   ScreenConfigCubit() : super(ScreenConfigInitial()) {
     screenConfig = screenConfigs[0];
-    ComponentOperationCubit.codeProcessor.variables['dw']=VariableModel('dw',screenConfig.width , true, 'device width',assignmentCode: 'MediaQuery.of(context).size.width',deletable: false);
-    ComponentOperationCubit.codeProcessor.variables['dh']=VariableModel('dh',screenConfig.height , true, 'device height',assignmentCode: 'MediaQuery.of(context).size.height',deletable: false);
+    ComponentOperationCubit.codeProcessor.variables['dw']=VariableModel('dw',screenConfig.width , true, 'device width',DataType.double,assignmentCode: 'MediaQuery.of(context).size.width',deletable: false);
+    ComponentOperationCubit.codeProcessor.variables['dh']=VariableModel('dh',screenConfig.height , true, 'device height',DataType.double,assignmentCode: 'MediaQuery.of(context).size.height',deletable: false);
   }
 
   Offset getSelectedConfig(BoxConstraints constraints) {

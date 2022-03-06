@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
@@ -8,6 +9,8 @@ import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/component_selection/component_selection_cubit.dart';
 import '../models/variable_model.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
+import 'models_view.dart';
 
 class VariableBox extends StatefulWidget {
   const VariableBox({Key? key}) : super(key: key);
@@ -19,7 +22,8 @@ class VariableBox extends StatefulWidget {
 class _VariableBoxState extends State<VariableBox> {
   final TextEditingController _controller1 = TextEditingController(),
       _controller2 = TextEditingController();
-  final ScrollController _scrollController=ScrollController();
+  DataType dataType = DataType.double;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +34,7 @@ class _VariableBoxState extends State<VariableBox> {
         elevation: 5,
         color: Colors.white,
         child: Container(
-          height: dh(context, 100)-70,
+          height: dh(context, 100) - 70,
           padding: const EdgeInsets.all(10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -56,6 +60,53 @@ class _VariableBoxState extends State<VariableBox> {
                                 BorderSide(color: Colors.black, width: 1),
                           ),
                         ),
+                      ),
+                    ),
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: Text(
+                          'type',
+                          style: AppFontStyle.roboto(13,
+                              color: Colors.black, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: CustomDropdownButton<DataType>(
+                        style: AppFontStyle.roboto(14),
+                        value: dataType,
+                        hint: null,
+                        items: DataType.values
+                            .map<CustomDropdownMenuItem<DataType>>(
+                              (e) => CustomDropdownMenuItem<DataType>(
+                                value: e,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    e.name,
+                                    style: AppFontStyle.roboto(14,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            dataType = value;
+                          });
+                        },
+                        selectedItemBuilder: (context, e) {
+                          return Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              e.name,
+                              style: AppFontStyle.roboto(14,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Center(
@@ -93,20 +144,15 @@ class _VariableBoxState extends State<VariableBox> {
                               timeInSecForIosWeb: 3);
                           return;
                         }
-                        final value = double.tryParse(_controller2.text);
-                        if (value == null) {
-                          Fluttertoast.showToast(
-                              msg: 'Please enter valid value',
-                              toastLength: Toast.LENGTH_LONG,
-                              timeInSecForIosWeb: 3);
-                          return;
-                        }
                         final name = _controller1.text;
                         final capitalACode = 'A'.codeUnits[0],
                             smallZCode = 'z'.codeUnits[0];
+                        final intStart = '0'.codeUnits[0],
+                            intEnd = '9'.codeUnits[0];
                         for (final codeUnit in name.codeUnits) {
-                          if (codeUnit < capitalACode ||
-                              codeUnit > smallZCode) {
+                          if ((codeUnit < capitalACode ||
+                                  codeUnit > smallZCode) &&
+                              (codeUnit < intStart || codeUnit > intEnd)) {
                             Fluttertoast.showToast(
                                 msg:
                                     'Only characters are allowed in variable name',
@@ -115,6 +161,7 @@ class _VariableBoxState extends State<VariableBox> {
                             return;
                           }
                         }
+
                         final variables = ComponentOperationCubit
                             .codeProcessor.variables.keys;
                         for (final variable in variables) {
@@ -127,8 +174,27 @@ class _VariableBoxState extends State<VariableBox> {
                             return;
                           }
                         }
+                        late final dynamic value;
+                        switch (dataType) {
+                          case DataType.int:
+                            value = int.tryParse(_controller2.text);
+                            break;
+                          case DataType.double:
+                            value = double.tryParse(_controller2.text);
+                            break;
+                          case DataType.string:
+                            value = _controller2.text;
+                            break;
+                        }
+                        if (value == null) {
+                          Fluttertoast.showToast(
+                              msg: 'Please enter valid value',
+                              toastLength: Toast.LENGTH_LONG,
+                              timeInSecForIosWeb: 3);
+                          return;
+                        }
                         ComponentOperationCubit.codeProcessor.variables[name] =
-                            VariableModel(name, value, false, null);
+                            VariableModel(name, value, false, null, dataType);
                         _controller1.text = '';
                         _controller2.text = '';
                         BlocProvider.of<ComponentOperationCubit>(context,
@@ -192,25 +258,41 @@ class _VariableBoxState extends State<VariableBox> {
                               controller: TextEditingController.fromValue(
                                   TextEditingValue(
                                       text: '${variables[i].value.value}')),
-                              onChanged: (value) {
-                                final num = double.tryParse(value);
-                                if (num != null) {
-                                  ComponentOperationCubit.codeProcessor
-                                      .variables[variables[i].key]!.value = num;
-                                  BlocProvider.of<ComponentOperationCubit>(
-                                          context,
-                                          listen: false)
-                                      .updateVariable(ComponentOperationCubit
-                                          .codeProcessor
-                                          .variables[variables[i].key]!);
-                                  BlocProvider.of<ComponentCreationCubit>(
-                                          context,
-                                          listen: false)
-                                      .changedComponent();
-                                  BlocProvider.of<ComponentSelectionCubit>(
-                                          context,
-                                          listen: false)
-                                      .emit(ComponentSelectionChange());
+                              onChanged: (val) {
+                                late final dynamic value;
+                                switch (variables[i].value.dataType) {
+                                  case DataType.int:
+                                    value = int.tryParse(val);
+                                    break;
+                                  case DataType.double:
+                                    value = double.tryParse(val);
+                                    break;
+                                  case DataType.string:
+                                    value = val;
+                                    break;
+                                }
+                                if (value != null) {
+                                  ComponentOperationCubit
+                                      .codeProcessor
+                                      .variables[variables[i].key]!
+                                      .value = value;
+                                  Future.delayed(
+                                      const Duration(milliseconds: 500), () {
+                                    BlocProvider.of<ComponentOperationCubit>(
+                                            context,
+                                            listen: false)
+                                        .updateVariable(ComponentOperationCubit
+                                            .codeProcessor
+                                            .variables[variables[i].key]!);
+                                    BlocProvider.of<ComponentCreationCubit>(
+                                            context,
+                                            listen: false)
+                                        .changedComponent();
+                                    BlocProvider.of<ComponentSelectionCubit>(
+                                            context,
+                                            listen: false)
+                                        .emit(ComponentSelectionChange());
+                                  });
                                 }
                               },
                               decoration: const InputDecoration(
@@ -228,7 +310,8 @@ class _VariableBoxState extends State<VariableBox> {
                               child: Text(
                                 variables[i].value.description!,
                                 style: AppFontStyle.roboto(12,
-                                    color: Colors.black,fontWeight: FontWeight.w600),
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w600),
                               ),
                             ),
                           ),

@@ -468,9 +468,15 @@ abstract class FireBridge {
         .where('project_name', isNull: false)
         .get(const GetOptions(source: Source.server));
     final List<dynamic> variables = document.docs[0]['variables'];
-    variables.firstWhere(
-            (element) => element['name'] == variableModel.name)['value'] =
-        variableModel.value;
+    final variable=variables.firstWhere(
+            (element) => element['name'] == variableModel.name);
+    if(variable['value'] is String){
+      variable['value'] =
+          variableModel.value.toString();
+    }
+    else{
+      variable['value'] = variableModel.value;
+    }
     final Map<String, dynamic> body = {'variables': variables};
 
     if (body.isNotEmpty) {
