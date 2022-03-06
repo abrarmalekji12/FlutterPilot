@@ -252,7 +252,7 @@ class CodeProcessor {
       processOperator(String.fromCharCode(toProcess));
     }
     // Print the result if no error has been seen.
-    if (!error) {
+    if (!error&&valueStack.isNotEmpty) {
       final result = valueStack.peek;
       valueStack.pop();
       if (operatorStack.isNotEmpty || valueStack.isNotEmpty) {

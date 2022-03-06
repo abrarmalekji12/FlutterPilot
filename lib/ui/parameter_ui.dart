@@ -235,14 +235,11 @@ class SimpleParameterWidget extends StatelessWidget {
           child: TextFormField(
             maxLines: parameter.inputType == ParamInputType.text ? null : 3,
             validator: (value) {
-              if (value == null) {
-                return '';
-              }
               final result =
-                  parameter.process(value);
+                  parameter.process(value??'');
               debugPrint('RESULT IS $value $result');
               if (result != null) {
-                parameter.compilerEnable!.code = value;
+                parameter.compilerEnable!.code = value??'';
                 parameter.val = result;
                 if (parameter.inputCalculateAs != null) {
                   parameter.val =
@@ -273,7 +270,7 @@ class SimpleParameterWidget extends StatelessWidget {
                   },
             controller: _textEditingController,
             onChanged: (value) {
-              if (value.isNotEmpty) {
+              if (value.isNotEmpty||parameter.val is String) {
                 if (parameter.compilerEnable != null) {
                   _formKey.currentState!.validate();
                   return;

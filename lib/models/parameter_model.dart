@@ -291,7 +291,7 @@ class SimpleParameter<T> extends Parameter {
       return '';
     }
     String tempCode = '';
-    if (compilerEnable != null && compilerEnable!.code.isNotEmpty) {
+    if (compilerEnable != null && (compilerEnable!.code.isNotEmpty||T == String)) {
       tempCode = compilerEnable!.code;
       if (!clean) {
         tempCode = '`$tempCode`';
