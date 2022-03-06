@@ -106,18 +106,15 @@ class CodeProcessor {
       final si = code.indexOf('{{'), ei = code.indexOf('}}');
       if (si + 2 == ei) {
         return null;
+        // return CodeOutput.right('No variables');
       }
       final variableName = code.substring(si + 2, ei);
-      if (variableName.isNotEmpty) {
-        final value = process<String>(variableName, resolve: true);
+       final value = process<String>(variableName, resolve: true);
         if (value != null) {
           code = code.replaceAll('{{$variableName}}', value.toString());
         } else {
-          return null;
+          return code;//CodeOutput.right('No varaible with name $variableName')
         }
-      } else {
-        return null;
-      }
     }
     return code;
   }
@@ -139,8 +136,14 @@ class CodeProcessor {
       final ch = nextToken.codeUnits.first;
 
       if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || ch == dotCodeUnit) {
-        number += nextToken;
-      } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
+        if(ch!=dotCodeUnit&&variable.isNotEmpty){
+          variable+=number+nextToken;
+          number='';
+        }
+        else {
+          number += nextToken;
+        }
+        } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
           ch == underScoreCodeUnit) {
         variable += nextToken;
       } else if (ch == '"'.codeUnits.first) {
@@ -282,4 +285,19 @@ class Stack2<E> {
 
   @override
   String toString() => _list.toString();
+}
+
+class CodeOutput {
+  String? result;
+  String? error;
+  CodeOutput(this.result,this.error);
+
+  factory CodeOutput.left(String result){
+    return CodeOutput(result,null);
+  }
+
+  factory CodeOutput.right(String error){
+    return CodeOutput(null,error);
+  }
+
 }

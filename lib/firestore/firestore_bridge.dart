@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
+import '../app_config.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../models/local_model.dart';
 import '../models/variable_model.dart';
@@ -18,17 +19,28 @@ import '../network/auth_response/auth_response_model.dart';
 
 abstract class FireBridge {
   static Future<void> init() async {
+
+    // await Firebase.initializeApp(
+    //     options: FirebaseOptions.fromMap(const {
+    //   'apiKey': 'AIzaSyBCYM-y341AVf0v-Ix6dq7UXhnDbIFjwOk',
+    //   'authDomain': 'flutter-visual-builder.firebaseapp.com',
+    //   'projectId': 'flutter-visual-builder',
+    //   'storageBucket': 'flutter-visual-builder.appspot.com',
+    //   'messagingSenderId': '357010413683',
+    //   'appId': '1:357010413683:web:851137f5a4916cc6587206'
+    // }));
+
     await Firebase.initializeApp(
         options: FirebaseOptions.fromMap(const {
-      'apiKey': 'AIzaSyBCYM-y341AVf0v-Ix6dq7UXhnDbIFjwOk',
-      'authDomain': 'flutter-visual-builder.firebaseapp.com',
-      'projectId': 'flutter-visual-builder',
-      'storageBucket': 'flutter-visual-builder.appspot.com',
-      'messagingSenderId': '357010413683',
-      'appId': '1:357010413683:web:851137f5a4916cc6587206'
-    }));
+          'apiKey': 'AIzaSyDOJQUOBFfomuLrYK6oCXr8-uJMXo-AByg',
+          'authDomain': 'flutter-visual-builder-2.firebaseapp.com',
+          'projectId': 'flutter-visual-builder-2',
+          'storageBucket': 'flutter-visual-builder-2.appspot.com',
+          'messagingSenderId': '1087783488343',
+          'appId': '1:1087783488343:web:efb618e6387c69e3a88c12'
+        }));
 
-    // await Firebase
+
   }
 
   static void saveComponent(CustomComponent customComponent) {
@@ -125,7 +137,7 @@ abstract class FireBridge {
       project.variables.map((e) => e.toJson()).toList(growable: false),
       'models': project.models.map((e) => e.toJson()).toList(growable: false),
       'device': 'iPhone X',
-      'screens' : project.uiScreens.map((e) => e.toJson()).toList(growable: false),
+      // 'screens' : project.uiScreens.map((e) => e.toJson()).toList(growable: false),
 
     };
     await FirebaseFirestore.instance
@@ -280,13 +292,13 @@ abstract class FireBridge {
       final model = LocalModel.fromJson(modelJson);
       flutterProject.models.add(model);
     }
-    for (final modelJson in projectInfo['screens'] ?? []) {
-      final screen = UIScreen.fromJson(modelJson,flutterProject);
-      flutterProject.uiScreens.add(screen);
-    }
-    if(flutterProject.uiScreens.isNotEmpty){
-      flutterProject.currentScreen=flutterProject.uiScreens.first;
-    }
+    // for (final modelJson in projectInfo['screens'] ?? []) {
+    //   final screen = UIScreen.fromJson(modelJson,flutterProject);
+    //   flutterProject.uiScreens.add(screen);
+    // }
+    // if(flutterProject.uiScreens.isNotEmpty){
+    //   flutterProject.currentScreen=flutterProject.uiScreens.first;
+    // }
     try {
       flutterProject.rootComponent = Component.fromCode(
           CodeOperations.trim(projectInfo['root']), flutterProject);

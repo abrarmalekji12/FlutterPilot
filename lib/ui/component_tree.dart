@@ -130,110 +130,110 @@ class _ComponentTreeState extends State<ComponentTree> {
             ],
           ),
         ),
-        if (_componentOperationCubit.flutterProject!.uiScreens.isNotEmpty)
-          BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
-            builder: (context, state) {
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Screens',
-                            style: AppFontStyle.roboto(13,
-                                color: Colors.black,
-                                fontWeight: FontWeight.w500),
-                          ),
-                          SizedBox(
-                              height: 50,
-                              child: CustomDropdownButton<UIScreen>(
-                                  style: AppFontStyle.roboto(13),
-                                  value: _componentOperationCubit
-                                      .flutterProject!.currentScreen,
-                                  hint: null,
-                                  items: _componentOperationCubit
-                                      .flutterProject!.uiScreens
-                                      .map<CustomDropdownMenuItem<UIScreen>>(
-                                        (e) => CustomDropdownMenuItem<UIScreen>(
-                                          value: e,
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              e.name,
-                                              style: AppFontStyle.roboto(13,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                  onChanged: (value) {
-                                    if (value !=
-                                        _componentOperationCubit
-                                            .flutterProject!.currentScreen) {
-                                      _componentOperationCubit.flutterProject!
-                                          .currentScreen = value;
-                                      _componentOperationCubit
-                                              .flutterProject!.rootComponent =
-                                          _componentOperationCubit
-                                              .flutterProject!
-                                              .currentScreen!
-                                              .rootComponent;
-                                      _componentOperationCubit
-                                          .emit(ComponentUpdatedState());
-                                      _componentSelectionCubit
-                                          .emit(ComponentSelectionChange());
-                                      _componentCreationCubit
-                                          .changedComponent();
-                                    }
-                                  },
-                                  selectedItemBuilder: (context, config) {
-                                    return Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        config.name,
-                                        style: AppFontStyle.roboto(13,
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                    );
-                                  })),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        showCustomWidgetRename(context, 'Enter Screen Name',
-                            (name) {
-                          final screen = UIScreen.otherScreen(name);
-                          _componentOperationCubit.flutterProject!.uiScreens
-                              .add(screen);
-                          _componentOperationCubit
-                              .flutterProject!.currentScreen = screen;
-                          _componentOperationCubit
-                                  .flutterProject!.rootComponent =
-                              _componentOperationCubit
-                                  .flutterProject!.currentScreen!.rootComponent;
-                          _componentOperationCubit
-                              .emit(ComponentUpdatedState());
-                          _componentSelectionCubit
-                              .emit(ComponentSelectionChange());
-                          _componentCreationCubit.changedComponent();
-                          Get.back();
-                        });
-                      },
-                      icon: const Icon(
-                        Icons.add,
-                        color: Colors.blueAccent,
-                      ),
-                    )
-                  ],
-                ),
-              );
-            },
-          ),
+        // if (_componentOperationCubit.flutterProject!.uiScreens.isNotEmpty)
+        //   BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
+        //     builder: (context, state) {
+        //       return Padding(
+        //         padding: const EdgeInsets.all(8.0),
+        //         child: Row(
+        //           children: [
+        //             // Expanded(
+        //             //   child: Column(
+        //             //     crossAxisAlignment: CrossAxisAlignment.start,
+        //             //     children: [
+        //             //       Text(
+        //             //         'Screens',
+        //             //         style: AppFontStyle.roboto(13,
+        //             //             color: Colors.black,
+        //             //             fontWeight: FontWeight.w500),
+        //             //       ),
+        //             //       SizedBox(
+        //             //           height: 50,
+        //             //           child: CustomDropdownButton<UIScreen>(
+        //             //               style: AppFontStyle.roboto(13),
+        //             //               value: _componentOperationCubit
+        //             //                   .flutterProject!.currentScreen,
+        //             //               hint: null,
+        //             //               items: _componentOperationCubit
+        //             //                   .flutterProject!.uiScreens
+        //             //                   .map<CustomDropdownMenuItem<UIScreen>>(
+        //             //                     (e) => CustomDropdownMenuItem<UIScreen>(
+        //             //                       value: e,
+        //             //                       child: Align(
+        //             //                         alignment: Alignment.centerLeft,
+        //             //                         child: Text(
+        //             //                           e.name,
+        //             //                           style: AppFontStyle.roboto(13,
+        //             //                               fontWeight: FontWeight.w500),
+        //             //                         ),
+        //             //                       ),
+        //             //                     ),
+        //             //                   )
+        //             //                   .toList(),
+        //             //               onChanged: (value) {
+        //             //                 if (value !=
+        //             //                     _componentOperationCubit
+        //             //                         .flutterProject!.currentScreen) {
+        //             //                   _componentOperationCubit.flutterProject!
+        //             //                       .currentScreen = value;
+        //             //                   _componentOperationCubit
+        //             //                           .flutterProject!.rootComponent =
+        //             //                       _componentOperationCubit
+        //             //                           .flutterProject!
+        //             //                           .currentScreen!
+        //             //                           .rootComponent;
+        //             //                   _componentOperationCubit
+        //             //                       .emit(ComponentUpdatedState());
+        //             //                   _componentSelectionCubit
+        //             //                       .emit(ComponentSelectionChange());
+        //             //                   _componentCreationCubit
+        //             //                       .changedComponent();
+        //             //                 }
+        //             //               },
+        //             //               selectedItemBuilder: (context, config) {
+        //             //                 return Align(
+        //             //                   alignment: Alignment.centerLeft,
+        //             //                   child: Text(
+        //             //                     config.name,
+        //             //                     style: AppFontStyle.roboto(13,
+        //             //                         fontWeight: FontWeight.w500),
+        //             //                   ),
+        //             //                 );
+        //             //               })),
+        //             //     ],
+        //             //   ),
+        //             // ),
+        //             IconButton(
+        //               onPressed: () {
+        //                 showCustomWidgetRename(context, 'Enter Screen Name',
+        //                     (name) {
+        //                   final screen = UIScreen.otherScreen(name);
+        //                   _componentOperationCubit.flutterProject!.uiScreens
+        //                       .add(screen);
+        //                   _componentOperationCubit
+        //                       .flutterProject!.currentScreen = screen;
+        //                   _componentOperationCubit
+        //                           .flutterProject!.rootComponent =
+        //                       _componentOperationCubit
+        //                           .flutterProject!.currentScreen!.rootComponent;
+        //                   _componentOperationCubit
+        //                       .emit(ComponentUpdatedState());
+        //                   _componentSelectionCubit
+        //                       .emit(ComponentSelectionChange());
+        //                   _componentCreationCubit.changedComponent();
+        //                   Get.back();
+        //                 });
+        //               },
+        //               icon: const Icon(
+        //                 Icons.add,
+        //                 color: Colors.blueAccent,
+        //               ),
+        //             )
+        //           ],
+        //         ),
+        //       );
+        //     },
+        //   ),
         Expanded(
           child: Row(
             children: [
@@ -538,7 +538,6 @@ class ComponentParameterWidget extends StatelessWidget {
       required this.componentCreationCubit})
       : super(key: key);
 
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -840,19 +839,24 @@ class _SublistWidgetState extends State<SublistWidget> {
                 },
                 onAccept: (object) {
                   debugPrint('ACCEPTED $object');
-                performReversibleOperation(() {
-                  BlocProvider.of<ComponentOperationCubit>(context,
-                      listen: false)
-                      .removeComponentAndRefresh(context, object as Component);
-                  BlocProvider.of<ComponentOperationCubit>(context,
-                      listen: false)
-                      .addOperation(widget.component, object, widget.ancestor);
-                  BlocProvider.of<ComponentCreationCubit>(context,
-                      listen: false)
-                      .changedComponent();
-                  BlocProvider.of<ComponentSelectionCubit>(context,
-                      listen: false).changeComponentSelection(ComponentSelectionModel.unique(object), root: widget.ancestor);
-                });
+                  performReversibleOperation(() {
+                    BlocProvider.of<ComponentOperationCubit>(context,
+                            listen: false)
+                        .removeComponentAndRefresh(
+                            context, object as Component);
+                    BlocProvider.of<ComponentOperationCubit>(context,
+                            listen: false)
+                        .addOperation(
+                            widget.component, object, widget.ancestor,);
+                    BlocProvider.of<ComponentCreationCubit>(context,
+                            listen: false)
+                        .changedComponent();
+                    BlocProvider.of<ComponentSelectionCubit>(context,
+                            listen: false)
+                        .changeComponentSelection(
+                            ComponentSelectionModel.unique(object),
+                            root: widget.ancestor);
+                  });
                 },
                 builder: (context, list1, list2) {
                   return ComponentTile(
@@ -905,17 +909,22 @@ class _SublistWidgetState extends State<SublistWidget> {
                 return true;
               }, onAccept: (object) {
                 debugPrint('ACCEPTED $object');
-              performReversibleOperation(() {
-                BlocProvider.of<ComponentOperationCubit>(context, listen: false)
-                    .removeComponent(object as Component);
-                BlocProvider.of<ComponentOperationCubit>(context, listen: false)
-                    .addOperation(widget.component, object, widget.ancestor);
-                BlocProvider.of<ComponentCreationCubit>(context,
-                    listen: false)
-                    .changedComponent();
-                BlocProvider.of<ComponentSelectionCubit>(context,
-                    listen: false).changeComponentSelection(ComponentSelectionModel.unique(object), root: widget.ancestor);
-              });
+                performReversibleOperation(() {
+                  BlocProvider.of<ComponentOperationCubit>(context,
+                          listen: false)
+                      .removeComponent(object as Component);
+                  BlocProvider.of<ComponentOperationCubit>(context,
+                          listen: false)
+                      .addOperation(widget.component, object, widget.ancestor);
+                  BlocProvider.of<ComponentCreationCubit>(context,
+                          listen: false)
+                      .changedComponent();
+                  BlocProvider.of<ComponentSelectionCubit>(context,
+                          listen: false)
+                      .changeComponentSelection(
+                          ComponentSelectionModel.unique(object),
+                          root: widget.ancestor);
+                });
               }, builder: (context, list1, list2) {
                 return ComponentTile(
                   component: widget.component,
@@ -1072,29 +1081,31 @@ class _SublistWidgetState extends State<SublistWidget> {
       ],
     );
   }
+
   void performReversibleOperation(void Function() work) {
     final operation = Operation(
-        CodeOperations.trim(widget.componentOperationCubit
-            .flutterProject!.rootComponent!
+        CodeOperations.trim(widget
+            .componentOperationCubit.flutterProject!.rootComponent!
             .code(clean: false))!,
-        widget. componentSelectionCubit.currentSelected.treeSelection.first.id);
-    widget. componentOperationCubit.revertWork.add(operation, work, (p0) {
+        widget.componentSelectionCubit.currentSelected.treeSelection.first.id);
+    widget.componentOperationCubit.revertWork.add(operation, work, (p0) {
       final Operation operation = p0;
-      widget. componentOperationCubit.flutterProject!.rootComponent =
+      widget.componentOperationCubit.flutterProject!.rootComponent =
           Component.fromCode(
               operation.code, widget.componentOperationCubit.flutterProject!);
       widget.componentOperationCubit.emit(ComponentUpdatedState());
-      widget.componentOperationCubit.flutterProject!.rootComponent!.forEach((comp) {
+      widget.componentOperationCubit.flutterProject!.rootComponent!
+          .forEach((comp) {
         if (comp.name == 'Image.asset') {
           final imageData = (comp.parameters[0].value as ImageData);
           if (widget.componentOperationCubit.byteCache
               .containsKey(imageData.imageName)) {
             imageData.bytes =
-            widget.componentOperationCubit.byteCache[imageData.imageName];
+                widget.componentOperationCubit.byteCache[imageData.imageName];
           }
         }
         if (comp.id == operation.selectedId) {
-          widget. componentSelectionCubit.changeComponentSelection(
+          widget.componentSelectionCubit.changeComponentSelection(
               ComponentSelectionModel.unique(comp),
               root: widget.ancestor);
         }
@@ -1102,7 +1113,6 @@ class _SublistWidgetState extends State<SublistWidget> {
       widget.componentCreationCubit.changedComponent();
     });
   }
-
 }
 
 class ComponentModificationMenu extends StatelessWidget {
@@ -1180,7 +1190,11 @@ class ComponentModificationMenu extends StatelessWidget {
                 showSelectionDialog(context, (comp) {
                   performReversibleOperation(() {
                     componentOperationCubit.addOperation(
-                        component, comp, ancestor);
+                        component, comp, ancestor,
+                        componentParameterOperation:
+                            componentParameterOperation,
+                        componentParameter: componentParameter,
+                        customNamed: customNamed);
                     componentCreationCubit.changedComponent();
                     componentOperationCubit.addedComponent(comp, ancestor);
                     componentSelectionCubit.changeComponentSelection(

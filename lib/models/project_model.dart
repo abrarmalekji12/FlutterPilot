@@ -15,8 +15,8 @@ class FlutterProject {
   final String? device;
   final List<VariableModel> variables = [];
   final List<LocalModel> models = [];
-  UIScreen? currentScreen;
-  final List<UIScreen> uiScreens = [];
+  // UIScreen? currentScreen;
+  // final List<UIScreen> uiScreens = [];
   final List<CustomComponent> customComponents = [];
   Component? rootComponent;
   final List<FavouriteModel> favouriteList = [];
@@ -25,8 +25,8 @@ class FlutterProject {
 
   factory FlutterProject.createNewProject(String name, int userId) {
     final FlutterProject flutterProject = FlutterProject(name, userId);
-    flutterProject.uiScreens.add(UIScreen.mainUI());
-    flutterProject.currentScreen=flutterProject.uiScreens.first;
+    // flutterProject.uiScreens.add(UIScreen.mainUI());
+    // flutterProject.currentScreen=flutterProject.uiScreens.first;
     flutterProject.rootComponent = componentList['MaterialApp']!();
     return flutterProject;
   }

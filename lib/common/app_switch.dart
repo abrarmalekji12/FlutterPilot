@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/constant/app_colors.dart';
+import '../constant/app_colors.dart';
 import 'package:flutter_switch/flutter_switch.dart';
 
 class AppSwitch extends StatelessWidget {
@@ -14,11 +14,6 @@ class AppSwitch extends StatelessWidget {
     return FlutterSwitch(
       width: 40,
       disabled: disabled,
-
-      // activeIcon: Icon(
-      //   Icons,
-      //   color: AppColors.titleTextFieldFocusColor,
-      // ),
       toggleSize: 15,
       inactiveColor: const Color(0xffC4C4C4),
       height: 20,

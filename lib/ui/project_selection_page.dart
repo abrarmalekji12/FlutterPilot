@@ -1,10 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/app_loader.dart';
 import '../constant/font_style.dart';
 import '../cubit/authentication/authentication_cubit.dart';
-import '../firestore/firestore_bridge.dart';
 import '../models/project_model.dart';
 import 'authentication/login.dart';
 import 'home_page.dart';
@@ -25,6 +23,7 @@ class ProjectSelectionPage extends StatefulWidget {
 class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
   late final FlutterProjectCubit _flutterProjectCubit;
   List<FlutterProject> _flutterProjects = [];
+  final _formKey=GlobalKey<FormState>();
   final TextEditingController _textEditingController = TextEditingController();
 
   @override
@@ -85,7 +84,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                   Container(
                     height: 56,
                     child: Row(
-                      children: [const Spacer(), LogoutButton()],
+                      children: const [Spacer(), LogoutButton()],
                     ),
                     decoration: const BoxDecoration(
                         border: Border(
@@ -93,11 +92,11 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                 BorderSide(color: Color(0xf2f2f2), width: 1))),
                   ),
                   Text(
-                    'Select a project to get started',
+                    'Projects',
                     style: GoogleFonts.getFont(
                       'Roboto',
                       textStyle: const TextStyle(
-                        fontSize: 25,
+                        fontSize: 21,
                         color: Color(0xff000000),
                         fontWeight: FontWeight.w700,
                         fontStyle: FontStyle.normal,
@@ -108,82 +107,92 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                   const SizedBox(
                     height: 15,
                   ),
-                  TextField(
-                    controller: _textEditingController,
-                    style: GoogleFonts.getFont(
-                      'Roboto',
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        color: Color(0xff000000),
-                        fontWeight: FontWeight.w400,
-                        fontStyle: FontStyle.normal,
-                      ),
-                    ),
-                    readOnly: false,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.all(15),
-                      labelText: 'Please enter project name',
-                      labelStyle: GoogleFonts.getFont(
+                  Form(
+                    key: _formKey,
+                    child: TextFormField(
+                      controller: _textEditingController,
+                      style: GoogleFonts.getFont(
                         'Roboto',
                         textStyle: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 18,
                           color: Color(0xff000000),
                           fontWeight: FontWeight.w400,
                           fontStyle: FontStyle.normal,
                         ),
                       ),
-                      helperStyle: GoogleFonts.getFont(
-                        'ABeeZee',
-                        textStyle: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xff000000),
-                          fontWeight: FontWeight.w400,
-                          fontStyle: FontStyle.normal,
+                      validator: (value){
+                        if(value==null||value.length < 3){
+                          return 'Project name should be greater than 3';
+                        }
+                        return null;
+                      },
+                      readOnly: false,
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.all(15),
+                        labelText: 'Please enter project name',
+                        labelStyle: GoogleFonts.getFont(
+                          'Roboto',
+                          textStyle: const TextStyle(
+                            fontSize: 15,
+                            color: Color(0xff000000),
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.normal,
+                          ),
                         ),
-                      ),
-                      hintStyle: GoogleFonts.getFont(
-                        'ABeeZee',
-                        textStyle: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xff000000),
-                          fontWeight: FontWeight.w400,
-                          fontStyle: FontStyle.normal,
+
+                        helperStyle: GoogleFonts.getFont(
+                          'ABeeZee',
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xff000000),
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.normal,
+                          ),
                         ),
-                      ),
-                      errorStyle: GoogleFonts.getFont(
-                        'ABeeZee',
-                        textStyle: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.red,
-                          fontWeight: FontWeight.w400,
-                          fontStyle: FontStyle.normal,
+                        hintStyle: GoogleFonts.getFont(
+                          'ABeeZee',
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xff000000),
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.normal,
+                          ),
                         ),
-                      ),
-                      icon: const Icon(
-                        Icons.create,
-                      ),
-                      iconColor: const Color(0xffffffff),
-                      prefixText: '',
-                      prefixStyle: GoogleFonts.getFont(
-                        'ABeeZee',
-                        textStyle: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xff000000),
-                          fontWeight: FontWeight.w400,
-                          fontStyle: FontStyle.normal,
+                        errorStyle: GoogleFonts.getFont(
+                          'ABeeZee',
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.red,
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.normal,
+                          ),
                         ),
-                      ),
-                      suffixText: '',
-                      suffixStyle: GoogleFonts.getFont(
-                        'ABeeZee',
-                        textStyle: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xff000000),
-                          fontWeight: FontWeight.w400,
-                          fontStyle: FontStyle.normal,
+                        icon: const Icon(
+                          Icons.create,
                         ),
+                        iconColor: const Color(0xffffffff),
+                        prefixText: '',
+                        prefixStyle: GoogleFonts.getFont(
+                          'ABeeZee',
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xff000000),
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.normal,
+                          ),
+                        ),
+                        suffixText: '',
+                        suffixStyle: GoogleFonts.getFont(
+                          'ABeeZee',
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xff000000),
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.normal,
+                          ),
+                        ),
+                        enabled: true,
                       ),
-                      enabled: true,
                     ),
                   ),
                   const SizedBox(
@@ -201,68 +210,57 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.max,
                             children: [
-                              InkWell(
-                                borderRadius: BorderRadius.circular(20),
-                                onTap: () {
-                                  if (_textEditingController.text.length > 3) {
+                              ElevatedButton(
+                                onPressed: () {
+                                  if (_formKey.currentState!.validate()) {
                                     final name = _textEditingController.text;
                                     _flutterProjectCubit
                                         .createNewProject(name)
                                         .then((value) {
                                       _textEditingController.text = '';
-
                                       setState(() {});
                                       Get.to(
-                                          () => HomePage(
-                                                projectName: name,
-                                                userId: widget.userId,
-                                              ),
+                                              () => HomePage(
+                                            projectName: name,
+                                            userId: widget.userId,
+                                          ),
                                           routeName: 'projects/$name');
                                     });
                                   }
                                 },
-                                child: Container(
-                                    padding: const EdgeInsets.all(20),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xffffffff),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: const Color(0xff171717),
-                                        width: 3,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: [
+                                      const Icon(
+                                        Icons.add,
+                                        size: 35,
+                                        color: Colors.white,
                                       ),
-                                      shape: BoxShape.rectangle,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: [
-                                        const Icon(
-                                          Icons.add,
-                                          size: 35,
-                                          color: Color(0xff000000),
-                                        ),
-                                        const SizedBox(
-                                          width: 10,
-                                        ),
-                                        Text(
-                                          'Create new project',
-                                          style: GoogleFonts.getFont(
-                                            'Roboto',
-                                            textStyle: const TextStyle(
-                                              fontSize: 21,
-                                              color: Color(0xff000000),
-                                              fontWeight: FontWeight.w500,
-                                              fontStyle: FontStyle.normal,
-                                            ),
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
+                                      Text(
+                                        'Create new project',
+                                        style: GoogleFonts.getFont(
+                                          'Roboto',
+                                          textStyle: const TextStyle(
+                                            fontSize: 21,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontStyle: FontStyle.normal,
                                           ),
-                                          textAlign: TextAlign.left,
                                         ),
-                                      ],
-                                    )),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -274,8 +272,8 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                             style: GoogleFonts.getFont(
                               'Roboto',
                               textStyle: const TextStyle(
-                                fontSize: 20,
-                                color: Color(0xff747474),
+                                fontSize: 16,
+                                color: Colors.black,
                                 fontWeight: FontWeight.w500,
                                 fontStyle: FontStyle.normal,
                               ),
