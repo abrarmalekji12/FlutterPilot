@@ -309,8 +309,12 @@ abstract class FireBridge {
     for (final screenDoc in documents) {
       final screen = UIScreen.fromJson(screenDoc.data(), flutterProject);
       flutterProject.uiScreens.add(screen);
-    }
 
+    }
+    for(int i=0;i< flutterProject.uiScreens.length;i++){
+
+      flutterProject.uiScreens[i].rootComponent = Component.fromCode(documents[i].data()['root'], flutterProject);
+    }
     if (projectInfo['current_screen'] != null) {
       for (final screen in flutterProject.uiScreens) {
         if (screen.name == projectInfo['main_screen']) {

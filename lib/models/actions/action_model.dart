@@ -9,6 +9,10 @@ abstract class ActionModel {
   ActionModel(this.arguments);
 
   void perform(BuildContext context);
+
+  String metaCode();
+
+
 }
 
 
@@ -25,6 +29,12 @@ class NewPageInStackAction extends ActionModel {
       ),
     );
   }
+  @override
+  String metaCode() {
+  return 'NPISA<${(arguments[0] as UIScreen?)?.name}>';
+  }
+
+
 }
 
 class GoBackInStackAction extends ActionModel {
@@ -34,4 +44,34 @@ class GoBackInStackAction extends ActionModel {
   void perform(BuildContext context) {
     (const GlobalObjectKey(navigationKey).currentState as NavigatorState).pop();
   }
+
+
+  String code(){
+    return '';
+  }
+  @override
+  String metaCode() {
+    return 'NBISA';
+  }
+
+}
+
+class ShowDialogInStackAction extends ActionModel {
+  ShowDialogInStackAction() : super([]);
+
+  @override
+  void perform(BuildContext context) {
+
+    // (const GlobalObjectKey(navigationKey).currentState as NavigatorState).context;
+  }
+  @override
+  String metaCode() {
+    return 'SDISA';
+  }
+
+  @override
+  void fromMetaCode(String code) {
+
+  }
+
 }

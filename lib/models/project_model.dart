@@ -146,7 +146,7 @@ class UIScreen {
   factory UIScreen.fromJson(
       Map<String, dynamic> json, final FlutterProject flutterProject) {
     final screen = UIScreen(json['name']);
-    screen.rootComponent = Component.fromCode(json['root'], flutterProject);
+
     screen.models.addAll(
         List.from(json['models'] ?? []).map((e) => LocalModel.fromJson(e)));
     screen.variables.addAll(List.from(json['variables'] ?? [])

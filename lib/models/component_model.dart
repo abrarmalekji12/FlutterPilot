@@ -70,9 +70,24 @@ abstract class Component {
     return null;
   }
 
+  String metaCode(String string) {
+    string += '[id=$id';
+    if (this is ClickableHolder) {
+      string +=
+          '|action={${(this as ClickableHolder).actionList.map((e) => e.metaCode()).join(':')}}';
+    }
+    string += ']';
+    return string;
+  }
+
   void metaInfoFromCode(
       final String metaCode, final FlutterProject? flutterProject) {
+
     final list = metaCode.substring(1, metaCode.length - 1).split('|');
+
+    if(metaCode.contains('action')) {
+      debugPrint('FROM CODE $metaCode   $list');
+    }
     for (final value in list) {
       if (value.isNotEmpty) {
         final fieldList = value.split('=');
@@ -81,9 +96,17 @@ abstract class Component {
             id = fieldList[1];
             break;
           case 'model':
-            (this as BuilderComponent).model = flutterProject?.currentScreen.models
+            (this as BuilderComponent).model = flutterProject
+                ?.currentScreen.models
                 .firstWhereOrNull((element) => element.name == fieldList[1]);
             break;
+          case 'action':
+            debugPrint('ACtiON ${fieldList[1]}');
+            fieldList[1]
+                .substring(1, fieldList[1].length - 1)
+                .split(':')
+                .forEach((e) => (this as ClickableHolder)
+                    .fromMetaCodeToAction(e, flutterProject!));
         }
       }
     }
@@ -378,16 +401,15 @@ abstract class Component {
 
   Widget create(BuildContext context);
 
-
-  String parametersCode(bool clean){
+  String parametersCode(bool clean) {
     String middle = '';
     for (final parameter in parameters) {
       final paramCode = parameter.code(clean);
       if (paramCode.isNotEmpty) {
-        middle  += '$paramCode,${clean?'\n':''}'.replaceAll(',,', ',');
+        middle += '$paramCode,${clean ? '\n' : ''}'.replaceAll(',,', ',');
       }
     }
-    if(clean) {
+    if (clean) {
       int start = 0;
       int gotIndex = -1;
       while (start < middle.length) {
@@ -409,8 +431,8 @@ abstract class Component {
             //   innerArea = innerArea.replaceAll(variable.name,
             //       '${variable!}[index].${variable.name}');
             // }
-            middle = middle.replaceRange(
-                gotIndex - 2, start + 2, '\${$innerArea}');
+            middle =
+                middle.replaceRange(gotIndex - 2, start + 2, '\${$innerArea}');
             gotIndex = -1;
             start += 2;
             continue;
@@ -419,13 +441,13 @@ abstract class Component {
       }
     }
     return middle;
-
   }
+
   String code({bool clean = true}) {
-    final middle=parametersCode(clean);
+    final middle = parametersCode(clean);
     String name = this.name;
     if (!clean) {
-      name += '[id=$id]';
+      name = metaCode(name);
     }
     if (middle.trim().isEmpty) {
       return '$name()';
@@ -476,8 +498,7 @@ abstract class MultiHolder extends Component {
 
   @override
   String code({bool clean = true}) {
-
-    final middle=parametersCode(clean);
+    final middle = parametersCode(clean);
 
     String name = this.name;
     if (!clean) {
@@ -605,25 +626,25 @@ abstract class Holder extends Component {
   }
 
   @override
-  void searchTappedComponent(final Offset offset, final List<Component> components) {
+  void searchTappedComponent(
+      final Offset offset, final List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
       if (this is BuilderComponent) {
-        for(final comp in
-        (this as BuilderComponent).builtList){
-          final len=components.length;
-         comp.searchTappedComponent(offset, components);
-         if(len!=components.length){
-           break;
-         }
+        for (final comp in (this as BuilderComponent).builtList) {
+          final len = components.length;
+          comp.searchTappedComponent(offset, components);
+          if (len != components.length) {
+            break;
+          }
         }
       } else {
         child?.searchTappedComponent(offset, components);
       }
       for (final compParam in componentParameters) {
         for (final comp in compParam.components) {
-          final len=components.length;
+          final len = components.length;
           comp.searchTappedComponent(offset, components);
-          if(len!=components.length){
+          if (len != components.length) {
             break;
           }
         }
@@ -634,11 +655,10 @@ abstract class Holder extends Component {
 
   @override
   String code({bool clean = true}) {
-
-    final middle=parametersCode(clean);
+    final middle = parametersCode(clean);
     String name = this.name;
     if (!clean) {
-      name += '[id=$id]';
+      name = metaCode(name);
     }
     if (child == null) {
       if (!required) {
@@ -672,19 +692,30 @@ abstract class Holder extends Component {
   int get childCount => 1;
 }
 
-abstract class ClickableHolder extends Holder{
-  final List<ActionModel> actionList=[];
+abstract class ClickableHolder extends Holder {
+  final List<ActionModel> actionList = [];
 
-  ClickableHolder(String name, List<Parameter> parameters) : super(name, parameters);
+  ClickableHolder(String name, List<Parameter> parameters)
+      : super(name, parameters);
 
-  void perform(BuildContext context){
-    if(RuntimeProvider.of(context) == RuntimeMode.run) {
+  void perform(BuildContext context) {
+    if (RuntimeProvider.of(context) == RuntimeMode.run) {
       for (final action in actionList) {
         action.perform(context);
       }
     }
   }
+
+  void fromMetaCodeToAction(String code, final FlutterProject flutterProject) {
+    if (code.startsWith('NPISA')) {
+      final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
+      actionList.add(NewPageInStackAction(flutterProject.uiScreens.firstWhere((element) => element.name==name)));
+    } else if (code.startsWith('GBISA')) {
+      actionList.add(GoBackInStackAction());
+    }
+  }
 }
+
 abstract class CustomNamedHolder extends Component {
   Map<String, Component?> childMap = {};
   Map<String, List<Component>> childrenMap = {};
@@ -753,11 +784,10 @@ abstract class CustomNamedHolder extends Component {
 
   @override
   String code({bool clean = true}) {
-
-    final middle=parametersCode(clean);
+    final middle = parametersCode(clean);
     String name = this.name;
     if (!clean) {
-      name += '[id=$id]';
+      name = metaCode(name);
     }
     String childrenCode = '';
     for (final child in childMap.keys) {
