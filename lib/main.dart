@@ -4,14 +4,16 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'common/shared_preferences.dart';
 import 'cubit/authentication/authentication_cubit.dart';
 import 'ui/authentication/login.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 
 import 'constant/app_colors.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Preferences.load();
   runApp(const MyApp());
 }
 

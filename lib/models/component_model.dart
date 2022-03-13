@@ -72,9 +72,9 @@ abstract class Component {
 
   String metaCode(String string) {
     string += '[id=$id';
-    if (this is ClickableHolder) {
+    if (this is Clickable) {
       string +=
-          '|action={${(this as ClickableHolder).actionList.map((e) => e.metaCode()).join(':')}}';
+          '|action={${(this as Clickable).actionList.map((e) => e.metaCode()).join(':')}}';
     }
     string += ']';
     return string;
@@ -82,12 +82,7 @@ abstract class Component {
 
   void metaInfoFromCode(
       final String metaCode, final FlutterProject? flutterProject) {
-
     final list = metaCode.substring(1, metaCode.length - 1).split('|');
-
-    if(metaCode.contains('action')) {
-      debugPrint('FROM CODE $metaCode   $list');
-    }
     for (final value in list) {
       if (value.isNotEmpty) {
         final fieldList = value.split('=');
@@ -101,12 +96,19 @@ abstract class Component {
                 .firstWhereOrNull((element) => element.name == fieldList[1]);
             break;
           case 'action':
-            debugPrint('ACtiON ${fieldList[1]}');
-            fieldList[1]
-                .substring(1, fieldList[1].length - 1)
-                .split(':')
-                .forEach((e) => (this as ClickableHolder)
-                    .fromMetaCodeToAction(e, flutterProject!));
+            if (this is Clickable) {
+              final list = fieldList[1].substring(1, fieldList[1].length - 1);
+              if (list.isNotEmpty) {
+                if (list.contains(':')) {
+                  list.split(':').forEach((e) => (this as Clickable)
+                      .fromMetaCodeToAction(e, flutterProject!));
+                } else {
+                  (this as Clickable)
+                      .fromMetaCodeToAction(list, flutterProject!);
+                }
+              }
+            }
+            break;
         }
       }
     }
@@ -692,11 +694,18 @@ abstract class Holder extends Component {
   int get childCount => 1;
 }
 
-abstract class ClickableHolder extends Holder {
-  final List<ActionModel> actionList = [];
-
+abstract class ClickableHolder extends Holder with Clickable {
   ClickableHolder(String name, List<Parameter> parameters)
       : super(name, parameters);
+}
+
+abstract class ClickableComponent extends Component with Clickable {
+  ClickableComponent(String name, List<Parameter> parameters)
+      : super(name, parameters);
+}
+
+mixin Clickable {
+  final List<ActionModel> actionList = [];
 
   void perform(BuildContext context) {
     if (RuntimeProvider.of(context) == RuntimeMode.run) {
@@ -706,13 +715,57 @@ abstract class ClickableHolder extends Holder {
     }
   }
 
+  List<String>? getParams(final String code) {
+    if(code.isEmpty){
+      return null;
+    }
+    final codeList =
+        code.substring(code.indexOf('<') + 1, code.indexOf('>')).split('-').map((element) => element!='null'?element:'').toList(growable: false);
+    return codeList;
+  }
+
   void fromMetaCodeToAction(String code, final FlutterProject flutterProject) {
     if (code.startsWith('NPISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
-      actionList.add(NewPageInStackAction(flutterProject.uiScreens.firstWhere((element) => element.name==name)));
-    } else if (code.startsWith('GBISA')) {
-      actionList.add(GoBackInStackAction());
+      UIScreen? selectedUiScreen;
+      for (final uiScreen in flutterProject.uiScreens) {
+        if (uiScreen.name == name) {
+          selectedUiScreen = uiScreen;
+          break;
+        }
+      }
+      actionList.add(NewPageInStackAction(selectedUiScreen));
     }
+    else if(code.startsWith('RCPISA')){
+      final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
+      UIScreen? selectedUiScreen;
+      for (final uiScreen in flutterProject.uiScreens) {
+        if (uiScreen.name == name) {
+          selectedUiScreen = uiScreen;
+          break;
+        }
+      }
+      actionList.add(ReplaceCurrentPageInStackAction(selectedUiScreen));
+
+    }
+    else if (code.startsWith('NBISA')) {
+      actionList.add(GoBackInStackAction());
+    } else if (code.startsWith('SDISA')) {
+      final list=getParams(code.substring(5));
+      actionList.add(ShowDialogInStackAction(args: list));
+    }
+    else if(code.startsWith('SCDISA')){
+      final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
+      UIScreen? selectedUiScreen;
+      for (final uiScreen in flutterProject.uiScreens) {
+        if (uiScreen.name == name) {
+          selectedUiScreen = uiScreen;
+          break;
+        }
+      }
+      actionList.add(ShowCustomDialogInStackAction(uiScreen: selectedUiScreen));
+    }
+
   }
 }
 

@@ -37,7 +37,7 @@ class _VariableBoxState extends State<VariableBox> {
           height: dh(context, 100) - 70,
           padding: const EdgeInsets.all(10),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 'Variables',

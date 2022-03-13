@@ -26,11 +26,12 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   RuntimeMode runtimeMode = RuntimeMode.edit;
   final List<FavouriteModel> favouriteList = [];
   Map<String, Uint8List> byteCache = {};
-  final RevertWork revertWork = RevertWork.init();
 
   ComponentOperationCubit() : super(ComponentOperationInitial());
 
   List<LocalModel> get models => flutterProject!.currentScreen.models;
+
+  RevertWork get revertWork => flutterProject!.currentScreen.revertWork;
 
   void addedComponent(Component component, Component root) {
     if (root is CustomComponent) {
@@ -39,13 +40,18 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  void changeProjectScreen(final UIScreen screen) async {
+  void changeProjectScreen(final UIScreen screen) {
     flutterProject!.currentScreen = screen;
     ComponentOperationCubit.codeProcessor.variables
         .removeWhere((key, value) => value.deletable);
     for (final variable in screen.variables) {
       ComponentOperationCubit.codeProcessor.variables[variable.name] = variable;
     }
+    emit(ComponentUpdatedState());
+    changeProjectScreenInDB();
+  }
+
+  Future<void> changeProjectScreenInDB() async{
     emit(ComponentOperationLoadingState());
     await FireBridge.updateCurrentScreen(flutterProject!.userId, flutterProject!);
     emit(ComponentOperationInitial());
@@ -134,6 +140,15 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     await FireBridge.removeImage(flutterProject!.userId, imgName);
     emit(ComponentOperationInitial());
   }
+
+  Future<void> deleteCurrentUIScreen(final UIScreen uiScreen) async {
+
+    emit(ComponentOperationLoadingState());
+    await FireBridge.removeUIScreen(flutterProject!.userId, flutterProject!,uiScreen);
+    emit(ComponentOperationInitial());
+  }
+
+
 
   Future<void> updateRootComponent() async {
     emit(ComponentOperationLoadingState());
@@ -368,7 +383,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> loadFavourites() async {
     emit(ComponentOperationLoadingState());
     final favouriteComponentList =
-        await FireBridge.loadFavourites(flutterProject!.userId);
+        await FireBridge.loadFavourites(flutterProject!.userId,project: flutterProject);
     favouriteList.clear();
     favouriteList.addAll(favouriteComponentList.reversed);
     flutterProject!.favouriteList.clear();

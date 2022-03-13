@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../code_to_component.dart';
+import '../common/material_alert.dart';
 import '../models/operation_model.dart';
 import '../models/other_model.dart';
 import '../common/custom_drop_down.dart';
@@ -48,378 +49,442 @@ class _ComponentTreeState extends State<ComponentTree> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    IconButton(
-                        onPressed: () {
-                          Get.back();
-                        },
-                        icon: const Icon(
-                          Icons.arrow_back_ios,
-                          size: 18,
-                        )),
-                    const SizedBox(
-                      width: 20,
-                    ),
-                    Expanded(
-                      child: Text(
-                        BlocProvider.of<ComponentOperationCubit>(context,
-                                listen: false)
-                            .flutterProject!
-                            .name,
-                        style: AppFontStyle.roboto(16,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
-                bloc: _componentOperationCubit,
-                builder: (context, state) {
-                  if (state is ComponentOperationLoadingState) {
-                    return const Icon(
-                      Icons.cloud_upload,
-                      color: Colors.blueAccent,
-                      size: 20,
-                    );
-                  } else if (state is ComponentOperationErrorState) {
-                    return InkWell(
-                      onTap: () {},
-                      borderRadius: BorderRadius.circular(10),
-                      child: const Icon(
-                        Icons.cloud_off_rounded,
-                        color: Colors.blueAccent,
-                        size: 20,
-                      ),
-                    );
-                  }
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
                     children: [
-                      if (_componentOperationCubit.revertWork.totalOperations >
-                          0)
-                        InkWell(
-                          onTap: () {
-                            _componentOperationCubit.revertWork.undo();
+                      IconButton(
+                          onPressed: () {
+                            Get.back();
                           },
-                          borderRadius: BorderRadius.circular(10),
-                          child: const Icon(
-                            Icons.undo,
-                            color: Colors.black,
-                          ),
-                        ),
+                          icon: const Icon(
+                            Icons.arrow_back_ios,
+                            size: 18,
+                          )),
                       const SizedBox(
-                        width: 30,
+                        width: 20,
                       ),
-                      const Icon(
-                        Icons.cloud_done,
-                        color: Colors.blueAccent,
-                        size: 20,
+                      Expanded(
+                        child: Text(
+                          BlocProvider.of<ComponentOperationCubit>(context,
+                                  listen: false)
+                              .flutterProject!
+                              .name,
+                          style: AppFontStyle.roboto(16,
+                              fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
-                  );
-                },
-              )
-            ],
-          ),
-        ),
-        if (_componentOperationCubit.flutterProject!.uiScreens.isNotEmpty) ...[
-          BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
-            builder: (context, state) {
-              return Padding(
-                padding: const EdgeInsets.all(5.0),
-                child: Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                  ),
+                ),
+                BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
+                  bloc: _componentOperationCubit,
+                  builder: (context, state) {
+                    if (state is ComponentOperationLoadingState) {
+                      return const Icon(
+                        Icons.cloud_upload,
+                        color: Colors.blueAccent,
+                        size: 20,
+                      );
+                    } else if (state is ComponentOperationErrorState) {
+                      return InkWell(
+                        onTap: () {},
+                        borderRadius: BorderRadius.circular(10),
+                        child: const Icon(
+                          Icons.cloud_off_rounded,
+                          color: Colors.blueAccent,
+                          size: 20,
+                        ),
+                      );
+                    }
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 50,
-                            child: CustomDropdownButton<UIScreen>(
-                                style: AppFontStyle.roboto(13),
-                                value: _componentOperationCubit
-                                    .flutterProject!.currentScreen,
-                                hint: null,
-                                items: _componentOperationCubit
-                                    .flutterProject!.uiScreens
-                                    .map<CustomDropdownMenuItem<UIScreen>>(
-                                      (e) => CustomDropdownMenuItem<UIScreen>(
-                                        value: e,
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: SizedBox(
-                                            height: 25,
+                        if (_componentOperationCubit.revertWork.totalOperations >
+                            0)
+                          InkWell(
+                            onTap: () {
+                              _componentOperationCubit.revertWork.undo();
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: const Icon(
+                              Icons.undo,
+                              color: Colors.black,
+                            ),
+                          ),
+                        const SizedBox(
+                          width: 30,
+                        ),
+                        const Icon(
+                          Icons.cloud_done,
+                          color: Colors.blueAccent,
+                          size: 20,
+                        ),
+                      ],
+                    );
+                  },
+                )
+              ],
+            ),
+          ),
+          if (_componentOperationCubit.flutterProject!.uiScreens.isNotEmpty) ...[
+            BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
+              builder: (context, state) {
+                return Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 50,
+                              child: CustomDropdownButton<UIScreen>(
+                                  style: AppFontStyle.roboto(13),
+                                  value: _componentOperationCubit
+                                      .flutterProject!.currentScreen,
+                                  hint: null,
+                                  items: _componentOperationCubit
+                                      .flutterProject!.uiScreens
+                                      .map<CustomDropdownMenuItem<UIScreen>>(
+                                        (e) => CustomDropdownMenuItem<UIScreen>(
+                                          value: e,
+                                          child: Align(
+                                            alignment: Alignment.centerLeft,
                                             child: Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 10),
+                                              padding:
+                                                  const EdgeInsets.all(10),
                                               child: Text(
                                                 e.name,
                                                 style: AppFontStyle.roboto(13,
-                                                    fontWeight: FontWeight.w500),
+                                                    fontWeight:
+                                                        FontWeight.w500),
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value !=
+                                      )
+                                      .toList(),
+                                  onChanged: (value) {
+                                    if (value !=
+                                        _componentOperationCubit
+                                            .flutterProject!.currentScreen) {
                                       _componentOperationCubit
-                                          .flutterProject!.currentScreen) {
-                                    _componentOperationCubit
-                                        .changeProjectScreen(value);
-                                    _componentOperationCubit
-                                        .emit(ComponentUpdatedState());
-                                    _componentSelectionCubit
-                                        .emit(ComponentSelectionChange());
-                                    _componentCreationCubit.changedComponent();
-                                  }
-                                },
-                                selectedItemBuilder: (context, config) {
-                                  return Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      config.name,
-                                      style: AppFontStyle.roboto(13,
-                                          fontWeight: FontWeight.w500),
-                                    ),
-                                  );
-                                }),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            showCustomWidgetRename(context, 'Enter Screen Name',
-                                (name) {
-                              final screen = UIScreen.otherScreen(name);
-                              _componentOperationCubit.addUIScreen(screen);
-
-                              _componentSelectionCubit
-                                  .emit(ComponentSelectionChange());
-                              _componentCreationCubit.changedComponent();
-                              Get.back();
-                            });
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.all(10),
-                            child: Icon(
-                              Icons.add,
-                              color: Colors.blueAccent,
+                                          .changeProjectScreen(value);
+                                      _componentSelectionCubit
+                                          .changeComponentSelection(
+                                              ComponentSelectionModel.unique(
+                                                  value.rootComponent!),
+                                              root: value.rootComponent!);
+                                      _componentCreationCubit.changedComponent();
+                                      debugPrint('CHANGE SCREEN DONE');
+                                    }
+                                  },
+                                  selectedItemBuilder: (context, config) {
+                                    return Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        config.name,
+                                        style: AppFontStyle.roboto(13,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                    );
+                                  }),
                             ),
                           ),
-                          borderRadius: BorderRadius.circular(12),
-                        )
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Transform.scale(
-                          scale:0.9,
-                          child: Checkbox(
-                            onChanged: (value) {
-                              _componentOperationCubit.flutterProject!.mainScreen =
-                                  _componentOperationCubit.flutterProject!.currentScreen;
-                              _componentOperationCubit.emit(ComponentUpdatedState());
-                            },
-                            value: _componentOperationCubit.flutterProject!.mainScreen ==
-                                _componentOperationCubit.flutterProject!.currentScreen,
-                            visualDensity: const VisualDensity(horizontal: 4,vertical: 4),
-                          ),
-                        ),
-                        Text(
-                          'Main Screen',
-                          style: AppFontStyle.roboto(14,
-                              color: Colors.black, fontWeight: FontWeight.w500),
-                        )
-                      ],
-                    )
-                  ],
-                ),
-              );
-            },
-          ),
+                          InkWell(
+                            onTap: () {
+                              showScreenNameDialog(context, 'Enter Screen Name',
+                                  (name, type) {
+                                final screen =
+                                    UIScreen.otherScreen(name, type: type);
+                                _componentOperationCubit.addUIScreen(
+                                  screen,
+                                );
 
-        ],
-        Expanded(
-          child: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: StatefulBuilder(builder: (context, setState2) {
-                    if (!_scrollController.hasListeners) {
-                      _scrollController.addListener(() {
-                        setState2(() {});
-                      });
-                    }
-                    return FractionallySizedBox(
-                      heightFactor: _scrollController.hasClients &&
-                              _scrollController.position.maxScrollExtent > 0
-                          ? (_scrollController.offset /
-                              _scrollController.position.maxScrollExtent)
-                          : 0,
-                      child: Container(
-                        width: 3,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: BlocListener<ComponentSelectionCubit,
-                      ComponentSelectionState>(
-                    listener: (context, state) {
-                      if (state is ComponentSelectionChange && state.scroll) {
-                        scrollToSelected();
-                      }
-                    },
-                    child: BlocBuilder<ComponentOperationCubit,
-                        ComponentOperationState>(
-                      bloc: _componentOperationCubit,
-                      buildWhen: (state1, state2) {
-                        debugPrint(
-                            '=== ComponentOperationCubit == buildWhen ${state1.runtimeType} to ${state2.runtimeType}');
-                        if (state2 is ComponentUpdatedState) {
-                          return true;
-                        }
-                        return false;
-                      },
-                      builder: (context, state) {
-                        debugPrint(
-                            '=== ComponentOperationCubit == state ${state.runtimeType}');
-                        return SingleChildScrollView(
-                          controller: _scrollController,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Container(
-                                alignment: Alignment.topLeft,
-                                padding: const EdgeInsets.all(6),
-                                child: SublistWidget(
-                                    component: _componentOperationCubit
-                                        .flutterProject!.rootComponent!,
-                                    ancestor: _componentOperationCubit
-                                        .flutterProject!.rootComponent!,
-                                    componentSelectionCubit:
-                                        _componentSelectionCubit,
-                                    componentOperationCubit:
-                                        _componentOperationCubit,
-                                    componentCreationCubit:
-                                        _componentCreationCubit),
+                                _componentCreationCubit.changedComponent();
+                                _componentSelectionCubit.changeComponentSelection(
+                                    ComponentSelectionModel.unique(
+                                        screen.rootComponent!),
+                                    root: screen.rootComponent!);
+                                Get.back();
+                              });
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Icon(
+                                Icons.add,
+                                color: Colors.blueAccent,
                               ),
-                              // Padding(
-                              //   padding: const EdgeInsets.all(10),
-                              //   child: Row(
-                              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              //     children: [
-                              //       Text(
-                              //         'Custom Widgets',
-                              //         style: AppFontStyle.roboto(14,
-                              //             color: const Color(0xff494949),
-                              //             fontWeight: FontWeight.bold),
-                              //       ),
-                              //       InkWell(
-                              //         borderRadius: BorderRadius.circular(10),
-                              //         onTap: () {
-                              //           //ADD Custom Widgets
-                              //           showCustomWidgetRename(
-                              //               context, 'Enter widget name', (name) {
-                              //             Get.back();
-                              //
-                              //             BlocProvider.of<ComponentOperationCubit>(
-                              //                     context,
-                              //                     listen: false)
-                              //                 .addCustomComponent(name);
-                              //           });
-                              //         },
-                              //         child: const CircleAvatar(
-                              //           radius: 10,
-                              //           backgroundColor: AppColors.theme,
-                              //           child: Icon(
-                              //             Icons.add,
-                              //             size: 15,
-                              //             color: Colors.white,
-                              //           ),
-                              //         ),
-                              //       ),
-                              //     ],
-                              //   ),
-                              // ),
-                              // for (final CustomComponent comp in _componentOperationCubit
-                              //     .flutterProject!.customComponents) ...[
-                              //   Row(
-                              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              //     children: [
-                              //       Container(
-                              //         decoration: BoxDecoration(
-                              //             border: Border.all(
-                              //                 color: AppColors.theme, width: 1.5),
-                              //             borderRadius: BorderRadius.circular(4)),
-                              //         padding: const EdgeInsets.all(5),
-                              //         margin: const EdgeInsets.symmetric(
-                              //             horizontal: 10, vertical: 5),
-                              //         child: Text(
-                              //           comp.name,
-                              //           style: AppFontStyle.roboto(15,
-                              //               color: AppColors.theme,
-                              //               fontWeight: FontWeight.bold),
-                              //         ),
-                              //       ),
-                              //       ComponentModificationMenu(
-                              //         component: comp,
-                              //         ancestor: comp,
-                              //         componentOperationCubit: _componentOperationCubit,
-                              //         componentCreationCubit: _componentCreationCubit,
-                              //         componentSelectionCubit: _componentSelectionCubit,
-                              //       )
-                              //     ],
-                              //   ),
-                              //   if (comp.root != null)
-                              //     Container(
-                              //       alignment: Alignment.topLeft,
-                              //       padding: const EdgeInsets.all(10),
-                              //       child: SublistWidget(
-                              //           component: comp.root!,
-                              //           ancestor: comp,
-                              //           componentSelectionCubit: _componentSelectionCubit,
-                              //           componentOperationCubit: _componentOperationCubit,
-                              //           componentCreationCubit: _componentCreationCubit),
-                              //     ),
-                              // ],
-                              const SizedBox(
-                                height: 100,
-                              ),
-                            ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Transform.scale(
+                            scale: 0.9,
+                            child: Checkbox(
+                              onChanged: (value) {
+                                _componentOperationCubit
+                                        .flutterProject!.mainScreen =
+                                    _componentOperationCubit
+                                        .flutterProject!.currentScreen;
+                                _componentOperationCubit
+                                    .emit(ComponentUpdatedState());
+                              },
+                              value: _componentOperationCubit
+                                      .flutterProject!.mainScreen ==
+                                  _componentOperationCubit
+                                      .flutterProject!.currentScreen,
+                              visualDensity:
+                                  const VisualDensity(horizontal: 4, vertical: 4),
+                            ),
+                          ),
+                          Text(
+                            'Main Screen',
+                            style: AppFontStyle.roboto(14,
+                                color: Colors.black, fontWeight: FontWeight.w500),
+                          )
+                        ],
+                      ),
+                      if (_componentOperationCubit
+                              .flutterProject?.currentScreen !=
+                          _componentOperationCubit.flutterProject?.mainScreen)
+                        TextButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => MaterialAlertDialog(
+                                title:
+                                    'Do you really want to delete this Screen?, you will not be able to get back',
+                                positiveButtonText: 'delete',
+                                negativeButtonText: 'cancel',
+                                onPositiveTap: () {
+                                  _componentOperationCubit.deleteCurrentUIScreen(
+                                      _componentOperationCubit
+                                          .flutterProject!.currentScreen);
+                                  _componentOperationCubit
+                                      .flutterProject!.uiScreens
+                                      .remove(_componentOperationCubit
+                                          .flutterProject!.currentScreen);
+                                  final newScreen = _componentOperationCubit
+                                      .flutterProject!.uiScreens
+                                      .where((element) =>
+                                          element.rootComponent?.name ==
+                                              'Scaffold' ||
+                                          element.rootComponent?.name ==
+                                              'MaterialApp')
+                                      .first;
+                                  _componentOperationCubit
+                                      .changeProjectScreen(newScreen);
+
+                                  _componentCreationCubit.changedComponent();
+                                  _componentSelectionCubit
+                                      .changeComponentSelection(
+                                          ComponentSelectionModel.unique(
+                                              newScreen.rootComponent!),
+                                          root: newScreen.rootComponent!);
+                                },
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Remove this screen',
+                            style: AppFontStyle.roboto(14,
+                                color: Colors.red, fontWeight: FontWeight.w600),
+                          ),
+                        )
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+          Expanded(
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: StatefulBuilder(builder: (context, setState2) {
+                      if (!_scrollController.hasListeners) {
+                        _scrollController.addListener(() {
+                          setState2(() {});
+                        });
+                      }
+                      return FractionallySizedBox(
+                        heightFactor: _scrollController.hasClients &&
+                                _scrollController.position.maxScrollExtent > 0
+                            ? (_scrollController.offset /
+                                _scrollController.position.maxScrollExtent)
+                            : 0,
+                        child: Container(
+                          width: 3,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            color: Colors.blueAccent,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                // Expanded(child: Container())
+
+
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: BlocListener<ComponentSelectionCubit,
+                        ComponentSelectionState>(
+                      listener: (context, state) {
+                        if (state is ComponentSelectionChange && state.scroll) {
+                          scrollToSelected();
+                        }
                       },
+                      child: BlocBuilder<ComponentOperationCubit,
+                          ComponentOperationState>(
+                        bloc: _componentOperationCubit,
+                        buildWhen: (state1, state2) {
+                          debugPrint(
+                              '=== ComponentOperationCubit == buildWhen ${state1.runtimeType} to ${state2.runtimeType}');
+                          if (state2 is ComponentUpdatedState) {
+                            return true;
+                          }
+                          return false;
+                        },
+                        builder: (context, state) {
+                          debugPrint(
+                              '=== ComponentOperationCubit == state ${state.runtimeType}');
+                          return SingleChildScrollView(
+                            controller: _scrollController,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Container(
+                                  alignment: Alignment.topLeft,
+                                  padding: const EdgeInsets.all(6),
+                                  child: SublistWidget(
+                                      component: _componentOperationCubit
+                                          .flutterProject!.rootComponent!,
+                                      ancestor: _componentOperationCubit
+                                          .flutterProject!.rootComponent!,
+                                      componentSelectionCubit:
+                                          _componentSelectionCubit,
+                                      componentOperationCubit:
+                                          _componentOperationCubit,
+                                      componentCreationCubit:
+                                          _componentCreationCubit),
+                                ),
+                                // Padding(
+                                //   padding: const EdgeInsets.all(10),
+                                //   child: Row(
+                                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                //     children: [
+                                //       Text(
+                                //         'Custom Widgets',
+                                //         style: AppFontStyle.roboto(14,
+                                //             color: const Color(0xff494949),
+                                //             fontWeight: FontWeight.bold),
+                                //       ),
+                                //       InkWell(
+                                //         borderRadius: BorderRadius.circular(10),
+                                //         onTap: () {
+                                //           //ADD Custom Widgets
+                                //           showCustomWidgetRename(
+                                //               context, 'Enter widget name', (name) {
+                                //             Get.back();
+                                //
+                                //             BlocProvider.of<ComponentOperationCubit>(
+                                //                     context,
+                                //                     listen: false)
+                                //                 .addCustomComponent(name);
+                                //           });
+                                //         },
+                                //         child: const CircleAvatar(
+                                //           radius: 10,
+                                //           backgroundColor: AppColors.theme,
+                                //           child: Icon(
+                                //             Icons.add,
+                                //             size: 15,
+                                //             color: Colors.white,
+                                //           ),
+                                //         ),
+                                //       ),
+                                //     ],
+                                //   ),
+                                // ),
+                                // for (final CustomComponent comp in _componentOperationCubit
+                                //     .flutterProject!.customComponents) ...[
+                                //   Row(
+                                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                //     children: [
+                                //       Container(
+                                //         decoration: BoxDecoration(
+                                //             border: Border.all(
+                                //                 color: AppColors.theme, width: 1.5),
+                                //             borderRadius: BorderRadius.circular(4)),
+                                //         padding: const EdgeInsets.all(5),
+                                //         margin: const EdgeInsets.symmetric(
+                                //             horizontal: 10, vertical: 5),
+                                //         child: Text(
+                                //           comp.name,
+                                //           style: AppFontStyle.roboto(15,
+                                //               color: AppColors.theme,
+                                //               fontWeight: FontWeight.bold),
+                                //         ),
+                                //       ),
+                                //       ComponentModificationMenu(
+                                //         component: comp,
+                                //         ancestor: comp,
+                                //         componentOperationCubit: _componentOperationCubit,
+                                //         componentCreationCubit: _componentCreationCubit,
+                                //         componentSelectionCubit: _componentSelectionCubit,
+                                //       )
+                                //     ],
+                                //   ),
+                                //   if (comp.root != null)
+                                //     Container(
+                                //       alignment: Alignment.topLeft,
+                                //       padding: const EdgeInsets.all(10),
+                                //       child: SublistWidget(
+                                //           component: comp.root!,
+                                //           ancestor: comp,
+                                //           componentSelectionCubit: _componentSelectionCubit,
+                                //           componentOperationCubit: _componentOperationCubit,
+                                //           componentCreationCubit: _componentCreationCubit),
+                                //     ),
+                                // ],
+                                const SizedBox(
+                                  height: 100,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -456,51 +521,131 @@ class _ComponentTreeState extends State<ComponentTree> {
         duration: const Duration(milliseconds: 200));
   }
 
-  void showCustomWidgetRename(
-      BuildContext context, String title, Function(String) onSubmit) {
+  void showScreenNameDialog(
+      BuildContext context, String title, Function(String, String) onSubmit) {
     CustomDialog.show(
-        context,
-        GestureDetector(
-          onTap: () {},
-          child: Container(
-            padding: const EdgeInsets.all(15),
-            color: Colors.white,
-            width: 500,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  style: AppFontStyle.roboto(14, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                SizedBox(
-                  height: 40,
-                  child: AppTextField(
-                    value: '',
-                  ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                AppButton(
-                  height: 40,
-                  title: 'create',
-                  onPressed: () {
-                    if (AppTextField.changedValue.length > 1 &&
-                        !AppTextField.changedValue.contains(' ') &&
-                        !AppTextField.changedValue.contains('.')) {
-                      onSubmit(AppTextField.changedValue);
-                    }
-                  },
-                )
-              ],
+      context,
+      GestureDetector(
+        onTap: () {},
+        child: NewScreenNameDialog(
+          title: title,
+          onSubmit: onSubmit,
+        ),
+      ),
+    );
+  }
+}
+
+class NewScreenNameDialog extends StatefulWidget {
+  final String title;
+  final Function onSubmit;
+
+  const NewScreenNameDialog(
+      {Key? key, required this.title, required this.onSubmit})
+      : super(key: key);
+
+  @override
+  State<NewScreenNameDialog> createState() => _NewScreenNameDialogState();
+}
+
+class _NewScreenNameDialogState extends State<NewScreenNameDialog> {
+  String? type = 'screen';
+  String name = '';
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      color: Colors.white,
+      width: 500,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.title,
+            style: AppFontStyle.roboto(14, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          SizedBox(
+            height: 40,
+            child: AppTextField(
+              controller: _controller,
+              onChange: (data) {
+                name = data;
+              },
             ),
           ),
-        ));
+          const SizedBox(
+            height: 20,
+          ),
+          Row(
+            children: [
+              Text(
+                'Type',
+                style: AppFontStyle.roboto(13, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(
+                width: 20,
+              ),
+              Expanded(
+                  child: CustomDropdownButton<String>(
+                style: AppFontStyle.roboto(14),
+                value: type,
+                hint: null,
+                items: ['screen', 'dialog']
+                    .map<CustomDropdownMenuItem<String>>(
+                      (e) => CustomDropdownMenuItem<String>(
+                        value: e,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            e,
+                            style: AppFontStyle.roboto(14,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    type = value;
+                  });
+                },
+                selectedItemBuilder: (context, e) {
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      e,
+                      style:
+                          AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                    ),
+                  );
+                },
+              )),
+            ],
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          AppButton(
+            height: 40,
+            title: 'Create',
+            onPressed: () {
+              if (name.length > 3 &&
+                  !name.contains(' ') &&
+                  !name.contains('.')) {
+                widget.onSubmit(name, type!);
+              }
+            },
+          )
+        ],
+      ),
+    );
   }
 }
 
@@ -644,6 +789,7 @@ class MultipleChildWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(left: 5, top: 0),
       decoration: const BoxDecoration(
+
         border: Border(
           left: BorderSide(width: 0.4, color: Colors.grey),
         ),
@@ -963,7 +1109,7 @@ class _SublistWidgetState extends State<SublistWidget> {
               )
             ],
           ),
-          if ((widget.component as Holder).child != null) ...[
+          if ((widget.component as Holder).child != null)
             SingleChildWidget(
                 component: widget.component,
                 ancestor: widget.ancestor,
@@ -972,7 +1118,13 @@ class _SublistWidgetState extends State<SublistWidget> {
                 componentOperationCubit: widget.componentOperationCubit,
                 componentSelectionCubit: widget.componentSelectionCubit,
                 componentCreationCubit: widget.componentCreationCubit),
-          ]
+          if (widget.component.componentParameters.isNotEmpty)
+            ComponentParameterWidget(
+                component: widget.component,
+                ancestor: widget.ancestor,
+                componentOperationCubit: widget.componentOperationCubit,
+                componentSelectionCubit: widget.componentSelectionCubit,
+                componentCreationCubit: widget.componentCreationCubit)
         ],
       );
     } else if (widget.component is CustomNamedHolder) {
@@ -1048,26 +1200,22 @@ class _SublistWidgetState extends State<SublistWidget> {
         ],
       );
     } else if (widget.component is CustomComponent) {
-      return Column(
+      return Row(
         children: [
-          Row(
-            children: [
-              ComponentTile(
-                component: widget.component,
-                ancestor: widget.ancestor,
-                componentSelectionCubit: widget.componentSelectionCubit,
-              ),
-              const Spacer(),
-              ComponentModificationMenu(
-                component: widget.component,
-                ancestor: widget.ancestor,
-                componentParameter: widget.componentParameter,
-                componentOperationCubit: widget.componentOperationCubit,
-                componentCreationCubit: widget.componentCreationCubit,
-                componentSelectionCubit: widget.componentSelectionCubit,
-              )
-            ],
+          ComponentTile(
+            component: widget.component,
+            ancestor: widget.ancestor,
+            componentSelectionCubit: widget.componentSelectionCubit,
           ),
+          const Spacer(),
+          ComponentModificationMenu(
+            component: widget.component,
+            ancestor: widget.ancestor,
+            componentParameter: widget.componentParameter,
+            componentOperationCubit: widget.componentOperationCubit,
+            componentCreationCubit: widget.componentCreationCubit,
+            componentSelectionCubit: widget.componentSelectionCubit,
+          )
         ],
       );
     }

@@ -10,6 +10,22 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
   final AuthViewModel authViewModel=AuthViewModel();
   AuthenticationCubit() : super(AuthenticationInitial());
 
+
+  Future<void> loginWithPreferences() async {
+    // emit(AuthLoadingState());
+    try {
+      final response = await FireBridge.tryLoginWithPreference();
+      if (response != null) {
+        emit(AuthSuccessState(response));
+      } else {
+        emit(AuthenticationInitial());
+      }
+    } on Exception catch(error){
+      final errorMsg=error.toString();
+      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']')+1)));
+    }
+  }
+
   Future<void> login(String userName, String password) async {
     emit(AuthLoadingState());
     try {

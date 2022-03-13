@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'constant/app_colors.dart';
-import 'constant/string_constant.dart';
 import 'models/builder_component.dart';
 import 'models/component_model.dart';
 import 'models/other_model.dart';
@@ -42,7 +41,7 @@ final componentList = <String, Component Function()>{
   'SizedBox.expand': () => CSizedBoxExpand(),
   'SizedBox.shrink': () => CSizedBoxShrink(),
   'SizedBox.fromSize': () => CSizedBoxFromSize(),
-  'BackdropFilter':()=> CBackdropFilter(),
+  'BackdropFilter': () => CBackdropFilter(),
   'PreferredSize': () => CPreferredSize(),
   'FittedBox': () => CFittedBox(),
   'Text': () => CText(),
@@ -65,6 +64,7 @@ final componentList = <String, Component Function()>{
   'TextField': () => CTextField(),
   'InputDecorator': () => CInputDecorator(),
   'InkWell': () => CInkWell(),
+  'GestureDetector': () => CGestureDetector(),
   'Tooltip': () => CTooltip(),
   'TextButton': () => CTextButton(),
   'OutlinedButton': () => COutlinedButton(),
@@ -877,14 +877,16 @@ class CCircleAvatar extends Holder {
   }
 }
 
-class COutlinedButton extends Holder {
+class COutlinedButton extends ClickableHolder {
   COutlinedButton()
       : super('OutlinedButton', [Parameters.buttonStyleParameter()]);
 
   @override
   Widget create(BuildContext context) {
     return OutlinedButton(
-      onPressed: () {},
+      onPressed: () {
+        perform(context);
+      },
       child: child?.build(context) ?? Container(),
       style: parameters[0].value,
     );
@@ -908,6 +910,7 @@ class CElevatedButton extends ClickableHolder {
     );
   }
 }
+
 // class CBottomNavigationBar extends Cu {
 //   CBottomNavigationBar() : super('BottomNavigationBar',[
 //   ]);
@@ -955,7 +958,21 @@ class CInkWell extends ClickableHolder {
   }
 }
 
-class CFloatingActionButton extends Holder {
+class CGestureDetector extends ClickableHolder {
+  CGestureDetector() : super('GestureDetector', []);
+
+  @override
+  Widget create(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        perform(context);
+      },
+      child: child?.build(context) ?? Container(),
+    );
+  }
+}
+
+class CFloatingActionButton extends ClickableHolder {
   CFloatingActionButton()
       : super('FloatingActionButton', [
           Parameters.backgroundColorParameter(),
@@ -983,9 +1000,10 @@ class CFloatingActionButton extends Holder {
 
   @override
   Widget create(BuildContext context) {
-
     return FloatingActionButton(
-      onPressed: () {},
+      onPressed: () {
+        perform(context);
+      },
       child: child?.build(context) ?? Container(),
       backgroundColor: parameters[0].value,
       foregroundColor: parameters[1].value,
@@ -1001,13 +1019,15 @@ class CFloatingActionButton extends Holder {
   }
 }
 
-class CTextButton extends Holder {
+class CTextButton extends ClickableHolder {
   CTextButton() : super('TextButton', [Parameters.buttonStyleParameter()]);
 
   @override
   Widget create(BuildContext context) {
     return TextButton(
-      onPressed: () {},
+      onPressed: () {
+        perform(context);
+      },
       child: child?.build(context) ?? Container(),
       style: parameters[0].value,
     );
@@ -1173,12 +1193,8 @@ class CSizedBox extends Holder {
   }
 }
 
-
 class CBackdropFilter extends Holder {
-  CBackdropFilter()
-      : super('BackdropFilter', [
-        Parameters.filterParameter()
-  ]);
+  CBackdropFilter() : super('BackdropFilter', [Parameters.filterParameter()]);
 
   @override
   Widget create(BuildContext context) {
@@ -1188,6 +1204,7 @@ class CBackdropFilter extends Holder {
     );
   }
 }
+
 class CSizedBoxShrink extends Holder {
   CSizedBoxShrink() : super('SizedBox.shrink', []);
 
@@ -1277,7 +1294,7 @@ class CMaterial extends Holder {
 class CText extends Component {
   CText()
       : super('Text', [
-          Parameters.textParameter(),
+          Parameters.textParameter()..withDefaultValue('Hello World'),
           Parameters.googleFontTextStyleParameter(),
           Parameters.textAlignParameter(),
         ]);
@@ -1372,7 +1389,7 @@ class CImage extends Component {
   }
 }
 
-class CIconButton extends Component {
+class CIconButton extends ClickableComponent {
   CIconButton()
       : super('IconButton', [
           ComponentParameter(
@@ -1421,7 +1438,9 @@ class CIconButton extends Component {
       alignment: parameters[8].value,
       padding: parameters[9].value,
       tooltip: parameters[10].value,
-      onPressed: () {},
+      onPressed: () {
+        perform(context);
+      },
     );
   }
 }

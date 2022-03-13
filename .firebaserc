@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "flutter-visual-builder"
-  }
+    "default": "flutter-visual-builder-2",
+    "main": "flutter-visual-builder"
+  },
+  "targets": {}
 }

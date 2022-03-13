@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../code_to_component.dart';
+import '../common/undo/revert_work.dart';
 import '../constant/string_constant.dart';
+import '../cubit/stack_action/stack_action_cubit.dart';
+import '../ui/action_ui.dart';
 import 'local_model.dart';
 import 'variable_model.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -40,7 +44,7 @@ class FlutterProject {
     currentScreen.rootComponent = root;
   }
 
-  String code() {
+  String code(final UIScreen screen) {
     String implementationCode = '';
     if (customComponents.isNotEmpty) {
       for (final customComponent in customComponents) {
@@ -68,19 +72,26 @@ class FlutterProject {
         in ComponentOperationCubit.codeProcessor.functions.values) {
       functionImplementationCode += '${function.functionCode}\n';
     }
-    final className = name[0].toUpperCase() + name.substring(1);
+    final className = screen.name[0].toUpperCase() + screen.name.substring(1);
     // ${rootComponent!.code()}
     return ''' 
-    // copy all the images to assets/images/ folder
+   
+    ${screen==mainScreen?'''
+     // copy all the images to assets/images/ folder
     // 
     // TODO Dependencies (add into pubspec.yaml)
     // google_fonts: ^2.2.0
+    ''':''}
     import 'package:flutter/material.dart';
-    import 'package:google_fonts/google_fonts.dart';
-    ${currentScreen.models.map((e) => e.implementationCode).join('\n')}
+    cimport 'package:google_fonts/google_fonts.dart';
+    
+    ${screen.models.map((e) => e.implementationCode).join('\n')}
+    
+    ${screen==mainScreen?'''
     void main(){
     runApp(const $className());
     } 
+    ''':''}
     class $className extends StatefulWidget {
     const $className({Key? key}) : super(key: key);
 
@@ -89,13 +100,13 @@ class FlutterProject {
     }
 
     class _${className}State extends State<$className> {
-    ${currentScreen.models.map((e) => e.declarationCode).join('\n')}
+    ${screen.models.map((e) => e.declarationCode).join('\n')}
      $staticVariablesCode
      $dynamicVariablesDefinitionCode
      @override
      Widget build(BuildContext context) {
          $dynamicVariableAssignmentCode
-          return ${rootComponent!.code()};
+          return ${screen.rootComponent!.code()};
       }
       $functionImplementationCode 
     }
@@ -104,14 +115,34 @@ class FlutterProject {
     ''';
   }
 
-  Widget run(BuildContext context, {bool navigator = false}) {
+  Widget run(final BuildContext context, {bool navigator = false}) {
     if (!navigator) {
       return rootComponent?.build(context);
     }
-    return Navigator(
-      key: const GlobalObjectKey(navigationKey),
-      onGenerateRoute: (settings) => MaterialPageRoute(
-        builder: (_) => mainScreen.build(context) ?? Container(),
+
+    final _stackCubit = StackActionCubit();
+    return BlocProvider<StackActionCubit>(
+      create: (_) => _stackCubit,
+      child: BlocBuilder<StackActionCubit, StackActionState>(
+        bloc: _stackCubit,
+        builder: (context, state) {
+          return Stack(
+            children: [
+              Navigator(
+                key: const GlobalObjectKey(navigationKey),
+                onGenerateRoute: (settings) => MaterialPageRoute(
+                  builder: (_) => mainScreen.build(context) ?? Container() ,
+                ),
+              ),
+              for (final model in _stackCubit.models)
+                Center(
+                  child: StackActionWidget(
+                    actionModel: model,
+                  ),
+                )
+            ],
+          );
+        },
       ),
     );
   }
@@ -127,6 +158,7 @@ class UIScreen {
   Component? rootComponent;
   final List<LocalModel> models = [];
   final List<VariableModel> variables = [];
+  final RevertWork revertWork = RevertWork.init();
 
   UIScreen(this.name);
 
@@ -154,9 +186,11 @@ class UIScreen {
     return screen;
   }
 
-  factory UIScreen.otherScreen(final String name) {
+  factory UIScreen.otherScreen(final String name, {String type = 'screen'}) {
     final UIScreen uiScreen = UIScreen(name);
-    uiScreen.rootComponent = componentList['Scaffold']!();
+    uiScreen.rootComponent = type == 'screen'
+        ? componentList['Scaffold']!()
+        : componentList['Container']!();
     return uiScreen;
   }
 

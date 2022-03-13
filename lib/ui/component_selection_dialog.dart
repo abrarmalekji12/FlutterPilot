@@ -220,6 +220,9 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                           child: LayoutBuilder(builder: (context, constraints) {
                             return BlocBuilder<ComponentOperationCubit,
                                 ComponentOperationState>(
+                              buildWhen: (context,state){
+                                return state is ComponentUpdatedState;
+                              },
                               bloc: componentOperationCubit,
                               builder: (context, state) {
                                 if (state is ComponentOperationLoadingState) {

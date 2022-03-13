@@ -1,4 +1,3 @@
-import 'common/logger.dart';
 
 abstract class CodeOperations {
   static String? trim(String? code) {
@@ -8,8 +7,12 @@ abstract class CodeOperations {
     final List<int> outputString = [];
     bool open = false;
     for (int i = 0; i < code.length; i++) {
-      if (code[i] == '\''||code[i]=='`') {
+      if (code[i] == '\'' || code[i] == '`') {
         open = !open;
+      } else if (code[i] == '<') {
+        open = true;
+      } else if (code[i] == '>') {
+        open = false;
       } else if (!open && (code[i] == ' ' || code[i] == '\n')) {
         continue;
       }
@@ -19,25 +22,24 @@ abstract class CodeOperations {
   }
 
   static List<String> splitByComma(String paramCode) {
-    if(paramCode.startsWith('[')&&paramCode.endsWith(']')){
-      paramCode=paramCode.substring(1,paramCode.length-1);
+    if (paramCode.startsWith('[') && paramCode.endsWith(']')) {
+      paramCode = paramCode.substring(1, paramCode.length - 1);
     }
     int parenthesisCount = 0;
     final List<int> dividers = [-1];
-    bool stringQuote=false;
+    bool stringQuote = false;
     for (int i = 0; i < paramCode.length; i++) {
-      if(paramCode[i]=='\''||paramCode[i]=='`'){
-        stringQuote=!stringQuote;
+      if (paramCode[i] == '\'' || paramCode[i] == '`') {
+        stringQuote = !stringQuote;
       }
-      if(stringQuote){
+      if (stringQuote) {
         continue;
       }
       if (paramCode[i] == ',' && parenthesisCount == 0) {
         dividers.add(i);
-      }
-      else if (paramCode[i] == '('||paramCode[i] == '[') {
+      } else if (paramCode[i] == '(' || paramCode[i] == '[') {
         parenthesisCount++;
-      } else if (paramCode[i] == ')'||paramCode[i] == ']') {
+      } else if (paramCode[i] == ')' || paramCode[i] == ']') {
         parenthesisCount--;
       }
     }

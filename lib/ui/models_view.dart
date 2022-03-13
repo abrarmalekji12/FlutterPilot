@@ -58,7 +58,7 @@ class _ModelBoxState extends State<ModelBox> {
                 },
                 builder: (context, state) {
                   return Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
                         'Models',

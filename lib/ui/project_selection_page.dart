@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/app_loader.dart';
+import '../common/material_alert.dart';
 import '../constant/font_style.dart';
 import '../cubit/authentication/authentication_cubit.dart';
 import '../models/project_model.dart';
@@ -22,8 +23,7 @@ class ProjectSelectionPage extends StatefulWidget {
 
 class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
   late final FlutterProjectCubit _flutterProjectCubit;
-  List<FlutterProject> _flutterProjects = [];
-  final _formKey=GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _textEditingController = TextEditingController();
 
   @override
@@ -44,13 +44,13 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
           padding: const EdgeInsets.all(40),
           child: BlocListener<AuthenticationCubit, AuthenticationState>(
             listener: (context, state) {
-              switch(state.runtimeType){
-                case AuthLoadingState :
+              switch (state.runtimeType) {
+                case AuthLoadingState:
                   AppLoader.show(context);
                   break;
-                case AuthSuccessState :
+                case AuthSuccessState:
                   AppLoader.hide();
-                  Get.offAll(()=>const LoginPage());
+                  Get.offAll(() => const LoginPage());
                   break;
               }
             },
@@ -63,13 +63,10 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                     break;
                   case FlutterProjectsLoadedState:
                     AppLoader.hide();
-                    _flutterProjects = (state as FlutterProjectsLoadedState)
-                        .flutterProjectList;
                     setState(() {});
                     break;
                   case FlutterProjectLoadedState:
-                    _flutterProjects.add(
-                        (state as FlutterProjectLoadedState).flutterProject);
+
                     break;
                   case FlutterProjectErrorState:
                     AppLoader.hide();
@@ -120,8 +117,8 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                           fontStyle: FontStyle.normal,
                         ),
                       ),
-                      validator: (value){
-                        if(value==null||value.length < 3){
+                      validator: (value) {
+                        if (value == null || value.length < 3) {
                           return 'Project name should be greater than 3';
                         }
                         return null;
@@ -139,7 +136,6 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                             fontStyle: FontStyle.normal,
                           ),
                         ),
-
                         helperStyle: GoogleFonts.getFont(
                           'ABeeZee',
                           textStyle: const TextStyle(
@@ -220,10 +216,10 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                       _textEditingController.text = '';
                                       setState(() {});
                                       Get.to(
-                                              () => HomePage(
-                                            projectName: name,
-                                            userId: widget.userId,
-                                          ),
+                                          () => HomePage(
+                                                projectName: name,
+                                                userId: widget.userId,
+                                              ),
                                           routeName: 'projects/$name');
                                     });
                                   }
@@ -231,8 +227,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.max,
@@ -286,34 +281,62 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                           Expanded(
                             child: SingleChildScrollView(
                               child: Wrap(
-                                children: _flutterProjects
+                                children: _flutterProjectCubit.projects
                                     .map((project) => Padding(
                                           padding: const EdgeInsets.only(
                                               right: 10, bottom: 10),
-                                          child: ElevatedButton(
-                                            onPressed: () {
-                                              Get.to(
-                                                  () => HomePage(
-                                                        projectName:
-                                                            project.name,
-                                                        userId: widget.userId,
-                                                      ),
-                                                  routeName:
-                                                      '/projects/${project.name}');
-                                            },
-                                            child: Text(
-                                              project.name,
-                                              style: GoogleFonts.getFont(
-                                                'Roboto',
-                                                textStyle: const TextStyle(
-                                                  fontSize: 18,
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontStyle: FontStyle.normal,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  Get.to(
+                                                      () => HomePage(
+                                                            projectName:
+                                                                project.name,
+                                                            userId:
+                                                                widget.userId,
+                                                          ),
+                                                      routeName:
+                                                          '/projects/${project.name}');
+                                                },
+                                                child: Text(
+                                                  project.name,
+                                                  style: GoogleFonts.getFont(
+                                                    'Roboto',
+                                                    textStyle: const TextStyle(
+                                                      fontSize: 18,
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontStyle:
+                                                          FontStyle.normal,
+                                                    ),
+                                                  ),
+                                                  textAlign: TextAlign.left,
                                                 ),
                                               ),
-                                              textAlign: TextAlign.left,
-                                            ),
+                                              InkWell(
+                                                  child: const Icon(
+                                                    Icons.delete,
+                                                    color: Colors.red,
+                                                  ),
+                                                  onTap: () {
+                                                    showDialog(context: context,builder:
+                                                      (_)=> MaterialAlertDialog(
+                                                        title:
+                                                        'Do you really want to delete this project?, you will not be able to get back',
+                                                        positiveButtonText: 'delete',
+                                                        negativeButtonText: 'cancel',
+                                                        onPositiveTap: (){
+                                                          _flutterProjectCubit
+                                                              .deleteProject(project);
+                                                        },
+                                                      ),
+                                                    );
+                                                  },
+                                              )
+                                            ],
                                           ),
                                         ))
                                     .toList(growable: false),

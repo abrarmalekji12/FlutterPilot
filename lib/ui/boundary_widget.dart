@@ -50,6 +50,7 @@ class BoundaryWidget extends StatelessWidget {
         .map<Boundary>((e) => Boundary(e.boundary!, e.name))
         .toList(growable: false);
   }
+
 // List<Boundary> getAllBoundaries(BuildContext context) {
 //   final List<Boundary> boundaries = [];
 //   if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)

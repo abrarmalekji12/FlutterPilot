@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../common/dialog_selection.dart';
 import '../constant/app_colors.dart';
+import '../cubit/action_edit/action_edit_cubit.dart';
 import '../models/builder_component.dart';
 import '../models/component_selection.dart';
 import '../runtime_provider.dart';
@@ -90,7 +91,13 @@ class _HomePageState extends State<HomePage> {
                 componentOperationCubit: componentOperationCubit,
                 screenConfigCubit: screenConfigCubit,
               ),
-            );
+            ).then((value) {
+              ComponentOperationCubit.codeProcessor.variables['dw']!.value =
+                  screenConfigCubit.screenConfig.width;
+              ComponentOperationCubit.codeProcessor.variables['dh']!.value =
+                  screenConfigCubit.screenConfig.height;
+
+            });
           } else if (componentOperationCubit.runtimeMode == RuntimeMode.run) {
             Get.back();
             componentOperationCubit.runtimeMode = RuntimeMode.edit;
@@ -248,10 +255,13 @@ class ScreenConfigSelection extends StatelessWidget {
                       value: e,
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${e.name} (${e.width}x${e.height})',
-                          style: AppFontStyle.roboto(13,
-                              fontWeight: FontWeight.w500),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Text(
+                            '${e.name} (${e.width}x${e.height})',
+                            style: AppFontStyle.roboto(13,
+                                fontWeight: FontWeight.w500),
+                          ),
                         ),
                       ),
                     ),
@@ -304,10 +314,9 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
               CustomDialog.show(
                 context,
                 CodeViewerWidget(
-                  code: BlocProvider.of<ComponentOperationCubit>(context,
-                          listen: false)
-                      .flutterProject!
-                      .code(),
+                  componentOperationCubit:
+                      BlocProvider.of<ComponentOperationCubit>(context,
+                          listen: false),
                 ),
               );
             },
@@ -317,7 +326,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
               ),
               color: Colors.blueAccent,
               child: Padding(
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.all(7),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
@@ -325,13 +334,14 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                     const Icon(
                       Icons.code,
                       color: Colors.white,
+                      size: 18,
                     ),
                     const SizedBox(
                       width: 10,
                     ),
                     Text(
-                      'view code',
-                      style: AppFontStyle.roboto(14, color: Colors.white),
+                      'Code',
+                      style: AppFontStyle.roboto(13, color: Colors.white),
                     )
                   ],
                 ),
@@ -358,7 +368,15 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                   screenConfigCubit: BlocProvider.of<ScreenConfigCubit>(context,
                       listen: false),
                 ),
-              );
+              ).then((value) {
+                ComponentOperationCubit.codeProcessor.variables['dw']!.value =
+                    BlocProvider.of<ScreenConfigCubit>(context,
+                        listen: false).screenConfig.width;
+                ComponentOperationCubit.codeProcessor.variables['dh']!.value =
+                    BlocProvider.of<ScreenConfigCubit>(context,
+                        listen: false).screenConfig.height;
+
+              });
             },
             child: Card(
               shape: RoundedRectangleBorder(
@@ -366,21 +384,22 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
               ),
               color: Colors.green.shade500,
               child: Padding(
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.all(7),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
-                      Icons.remove_red_eye_rounded,
+                      Icons.play_arrow,
                       color: Colors.white,
+                      size: 18,
                     ),
                     const SizedBox(
                       width: 10,
                     ),
                     Text(
-                      'view',
-                      style: AppFontStyle.roboto(14, color: Colors.white),
+                      'Run',
+                      style: AppFontStyle.roboto(13, color: Colors.white),
                     )
                   ],
                 ),
@@ -507,49 +526,49 @@ class PrototypeShowcase extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: InkWell(
-              onTap: () {
-                BlocProvider.of<FlutterProjectCubit>(context, listen: false)
-                    .reloadProject(
-                        BlocProvider.of<ComponentSelectionCubit>(context,
-                            listen: false),
-                        BlocProvider.of<ComponentOperationCubit>(context,
-                            listen: false));
-              },
-              borderRadius: BorderRadius.circular(10),
-              child: const Icon(
-                Icons.refresh,
-                color: Colors.black,
-              )),
-        ),
-        const Divider(
-          height: 5,
-          thickness: 0.4,
-        ),
-        Expanded(
-          child: RuntimeProvider(
-            runtimeMode: RuntimeMode.run,
-            child: BlocBuilder<FlutterProjectCubit, FlutterProjectState>(
-              buildWhen: (state1, state2) {
-                if (state2 is FlutterProjectLoadingState) {
-                  return false;
-                }
-                return true;
-              },
-              builder: (context, state) {
-                if (state is FlutterProjectLoadedState) {
-                  return state.flutterProject.run(context);
-                }
-                return Container();
-              },
-            ),
-          ),
-        ),
-      ],
+    // Padding(
+    //   padding: const EdgeInsets.all(8.0),
+    //   child: InkWell(
+    //       onTap: () {
+    //         BlocProvider.of<FlutterProjectCubit>(context, listen: false)
+    //             .reloadProject(
+    //             BlocProvider.of<ComponentSelectionCubit>(context,
+    //                 listen: false),
+    //             BlocProvider.of<ComponentOperationCubit>(context,
+    //                 listen: false));
+    //       },
+    //       borderRadius: BorderRadius.circular(10),
+    //       child: const Icon(
+    //         Icons.refresh,
+    //         color: Colors.black,
+    //       )),
+    // ),
+    // const Divider(
+    // height: 5,
+    // thickness: 0.4,
+    // ),
+
+    return RuntimeProvider(
+      runtimeMode: RuntimeMode.run,
+      child: BlocBuilder<FlutterProjectCubit, FlutterProjectState>(
+        buildWhen: (state1, state2) {
+          if (state2 is FlutterProjectLoadingState) {
+            return false;
+          }
+          return true;
+        },
+        builder: (context, state) {
+          if (state is FlutterProjectLoadedState) {
+            ComponentOperationCubit.codeProcessor.variables['dw']!.value =
+                MediaQuery.of(context).size.width;
+            ComponentOperationCubit.codeProcessor.variables['dh']!.value =
+                MediaQuery.of(context).size.height;
+
+            return state.flutterProject.run(context, navigator: true);
+          }
+          return Container();
+        },
+      ),
     );
   }
 }
@@ -639,12 +658,6 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                         component: _componentSelectionCubit.currentSelected
                             .propertySelection as BuilderComponent,
                       ),
-                    if (_componentSelectionCubit
-                        .currentSelected.propertySelection is ClickableHolder)
-                      ActionModelWidget(
-                        component: _componentSelectionCubit.currentSelected
-                            .propertySelection as ClickableHolder,
-                      ),
                     Expanded(
                       child: BlocListener<ComponentCreationCubit,
                           ComponentCreationState>(
@@ -663,6 +676,25 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                         child: ListView(
                           controller: _propertyScrollController,
                           children: [
+                            if (_componentSelectionCubit
+                                .currentSelected.propertySelection is Clickable)
+                              BlocProvider<ActionEditCubit>(
+                                create: (_) => ActionEditCubit(),
+                                child: BlocListener<ActionEditCubit,
+                                    ActionEditState>(
+                                  listener: (context, state) {
+                                    if (state is ActionChangeState) {
+                                      _componentOperationCubit
+                                          .updateRootComponent();
+                                    }
+                                  },
+                                  child: ActionModelWidget(
+                                    component: _componentSelectionCubit
+                                        .currentSelected
+                                        .propertySelection as Clickable,
+                                  ),
+                                ),
+                              ),
                             for (final param in _componentSelectionCubit
                                 .currentSelected.propertySelection.parameters)
                               ParameterWidget(

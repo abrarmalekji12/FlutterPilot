@@ -30,10 +30,11 @@ class CustomDropdownButton<T> extends StatefulWidget {
 
 class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
   // T? selected;
-  GlobalKey globalKey = GlobalKey();
+  final GlobalKey globalKey = GlobalKey();
+
   OverlayEntry? overlayEntry;
   int state = 0;
-
+  static const itemHeight=30.0;
   @override
   void initState() {
     super.initState();
@@ -130,7 +131,7 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xfff2f2f2),width: 1),
+          border: Border.all(color: const Color(0xfff2f2f2),width: 2),
         ),
         padding: const EdgeInsets.all(5),
         child: Row(
@@ -189,13 +190,13 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
 
   double getCalculatedHeight() {
     final size=MediaQuery.of(context).size;
-    final itemsHeight=widget.items.length*40.0;
+    final height=widget.items.length*itemHeight;
     final topPosition=getTopPosition();
-    if(topPosition+itemsHeight>size.height){
+    if(topPosition+height>size.height){
       return size.height-(topPosition);
     }
     // buttonSize = renderBox.size;
-    return itemsHeight;
+    return height;
   }
   double getTopPosition() {
     final RenderBox renderBox =
@@ -205,8 +206,8 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
 
     final Offset position = renderBox.localToGlobal(Offset.zero);
 
-    if(position.dy+renderBox.size.height+(40*widget.items.length)>size.height) {
-      return size.height-(40*widget.items.length)>0?size.height-(40*widget.items.length):position.dy;
+    if(position.dy+renderBox.size.height+(itemHeight*widget.items.length)>size.height) {
+      return size.height-(itemHeight*widget.items.length)>0?size.height-(itemHeight*widget.items.length):position.dy;
     }
     return position.dy + renderBox.size.height;
   }

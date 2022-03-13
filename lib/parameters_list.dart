@@ -402,6 +402,8 @@ class Parameters {
         'close': Icons.close,
         'add': Icons.add,
         'delete': Icons.delete,
+        'search': Icons.search,
+        'update': Icons.update,
         'arrow_back': Icons.arrow_back,
         'arrow_back_ios': Icons.arrow_back_ios,
         'arrow_forward': Icons.arrow_forward,
@@ -1003,7 +1005,7 @@ class Parameters {
   static Parameter googleFontTypeParameter() {
     return ChoiceValueListParameter<String>(
         options: GoogleFonts.asMap().keys.toList(),
-        defaultValue: 0,
+        defaultValue: 1068,
         name: 'Font - Family',
         dynamicChild: (value) {
           return Text(
@@ -1140,12 +1142,11 @@ class Parameters {
   static filterParameter() => ComplexParameter(
           params: [
             Parameters.widthParameter()
-
               ..withRequired(true)
               ..withDefaultValue(0.1)
               ..withNamedParamInfoAndSameDisplayName('sigmaX'),
             Parameters.widthParameter()
-            ..withRequired(true)
+              ..withRequired(true)
               ..withDefaultValue(0.1)
               ..withNamedParamInfoAndSameDisplayName('sigmaY')
           ],

@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
+import '../common/shared_preferences.dart';
+import '../constant/preference_key.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../models/local_model.dart';
 import '../models/variable_model.dart';
@@ -123,6 +125,20 @@ abstract class FireBridge {
     logger('=== FIRE-BRIDGE == deleteGlobalCustomComponent ==');
   }
 
+  static Future<void> deleteProject( int userId, FlutterProject project) async {
+    final response = await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(project.name).get();
+    for(final doc in response.docs){
+      await doc.reference.delete();
+    }
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProjectInfo) .update({
+      'projects': FieldValue.arrayRemove([project.name])
+    });
+  }
   static Future<void> saveFlutterProject(
       int userId, FlutterProject project) async {
     final List<CustomComponent> components = project.customComponents;
@@ -174,16 +190,16 @@ abstract class FireBridge {
   }
 
   static Future<List<FavouriteModel>> loadFavourites(final int userId,
-      {String? projectName}) async {
+      {required FlutterProject? project}) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot;
-    if (projectName == null) {
+    if (project == null) {
       snapshot = await FirebaseFirestore.instance
           .collection('us$userId|${Strings.kFavourites}')
           .get();
     } else {
       snapshot = await FirebaseFirestore.instance
           .collection('us$userId|${Strings.kFavourites}')
-          .where('project_name', isEqualTo: projectName)
+          .where('project_name', isEqualTo: project.name)
           .get();
     }
 
@@ -191,7 +207,7 @@ abstract class FireBridge {
     for (final document in snapshot.docs) {
       final json = document.data();
       favouriteModels.add(FavouriteModel(
-          Component.fromCode(json['code'], null)!
+          Component.fromCode(json['code'], project)!
             ..boundary = Rect.fromLTWH(0, 0, json['width'], json['height']),
           json['project_name']));
     }
@@ -309,20 +325,25 @@ abstract class FireBridge {
     for (final screenDoc in documents) {
       final screen = UIScreen.fromJson(screenDoc.data(), flutterProject);
       flutterProject.uiScreens.add(screen);
-
     }
-    for(int i=0;i< flutterProject.uiScreens.length;i++){
 
-      flutterProject.uiScreens[i].rootComponent = Component.fromCode(documents[i].data()['root'], flutterProject);
-    }
     if (projectInfo['current_screen'] != null) {
+      bool initializedMain=false,initializedCurrent=false;
       for (final screen in flutterProject.uiScreens) {
         if (screen.name == projectInfo['main_screen']) {
           flutterProject.mainScreen = screen;
+          initializedMain=true;
         }
         if (screen.name == projectInfo['current_screen']) {
           flutterProject.currentScreen = screen;
+        initializedCurrent=true;
         }
+      }
+      if(!initializedMain){
+       flutterProject.mainScreen=flutterProject.uiScreens.first;
+      }
+      if(!initializedCurrent){
+        flutterProject.currentScreen=flutterProject.uiScreens.first;
       }
     } else {
       if (flutterProject.uiScreens.isNotEmpty) {
@@ -335,6 +356,13 @@ abstract class FireBridge {
 
       flutterProject.mainScreen = flutterProject.uiScreens.first;
     }
+    final currentScreen = flutterProject.currentScreen;
+    for (int i = 0; i < flutterProject.uiScreens.length; i++) {
+      flutterProject.currentScreen = flutterProject.uiScreens[i];
+      flutterProject.uiScreens[i].rootComponent =
+          Component.fromCode(documents[i].data()['root'], flutterProject);
+    }
+    flutterProject.currentScreen = currentScreen;
     // for (final doc in documents) {
     //    final componentBody = doc.data();
     //    flutterProject.customComponents.add(
@@ -380,7 +408,18 @@ abstract class FireBridge {
     return null;
   }
 
+  static Future<int?> tryLoginWithPreference() async {
+    if (Preferences.sharedPreferences.containsKey(PrefKey.UID)) {
+      return Preferences.sharedPreferences.getInt(PrefKey.UID);
+    }
+    return null;
+  }
+
   static Future<AuthResponse> login(String userName, String password) async {
+    if (Preferences.sharedPreferences.containsKey(PrefKey.UID)) {
+      return AuthResponse.left(
+          Preferences.sharedPreferences.getInt(PrefKey.UID)!);
+    }
     final loginResponse = await FirebaseAuth.instance
         .signInWithEmailAndPassword(email: userName, password: password);
     if (loginResponse.user == null) {
@@ -398,6 +437,7 @@ abstract class FireBridge {
           'Something went wrong, Please check your internet');
     }
     final data = response.docs[0].data();
+    Preferences.sharedPreferences.setInt(PrefKey.UID, data['userId']);
     return AuthResponse.left(data['userId']);
   }
 
@@ -551,8 +591,8 @@ abstract class FireBridge {
     logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
   }
 
-  static Future<CustomComponent> retrieveComponent(int userId,
-      String projectName, String name, FlutterProject flutterProject) async {
+  static Future<CustomComponent> retrieveComponent(final int userId,
+      final String projectName, final String name, final FlutterProject flutterProject) async {
     final snapshot = await FirebaseFirestore.instance.collection(name).get();
     return StatelessComponent(name: name)
       ..root = Component.fromCode(snapshot.docs[0]['code'], flutterProject);
@@ -560,5 +600,13 @@ abstract class FireBridge {
 
   static Future<void> logout() async {
     await FirebaseAuth.instance.signOut();
+    Preferences.sharedPreferences.remove(PrefKey.UID);
+  }
+
+  static removeUIScreen(final int userId, final FlutterProject flutterProject, final UIScreen uiScreen) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(flutterProject.name).doc(uiScreen.name).delete();
   }
 }

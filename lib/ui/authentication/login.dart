@@ -47,6 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       AppLoader.show(context);
       FireBridge.init().then((value) {
         AppLoader.hide();
+        _authenticationCubit.loginWithPreferences();
       });
     });
   }
@@ -95,10 +96,13 @@ class _LoginPageState extends State<LoginPage> {
                   width: dw,
                   fit: BoxFit.cover,
                 ),
-                BackdropFilter(filter: ImageFilter.blur(sigmaX: 11,sigmaY: 11),child:Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                ) ,),
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 11, sigmaY: 11),
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                ),
                 Align(
                     alignment: Alignment.center,
                     child: Form(
@@ -107,331 +111,338 @@ class _LoginPageState extends State<LoginPage> {
                       child: FittedBox(
                         child: Container(
                             width: res(400, dw),
-                            height: ResponsiveWidget.isSmallScreen(context)?dh:null,
+                            height: ResponsiveWidget.isSmallScreen(context)
+                                ? dh
+                                : null,
                             alignment: Alignment.center,
-                            decoration:  BoxDecoration(
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                  offset: const Offset(0,8),
+                            decoration:
+                                BoxDecoration(color: Colors.white, boxShadow: [
+                              BoxShadow(
+                                  offset: const Offset(0, 8),
                                   blurRadius: 24,
                                   spreadRadius: 0,
-                                  color: Colors.black.withOpacity(0.1)
-                                )
-                              ]
-                            ),
+                                  color: Colors.black.withOpacity(0.1))
+                            ]),
                             child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 50,horizontal: 20),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset(
-                                      'assets/icons/half_circle.png',
-                                      width: 30,
-                                      fit: BoxFit.fitWidth,
-                                    ),
-                                    const SizedBox(
-                                      height: 30,
-                                    ),
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          'Hey,\nLogin Now.',
-                                          style: GoogleFonts.getFont(
-                                            'Lato',
-                                            textStyle: const TextStyle(
-                                              fontSize: 22,
-                                              color: Color(0xff000000),
-                                              fontWeight: FontWeight.w900,
-                                              fontStyle: FontStyle.normal,
-                                            ),
-                                          ),
-                                          textAlign: TextAlign.left,
-                                        ),
-                                        const SizedBox(
-                                          height: 20,
-                                        ),
-                                        RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              TextSpan(
-                                                text: 'If you are new/',
-                                                style: GoogleFonts.getFont(
-                                                  'Roboto',
-                                                  textStyle: const TextStyle(
-                                                    fontSize: 15,
-                                                    color: Color(0xff9c9da2),
-                                                    fontWeight:
-                                                        FontWeight.w500,
-                                                    fontStyle:
-                                                        FontStyle.normal,
-                                                  ),
-                                                ),
-                                              ),
-                                              TextSpan(
-                                                recognizer:
-                                                    TapGestureRecognizer()
-                                                      ..onTap = () {
-                                                        Get.off(() =>
-                                                            const RegisterPage());
-                                                      },
-                                                text: ' Create New',
-                                                style: GoogleFonts.getFont(
-                                                  'Lato',
-                                                  textStyle: const TextStyle(
-                                                    fontSize: 17,
-                                                    color: Color(0xff1a1b26),
-                                                    fontWeight:
-                                                        FontWeight.w600,
-                                                    fontStyle:
-                                                        FontStyle.normal,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(
-                                      height: 30,
-                                    ),
-                                    Container(
-                                        height: 60,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xfffdce84),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          shape: BoxShape.rectangle,
-                                        ),
-                                        child: TextFormField(
-                                          controller: _userNameController,
-                                          style: GoogleFonts.getFont(
-                                            'Roboto',
-                                            textStyle: const TextStyle(
-                                              fontSize: 19,
-                                              color: Color(0xffffffff),
-                                              fontWeight: FontWeight.w400,
-                                              fontStyle: FontStyle.normal,
-                                            ),
-                                          ),
-                                          onChanged: (value) {
-                                            _authenticationCubit.authViewModel
-                                                .userName = value;
-                                          },
-                                          validator: (value) {
-                                            return (!(value?.isValidEmail()??false))
-                                                ? 'Invalid email'
-                                                : null;
-                                          },
-                                          readOnly: false,
-                                          decoration: InputDecoration(
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                              horizontal: 20,
-                                              vertical: 5,
-                                            ),
-                                            labelText: 'Your Email',
-                                            labelStyle: GoogleFonts.getFont(
-                                              'Roboto',
-                                              textStyle: const TextStyle(
-                                                fontSize: 19,
-                                                color: Color(0xffffffff),
-                                                fontWeight: FontWeight.w600,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            helperStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xff000000),
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            hintStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xff000000),
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            errorStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-
-                                                color: Colors.red,
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            border: UnderlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(0),
-                                              borderSide: BorderSide.none,
-                                            ),
-                                            suffixIcon: const Padding(
-                                                padding: EdgeInsets.only(
-                                                  top: 0,
-                                                  left: 0,
-                                                  bottom: 0,
-                                                  right: 10,
-                                                ),
-                                                child: CircleAvatar(
-                                                    radius: 10,
-                                                    backgroundColor:
-                                                        Color(0xffffffff),
-                                                    foregroundColor:
-                                                        Color(0xffffffff),
-                                                    child: Icon(
-                                                      Icons.person,
-                                                      color:
-                                                          Color(0xff3b403f),
-                                                    ))),
-                                            iconColor:
-                                                const Color(0xffffffff),
-                                            prefixText: '',
-                                            prefixStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xff000000),
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            suffixText: '',
-                                            suffixStyle: GoogleFonts.getFont(
-                                              'ABeeZee',
-                                              textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xff000000),
-                                                fontWeight: FontWeight.w400,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                            enabledBorder:
-                                                UnderlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(0),
-                                              borderSide: BorderSide.none,
-                                            ),
-                                            fillColor:
-                                                const Color(0xfffdce84),
-                                            enabled: true,
-                                          ),
-                                        )),
-                                    const SizedBox(
-                                      height: 20,
-                                    ),
-                                    Container(
-                                      height: 60,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xfff5f5f5),
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        shape: BoxShape.rectangle,
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 50, horizontal: 20),
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        'assets/icons/half_circle.png',
+                                        width: 30,
+                                        fit: BoxFit.fitWidth,
                                       ),
-                                      child: PasswordBox(
-                                        controller: _passwordController,
-                                        onChanged: (value) {
-                                          _authenticationCubit
-                                              .authViewModel.password = value;
-                                        },
+                                      const SizedBox(
+                                        height: 30,
                                       ),
-                                    ),
-                                    const SizedBox(
-                                      height: 30,
-                                    ),
-                                    RichText(
-                                      text: TextSpan(
+                                      Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          TextSpan(
-                                            text: 'Forgot Password?',
-                                            style: GoogleFonts.getFont(
-                                              'Roboto',
-                                              textStyle: const TextStyle(
-                                                fontSize: 15,
-                                                color: Color(0xff9c9da2),
-                                                fontWeight: FontWeight.w500,
-                                                fontStyle: FontStyle.normal,
-                                              ),
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: ' Reset Now',
-                                            recognizer: TapGestureRecognizer()
-                                              ..onTap = () {
-                                                Get.off(() =>
-                                                    const ResetPasswordPage());
-                                              },
+                                          Text(
+                                            'Hey,\nLogin Now.',
                                             style: GoogleFonts.getFont(
                                               'Lato',
                                               textStyle: const TextStyle(
-                                                fontSize: 17,
-                                                color: Color(0xff1a1b26),
-                                                fontWeight: FontWeight.w600,
+                                                fontSize: 22,
+                                                color: Color(0xff000000),
+                                                fontWeight: FontWeight.w900,
                                                 fontStyle: FontStyle.normal,
                                               ),
+                                            ),
+                                            textAlign: TextAlign.left,
+                                          ),
+                                          const SizedBox(
+                                            height: 20,
+                                          ),
+                                          RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                TextSpan(
+                                                  text: 'If you are new/',
+                                                  style: GoogleFonts.getFont(
+                                                    'Roboto',
+                                                    textStyle: const TextStyle(
+                                                      fontSize: 15,
+                                                      color: Color(0xff9c9da2),
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontStyle:
+                                                          FontStyle.normal,
+                                                    ),
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  recognizer:
+                                                      TapGestureRecognizer()
+                                                        ..onTap = () {
+                                                          Get.off(() =>
+                                                              const RegisterPage());
+                                                        },
+                                                  text: ' Create New',
+                                                  style: GoogleFonts.getFont(
+                                                    'Lato',
+                                                    textStyle: const TextStyle(
+                                                      fontSize: 17,
+                                                      color: Color(0xff1a1b26),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontStyle:
+                                                          FontStyle.normal,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    const SizedBox(
-                                      height: 40,
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        if (_formKey.currentState
-                                                ?.validate() ??
-                                            false) {
-                                          _authenticationCubit.login(
-                                              _authenticationCubit
-                                                  .authViewModel.userName,
-                                              _authenticationCubit
-                                                  .authViewModel.password);
-                                        }
-                                      },
-                                      child: Container(
-                                        height: 50,
+                                      const SizedBox(
+                                        height: 30,
+                                      ),
+                                      Container(
+                                          height: 60,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xfffdce84),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            shape: BoxShape.rectangle,
+                                          ),
+                                          child: TextFormField(
+                                            controller: _userNameController,
+                                            style: GoogleFonts.getFont(
+                                              'Roboto',
+                                              textStyle: const TextStyle(
+                                                fontSize: 19,
+                                                color: Color(0xffffffff),
+                                                fontWeight: FontWeight.w400,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            onChanged: (value) {
+                                              _authenticationCubit.authViewModel
+                                                  .userName = value;
+                                            },
+                                            validator: (value) {
+                                              return (!(value?.isValidEmail() ??
+                                                      false))
+                                                  ? 'Invalid email'
+                                                  : null;
+                                            },
+                                            readOnly: false,
+                                            decoration: InputDecoration(
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 20,
+                                                vertical: 5,
+                                              ),
+                                              labelText: 'Your Email',
+                                              labelStyle: GoogleFonts.getFont(
+                                                'Roboto',
+                                                textStyle: const TextStyle(
+                                                  fontSize: 19,
+                                                  color: Color(0xffffffff),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontStyle: FontStyle.normal,
+                                                ),
+                                              ),
+                                              helperStyle: GoogleFonts.getFont(
+                                                'ABeeZee',
+                                                textStyle: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Color(0xff000000),
+                                                  fontWeight: FontWeight.w400,
+                                                  fontStyle: FontStyle.normal,
+                                                ),
+                                              ),
+                                              hintStyle: GoogleFonts.getFont(
+                                                'ABeeZee',
+                                                textStyle: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Color(0xff000000),
+                                                  fontWeight: FontWeight.w400,
+                                                  fontStyle: FontStyle.normal,
+                                                ),
+                                              ),
+                                              errorStyle: GoogleFonts.getFont(
+                                                'ABeeZee',
+                                                textStyle: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.red,
+                                                  fontWeight: FontWeight.w400,
+                                                  fontStyle: FontStyle.normal,
+                                                ),
+                                              ),
+                                              border: UnderlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(0),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              suffixIcon: const Padding(
+                                                  padding: EdgeInsets.only(
+                                                    top: 0,
+                                                    left: 0,
+                                                    bottom: 0,
+                                                    right: 10,
+                                                  ),
+                                                  child: CircleAvatar(
+                                                      radius: 10,
+                                                      backgroundColor:
+                                                          Color(0xffffffff),
+                                                      foregroundColor:
+                                                          Color(0xffffffff),
+                                                      child: Icon(
+                                                        Icons.person,
+                                                        color:
+                                                            Color(0xff3b403f),
+                                                      ))),
+                                              iconColor:
+                                                  const Color(0xffffffff),
+                                              prefixText: '',
+                                              prefixStyle: GoogleFonts.getFont(
+                                                'ABeeZee',
+                                                textStyle: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Color(0xff000000),
+                                                  fontWeight: FontWeight.w400,
+                                                  fontStyle: FontStyle.normal,
+                                                ),
+                                              ),
+                                              suffixText: '',
+                                              suffixStyle: GoogleFonts.getFont(
+                                                'ABeeZee',
+                                                textStyle: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Color(0xff000000),
+                                                  fontWeight: FontWeight.w400,
+                                                  fontStyle: FontStyle.normal,
+                                                ),
+                                              ),
+                                              enabledBorder:
+                                                  UnderlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(0),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              fillColor:
+                                                  const Color(0xfffdce84),
+                                              enabled: true,
+                                            ),
+                                          )),
+                                      const SizedBox(
+                                        height: 20,
+                                      ),
+                                      Container(
+                                        height: 60,
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xffb12341),
+                                          color: const Color(0xfff5f5f5),
                                           borderRadius:
                                               BorderRadius.circular(10),
                                           shape: BoxShape.rectangle,
                                         ),
-                                        child: Text(
-                                          'Log in',
-                                          style: GoogleFonts.getFont(
-                                            'Roboto',
-                                            textStyle: const TextStyle(
-                                              fontSize: 16,
-                                              color: Color(0xffffffff),
-                                              fontWeight: FontWeight.w500,
-                                              fontStyle: FontStyle.normal,
-                                            ),
-                                          ),
-                                          textAlign: TextAlign.left,
+                                        child: PasswordBox(
+                                          controller: _passwordController,
+                                          onChanged: (value) {
+                                            _authenticationCubit
+                                                .authViewModel.password = value;
+                                          },
                                         ),
                                       ),
-                                    )
-                                  ],
+                                      const SizedBox(
+                                        height: 30,
+                                      ),
+                                      RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text: 'Forgot Password?',
+                                              style: GoogleFonts.getFont(
+                                                'Roboto',
+                                                textStyle: const TextStyle(
+                                                  fontSize: 15,
+                                                  color: Color(0xff9c9da2),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontStyle: FontStyle.normal,
+                                                ),
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: ' Reset Now',
+                                              recognizer: TapGestureRecognizer()
+                                                ..onTap = () {
+                                                  Get.off(() =>
+                                                      const ResetPasswordPage());
+                                                },
+                                              style: GoogleFonts.getFont(
+                                                'Lato',
+                                                textStyle: const TextStyle(
+                                                  fontSize: 17,
+                                                  color: Color(0xff1a1b26),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontStyle: FontStyle.normal,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 40,
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          if (_formKey.currentState
+                                                  ?.validate() ??
+                                              false) {
+                                            _authenticationCubit.login(
+                                                _authenticationCubit
+                                                    .authViewModel.userName,
+                                                _authenticationCubit
+                                                    .authViewModel.password);
+                                          }
+                                        },
+                                        child: Container(
+                                          height: 50,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xffb12341),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            shape: BoxShape.rectangle,
+                                          ),
+                                          child: Text(
+                                            'Log in',
+                                            style: GoogleFonts.getFont(
+                                              'Roboto',
+                                              textStyle: const TextStyle(
+                                                fontSize: 16,
+                                                color: Color(0xffffffff),
+                                                fontWeight: FontWeight.w500,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                            ),
+                                            textAlign: TextAlign.left,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: MediaQuery.of(context)
+                                            .viewInsets
+                                            .bottom,
+                                      ),
+                                    ],
+                                  ),
                                 ))),
                       ),
                     )),

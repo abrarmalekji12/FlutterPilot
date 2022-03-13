@@ -14,7 +14,7 @@ import 'package:meta/meta.dart';
 part 'flutter_project_state.dart';
 
 class FlutterProjectCubit extends Cubit<FlutterProjectState> {
-  final List<FlutterProject> projects = [];
+  List<FlutterProject> projects = [];
   final int userId;
 
   FlutterProjectCubit(this.userId) : super(FlutterProjectInitial());
@@ -22,13 +22,19 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
   Future<void> loadFlutterProjectList() async {
     emit(FlutterProjectLoadingState());
     try {
-      final projects = await FireBridge.loadAllFlutterProjects(userId);
+      projects = await FireBridge.loadAllFlutterProjects(userId);
       emit(FlutterProjectsLoadedState(projects));
     } on Exception {
       emit(FlutterProjectErrorState());
     }
   }
 
+  Future<void> deleteProject(final FlutterProject project) async {
+    emit(FlutterProjectLoadingState());
+    await FireBridge.deleteProject(userId, project);
+    projects.remove(project);
+    emit(FlutterProjectsLoadedState(projects));
+  }
   Future<void> createNewProject(final String name) async {
     emit(FlutterProjectLoadingState());
     final flutterProject = FlutterProject.createNewProject(name, userId);
