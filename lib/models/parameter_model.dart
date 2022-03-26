@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../common/compiler/code_processor.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/visual_box_drawer/visual_box_cubit.dart';
 import 'operation_model.dart';
@@ -31,10 +32,7 @@ abstract class Parameter {
   void cloneOf(Parameter parameter) {
     if (parameter is SimpleParameter) {
       (this as SimpleParameter).val = parameter.val;
-      if (parameter.compilerEnable != null) {
-        (this as SimpleParameter).compilerEnable!.code =
-            parameter.compilerEnable!.code;
-      }
+      (this as SimpleParameter).compiler.code = parameter.compiler.code;
     } else if (parameter is ChoiceParameter) {
       for (int i = 0; i < (this as ChoiceParameter).options.length; i++) {
         (this as ChoiceParameter).options[i].cloneOf(parameter.options[i]);
@@ -123,8 +121,12 @@ abstract class Parameter {
 
   void withChangeNamed(String? name) {
     if (info != null) {
-      if (info is NamedParameterInfo && name != null) {
-        (info as NamedParameterInfo).name = name;
+      if (info is NamedParameterInfo) {
+        if (name != null) {
+          (info as NamedParameterInfo).name = name;
+        } else {
+          info = SimpleParameterInfo();
+        }
       } else if (info is InnerObjectParameterInfo) {
         (info as InnerObjectParameterInfo).namedIfHaveAny = name;
       }
@@ -181,7 +183,7 @@ abstract class Parameter {
 class SimpleParameter<T> extends Parameter {
   T? val;
   final ParamInputType inputType;
-  late final CompilerEnable? compilerEnable;
+  late final CompilerEnable compiler = CompilerEnable();
   T? defaultValue;
 
   late final dynamic Function(T) evaluate;
@@ -205,17 +207,19 @@ class SimpleParameter<T> extends Parameter {
     if (required) {
       val = defaultValue;
     }
-    compilerEnable = CompilerEnable();
   }
 
   @override
   dynamic get value {
-    if (compilerEnable != null) {
-      final result = compilerEnable!.code.isNotEmpty
-          ? ComponentOperationCubit.codeProcessor
-              .process<T>(compilerEnable!.code)
-          : null;
-      if (result != null) {
+    final result = compiler.code.isNotEmpty
+        ? ComponentOperationCubit.codeProcessor.process<T>(compiler.code)
+        : null;
+    if (result != null) {
+      if (T == Color) {
+        val = colorToHex(result.toString()) as T?;
+      } else if (T == ImageData) {
+        val = ImageData(ComponentOperationCubit.bytesCache[result], result) as T;
+      } else {
         val = result as T;
       }
     }
@@ -233,9 +237,9 @@ class SimpleParameter<T> extends Parameter {
 
   @override
   get rawValue {
-    if (compilerEnable != null && compilerEnable!.code.isNotEmpty) {
-      final result = ComponentOperationCubit.codeProcessor
-          .process<T>(compilerEnable!.code);
+    if (compiler.code.isNotEmpty) {
+      final result =
+          ComponentOperationCubit.codeProcessor.process<T>(compiler.code);
       if (result != null) {
         val = result as T;
       }
@@ -261,6 +265,8 @@ class SimpleParameter<T> extends Parameter {
       val = int.tryParse(value) as T;
     } else if (T == double) {
       val = double.tryParse(value) as T;
+    } else if (T == String) {
+      val = value.replaceAll('\'', '\\\'') as T;
     } else {
       val = value as T;
     }
@@ -285,19 +291,27 @@ class SimpleParameter<T> extends Parameter {
 
   @override
   String code(bool clean) {
-    if (!isRequired &&
-        val == null &&
-        (compilerEnable == null || compilerEnable!.code.isEmpty)) {
+    if (!isRequired && val == null && (compiler.code.isEmpty)) {
       return '';
     }
     String tempCode = '';
-    if (compilerEnable != null && (compilerEnable!.code.isNotEmpty||T == String)) {
-      tempCode = compilerEnable!.code;
+    if (compiler.code.isNotEmpty || T == String) {
+      tempCode = compiler.code;
       if (!clean) {
         tempCode = '`$tempCode`';
       } else if (T == String) {
-        tempCode = '\'${tempCode.replaceAll('\'', '__quote__')}\''
-            .replaceAll('\$', '\\\$');
+        if (tempCode.contains('\n')) {
+          tempCode = '\'\'\'$tempCode\'\'\''.replaceAll('\$', '\\\$');
+        } else {
+          tempCode = '\'$tempCode\''.replaceAll('\$', '\\\$');
+        }
+      } else if (T == Color) {
+        tempCode =
+            'hexToColor(${tempCode.startsWith('#') ? '\'$tempCode\'' : tempCode})!';
+      }
+      else if(T == ImageData){
+        tempCode= '\'assets/images/$tempCode\'';
+        debugPrint('TEMP $tempCode ');
       }
     } else {
       tempCode = '$rawValue';
@@ -312,10 +326,17 @@ class SimpleParameter<T> extends Parameter {
   bool fromCode(String code) {
     try {
       final paramCode = info?.fromCode(code) ?? code;
-      if (paramCode[0] == '`' &&
-          paramCode[paramCode.length - 1] == '`' &&
-          compilerEnable != null) {
-        compilerEnable!.code = paramCode.substring(1, paramCode.length - 1);
+      if (paramCode[0] == '`' && paramCode[paramCode.length - 1] == '`') {
+        compiler.code = paramCode.substring(1, paramCode.length - 1);
+        if (T == ImageData) {
+          val = ImageData(
+              null,
+              ComponentOperationCubit.codeProcessor.process<String>(compiler
+                  .code
+                  .replaceAll('\'', '')
+                  .replaceAll('\\\$', '\$')
+                  .replaceAll('__quote__', '\''))) as T;
+        }
       } else {
         val = getValueFromCode<T>(paramCode);
       }
@@ -450,25 +471,38 @@ class ChoiceValueParameter extends Parameter {
 
   @override
   String code(bool clean) {
+    final toValue = value;
+    if (toValue == null) {
+      if (info?.optional ?? false) {
+        return '';
+      } else {
+        return info!.code(
+            getCode != null ? getCode!.call(rawValue) : toValue.toString());
+      }
+    }
     if (info == null || info is SimpleParameterInfo) {
-      return getCode != null ? getCode!.call(rawValue) : value.toString();
+      return getCode != null ? getCode!.call(rawValue) : toValue.toString();
     }
     return info!
-        .code(getCode != null ? getCode!.call(rawValue) : value.toString());
+        .code(getCode != null ? getCode!.call(rawValue) : toValue.toString());
   }
 
   @override
   bool fromCode(String code) {
     final paramCode = (info?.fromCode(code) ?? code);
-    if (fromCodeToKey == null) {
-      final option = options.entries
-          .firstWhere((element) => element.value.toString() == paramCode);
-      val = option.key;
+    if (paramCode != 'null') {
+      if (fromCodeToKey == null) {
+        final option = options.entries
+            .firstWhere((element) => element.value.toString() == paramCode);
+        val = option.key;
+      } else {
+        final code = fromCodeToKey!.call(paramCode);
+        final option =
+            options.entries.firstWhere((element) => element.key == code);
+        val = option.key;
+      }
     } else {
-      final code = fromCodeToKey!.call(paramCode);
-      final option =
-      options.entries.firstWhere((element) => element.key == code);
-      val = option.key;
+      val = null;
     }
     return true;
   }
@@ -711,7 +745,7 @@ class ComplexParameter extends Parameter {
     for (final para in params) {
       final paramCode = para.code(clean);
       if (paramCode.isNotEmpty) {
-        middle += '$paramCode,${clean ? '\n' : ''}'.replaceAll(',,', ',');
+        middle += '$paramCode,'.replaceAll(',,', ',');
       }
     }
     return info?.code(middle) ?? middle;
@@ -736,7 +770,7 @@ class ComplexParameter extends Parameter {
       } else if (paramCodeList.isNotEmpty) {
         final paramCode = paramCodeList.removeAt(0);
         // logger('subcode param trying $paramCode');
-        !parameter.fromCode(paramCode);
+        parameter.fromCode(paramCode);
       } else {
         break;
       }
@@ -881,9 +915,9 @@ class ComponentParameter extends Parameter {
   String code(bool clean) {
     String paramCode = '';
     if (multiple) {
-      paramCode += '[\n';
+      paramCode += '[';
       for (final comp in components) {
-        paramCode += '${comp.code(clean: clean)}\n';
+        paramCode += comp.code(clean: clean);
       }
       paramCode + '],';
     } else if (components.isNotEmpty) {

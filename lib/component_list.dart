@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
+import 'common/custom_drop_down.dart';
 import 'constant/app_colors.dart';
 import 'models/builder_component.dart';
 import 'models/component_model.dart';
@@ -73,7 +76,9 @@ final componentList = <String, Component Function()>{
   'IconButton': () => CIconButton(),
   'Placeholder': () => CPlaceholder(),
   'ListView.Builder': () => CListViewBuilder(),
-  'GridView.Builder': () => CGridViewBuilder()
+  'GridView.Builder': () => CGridViewBuilder(),
+  'DropDownButton': () => CDropDownButton(),
+  'DropDownMenuItem': () => CDropDownMenuItem(),
 };
 
 class CMaterialApp extends CustomNamedHolder {
@@ -664,6 +669,26 @@ class CScaffold extends CustomNamedHolder {
   }
 }
 
+class CDropDownButton extends CustomNamedHolder {
+  CDropDownButton() : super('DropDownButton', [], {
+    'icon':null,
+
+  }, [
+    'items'
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return DropdownButton<String>(
+      icon: childMap['icon']?.build(context),
+        items: (childrenMap['items']??[])
+            .map<DropdownMenuItem<String>>(
+                (e) => e.buildWithoutKey(context) as DropdownMenuItem<String>)
+            .toList(),
+        onChanged: (data) {});
+  }
+}
+
 class CRow extends MultiHolder {
   CRow()
       : super('Row', [
@@ -769,6 +794,29 @@ class CListView extends MultiHolder {
       scrollDirection: parameters[1].value,
       reverse: parameters[2].value,
       controller: initScrollController(context),
+    );
+  }
+}
+
+class CDropDownMenuItem extends ClickableHolder {
+  CDropDownMenuItem()
+      : super('DropDownMenuItem', [
+          Parameters.enableParameter()..withChangeNamed('enabled'),
+          Parameters.textParameter()
+            ..withNamedParamInfoAndSameDisplayName('value')
+            ..withRequired(false)
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return DropdownMenuItem<String>(
+      key: key(context),
+      child: child?.build(context) ?? Container(),
+      onTap: () {
+        perform(context);
+      },
+      enabled: parameters[0].value,
+      value: parameters[1].value,
     );
   }
 }
@@ -1004,6 +1052,7 @@ class CFloatingActionButton extends ClickableHolder {
       onPressed: () {
         perform(context);
       },
+      heroTag: null,
       child: child?.build(context) ?? Container(),
       backgroundColor: parameters[0].value,
       foregroundColor: parameters[1].value,

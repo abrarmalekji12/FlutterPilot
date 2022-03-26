@@ -1,6 +1,9 @@
 import 'package:cyclop/cyclop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../common/custom_text_field.dart';
+import '../common/dynamic_value_editing_controller.dart';
+import '../common/dynamic_value_filed.dart';
 import 'image_selection.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../common/app_switch.dart';
@@ -172,46 +175,40 @@ class ParameterWidget extends StatelessWidget {
 class SimpleParameterWidget extends StatelessWidget {
   final SimpleParameter parameter;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _textEditingController = TextEditingController();
+  final DynamicValueEditingController _textEditingController =
+      DynamicValueEditingController();
 
   SimpleParameterWidget({Key? key, required this.parameter}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Container(
-        height: parameter.inputType != ParamInputType.longText &&
-                parameter.inputType != ParamInputType.text
-            ? 40
-            : null,
-        padding: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-            color: const Color(0xfff2f2f2),
-            borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(3),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (parameter.displayName != null)
-              Expanded(
-                child: Text(
-                  parameter.displayName!,
-                  style: AppFontStyle.roboto(14,
-                      color: Colors.black, fontWeight: FontWeight.w500),
-                ),
-              ),
-            const SizedBox(
-              width: 20,
-            ),
+    return Container(
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+          color: const Color(0xfff2f2f2),
+          borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.all(3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (parameter.displayName != null)
             Expanded(
-              child: Container(
-                alignment: Alignment.centerRight,
-                child: _buildInputType(context),
+              child: Text(
+                parameter.displayName!,
+                style: AppFontStyle.roboto(14,
+                    color: Colors.black, fontWeight: FontWeight.w500),
               ),
-            )
-          ],
-        ),
+            ),
+          const SizedBox(
+            width: 20,
+          ),
+          Expanded(
+            child: Container(
+              alignment: Alignment.centerRight,
+              child: _buildInputType(context),
+            ),
+          )
+        ],
       ),
     );
   }
@@ -221,222 +218,123 @@ class SimpleParameterWidget extends StatelessWidget {
       case ParamInputType.longText:
       case ParamInputType.text:
         WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-          _textEditingController.text = '';
-          _textEditingController.text = parameter.compilerEnable != null &&
-                  parameter.compilerEnable!.code.isNotEmpty
-              ? parameter.compilerEnable!.code
+          _textEditingController.text = parameter.compiler.code.isNotEmpty
+              ? parameter.compiler.code
               : '${parameter.getValue() ?? ''}';
-
-
         });
-        return SizedBox(
-          width: parameter.inputType == ParamInputType.text ? 110 : 200,
-          height: parameter.inputType != ParamInputType.text ? 60 : null,
-          child: TextFormField(
-            maxLines: parameter.inputType == ParamInputType.text ? null : 3,
-            validator: (value) {
-              final result =
-                  parameter.process(value??'');
-              debugPrint('RESULT IS $value $result');
-              if (result != null) {
-                parameter.compilerEnable!.code = value??'';
-                parameter.val = result;
-                if (parameter.inputCalculateAs != null) {
-                  parameter.val =
-                      parameter.inputCalculateAs!.call(parameter.val!, true);
+        return Form(
+          key: _formKey,
+          child: SizedBox(
+            width: parameter.inputType == ParamInputType.text ? 110 : 200,
+            height: parameter.inputType != ParamInputType.text ? 60 : null,
+            child: TextFormField(
+              maxLines: parameter.inputType == ParamInputType.text ? null : 3,
+              validator: (value) {
+                final result = parameter.process(value ?? '');
+                debugPrint('RESULT IS $value $result');
+                if (result != null) {
+                  parameter.compiler.code = value ?? '';
+                  parameter.val = result;
+                  if (parameter.inputCalculateAs != null) {
+                    parameter.val =
+                        parameter.inputCalculateAs!.call(parameter.val!, true);
+                  }
+                  BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                      .parameterChanged(context, parameter);
+                  BlocProvider.of<ComponentCreationCubit>(context,
+                          listen: false)
+                      .changedComponent();
+                  return null;
+                }
+                return '';
+              },
+              buildCounter: (
+                BuildContext context, {
+                required int currentLength,
+                required int? maxLength,
+                required bool isFocused,
+              }) {
+                return Text(
+                  '${parameter.val}',
+                  style: AppFontStyle.roboto(13,
+                      fontWeight: FontWeight.w500, color: Colors.blueAccent),
+                );
+              },
+              style: AppFontStyle.roboto(13, fontWeight: FontWeight.w600),
+              controller: _textEditingController,
+              onChanged: (value) {
+                if (value.isNotEmpty || parameter.val is String) {
+                  _formKey.currentState!.validate();
+                  return;
+                } else {
+                  parameter.compiler.code = '';
+                  parameter.val = null;
                 }
                 BlocProvider.of<ParameterBuildCubit>(context, listen: false)
                     .parameterChanged(context, parameter);
                 BlocProvider.of<ComponentCreationCubit>(context, listen: false)
                     .changedComponent();
-                return null;
-              }
-              return '';
+              },
+              textAlignVertical: TextAlignVertical.center,
+              decoration: InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical:
+                          parameter.inputType == ParamInputType.text ? 0 : 5),
+                  enabled: true,
+                  errorText: null,
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: Colors.grey, width: 1.5)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: Colors.grey, width: 1.5)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                          color: Colors.blueAccent, width: 1.5))),
+            ),
+          ),
+        );
+      case ParamInputType.color:
+        return ColorInputWidget(parameter: parameter);
+      case ParamInputType.sliderZeroToOne:
+        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+          _textEditingController.text = parameter.compiler.code.isNotEmpty
+              ? parameter.compiler.code
+              : '${parameter.getValue() ?? ''}';
+        });
+        return DynamicValueField<double>(
+            inputOption: InputOption.doubleZeroToOne,
+            onProcessedResult: (code, result) {
+              parameter.val = result;
+              BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                  .parameterChanged(context, parameter);
+              BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                  .changedComponent();
+              return true;
             },
-            buildCounter: parameter.compilerEnable == null
-                ? null
-                : (
-                    BuildContext context, {
-                    required int currentLength,
-                    required int? maxLength,
-                    required bool isFocused,
-                  }) {
-                    return Text(
-                      '${parameter.val}',
-                      style: AppFontStyle.roboto(13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.blueAccent),
-                    );
-                  },
-            controller: _textEditingController,
-            onChanged: (value) {
-              if (value.isNotEmpty||parameter.val is String) {
-                if (parameter.compilerEnable != null) {
-                  _formKey.currentState!.validate();
-                  return;
-                } else {
-                  parameter.setValue(value);
-                }
-              } else {
-                if (parameter.compilerEnable != null) {
-                  parameter.compilerEnable!.code = '';
-                }
-                parameter.val = null;
-              }
+            onErrorCode: () {
+              parameter.val = null;
               BlocProvider.of<ParameterBuildCubit>(context, listen: false)
                   .parameterChanged(context, parameter);
               BlocProvider.of<ComponentCreationCubit>(context, listen: false)
                   .changedComponent();
             },
-            textAlignVertical: TextAlignVertical.center,
-            decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical:
-                        parameter.inputType == ParamInputType.text ? 0 : 5),
-                enabled: true,
-                errorText: null,
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Colors.grey, width: 1.5)),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Colors.grey, width: 1.5)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                        color: Colors.blueAccent, width: 1.5))),
-          ),
-        );
-      case ParamInputType.color:
-        return StatefulBuilder(builder: (context, setStateForColor) {
-          final value = parameter.value;
-          return SizedBox(
-            height: 35,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!parameter.isRequired)
-                  SizedBox(
-                    width: 30,
-                    height: 30,
-                    child: Checkbox(
-                        value: value != null,
-                        onChanged: (b) {
-                          if (b != null) {
-                            if (!b) {
-                              parameter.val = null;
-                            } else {
-                              parameter.val = Colors.transparent;
-                            }
-                            setStateForColor(() {});
-                            BlocProvider.of<ParameterBuildCubit>(context,
-                                    listen: false)
-                                .parameterChanged(context, parameter);
-                            BlocProvider.of<ComponentCreationCubit>(context,
-                                    listen: false)
-                                .changedComponent();
-                          }
-                        }),
-                  ),
-                if (value != null)
-                  SizedBox(
-                    width: 15,
-                    child: ColorButton(
-                      color: value,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: parameter.value ?? Colors.transparent,
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      onColorChanged: (color) {
-                        parameter.val = color;
-                        if (parameter.inputCalculateAs != null) {
-                          parameter.val = parameter.inputCalculateAs!
-                              .call(parameter.val!, true);
-                        }
-                        setStateForColor(() {});
-                        BlocProvider.of<ParameterBuildCubit>(context,
-                                listen: false)
-                            .parameterChanged(context, parameter);
-                        BlocProvider.of<ComponentCreationCubit>(context,
-                                listen: false)
-                            .changedComponent();
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          );
-        });
-      case ParamInputType.sliderZeroToOne:
-        return StatefulBuilder(builder: (context, setStateForSlider) {
-          final value = parameter.rawValue;
-          return SizedBox(
-            width: 350,
-            height: 35,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (!parameter.isRequired)
-                  SizedBox(
-                    width: 30,
-                    height: 30,
-                    child: Checkbox(
-                        value: value != null,
-                        onChanged: (b) {
-                          if (b != null) {
-                            if (!b) {
-                              parameter.val = null;
-                            } else {
-                              parameter.val = 1;
-                            }
-                            setStateForSlider(() {});
-                            BlocProvider.of<ParameterBuildCubit>(context,
-                                    listen: false)
-                                .parameterChanged(context, parameter);
-                            BlocProvider.of<ComponentCreationCubit>(context,
-                                    listen: false)
-                                .changedComponent();
-                          }
-                        }),
-                  ),
-                if (value != null) ...[
-                  Expanded(
-                    child: Center(
-                      child: Slider.adaptive(
-                          value: value,
-                          onChanged: (i) {
-                            parameter.val = i;
-                            BlocProvider.of<ComponentCreationCubit>(context,
-                                    listen: false)
-                                .changedComponent();
-                            setStateForSlider(() {});
-                          }),
-                    ),
-                  ),
-                  Text(
-                    (value as double).toStringAsFixed(2),
-                    style: AppFontStyle.roboto(12),
-                  )
-                ]
-              ],
-            ),
-          );
-        });
+            textEditingController: _textEditingController);
       case ParamInputType.image:
-        if (parameter.val != null &&
-            (parameter.val as ImageData).bytes == null) {
-          WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-            // BlocProvider.of<ComponentOperationCubit>(context, listen: false)
-            //     .loadImage((parameter.val as ImageData));
-          });
-        }
         return BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
             builder: (context, state) {
+          WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+            if (parameter.compiler.code.isNotEmpty) {
+              _textEditingController.text = parameter.compiler.code;
+            } else {
+              _textEditingController.text =
+                  (parameter.val as ImageData?)?.imageName ?? '';
+            }
+          });
           return StatefulBuilder(builder: (context, setStateForImage) {
             return InkWell(
               onTap: () {
@@ -448,6 +346,7 @@ class SimpleParameterWidget extends StatelessWidget {
                 ).then((value) {
                   if (value != null && value is ImageData) {
                     parameter.val = value;
+                    parameter.compiler.code = value.imageName!;
                     setStateForImage(() {});
                     BlocProvider.of<ComponentCreationCubit>(context,
                             listen: false)
@@ -455,26 +354,74 @@ class SimpleParameterWidget extends StatelessWidget {
                   }
                 });
               },
-              child: parameter.value != null &&
-                      ((parameter.value as ImageData).bytes != null)
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: Image.memory(
-                        (parameter.value as ImageData).bytes!,
-                        width: 40,
-                        fit: BoxFit.fitHeight,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.image,
-                      size: 30,
-                      color: Colors.grey,
-                    ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  parameter.value != null &&
+                          ((parameter.value as ImageData).bytes != null)
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Image.memory(
+                            (parameter.value as ImageData).bytes!,
+                            width: 40,
+                            fit: BoxFit.fitHeight,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.image,
+                          size: 30,
+                          color: Colors.grey,
+                        ),
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  SizedBox(
+                    width: 100,
+                    child: DynamicValueField<String>(
+                        onProcessedResult: (code, result) {
+                          if (BlocProvider.of<ComponentOperationCubit>(context,
+                                  listen: false)
+                              .byteCache
+                              .containsKey(result)) {
+                            parameter.compiler.code = code;
+                            (parameter.val as ImageData).imageName = result;
+                            (parameter.val as ImageData).bytes =
+                                BlocProvider.of<ComponentOperationCubit>(
+                                        context,
+                                        listen: false)
+                                    .byteCache[result];
+
+                            setStateForImage(() {});
+                            BlocProvider.of<ComponentCreationCubit>(context,
+                                    listen: false)
+                                .changedComponent();
+                            return true;
+                          }
+                          return false;
+                        },
+                        textEditingController: _textEditingController),
+                  )
+                ],
+              ),
             );
           });
         });
     }
   }
+}
+
+Color? fromHex(String hexString) {
+  if (hexString.length < 7) {
+    return null;
+  }
+  final buffer = StringBuffer();
+  if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+  buffer.write(hexString.replaceFirst('#', ''));
+  final colorInt = int.tryParse(buffer.toString(), radix: 16);
+  if (colorInt == null) {
+    return null;
+  }
+  return Color(colorInt);
 }
 
 class ListParameterWidget extends StatelessWidget {
@@ -627,6 +574,134 @@ class ChoiceValueParameterWidget extends StatelessWidget {
           },
         )
       ],
+    );
+  }
+}
+
+class ColorInputWidget extends StatefulWidget {
+  final SimpleParameter parameter;
+
+  const ColorInputWidget({Key? key, required this.parameter}) : super(key: key);
+
+  @override
+  State<ColorInputWidget> createState() => _ColorInputWidgetState();
+}
+
+class _ColorInputWidgetState extends State<ColorInputWidget> {
+  final GlobalKey<FormState> _formKey = GlobalKey();
+  final GlobalKey _editorKey = GlobalKey();
+  final DynamicValueEditingController _textEditingController =
+      DynamicValueEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      _textEditingController.text = widget.parameter.compiler.code;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final value = widget.parameter.value;
+    return Form(
+      key: _formKey,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
+            builder: (context, state) {
+              return Row(
+                children: [
+                  if (!widget.parameter.isRequired)
+                    SizedBox(
+                      width: 30,
+                      height: 30,
+                      child: Checkbox(
+                          value: value != null,
+                          onChanged: (b) {
+                            if (b != null) {
+                              if (!b) {
+                                widget.parameter.val = null;
+                              } else {
+                                widget.parameter.val = Colors.transparent;
+                              }
+                              setState(() {});
+                              BlocProvider.of<ParameterBuildCubit>(context,
+                                      listen: false)
+                                  .parameterChanged(context, widget.parameter);
+                              BlocProvider.of<ComponentCreationCubit>(context,
+                                      listen: false)
+                                  .changedComponent();
+                            }
+                          }),
+                    ),
+                  if (value != null)
+                    SizedBox(
+                      width: 15,
+                      child: ColorButton(
+                        color: value,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: widget.parameter.value ?? Colors.transparent,
+                          border: Border.all(color: Colors.black, width: 1),
+                        ),
+                        onColorChanged: (color) {
+                          widget.parameter.val = color;
+                          if (widget.parameter.inputCalculateAs != null) {
+                            widget.parameter.val = widget
+                                .parameter.inputCalculateAs!
+                                .call(widget.parameter.val!, true);
+                          }
+                          _textEditingController.text = widget
+                              .parameter
+                              .compiler
+                              .code = '#${color.value.toRadixString(16)}';
+                          setState(() {});
+                          BlocProvider.of<ParameterBuildCubit>(context,
+                                  listen: false)
+                              .parameterChanged(context, widget.parameter);
+                          BlocProvider.of<ComponentCreationCubit>(context,
+                                  listen: false)
+                              .changedComponent();
+                        },
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(
+            width: 5,
+          ),
+          SizedBox(
+            width: 100,
+            child: DynamicValueField<Color>(
+              key: _editorKey,
+              textEditingController: _textEditingController,
+              onErrorCode: (){
+                widget.parameter.compiler.code = '';
+                widget.parameter.val =null;
+                BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                    .parameterChanged(context, widget.parameter);
+                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                    .changedComponent();
+              },
+              onProcessedResult: (code, result) {
+                widget.parameter.compiler.code = code;
+                widget.parameter.val = fromHex(result);
+                BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                    .parameterChanged(context, widget.parameter);
+                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                    .changedComponent();
+                // setState(() {});
+                return true;
+              },
+            ),
+          )
+        ],
+      ),
     );
   }
 }

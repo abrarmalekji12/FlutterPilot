@@ -66,7 +66,6 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                     setState(() {});
                     break;
                   case FlutterProjectLoadedState:
-
                     break;
                   case FlutterProjectErrorState:
                     AppLoader.hide();
@@ -317,24 +316,29 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                                 ),
                                               ),
                                               InkWell(
-                                                  child: const Icon(
-                                                    Icons.delete,
-                                                    color: Colors.red,
-                                                  ),
-                                                  onTap: () {
-                                                    showDialog(context: context,builder:
-                                                      (_)=> MaterialAlertDialog(
-                                                        title:
-                                                        'Do you really want to delete this project?, you will not be able to get back',
-                                                        positiveButtonText: 'delete',
-                                                        negativeButtonText: 'cancel',
-                                                        onPositiveTap: (){
-                                                          _flutterProjectCubit
-                                                              .deleteProject(project);
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
+                                                child: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                ),
+                                                onTap: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (_) =>
+                                                        MaterialAlertDialog(
+                                                      title:
+                                                          'Do you really want to delete this project?, you will not be able to get back',
+                                                      positiveButtonText:
+                                                          'delete',
+                                                      negativeButtonText:
+                                                          'cancel',
+                                                      onPositiveTap: () {
+                                                        _flutterProjectCubit
+                                                            .deleteProject(
+                                                                project);
+                                                      },
+                                                    ),
+                                                  );
+                                                },
                                               )
                                             ],
                                           ),

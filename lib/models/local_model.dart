@@ -26,7 +26,7 @@ class LocalModel {
 
   String get implementationCode {
     return '''
-    class $name{\n${variables.map((e) => 'final ${getDartDataType(e.dataType)} ${e.name};').join('\n')}\n$name( ${variables.map((e) => 'this.${e.name}').join(',')});
+    class $name{${variables.map((e) => 'final ${getDartDataType(e.dataType)} ${e.name};').join(' ')} $name( ${variables.map((e) => 'this.${e.name}').join(',')});
     }
     ''';
   }
@@ -34,11 +34,11 @@ class LocalModel {
   String get declarationCode {
     return '''
     List<$name> $listVariableName = [
-    ${values.map((e) => '$name(${e.map((value) => valueToCode(value)).join(',')})').join(',\n')}
+    ${values.map((e) => '$name(${e.map((value) => valueToCode(value)).join(',')})').join(',')}
     ];
     ''';
   }
-  String valueToCode(dynamic value){
+  static String valueToCode(dynamic value){
   switch(value.runtimeType){
     case double :
     case int :
@@ -49,7 +49,7 @@ class LocalModel {
   return '$value';
   }
 
-  String getDartDataType(final DataType dataType){
+  static String getDartDataType(final DataType dataType){
     switch(dataType){
 
       case DataType.int:

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import '../common/app_loader.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../runtime_provider.dart';
 import 'actions/action_model.dart';
@@ -101,10 +102,10 @@ abstract class Component {
               if (list.isNotEmpty) {
                 if (list.contains(':')) {
                   list.split(':').forEach((e) => (this as Clickable)
-                      .fromMetaCodeToAction(e, flutterProject!));
+                      .fromMetaCodeToAction(e, flutterProject));
                 } else {
                   (this as Clickable)
-                      .fromMetaCodeToAction(list, flutterProject!);
+                      .fromMetaCodeToAction(list, flutterProject);
                 }
               }
             }
@@ -140,7 +141,10 @@ abstract class Component {
       if (!componentList.containsKey(compName)) {
         Fluttertoast.showToast(
             msg:
-                'No widget with name $compName found, please clear cookies and reload App.');
+                'No widget with name $compName found in code $code, please clear cookies and reload App.',
+            timeInSecForIosWeb: 5);
+        AppLoader.hide();
+        Get.back();
         return null;
       }
       comp = componentList[compName]!();
@@ -149,7 +153,10 @@ abstract class Component {
       if (!componentList.containsKey(name)) {
         Fluttertoast.showToast(
             msg:
-                'No widget with name $name found, please clear cookies and reload App.');
+                'No widget with name $name found in code $code, please clear cookies and reload App.',
+            timeInSecForIosWeb: 5);
+        AppLoader.hide();
+        Get.back();
         return null;
       }
       comp = componentList[name]!();
@@ -258,6 +265,13 @@ abstract class Component {
     return comp;
   }
 
+  key(BuildContext context) => RuntimeProvider.of(context) != RuntimeMode.edit
+      ? (RuntimeProvider.of(context) != RuntimeMode.preview
+      ? ObjectKey(this)
+      : GlobalObjectKey(uniqueId+id))
+      : GlobalObjectKey(this);
+
+
   Widget build(BuildContext context) {
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
@@ -266,11 +280,22 @@ abstract class Component {
     }
 
     return ComponentWidget(
-      key: (RuntimeProvider.of(context) != RuntimeMode.edit)
-          ? ObjectKey(this)
+      key: RuntimeProvider.of(context) != RuntimeMode.edit
+          ? (RuntimeProvider.of(context) != RuntimeMode.preview
+              ? ObjectKey(this)
+              : GlobalObjectKey(uniqueId+id))
           : GlobalObjectKey(this),
       child: create(context),
     );
+  }
+  Widget buildWithoutKey(BuildContext context) {
+    if (RuntimeProvider.of(context) == RuntimeMode.edit) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        lookForUIChanges(context);
+      });
+    }
+
+    return create(context);
   }
 
   void forEach(final void Function(Component) work) async {
@@ -408,7 +433,7 @@ abstract class Component {
     for (final parameter in parameters) {
       final paramCode = parameter.code(clean);
       if (paramCode.isNotEmpty) {
-        middle += '$paramCode,${clean ? '\n' : ''}'.replaceAll(',,', ',');
+        middle += '$paramCode,'.replaceAll(',,', ',');
       }
     }
     if (clean) {
@@ -510,7 +535,7 @@ abstract class MultiHolder extends Component {
     for (final Component comp in children) {
       childrenCode += '${comp.code(clean: clean)},'.replaceAll(',,', ',');
     }
-    return '$name(\n${middle}children:[\n$childrenCode\n],\n)';
+    return '$name(${middle}children:[\n$childrenCode],)';
   }
 
   @override
@@ -664,12 +689,12 @@ abstract class Holder extends Component {
     }
     if (child == null) {
       if (!required) {
-        return '$name(\n$middle\n)';
+        return '$name($middle)';
       } else {
-        return '$name(\n${middle}child:Container(),\n)';
+        return '$name(${middle}child:Container(),)';
       }
     }
-    return '$name(\n${middle}child:${child!.code(clean: clean)}\n)';
+    return '$name(${middle}child:${child!.code(clean: clean)})';
   }
 
   @override
@@ -716,48 +741,49 @@ mixin Clickable {
   }
 
   List<String>? getParams(final String code) {
-    if(code.isEmpty){
+    if (code.isEmpty) {
       return null;
     }
-    final codeList =
-        code.substring(code.indexOf('<') + 1, code.indexOf('>')).split('-').map((element) => element!='null'?element:'').toList(growable: false);
+    final codeList = code
+        .substring(code.indexOf('<') + 1, code.indexOf('>'))
+        .split('-')
+        .map((element) => element != 'null' ? element : '')
+        .toList(growable: false);
     return codeList;
   }
 
-  void fromMetaCodeToAction(String code, final FlutterProject flutterProject) {
+  void fromMetaCodeToAction(String code, final FlutterProject? flutterProject) {
     if (code.startsWith('NPISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
-      UIScreen? selectedUiScreen;
-      for (final uiScreen in flutterProject.uiScreens) {
-        if (uiScreen.name == name) {
-          selectedUiScreen = uiScreen;
-          break;
-        }
-      }
-      actionList.add(NewPageInStackAction(selectedUiScreen));
-    }
-    else if(code.startsWith('RCPISA')){
+      actionList
+          .add(NewPageInStackAction(getUIScreenWithName(name, flutterProject)));
+    } else if (code.startsWith('RCPISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
-      UIScreen? selectedUiScreen;
-      for (final uiScreen in flutterProject.uiScreens) {
-        if (uiScreen.name == name) {
-          selectedUiScreen = uiScreen;
-          break;
-        }
-      }
-      actionList.add(ReplaceCurrentPageInStackAction(selectedUiScreen));
-
-    }
-    else if (code.startsWith('NBISA')) {
+      actionList.add(ReplaceCurrentPageInStackAction(
+          getUIScreenWithName(name, flutterProject)));
+    } else if (code.startsWith('NBISA')) {
       actionList.add(GoBackInStackAction());
+    } else if (code.startsWith('SBSISA')) {
+      final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
+      actionList.add(ShowBottomSheetInStackAction(
+          getUIScreenWithName(name, flutterProject)));
+    } else if (code.startsWith('HBSISA')) {
+      // actionList.add(HideBottomSheetInStackAction());
+    } else if (code.startsWith('SSBA')) {
+      final list = getParams(code.substring(4));
+      final action = ShowSnackBarAction();
+      if (list != null) {
+        (action.arguments[0] as Parameter).fromCode(list[0]);
+        (action.arguments[1] as Parameter).fromCode(list[1]);
+      }
+      actionList.add(action);
     } else if (code.startsWith('SDISA')) {
-      final list=getParams(code.substring(5));
+      final list = getParams(code.substring(5));
       actionList.add(ShowDialogInStackAction(args: list));
-    }
-    else if(code.startsWith('SCDISA')){
+    } else if (code.startsWith('SCDISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
       UIScreen? selectedUiScreen;
-      for (final uiScreen in flutterProject.uiScreens) {
+      for (final uiScreen in flutterProject?.uiScreens ?? []) {
         if (uiScreen.name == name) {
           selectedUiScreen = uiScreen;
           break;
@@ -765,7 +791,15 @@ mixin Clickable {
       }
       actionList.add(ShowCustomDialogInStackAction(uiScreen: selectedUiScreen));
     }
+  }
 
+  UIScreen? getUIScreenWithName(String name, FlutterProject? flutterProject) {
+    for (final uiScreen in flutterProject?.uiScreens ?? []) {
+      if (uiScreen.name == name) {
+        return uiScreen;
+      }
+    }
+    return null;
   }
 }
 
@@ -787,10 +821,16 @@ abstract class CustomNamedHolder extends Component {
     }
   }
 
-  void updateChildWithKey(String key, Component? component) {
-    childMap[key]?.setParent(null);
-    childMap[key] = component;
-    component?.setParent(this);
+  void addOrUpdateChildWithKey(String key, Component? component) {
+    if(childMap.containsKey(key)) {
+      childMap[key]?.setParent(null);
+      childMap[key] = component;
+      component?.setParent(this);
+    }
+    else if(component!=null){
+      childrenMap[key]!.add(component);
+      component.setParent(this);
+    }
   }
 
   void updateChild(Component? oldComponent, Component? component) {
@@ -849,7 +889,7 @@ abstract class CustomNamedHolder extends Component {
             .replaceAll(',,', ',');
       }
     }
-    return '$name(\n$middle$childrenCode\n)';
+    return '$name($middle$childrenCode)';
   }
 
   @override

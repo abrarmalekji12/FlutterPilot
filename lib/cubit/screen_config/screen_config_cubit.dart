@@ -1,9 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_builder/common/logger.dart';
-import 'package:flutter_builder/cubit/component_operation/component_operation_cubit.dart';
-import 'package:flutter_builder/models/variable_model.dart';
-import 'package:meta/meta.dart';
+import '../component_operation/component_operation_cubit.dart';
+import '../../models/variable_model.dart';
 
 import '../../screen_model.dart';
 import '../../ui/models_view.dart';
@@ -19,17 +17,28 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
     ScreenConfig('iPhone 5/SE', 320, 568),
     ScreenConfig('iPad Pro 11', 834, 1194),
     ScreenConfig('Galaxy Tab S7', 800, 1280),
-    ScreenConfig('Macbook Air', 1280, 800,scale: 1.25),
-    ScreenConfig('Macbook Pro', 1728, 1085,scale: 1.25),
-    ScreenConfig('Laptop (15")', 1920, 1080,scale: 1.25),
+    ScreenConfig('Macbook Air', 1280, 800, scale: 1.25),
+    ScreenConfig('Macbook Pro', 1728, 1085, scale: 1.25),
+    ScreenConfig('Laptop (15")', 1920, 1080, scale: 1.25),
   ];
 
   late ScreenConfig screenConfig;
 
   ScreenConfigCubit() : super(ScreenConfigInitial()) {
     screenConfig = screenConfigs[0];
-    ComponentOperationCubit.codeProcessor.variables['dw']=VariableModel('dw',screenConfig.width , true, 'device width',DataType.double,assignmentCode: 'MediaQuery.of(context).size.width',deletable: false);
-    ComponentOperationCubit.codeProcessor.variables['dh']=VariableModel('dh',screenConfig.height , true, 'device height',DataType.double,assignmentCode: 'MediaQuery.of(context).size.height',deletable: false);
+    ComponentOperationCubit.codeProcessor.variables['dw'] = VariableModel(
+        'dw', screenConfig.width, true, 'device width', DataType.double, '',
+        assignmentCode: 'MediaQuery.of(context).size.width', deletable: false);
+    ComponentOperationCubit.codeProcessor.variables['dh'] = VariableModel(
+        'dh', screenConfig.height, true, 'device height', DataType.double, '',
+        assignmentCode: 'MediaQuery.of(context).size.height', deletable: false);
+  }
+
+  void applyCurrentSizeToVariables() {
+    ComponentOperationCubit.codeProcessor.variables['dw']!.value =
+        screenConfig.width;
+    ComponentOperationCubit.codeProcessor.variables['dh']!.value =
+        screenConfig.height;
   }
 
   Offset getSelectedConfig(BoxConstraints constraints) {
@@ -58,8 +67,10 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
 
   void changeScreenConfig(ScreenConfig config) {
     screenConfig = config;
-    ComponentOperationCubit.codeProcessor.variables['dw']!.value=screenConfig.width;
-    ComponentOperationCubit.codeProcessor.variables['dh']!.value=screenConfig.height;
+    ComponentOperationCubit.codeProcessor.variables['dw']!.value =
+        screenConfig.width;
+    ComponentOperationCubit.codeProcessor.variables['dh']!.value =
+        screenConfig.height;
     emit(ScreenConfigChangeState());
   }
 }

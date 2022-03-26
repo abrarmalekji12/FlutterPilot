@@ -34,7 +34,7 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
 
   OverlayEntry? overlayEntry;
   int state = 0;
-  static const itemHeight=30.0;
+  static const itemHeight=40.0;
   @override
   void initState() {
     super.initState();
@@ -77,7 +77,8 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
                                 itemCount: widget.items.length,
                                itemBuilder: (context,i){
                                 return InkWell(
-                                   child: Padding(
+                                   child: Container(
+                                     height: itemHeight,
                                      padding: const EdgeInsets.all(5.0),
                                      child: widget.items[i].child,
                                    ),

@@ -57,8 +57,7 @@ abstract class BuilderComponent extends Holder {
 
   @override
   String code({bool clean = true}) {
-
-    final middle=parametersCode(clean);
+    final middle = parametersCode(clean);
     String itemCode =
         child?.code(clean: clean) ?? CContainer().code(clean: clean);
     String name = this.name;
@@ -69,7 +68,7 @@ abstract class BuilderComponent extends Holder {
 
     String itemCount = '';
     if (clean) {
-      itemCount = '\n, itemCount:${model?.listVariableName}.length,';
+      itemCount = ', itemCount:${model?.listVariableName}.length,';
       int start = 0;
       int gotIndex = -1;
       while (start < itemCode.length) {
@@ -103,9 +102,9 @@ abstract class BuilderComponent extends Holder {
         }
       }
     }
-    return '''$name($middle\nbuilder:(_,index){\nreturn $itemCode;\n}''' +
+    return '''$name($middle builder:(_,index){ return $itemCode; }''' +
         itemCount +
-        '\n),';
+        '),';
     // return '$name(\n${middle}child:${child!.code(clean: clean)}\n)';
   }
 
@@ -113,7 +112,6 @@ abstract class BuilderComponent extends Holder {
 }
 
 class CListViewBuilder extends BuilderComponent {
-
   CListViewBuilder() : super('ListView.Builder', []);
 
   @override

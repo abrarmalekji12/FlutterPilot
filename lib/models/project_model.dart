@@ -44,11 +44,25 @@ class FlutterProject {
     currentScreen.rootComponent = root;
   }
 
+  List<ImageData> getAllUsedImages(){
+    final imageList=<ImageData>[];
+    for(final screen in uiScreens){
+      screen.rootComponent?.forEach((component) {
+        if(component.name == 'Image.asset'){
+          if((component.parameters[0].value as ImageData?)!=null) {
+            imageList.add((component.parameters[0].value as ImageData));
+          }
+        }
+      });
+    }
+    return imageList;
+  }
+
   String code(final UIScreen screen) {
     String implementationCode = '';
     if (customComponents.isNotEmpty) {
       for (final customComponent in customComponents) {
-        implementationCode += '${customComponent.implementationCode()}\n';
+        implementationCode += customComponent.implementationCode();
       }
     }
     logger('IMPL $implementationCode');
@@ -59,39 +73,42 @@ class FlutterProject {
         in ComponentOperationCubit.codeProcessor.variables.entries) {
       if (!variable.value.runtimeAssigned) {
         staticVariablesCode +=
-            'static const double ${variable.key} = ${variable.value.value};\n';
+            'static const ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
       } else {
-        dynamicVariablesDefinitionCode += 'late double ${variable.key};\n';
+        dynamicVariablesDefinitionCode +=
+            'late ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key};';
         dynamicVariableAssignmentCode +=
-            '${variable.key} = ${variable.value.assignmentCode};\n';
+            '${variable.key} = ${variable.value.assignmentCode};';
       }
     }
 
     String functionImplementationCode = '';
     for (final function
         in ComponentOperationCubit.codeProcessor.functions.values) {
-      functionImplementationCode += '${function.functionCode}\n';
+      functionImplementationCode += function.functionCode;
     }
+
+
     final className = screen.name[0].toUpperCase() + screen.name.substring(1);
     // ${rootComponent!.code()}
     return ''' 
    
-    ${screen==mainScreen?'''
+    ${screen == mainScreen ? '''
      // copy all the images to assets/images/ folder
     // 
     // TODO Dependencies (add into pubspec.yaml)
     // google_fonts: ^2.2.0
-    ''':''}
+    ''' : ''}
     import 'package:flutter/material.dart';
-    cimport 'package:google_fonts/google_fonts.dart';
+    import 'package:google_fonts/google_fonts.dart';
     
-    ${screen.models.map((e) => e.implementationCode).join('\n')}
+    ${screen.models.map((e) => e.implementationCode).join(' ')}
     
-    ${screen==mainScreen?'''
+    ${screen == mainScreen ? '''
     void main(){
     runApp(const $className());
     } 
-    ''':''}
+    ''' : ''}
     class $className extends StatefulWidget {
     const $className({Key? key}) : super(key: key);
 
@@ -100,7 +117,7 @@ class FlutterProject {
     }
 
     class _${className}State extends State<$className> {
-    ${screen.models.map((e) => e.declarationCode).join('\n')}
+    ${screen.models.map((e) => e.declarationCode).join(' ')}
      $staticVariablesCode
      $dynamicVariablesDefinitionCode
      @override
@@ -112,6 +129,20 @@ class FlutterProject {
     }
 
     $implementationCode
+    
+  Color? hexToColor(String hexString) {
+  if (hexString.length < 7) {
+    return null;
+  }
+  final buffer = StringBuffer();
+  if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+  buffer.write(hexString.replaceFirst('#', ''));
+  final colorInt = int.tryParse(buffer.toString(), radix: 16);
+  if (colorInt == null) {
+    return null;
+  }
+  return Color(colorInt);
+}
     ''';
   }
 
@@ -121,26 +152,33 @@ class FlutterProject {
     }
 
     final _stackCubit = StackActionCubit();
+    _stackCubit.stackOperation(StackOperation.push, uiScreen: mainScreen);
+
     return BlocProvider<StackActionCubit>(
       create: (_) => _stackCubit,
       child: BlocBuilder<StackActionCubit, StackActionState>(
         bloc: _stackCubit,
         builder: (context, state) {
-          return Stack(
-            children: [
-              Navigator(
-                key: const GlobalObjectKey(navigationKey),
-                onGenerateRoute: (settings) => MaterialPageRoute(
-                  builder: (_) => mainScreen.build(context) ?? Container() ,
-                ),
-              ),
-              for (final model in _stackCubit.models)
-                Center(
-                  child: StackActionWidget(
-                    actionModel: model,
+          return Scaffold(
+            key: const GlobalObjectKey(deviceScaffoldMessenger),
+            body: SafeArea(
+              child: Stack(
+                children: [
+                  Navigator(
+                    key: const GlobalObjectKey(navigationKey),
+                    onGenerateRoute: (settings) => MaterialPageRoute(
+                      builder: (_) => mainScreen.build(context) ?? Container(),
+                    ),
                   ),
-                )
-            ],
+                  for (final model in _stackCubit.models)
+                    Center(
+                      child: StackActionWidget(
+                        actionModel: model,
+                      ),
+                    )
+                ],
+              ),
+            ),
           );
         },
       ),
@@ -182,7 +220,7 @@ class UIScreen {
     screen.models.addAll(
         List.from(json['models'] ?? []).map((e) => LocalModel.fromJson(e)));
     screen.variables.addAll(List.from(json['variables'] ?? [])
-        .map((e) => VariableModel.fromJson(e)));
+        .map((e) => VariableModel.fromJson(e, screen.name)));
     return screen;
   }
 

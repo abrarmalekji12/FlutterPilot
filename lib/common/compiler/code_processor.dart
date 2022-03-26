@@ -4,7 +4,22 @@ import 'package:flutter/cupertino.dart';
 import '../../code_to_component.dart';
 import '../../models/function_model.dart';
 import '../../models/local_model.dart';
+import '../../models/other_model.dart';
 import '../../models/variable_model.dart';
+
+Color? colorToHex(String hexString) {
+  if (hexString.length < 7) {
+    return null;
+  }
+  final buffer = StringBuffer();
+  if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+  buffer.write(hexString.replaceFirst('#', ''));
+  final colorInt = int.tryParse(buffer.toString(), radix: 16);
+  if (colorInt == null) {
+    return null;
+  }
+  return Color(colorInt);
+}
 
 class CodeProcessor {
   final Map<String, VariableModel> variables = {};
@@ -109,12 +124,12 @@ class CodeProcessor {
         // return CodeOutput.right('No variables');
       }
       final variableName = code.substring(si + 2, ei);
-       final value = process<String>(variableName, resolve: true);
-        if (value != null) {
-          code = code.replaceAll('{{$variableName}}', value.toString());
-        } else {
-          return code;//CodeOutput.right('No varaible with name $variableName')
-        }
+      final value = process<String>(variableName, resolve: true);
+      if (value != null) {
+        code = code.replaceAll('{{$variableName}}', value.toString());
+      } else {
+        return code; //CodeOutput.right('No varaible with name $variableName')
+      }
     }
     return code;
   }
@@ -125,9 +140,15 @@ class CodeProcessor {
     String number = '';
     String variable = '';
     error = false;
-    if (T == String && !resolve) {
+    if ((T == String||T == ImageData) && !resolve) {
       return processString(input);
+    }else if(T == Color && input.startsWith('#')){
+      return input;
     }
+    else if(input.contains('{{')){
+      return null;
+    }
+
     for (int n = 0; n < input.length; n++) {
       if (error) {
         return null;
@@ -136,24 +157,23 @@ class CodeProcessor {
       final ch = nextToken.codeUnits.first;
 
       if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || ch == dotCodeUnit) {
-        if(ch!=dotCodeUnit&&variable.isNotEmpty){
-          variable+=number+nextToken;
-          number='';
-        }
-        else {
+        if (ch != dotCodeUnit && variable.isNotEmpty) {
+          variable += number + nextToken;
+          number = '';
+        } else {
           number += nextToken;
         }
-        } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
+      } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
           ch == underScoreCodeUnit) {
         variable += nextToken;
       } else if (ch == '"'.codeUnits.first) {
-        if(variable.isEmpty){
+        if (variable.isEmpty) {
           continue;
         }
-        if (n - variable.length-1 >= 0 && input[n - variable.length-1] == '"') {
+        if (n - variable.length - 1 >= 0 &&
+            input[n - variable.length - 1] == '"') {
           return variable;
-        }
-        else{
+        } else {
           return null;
         }
       } else {
@@ -169,12 +189,12 @@ class CodeProcessor {
             if (count == 0 && input[m] == ')') {
               final argument =
                   CodeOperations.splitByComma(input.substring(n + 1, m));
-              if(functions[variable]==null){
+              if (functions[variable] == null) {
                 return null;
               }
               return functions[variable]!
                   .perform
-                  .call(argument.map((e) => process(e)).toList());
+                  .call(argument.map((e) => process<T>(e)).toList());
             } else if (input[m] == ')') {
               count--;
             }
@@ -239,7 +259,7 @@ class CodeProcessor {
       if (variables.containsKey(variable)) {
         valueStack.push(variables[variable]!.value);
       } else if (modelVariables.containsKey(variable)) {
-        valueStack.push(modelVariables[variable]??'null');
+        valueStack.push(modelVariables[variable] ?? 'null');
       } else {
         return null;
       }
@@ -252,7 +272,7 @@ class CodeProcessor {
       processOperator(String.fromCharCode(toProcess));
     }
     // Print the result if no error has been seen.
-    if (!error&&valueStack.isNotEmpty) {
+    if (!error && valueStack.isNotEmpty) {
       final result = valueStack.peek;
       valueStack.pop();
       if (operatorStack.isNotEmpty || valueStack.isNotEmpty) {
@@ -290,16 +310,16 @@ class Stack2<E> {
 class CodeOutput {
   String? result;
   String? error;
-  CodeOutput(this.result,this.error);
 
-  factory CodeOutput.left(String result){
-    return CodeOutput(result,null);
+  CodeOutput(this.result, this.error);
+
+  factory CodeOutput.left(String result) {
+    return CodeOutput(result, null);
   }
 
-  factory CodeOutput.right(String error){
-    return CodeOutput(null,error);
+  factory CodeOutput.right(String error) {
+    return CodeOutput(null, error);
   }
-
 }
 
 /*

@@ -35,15 +35,26 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
     projects.remove(project);
     emit(FlutterProjectsLoadedState(projects));
   }
+
   Future<void> createNewProject(final String name) async {
     emit(FlutterProjectLoadingState());
     final flutterProject = FlutterProject.createNewProject(name, userId);
     flutterProject.currentScreen.variables.addAll([
       VariableModel(
-          'tabletWidthLimit', 1200, false, 'maximum width tablet can have',DataType.double,
+          'tabletWidthLimit',
+          1200,
+          false,
+          'maximum width tablet can have',
+          DataType.double,
+          flutterProject.currentScreen.name,
           deletable: false),
       VariableModel(
-          'phoneWidthLimit', 900, false, 'maximum width phone can have',DataType.double,
+          'phoneWidthLimit',
+          900,
+          false,
+          'maximum width phone can have',
+          DataType.double,
+          flutterProject.currentScreen.name,
           deletable: false)
     ]);
     await FireBridge.saveFlutterProject(userId, flutterProject);
@@ -63,7 +74,8 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
       final String projectName) async {
     emit(FlutterProjectLoadingState());
     try {
-      ComponentOperationCubit.codeProcessor.variables.removeWhere((key, value) => value.deletable);
+      ComponentOperationCubit.codeProcessor.variables
+          .removeWhere((key, value) => value.deletable);
       ComponentOperationCubit.codeProcessor.modelVariables.clear();
 
       final FlutterProject? flutterProject =
@@ -81,16 +93,22 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
         final idList = componentOperationCubit.flutterProject!.favouriteList
             .map((e) => e.component.id)
             .toList();
-        flutterProject.rootComponent!.forEach((component) async {
-          final index = idList.indexOf(component.id);
-          if (index >= 0) {
-            flutterProject.favouriteList[index] =
-                FavouriteModel(component, projectName);
-          }
-          if (component.name == 'Image.asset') {
-            imageDataList.add((component.parameters[0].value as ImageData));
-          }
-        });
+
+        for (final uiScreen in flutterProject.uiScreens) {
+          ComponentOperationCubit.changeVariables(uiScreen);
+          uiScreen.rootComponent?.forEach((component) async {
+            final index = idList.indexOf(component.id);
+            if (index >= 0) {
+              flutterProject.favouriteList[index] =
+                  FavouriteModel(component, projectName);
+            }
+            if (component.name == 'Image.asset') {
+              imageDataList.add((component.parameters[0].value as ImageData));
+            }
+          });
+        }
+        await componentOperationCubit.loadAllImages();
+
         for (final ImageData imageData in imageDataList) {
           if (!componentOperationCubit.byteCache
               .containsKey(imageData.imageName!)) {
@@ -104,8 +122,10 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
             imageData.bytes =
                 componentOperationCubit.byteCache[imageData.imageName!];
           }
+          print('IMAGE DATA ${imageData.imageName} ${imageData.bytes?.length}');
         }
       }
+      ComponentOperationCubit.changeVariables(flutterProject.currentScreen);
       componentSelectionCubit.init(
           ComponentSelectionModel.unique(flutterProject.rootComponent!),
           flutterProject.rootComponent!);
@@ -114,16 +134,23 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
               .firstWhereOrNull((e) => e.name == 'tabletWidthLimit') ==
           null) {
         componentOperationCubit.addVariable(VariableModel(
-            'tabletWidthLimit', 1200, false, 'maximum width tablet can have',DataType.double,
+            'tabletWidthLimit',
+            1200,
+            false,
+            'maximum width tablet can have',
+            DataType.double,
+            flutterProject.currentScreen.name,
             deletable: false));
         componentOperationCubit.addVariable(VariableModel(
-            'phoneWidthLimit', 900, false, 'maximum width phone can have',DataType.double,
+            'phoneWidthLimit',
+            900,
+            false,
+            'maximum width phone can have',
+            DataType.double,
+            flutterProject.currentScreen.name,
             deletable: false));
       }
-      for(final variable in flutterProject.currentScreen.variables) {
-        ComponentOperationCubit.codeProcessor.variables[variable.name] =
-          variable;
-      }
+
       componentOperationCubit
           .extractSameTypeComponents(flutterProject.rootComponent!);
 

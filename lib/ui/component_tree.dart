@@ -108,7 +108,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                     return Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (_componentOperationCubit.revertWork.totalOperations >
+                        if (_componentOperationCubit
+                                .revertWork.totalOperations >
                             0)
                           InkWell(
                             onTap: () {
@@ -135,7 +136,8 @@ class _ComponentTreeState extends State<ComponentTree> {
               ],
             ),
           ),
-          if (_componentOperationCubit.flutterProject!.uiScreens.isNotEmpty) ...[
+          if (_componentOperationCubit
+              .flutterProject!.uiScreens.isNotEmpty) ...[
             BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
               builder: (context, state) {
                 return Padding(
@@ -161,15 +163,10 @@ class _ComponentTreeState extends State<ComponentTree> {
                                           value: e,
                                           child: Align(
                                             alignment: Alignment.centerLeft,
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(10),
-                                              child: Text(
-                                                e.name,
-                                                style: AppFontStyle.roboto(13,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
+                                            child: Text(
+                                              e.name,
+                                              style: AppFontStyle.roboto(13,
+                                                  fontWeight: FontWeight.w500),
                                             ),
                                           ),
                                         ),
@@ -186,7 +183,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                                               ComponentSelectionModel.unique(
                                                   value.rootComponent!),
                                               root: value.rootComponent!);
-                                      _componentCreationCubit.changedComponent();
+                                      _componentCreationCubit
+                                          .changedComponent();
                                       debugPrint('CHANGE SCREEN DONE');
                                     }
                                   },
@@ -213,10 +211,11 @@ class _ComponentTreeState extends State<ComponentTree> {
                                 );
 
                                 _componentCreationCubit.changedComponent();
-                                _componentSelectionCubit.changeComponentSelection(
-                                    ComponentSelectionModel.unique(
-                                        screen.rootComponent!),
-                                    root: screen.rootComponent!);
+                                _componentSelectionCubit
+                                    .changeComponentSelection(
+                                        ComponentSelectionModel.unique(
+                                            screen.rootComponent!),
+                                        root: screen.rootComponent!);
                                 Get.back();
                               });
                             },
@@ -248,14 +247,15 @@ class _ComponentTreeState extends State<ComponentTree> {
                                       .flutterProject!.mainScreen ==
                                   _componentOperationCubit
                                       .flutterProject!.currentScreen,
-                              visualDensity:
-                                  const VisualDensity(horizontal: 4, vertical: 4),
+                              visualDensity: const VisualDensity(
+                                  horizontal: 4, vertical: 4),
                             ),
                           ),
                           Text(
                             'Main Screen',
                             style: AppFontStyle.roboto(14,
-                                color: Colors.black, fontWeight: FontWeight.w500),
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500),
                           )
                         ],
                       ),
@@ -272,9 +272,10 @@ class _ComponentTreeState extends State<ComponentTree> {
                                 positiveButtonText: 'delete',
                                 negativeButtonText: 'cancel',
                                 onPositiveTap: () {
-                                  _componentOperationCubit.deleteCurrentUIScreen(
-                                      _componentOperationCubit
-                                          .flutterProject!.currentScreen);
+                                  _componentOperationCubit
+                                      .deleteCurrentUIScreen(
+                                          _componentOperationCubit
+                                              .flutterProject!.currentScreen);
                                   _componentOperationCubit
                                       .flutterProject!.uiScreens
                                       .remove(_componentOperationCubit
@@ -343,7 +344,6 @@ class _ComponentTreeState extends State<ComponentTree> {
                   ),
                 ),
                 // Expanded(child: Container())
-
 
                 Expanded(
                   child: Align(
@@ -789,7 +789,6 @@ class MultipleChildWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(left: 5, top: 0),
       decoration: const BoxDecoration(
-
         border: Border(
           left: BorderSide(width: 0.4, color: Colors.grey),
         ),
@@ -1185,6 +1184,49 @@ class _SublistWidgetState extends State<SublistWidget> {
                         component: (widget.component as CustomNamedHolder)
                             .childMap[child]!,
                         componentParameter: widget.componentParameter,
+                        componentSelectionCubit: widget.componentSelectionCubit,
+                        componentOperationCubit: widget.componentOperationCubit,
+                        componentCreationCubit: widget.componentCreationCubit,
+                      ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 5,
+                )
+              ],
+              for (final child
+                  in (widget.component as CustomNamedHolder).childrenMap.keys) ...[
+                Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          child,
+                          style: AppFontStyle.roboto(12,
+                              color: const Color(0xff494949),
+                              fontWeight: FontWeight.w500),
+                        ),
+                        ComponentModificationMenu(
+                            component: widget.component,
+                            customNamed: child,
+                            ancestor: widget.ancestor,
+                            componentSelectionCubit:
+                                widget.componentSelectionCubit,
+                            componentOperationCubit:
+                                widget.componentOperationCubit,
+                            componentCreationCubit:
+                                widget.componentCreationCubit),
+                      ],
+                    ),
+                    if ((widget.component as CustomNamedHolder)
+                            .childrenMap[child] !=
+                        null)
+                      MultipleChildWidget(
+                        ancestor: widget.ancestor,
+                        component: widget.component,
+                        children: (widget.component as CustomNamedHolder)
+                            .childrenMap[child]!,
                         componentSelectionCubit: widget.componentSelectionCubit,
                         componentOperationCubit: widget.componentOperationCubit,
                         componentCreationCubit: widget.componentCreationCubit,
@@ -1929,6 +1971,13 @@ class ComponentTile extends StatelessWidget {
                   ComponentSelectionModel.unique(component),
                   root: ancestor,
                   scroll: false);
+              if (GlobalObjectKey(component).currentContext != null) {
+                WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+                  Scrollable.ensureVisible(
+                      GlobalObjectKey(component).currentContext!,
+                      alignment: 0.5);
+                });
+              }
             },
             child: Container(
               key: GlobalObjectKey(component.uniqueId),

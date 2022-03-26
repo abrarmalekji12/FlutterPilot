@@ -190,7 +190,7 @@ abstract class FireBridge {
   }
 
   static Future<List<FavouriteModel>> loadFavourites(final int userId,
-      {required FlutterProject? project}) async {
+      {FlutterProject? project}) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot;
     if (project == null) {
       snapshot = await FirebaseFirestore.instance

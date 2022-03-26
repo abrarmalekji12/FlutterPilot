@@ -5,15 +5,11 @@ abstract class CodeOperations {
       return null;
     }
     final List<int> outputString = [];
-    bool open = false;
+    bool openString = false;
     for (int i = 0; i < code.length; i++) {
       if (code[i] == '\'' || code[i] == '`') {
-        open = !open;
-      } else if (code[i] == '<') {
-        open = true;
-      } else if (code[i] == '>') {
-        open = false;
-      } else if (!open && (code[i] == ' ' || code[i] == '\n')) {
+        openString = !openString;
+      } else if (!openString && (code[i] == ' ' || code[i] == '\n')) {
         continue;
       }
       outputString.add(code.codeUnitAt(i));

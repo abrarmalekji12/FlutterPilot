@@ -8,8 +8,9 @@ class VariableModel {
   String? description;
   String? assignmentCode;
   final bool deletable;
+  final String screen;
 
-  VariableModel(this.name, this.value, this.runtimeAssigned, this.description,this.dataType,
+  VariableModel(this.name, this.value, this.runtimeAssigned, this.description,this.dataType,this.screen,
       {this.assignmentCode, this.deletable = true});
 
   Map<String, dynamic> toJson() {
@@ -22,9 +23,9 @@ class VariableModel {
     };
   }
 
-  factory VariableModel.fromJson(Map<String, dynamic> map) {
+  factory VariableModel.fromJson(Map<String, dynamic> map,String screen) {
     return VariableModel(map['name'], map['value'], false, map['description'],map['dataType']!=null?DataType.values
-        .firstWhere((element) => element.name == map['dataType']):DataType.double,
+        .firstWhere((element) => element.name == map['dataType']):DataType.double,screen,
         deletable: map['deletable'] ?? true);
   }
 }

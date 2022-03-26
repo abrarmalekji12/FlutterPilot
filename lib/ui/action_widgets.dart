@@ -13,6 +13,7 @@ import '../cubit/component_operation/component_operation_cubit.dart';
 import '../models/actions/action_model.dart';
 import '../models/component_model.dart';
 import '../models/project_model.dart';
+import 'parameter_ui.dart';
 
 class ActionModelWidget extends StatefulWidget {
   final Clickable component;
@@ -52,6 +53,9 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                     'GoBackInStackAction',
                     'ShowDialogInStackAction',
                     'ShowCustomDialogInStackAction',
+                    'ShowBottomSheetInStackAction',
+                    // 'HideBottomSheetInStackAction',
+                    'ShowSnackBarAction'
                   ]
                       .map(
                         (e) => CustomPopupMenuItem<String>(
@@ -69,40 +73,41 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                       case 'NewPageInStackAction':
                         widget.component.actionList
                             .add(NewPageInStackAction(null));
-                        _clickActionCubit.changedState();
-                        BlocProvider.of<ActionEditCubit>(context, listen: false)
-                            .change();
+
                         break;
                       case 'ReplaceCurrentPageInStackAction':
                         widget.component.actionList
                             .add(ReplaceCurrentPageInStackAction(null));
-                        _clickActionCubit.changedState();
-                        BlocProvider.of<ActionEditCubit>(context, listen: false)
-                            .change();
+
                         break;
                       case 'GoBackInStackAction':
                         widget.component.actionList.add(GoBackInStackAction());
-                        _clickActionCubit.changedState();
 
-                        BlocProvider.of<ActionEditCubit>(context, listen: false)
-                            .change();
                         break;
                       case 'ShowDialogInStackAction':
                         widget.component.actionList
                             .add(ShowDialogInStackAction());
-                        _clickActionCubit.changedState();
-
-                        BlocProvider.of<ActionEditCubit>(context, listen: false)
-                            .change();
                         break;
                       case 'ShowCustomDialogInStackAction':
                         widget.component.actionList
                             .add(ShowCustomDialogInStackAction());
-                        _clickActionCubit.changedState();
-                        BlocProvider.of<ActionEditCubit>(context, listen: false)
-                            .change();
                         break;
+                      case 'ShowBottomSheetInStackAction':
+                        widget.component.actionList
+                            .add(ShowBottomSheetInStackAction(null));
+                        break;
+                      case 'ShowSnackBarAction':
+                        widget.component.actionList.add(ShowSnackBarAction());
+                        break;
+                      // case 'HideBottomSheetInStackAction':
+                      //   widget.component.actionList
+                      //       .add(HideBottomSheetInStackAction());
+                      //   break;
                     }
+
+                    _clickActionCubit.changedState();
+                    BlocProvider.of<ActionEditCubit>(context, listen: false)
+                        .change();
                   },
                   child: const Padding(
                     padding: EdgeInsets.all(10),
@@ -190,6 +195,10 @@ class ActionModelUIWidget extends StatelessWidget {
         return GoBackInStackActionWidget(
             clickableHolder: clickableHolder,
             action: actionModel as GoBackInStackAction);
+      // case HideBottomSheetInStackAction:
+      //   return HideBottomSheetInStackActionWidget(
+      //       clickableHolder: clickableHolder,
+      //       action: actionModel as HideBottomSheetInStackAction);
       case ShowDialogInStackAction:
         return ShowDialogInStackActionWidget(
           action: actionModel as ShowDialogInStackAction,
@@ -200,7 +209,14 @@ class ActionModelUIWidget extends StatelessWidget {
           action: actionModel as ShowCustomDialogInStackAction,
           clickableHolder: clickableHolder,
         );
-
+      case ShowBottomSheetInStackAction:
+        return ShowBottomSheetInStackActionWidget(
+            clickableHolder: clickableHolder,
+            action: actionModel as ShowBottomSheetInStackAction);
+      case ShowSnackBarAction:
+        return ShowSnackBarActionWidget(
+            clickableHolder: clickableHolder,
+            action: actionModel as ShowSnackBarAction);
       default:
         return Container();
     }
@@ -308,7 +324,6 @@ class NewPageInStackActionWidget extends StatelessWidget {
   }
 }
 
-
 class ReplaceCurrentPageInStackActionWidget extends StatelessWidget {
   final Clickable clickableHolder;
   final ReplaceCurrentPageInStackAction action;
@@ -331,7 +346,7 @@ class ReplaceCurrentPageInStackActionWidget extends StatelessWidget {
             width: 20,
           ),
           Expanded(child:
-          BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
+              BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
             builder: (context, state) {
               return Padding(
                 padding: const EdgeInsets.all(5.0),
@@ -350,40 +365,37 @@ class ReplaceCurrentPageInStackActionWidget extends StatelessWidget {
                                   fontWeight: FontWeight.w500),
                             ),
                             items: BlocProvider.of<ComponentOperationCubit>(
-                                context,
-                                listen: false)
+                                    context,
+                                    listen: false)
                                 .flutterProject!
                                 .uiScreens
                                 .map<CustomDropdownMenuItem<UIScreen>>(
                                   (e) => CustomDropdownMenuItem<UIScreen>(
-                                value: e,
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: SizedBox(
-                                    height: 25,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10),
-                                      child: Text(
-                                        e.name,
-                                        style: AppFontStyle.roboto(13,
-                                            fontWeight: FontWeight.w500),
+                                    value: e,
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10),
+                                        child: Text(
+                                          e.name,
+                                          style: AppFontStyle.roboto(13,
+                                              fontWeight: FontWeight.w500),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            )
+                                )
                                 .toList(),
                             onChanged: (value) {
                               if (value != (action.arguments[0] as UIScreen?)) {
                                 action.arguments[0] = value;
                                 BlocProvider.of<ClickActionCubit>(context,
-                                    listen: false)
+                                        listen: false)
                                     .changedState();
 
                                 BlocProvider.of<ActionEditCubit>(context,
-                                    listen: false)
+                                        listen: false)
                                     .change();
                               }
                             },
@@ -436,6 +448,33 @@ class GoBackInStackActionWidget extends StatelessWidget {
     );
   }
 }
+//
+// class HideBottomSheetInStackActionWidget extends StatelessWidget {
+//   final Clickable clickableHolder;
+//   final HideBottomSheetInStackAction action;
+//
+//   const HideBottomSheetInStackActionWidget(
+//       {Key? key, required this.clickableHolder, required this.action})
+//       : super(key: key);
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       padding: const EdgeInsets.all(10),
+//       child: Row(
+//         children: [
+//           Text(
+//             'Hide BottomSheet',
+//             style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+//           ),
+//           const SizedBox(
+//             width: 20,
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class ShowDialogInStackActionWidget extends StatelessWidget {
   final Clickable clickableHolder;
@@ -689,6 +728,168 @@ class ShowCustomDialogInStackActionWidget extends StatelessWidget {
                 },
               )),
             ],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class ShowBottomSheetInStackActionWidget extends StatelessWidget {
+  final Clickable clickableHolder;
+  final ShowBottomSheetInStackAction action;
+
+  const ShowBottomSheetInStackActionWidget(
+      {Key? key, required this.clickableHolder, required this.action})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Bottom Sheet',
+              style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          Row(
+            children: [
+              Text(
+                'Screen',
+                style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(
+                width: 20,
+              ),
+              Expanded(child:
+                  BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
+                builder: (context, state) {
+                  return Padding(
+                    padding: const EdgeInsets.all(5.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: CustomDropdownButton<UIScreen>(
+                                style: AppFontStyle.roboto(13),
+                                value: (action.arguments[0] as UIScreen?),
+                                hint: Text(
+                                  'Choose Screen',
+                                  style: AppFontStyle.roboto(14,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                items: BlocProvider.of<ComponentOperationCubit>(
+                                        context,
+                                        listen: false)
+                                    .flutterProject!
+                                    .uiScreens
+                                    .map<CustomDropdownMenuItem<UIScreen>>(
+                                      (e) => CustomDropdownMenuItem<UIScreen>(
+                                        value: e,
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: SizedBox(
+                                            height: 25,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 10),
+                                              child: Text(
+                                                e.name,
+                                                style: AppFontStyle.roboto(13,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value !=
+                                      (action.arguments[0] as UIScreen?)) {
+                                    action.arguments[0] = value;
+                                    BlocProvider.of<ClickActionCubit>(context,
+                                            listen: false)
+                                        .changedState();
+
+                                    BlocProvider.of<ActionEditCubit>(context,
+                                            listen: false)
+                                        .change();
+                                  }
+                                },
+                                selectedItemBuilder: (context, config) {
+                                  return Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      config.name,
+                                      style: AppFontStyle.roboto(13,
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                  );
+                                }),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              )),
+            ],
+          ),
+          ParameterWidget(
+            parameter: action.arguments[1],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class ShowSnackBarActionWidget extends StatelessWidget {
+  final Clickable clickableHolder;
+  final ShowSnackBarAction action;
+
+  const ShowSnackBarActionWidget(
+      {Key? key, required this.clickableHolder, required this.action})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'SnackBar',
+              style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ParameterWidget(
+            parameter: action.arguments[0],
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ParameterWidget(
+            parameter: action.arguments[1],
           )
         ],
       ),

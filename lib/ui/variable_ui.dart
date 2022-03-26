@@ -53,6 +53,7 @@ class _VariableBoxState extends State<VariableBox> {
                     Expanded(
                       child: TextField(
                         controller: _controller1,
+                        style: AppFontStyle.roboto(13,fontWeight: FontWeight.w600),
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.all(5),
                           enabledBorder: UnderlineInputBorder(
@@ -122,6 +123,8 @@ class _VariableBoxState extends State<VariableBox> {
                     Expanded(
                       child: TextField(
                         controller: _controller2,
+
+                        style: AppFontStyle.roboto(13,fontWeight: FontWeight.w600),
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.all(5),
                           enabledBorder: UnderlineInputBorder(
@@ -194,7 +197,18 @@ class _VariableBoxState extends State<VariableBox> {
                           return;
                         }
                         ComponentOperationCubit.codeProcessor.variables[name] =
-                            VariableModel(name, value, false, null, dataType);
+                            VariableModel(
+                          name,
+                          value,
+                          false,
+                          null,
+                          dataType,
+                          BlocProvider.of<ComponentOperationCubit>(context,
+                                  listen: false)
+                              .flutterProject!
+                              .currentScreen
+                              .name,
+                        );
                         _controller1.text = '';
                         _controller2.text = '';
                         BlocProvider.of<ComponentOperationCubit>(context,

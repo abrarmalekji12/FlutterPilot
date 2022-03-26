@@ -25,7 +25,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   final Map<String, List<Component>> sameComponentCollection = {};
   RuntimeMode runtimeMode = RuntimeMode.edit;
   final List<FavouriteModel> favouriteList = [];
-  Map<String, Uint8List> byteCache = {};
+  static Map<String, Uint8List> bytesCache = {};
 
   ComponentOperationCubit() : super(ComponentOperationInitial());
 
@@ -33,6 +33,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   RevertWork get revertWork => flutterProject!.currentScreen.revertWork;
 
+  get byteCache => bytesCache;
   void addedComponent(Component component, Component root) {
     if (root is CustomComponent) {
       updateGlobalCustomComponent(root);
@@ -40,20 +41,38 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  void changeProjectScreen(final UIScreen screen) {
-    flutterProject!.currentScreen = screen;
+  static void changeVariables(final UIScreen screen) {
     ComponentOperationCubit.codeProcessor.variables
         .removeWhere((key, value) => value.deletable);
     for (final variable in screen.variables) {
       ComponentOperationCubit.codeProcessor.variables[variable.name] = variable;
     }
+  }
+
+  static void addVariables(final UIScreen screen) {
+    for (final variable in screen.variables) {
+      ComponentOperationCubit.codeProcessor.variables[variable.name] = variable;
+    }
+  }
+  static void removeVariables(final UIScreen screen) {
+
+    ComponentOperationCubit.codeProcessor.variables
+        .removeWhere((key, value)=>screen.name==value.screen);
+  }
+
+
+
+  void changeProjectScreen(final UIScreen screen) {
+    flutterProject!.currentScreen = screen;
+    changeVariables(screen);
     emit(ComponentUpdatedState());
     changeProjectScreenInDB();
   }
 
-  Future<void> changeProjectScreenInDB() async{
+  Future<void> changeProjectScreenInDB() async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.updateCurrentScreen(flutterProject!.userId, flutterProject!);
+    await FireBridge.updateCurrentScreen(
+        flutterProject!.userId, flutterProject!);
     emit(ComponentOperationInitial());
   }
 
@@ -77,7 +96,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     if (componentParameterOperation) {
       componentParameter!.addComponent(comp);
     } else if (customNamed != null) {
-      (component as CustomNamedHolder).updateChildWithKey(customNamed, comp);
+      (component as CustomNamedHolder).addOrUpdateChildWithKey(customNamed, comp);
     } else {
       if (component is Holder) {
         component.updateChild(comp);
@@ -124,6 +143,11 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<List<ImageData>?> loadAllImages() async {
     emit(ComponentOperationLoadingState());
     final imageList = await FireBridge.loadAllImages(flutterProject!.userId);
+    for(final ImageData image in imageList??[]){
+      if(image.imageName!=null) {
+        byteCache[image.imageName!]=image.bytes!;
+      }
+    }
     emit(ComponentOperationInitial());
     return imageList;
   }
@@ -142,13 +166,11 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   Future<void> deleteCurrentUIScreen(final UIScreen uiScreen) async {
-
     emit(ComponentOperationLoadingState());
-    await FireBridge.removeUIScreen(flutterProject!.userId, flutterProject!,uiScreen);
+    await FireBridge.removeUIScreen(
+        flutterProject!.userId, flutterProject!, uiScreen);
     emit(ComponentOperationInitial());
   }
-
-
 
   Future<void> updateRootComponent() async {
     emit(ComponentOperationLoadingState());
@@ -383,7 +405,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> loadFavourites() async {
     emit(ComponentOperationLoadingState());
     final favouriteComponentList =
-        await FireBridge.loadFavourites(flutterProject!.userId,project: flutterProject);
+        await FireBridge.loadFavourites(flutterProject!.userId);
     favouriteList.clear();
     favouriteList.addAll(favouriteComponentList.reversed);
     flutterProject!.favouriteList.clear();
@@ -520,8 +542,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   Future<void> addModel(final LocalModel model) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.addModel(
-        flutterProject!.userId, flutterProject!, model);
+    await FireBridge.addModel(flutterProject!.userId, flutterProject!, model);
     emit(ComponentOperationInitial());
   }
 
@@ -534,9 +555,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   Future<void> updateVariable(VariableModel variableModel) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.updateVariable(
-        flutterProject!.userId,
-        flutterProject!,
+    await FireBridge.updateVariable(flutterProject!.userId, flutterProject!,
         ComponentOperationCubit.codeProcessor.variables[variableModel.name]!);
     emit(ComponentOperationInitial());
   }

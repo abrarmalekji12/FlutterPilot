@@ -130,7 +130,7 @@ class Parameters {
                       'SliverGridDelegateWithFixedCrossAxisCount')),
         ],
         required: true,
-        info: NamedParameterInfo('sliverDelegate'),
+        info: NamedParameterInfo('delegate'),
       );
 
   static ComplexParameter inputDecorationParameter() => ComplexParameter(
@@ -388,7 +388,7 @@ class Parameters {
         'passThrough': StackFit.passthrough,
       },
       defaultValue: 'loose',
-      info: NamedParameterInfo('alignment'));
+      info: NamedParameterInfo('fit'));
 
   static Parameter iconParameter() => ChoiceValueParameter(
       name: 'Choose icon',
@@ -436,6 +436,8 @@ class Parameters {
         'mail': Icons.mail,
         'mail_outline': Icons.mail_outline,
         'work': Icons.work,
+        'location_on_rounded':Icons.location_on_rounded,
+        'build':Icons.build,
       },
       defaultValue: 'close',
       required: true);
@@ -1059,15 +1061,25 @@ class Parameters {
             name: 'fontWeight',
             info: NamedParameterInfo('fontWeight'),
           ),
-          italicParameter()
+          italicParameter(),
+          textDecorationParameter(),
+          colorParameter()
+            ..withRequired(false)
+            ..withDefaultValue(null)
+            ..withNamedParamInfoAndSameDisplayName('decorationColor'),
+          textDecorationStyleParameter()
         ],
         name: 'Style',
         evaluate: (params) {
           return TextStyle(
-              fontSize: params[0].value,
-              color: params[1].value,
-              fontWeight: params[2].value,
-              fontStyle: params[3].value ? FontStyle.italic : FontStyle.normal);
+            fontSize: params[0].value,
+            color: params[1].value,
+            fontWeight: params[2].value,
+            fontStyle: params[3].value ? FontStyle.italic : FontStyle.normal,
+            decoration: params[4].value,
+            decorationColor: params[5].value,
+            decorationStyle: params[6].value,
+          );
         },
       );
 
@@ -1156,4 +1168,31 @@ class Parameters {
           },
           info: InnerObjectParameterInfo(
               innerObjectName: 'ImageFilter.blur', namedIfHaveAny: 'filter'));
+
+  static Parameter textDecorationParameter() => ChoiceValueParameter(
+        name: 'text-decoration',
+        options: {
+          'lineThrough': TextDecoration.lineThrough,
+          'underline': TextDecoration.underline,
+          'overline': TextDecoration.overline,
+          'none': TextDecoration.none,
+        },
+        required: false,
+        defaultValue: 'none',
+        info: NamedParameterInfo('decoration'),
+      );
+
+  static Parameter textDecorationStyleParameter() => ChoiceValueParameter(
+        name: 'text-decoration-style',
+        options: {
+          'solid': TextDecorationStyle.solid,
+          'dashed': TextDecorationStyle.dashed,
+          'dotted': TextDecorationStyle.dotted,
+          'wavy': TextDecorationStyle.wavy,
+          'double': TextDecorationStyle.double,
+        },
+        required: false,
+        defaultValue: null,
+        info: NamedParameterInfo('decorationStyle', isOptional: true),
+      );
 }

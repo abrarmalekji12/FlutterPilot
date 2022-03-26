@@ -36,7 +36,9 @@ dependencies:
   fluttertoast: ^8.0.8
   flutter_overlay_loader: ^1.0.3
   shimmer: ^2.0.0
-  flutter_screenutil: ^5.0.3
+  code_text_field: ^1.0.2
+  dart_style: ^2.2.2
+  widget_arrows: ^0.1.8
 
 dev_dependencies:
   flutter_test:

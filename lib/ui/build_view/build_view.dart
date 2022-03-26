@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import '../../constant/string_constant.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../cubit/screen_config/screen_config_cubit.dart';
 import '../../runtime_provider.dart';
@@ -24,7 +25,7 @@ class BuildView extends StatelessWidget {
     componentOperationCubit.runtimeMode = RuntimeMode.run;
     return GestureDetector(
       onTap: () {
-        _onDismiss();
+        _onDismiss(context);
       },
       child: Material(
         color: Colors.white,
@@ -44,21 +45,24 @@ class BuildView extends StatelessWidget {
                       child: GestureDetector(
                         onTap: () {},
                         child: DevicePreview(
-
                           tools: const [
                             DeviceSection()
                           ],
                           builder: (_) {
                             return LayoutBuilder(builder: (_, constraints) {
-                              ComponentOperationCubit
+                              if(Get.isDialogOpen??false) {
+                                ComponentOperationCubit
                                   .codeProcessor
                                   .variables['dw']!
                                   .value = constraints.maxWidth;
-                              ComponentOperationCubit
-                                  .codeProcessor
-                                  .variables['dh']!
-                                  .value = constraints.maxHeight;
-                              return SafeArea(
+
+                                ComponentOperationCubit
+                                    .codeProcessor
+                                    .variables['dh']!
+                                    .value = constraints.maxHeight;
+                              }
+                              return Container(
+                                color: Colors.white,
                                 child: componentOperationCubit.flutterProject!
                                     .run(context, navigator: true),
                               );
@@ -79,7 +83,8 @@ class BuildView extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
                   onTap: () {
-                    _onDismiss();
+
+                    _onDismiss(context);
                   },
                   child: const Icon(Icons.arrow_back),
                 ),
@@ -91,9 +96,12 @@ class BuildView extends StatelessWidget {
     );
   }
 
-  void _onDismiss() {
+  void _onDismiss(BuildContext context) {
     componentOperationCubit.runtimeMode = RuntimeMode.edit;
+    Get.back(closeOverlays: false,);
+    ComponentOperationCubit.changeVariables(componentOperationCubit.flutterProject!.currentScreen);
+
     onDismiss.call();
-    Get.back();
+
   }
 }

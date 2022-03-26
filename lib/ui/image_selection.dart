@@ -79,6 +79,7 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                             logger(
                                 '=== IMAGE SELECTED ${value.name}  || ${value.path}');
                             final imageData = ImageData(bytes, value.name);
+                            widget.componentOperationCubit.byteCache[value.name]=bytes;
                             widget.componentOperationCubit
                                 .uploadImage(imageData);
                             Get.back(result: imageData);
@@ -152,6 +153,8 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                             itemBuilder: (context, index) {
                               return InkWell(
                                 onTap: () {
+
+                                  widget.componentOperationCubit.byteCache[filteredImageDataList![index].imageName!]=filteredImageDataList![index].bytes!;
                                   Get.back(result: filteredImageDataList![index]);
                                 },
                                 child: Padding(

@@ -4,12 +4,13 @@ abstract class ParameterInfo {
   String fromCode(String code);
   bool isNamed();
   String? getName();
+  bool get optional;
 }
 
 class NamedParameterInfo extends ParameterInfo  {
   String name;
-
-  NamedParameterInfo(this.name);
+  bool isOptional;
+  NamedParameterInfo(this.name,{this.isOptional=false});
 
   @override
   String code(String value,{bool allowEmpty=false}) {
@@ -32,14 +33,18 @@ class NamedParameterInfo extends ParameterInfo  {
   @override
   bool isNamed()=> true;
 
+  @override
+  bool get optional => isOptional;
+
 }
 
 class InnerObjectParameterInfo extends ParameterInfo {
   final String innerObjectName;
   String? namedIfHaveAny;
+  bool isOptional;
 
   InnerObjectParameterInfo(
-      {required this.innerObjectName, this.namedIfHaveAny});
+      {required this.innerObjectName, this.namedIfHaveAny,this.isOptional=false});
 
   @override
   String code(String value,{bool allowEmpty=false}) {
@@ -62,6 +67,9 @@ class InnerObjectParameterInfo extends ParameterInfo {
     final out=(namedIfHaveAny!=null?code.replaceFirst('$namedIfHaveAny:', ''):code).replaceFirst('$innerObjectName(', '');
     return out.substring(0,out.length-1);
   }
+
+  @override
+  bool get optional => isOptional;
 }
 
 class SimpleParameterInfo extends ParameterInfo {
@@ -80,4 +88,7 @@ class SimpleParameterInfo extends ParameterInfo {
 
   @override
   String? getName()=> null;
+
+  @override
+  bool get optional => false;
 }

@@ -4,13 +4,18 @@ class CustomTextField extends StatelessWidget {
   final void Function(String) onChange;
   final String? hint;
   final TextEditingController? controller;
-  const CustomTextField({Key? key, required this.onChange, this.hint,this.controller}) : super(key: key);
+  final FormFieldValidator<String>? validator;
+  const CustomTextField(
+      {Key? key, required this.onChange, this.hint, this.controller, this.validator})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       onChanged: onChange,
       controller: controller,
+      validator: validator,
+      textAlignVertical: TextAlignVertical.center,
       decoration: InputDecoration(
         hintText: hint,
         contentPadding: const EdgeInsets.all(5),

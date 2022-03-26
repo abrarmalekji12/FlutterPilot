@@ -19,6 +19,7 @@ class BoundaryWidget extends StatelessWidget {
       child: BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
         builder: (context, state) {
           logger('======== COMPONENT SELECTION ');
+
           return BlocBuilder<VisualBoxCubit, VisualBoxState>(
             builder: (context, state) {
               final List<Boundary> boundaries = getAllBoundaries(context);
@@ -46,7 +47,8 @@ class BoundaryWidget extends StatelessWidget {
   List<Boundary> getAllBoundaries(BuildContext context) {
     return BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
         .currentSelected
-        .visualSelection.where((element) => element.boundary!=null)
+        .visualSelection
+        .where((element) => element.boundary != null)
         .map<Boundary>((e) => Boundary(e.boundary!, e.name))
         .toList(growable: false);
   }

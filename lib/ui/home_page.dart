@@ -3,9 +3,12 @@ import 'dart:async';
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_builder/ui/preview_ui.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../common/app_loader.dart';
 import '../common/dialog_selection.dart';
 import '../constant/app_colors.dart';
+import '../constant/string_constant.dart';
 import '../cubit/action_edit/action_edit_cubit.dart';
 import '../models/builder_component.dart';
 import '../models/component_selection.dart';
@@ -35,7 +38,6 @@ import 'boundary_widget.dart';
 import 'code_view_widget.dart';
 import 'component_selection_dialog.dart';
 import 'parameter_ui.dart';
-import 'package:flutter_overlay_loader/flutter_overlay_loader.dart';
 
 import '../models/component_model.dart';
 import 'component_tree.dart';
@@ -83,20 +85,14 @@ class _HomePageState extends State<HomePage> {
               componentSelectionCubit.currentSelected.propertySelection);
         } else if (event.key == 'v') {
           if (componentOperationCubit.runtimeMode == RuntimeMode.edit) {
-            Get.dialog(
-              BuildView(
-                onDismiss: () {
-                  componentCreationCubit.changedComponent();
-                },
-                componentOperationCubit: componentOperationCubit,
-                screenConfigCubit: screenConfigCubit,
-              ),
-            ).then((value) {
-              ComponentOperationCubit.codeProcessor.variables['dw']!.value =
-                  screenConfigCubit.screenConfig.width;
-              ComponentOperationCubit.codeProcessor.variables['dh']!.value =
-                  screenConfigCubit.screenConfig.height;
-
+            Get.dialog(BuildView(
+              onDismiss: () {
+                componentCreationCubit.changedComponent();
+              },
+              componentOperationCubit: componentOperationCubit,
+              screenConfigCubit: screenConfigCubit,
+            )).then((value) {
+              screenConfigCubit.applyCurrentSizeToVariables();
             });
           } else if (componentOperationCubit.runtimeMode == RuntimeMode.run) {
             Get.back();
@@ -107,7 +103,9 @@ class _HomePageState extends State<HomePage> {
       }
     });
     html.window.onResize.listen((event) {
-      componentCreationCubit.changedComponent();
+      if (mounted) {
+        componentCreationCubit.changedComponent();
+      }
     });
   }
 
@@ -158,17 +156,18 @@ class _HomePageState extends State<HomePage> {
             listener: (context, state) {
               switch (state.runtimeType) {
                 case FlutterProjectLoadingState:
-                  Loader.show(context);
+                  AppLoader.show(context,
+                      loadingMode: LoadingMode.projectLoadingMode);
                   break;
                 case FlutterProjectErrorState:
-                  Loader.hide();
+                  AppLoader.hide();
                   Fluttertoast.showToast(
                       msg: (state as FlutterProjectErrorState).message ??
                           'Something went wrong',
                       timeInSecForIosWeb: 3);
                   break;
                 case FlutterProjectLoadedState:
-                  Loader.hide();
+                  AppLoader.hide();
                   if (componentOperationCubit.flutterProject!.device != null) {
                     final config = screenConfigCubit.screenConfigs
                         .firstWhereOrNull((element) =>
@@ -255,13 +254,10 @@ class ScreenConfigSelection extends StatelessWidget {
                       value: e,
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Text(
-                            '${e.name} (${e.width}x${e.height})',
-                            style: AppFontStyle.roboto(13,
-                                fontWeight: FontWeight.w500),
-                          ),
+                        child: Text(
+                          '${e.name} (${e.width}x${e.height})',
+                          style: AppFontStyle.roboto(13,
+                              fontWeight: FontWeight.w500),
                         ),
                       ),
                     ),
@@ -303,29 +299,32 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.topRight,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            highlightColor: Colors.blueAccent.shade200,
-            borderRadius: BorderRadius.circular(8),
-            onTap: () {
-              CustomDialog.show(
-                context,
-                CodeViewerWidget(
-                  componentOperationCubit:
-                      BlocProvider.of<ComponentOperationCubit>(context,
-                          listen: false),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              highlightColor: Colors.blueAccent.shade200,
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                CustomDialog.show(
+                  context,
+                  CodeViewerWidget(
+                    componentOperationCubit:
+                        BlocProvider.of<ComponentOperationCubit>(context,
+                            listen: false),
+                  ),
+                );
+              },
+              child: Container(
+                width: 100,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: kElevationToShadow[1],
+                  color: Colors.blueAccent,
                 ),
-              );
-            },
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              color: Colors.blueAccent,
-              child: Padding(
                 padding: const EdgeInsets.all(7),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -336,55 +335,49 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                       color: Colors.white,
                       size: 18,
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const Spacer(),
                     Text(
                       'Code',
                       style: AppFontStyle.roboto(13, color: Colors.white),
-                    )
+                    ),
+                    const Spacer(),
                   ],
                 ),
               ),
             ),
-          ),
-          const SizedBox(
-            width: 10,
-          ),
-          InkWell(
-            highlightColor: Colors.blueAccent.shade200,
-            borderRadius: BorderRadius.circular(8),
-            onTap: () {
-              Get.dialog(
-                BuildView(
-                  onDismiss: () {
-                    BlocProvider.of<ComponentCreationCubit>(context,
-                            listen: false)
-                        .changedComponent();
-                  },
-                  componentOperationCubit:
-                      BlocProvider.of<ComponentOperationCubit>(context,
-                          listen: false),
-                  screenConfigCubit: BlocProvider.of<ScreenConfigCubit>(context,
-                      listen: false),
-                ),
-              ).then((value) {
-                ComponentOperationCubit.codeProcessor.variables['dw']!.value =
-                    BlocProvider.of<ScreenConfigCubit>(context,
-                        listen: false).screenConfig.width;
-                ComponentOperationCubit.codeProcessor.variables['dh']!.value =
-                    BlocProvider.of<ScreenConfigCubit>(context,
-                        listen: false).screenConfig.height;
-
-              });
-            },
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              color: Colors.green.shade500,
-              child: Padding(
+            const SizedBox(
+              height: 5,
+            ),
+            InkWell(
+              highlightColor: Colors.blueAccent.shade200,
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                Get.dialog(
+                  BuildView(
+                    onDismiss: () {
+                      BlocProvider.of<ComponentCreationCubit>(context,
+                              listen: false)
+                          .changedComponent();
+                    },
+                    componentOperationCubit:
+                        BlocProvider.of<ComponentOperationCubit>(context,
+                            listen: false),
+                    screenConfigCubit: BlocProvider.of<ScreenConfigCubit>(context,
+                        listen: false),
+                  ),
+                ).then((value) {
+                  BlocProvider.of<ScreenConfigCubit>(context, listen: false)
+                      .applyCurrentSizeToVariables();
+                });
+              },
+              child: Container(
+                width: 100,
                 padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade500,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: kElevationToShadow[1],
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
@@ -394,19 +387,62 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                       color: Colors.white,
                       size: 18,
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const Spacer(),
                     Text(
                       'Run',
                       style: AppFontStyle.roboto(13, color: Colors.white),
-                    )
+                    ),
+                    const Spacer(),
                   ],
                 ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(
+              height: 5,
+            ),
+            InkWell(
+              highlightColor: Colors.blue.shade200,
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                Get.to(
+                  () => PreviewPage(
+                      BlocProvider.of<ComponentOperationCubit>(context,
+                          listen: false),
+                      BlocProvider.of<ScreenConfigCubit>(context, listen: false)),
+                )?.then((value) {
+                  BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                      .changedComponent();
+                });
+              },
+              child: Container(
+                width: 100,
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: kElevationToShadow[1],
+                  color: Colors.deepPurpleAccent.shade400
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.preview,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Preview',
+                      style: AppFontStyle.roboto(13, color: Colors.white),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -449,14 +485,29 @@ class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
             });
           },
           child: Container(
+            width: 100,
             decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(10)),
-            padding: const EdgeInsets.all(10),
-            child: Text(
-              'Variables',
-              style: AppFontStyle.roboto(15,
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: kElevationToShadow[1],
+            ),
+            padding: const EdgeInsets.all(7),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.build,
                   color: _variableBoxOpen ? AppColors.theme : Colors.black,
-                  fontWeight: FontWeight.w500),
+                  size: 18,
+                ),
+                const Spacer(),
+                Text(
+                  'Variables',
+                  style: AppFontStyle.roboto(13,
+                      color: _variableBoxOpen ? AppColors.theme : Colors.black,
+                      fontWeight: FontWeight.w500),
+                ),
+                const Spacer(),
+              ],
             ),
           ),
         ),
@@ -477,46 +528,58 @@ class _ModelShowHideMenuState extends State<ModelShowHideMenu> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_modelBoxOpen)
-            TweenAnimationBuilder(
-              tween: Tween<double>(begin: 1, end: 0),
-              builder: (context, double value, _) {
-                return Transform.translate(
-                  offset: Offset(0, value * (-300)),
-                  child: const SizedBox(
-                    width: 450,
-                    child: ModelBox(),
-                  ),
-                );
-              },
-              duration: const Duration(milliseconds: 200),
-            ),
-          InkWell(
-            onTap: () {
-              setState(() {
-                _modelBoxOpen = !_modelBoxOpen;
-              });
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_modelBoxOpen)
+          TweenAnimationBuilder(
+            tween: Tween<double>(begin: 1, end: 0),
+            builder: (context, double value, _) {
+              return Transform.translate(
+                offset: Offset(0, value * (-300)),
+                child: const SizedBox(
+                  width: 450,
+                  child: ModelBox(),
+                ),
+              );
             },
-            child: Container(
-              decoration: BoxDecoration(
-                  color: Colors.white, borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.all(10),
-              child: Text(
-                'Models',
-                style: AppFontStyle.roboto(15,
-                    color: _modelBoxOpen ? AppColors.theme : Colors.black,
-                    fontWeight: FontWeight.w500),
-              ),
+            duration: const Duration(milliseconds: 200),
+          ),
+        InkWell(
+          onTap: () {
+            setState(() {
+              _modelBoxOpen = !_modelBoxOpen;
+            });
+          },
+          child: Container(
+            width: 100,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: kElevationToShadow[1],
+            ),
+            padding: const EdgeInsets.all(7),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.storage,
+                  size: 18,
+                  color: _modelBoxOpen ? AppColors.theme : Colors.black,
+                ),
+                const Spacer(),
+                Text(
+                  'Models',
+                  style: AppFontStyle.roboto(13,
+                      color: _modelBoxOpen ? AppColors.theme : Colors.black,
+                      fontWeight: FontWeight.w500),
+                ),
+                const Spacer(),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -563,7 +626,6 @@ class PrototypeShowcase extends StatelessWidget {
                 MediaQuery.of(context).size.width;
             ComponentOperationCubit.codeProcessor.variables['dh']!.value =
                 MediaQuery.of(context).size.height;
-
             return state.flutterProject.run(context, navigator: true);
           }
           return Container();
@@ -618,13 +680,13 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                   _componentOperationCubit, _screenConfigCubit),
               const ToolbarButtons(),
               const Positioned(
-                top: 50,
-                right: 0,
+                top: 120,
+                right: 10,
                 child: VariableShowHideMenu(),
               ),
               const Positioned(
-                top: 90,
-                right: 0,
+                top: 160,
+                right: 10,
                 child: ModelShowHideMenu(),
               )
             ],
