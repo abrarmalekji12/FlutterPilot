@@ -829,12 +829,25 @@ class ComplexParameterWidget extends StatelessWidget {
   }
 }
 
-class BooleanParameterWidget extends StatelessWidget {
+class BooleanParameterWidget extends StatefulWidget {
   final BooleanParameter parameter;
+
 
   const BooleanParameterWidget({Key? key, required this.parameter})
       : super(key: key);
 
+  @override
+  State<BooleanParameterWidget> createState() => _BooleanParameterWidgetState();
+}
+
+class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
+  final TextEditingController _textEditingController=TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  _textEditingController.text=widget.parameter.compiler.code;
+  }
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -845,27 +858,27 @@ class BooleanParameterWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            parameter.displayName!,
+            widget.parameter.displayName!,
             style: AppFontStyle.roboto(14,
                 color: Colors.black, fontWeight: FontWeight.w500),
           ),
-          BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
-            buildWhen: (state1, state2) {
-              if (state2 is ParameterChangeState &&
-                  (state2).parameter == parameter) return true;
-              return false;
-            },
-            builder: (context, state) {
-              return AppSwitch(
-                  value: parameter.val,
-                  onToggle: (value) {
-                    parameter.val = value;
-                    Provider.of<ParameterBuildCubit>(context, listen: false)
-                        .parameterChanged(context, parameter);
-                    Provider.of<ComponentCreationCubit>(context, listen: false)
-                        .changedComponent();
-                  });
-            },
+
+          SizedBox(
+            width: 250,
+            child: BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
+              buildWhen: (state1, state2) {
+                if (state2 is ParameterChangeState &&
+                    (state2).parameter == widget.parameter) return true;
+                return false;
+              },
+              builder: (context, state) {
+                return DynamicValueField<bool>(onProcessedResult: (code,value){
+                  widget.parameter.compiler.code=code;
+                  widget.parameter.val=value;
+                  return true;
+                }, textEditingController: _textEditingController);
+              },
+            ),
           )
         ],
       ),

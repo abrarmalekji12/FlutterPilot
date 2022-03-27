@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
+import '../common/editable_textview.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/component_creation/component_creation_cubit.dart';
@@ -15,141 +16,185 @@ import '../models/variable_model.dart';
 enum DataType { int, double, string }
 
 class ModelBox extends StatefulWidget {
-  const ModelBox({Key? key}) : super(key: key);
+  final OverlayEntry overlayEntry;
+  final ComponentOperationCubit componentOperationCubit;
+  final ComponentCreationCubit componentCreationCubit;
+
+  final ComponentSelectionCubit componentSelectionCubit;
+
+  const ModelBox({
+    Key? key,
+    required this.overlayEntry,
+    required this.componentOperationCubit,
+    required this.componentCreationCubit,
+
+    required this.componentSelectionCubit,
+  }) : super(key: key);
 
   @override
   _ModelBoxState createState() => _ModelBoxState();
 }
 
 class _ModelBoxState extends State<ModelBox> {
-  late final ComponentOperationCubit _componentOperationCubit;
   final ModelCubit _modelCubit = ModelCubit();
-  final ScrollController _scrollController=ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _componentOperationCubit =
-        BlocProvider.of<ComponentOperationCubit>(context, listen: false);
   }
+
+  get componentOperationCubit => widget.componentOperationCubit;
 
   @override
   Widget build(BuildContext context) {
-    return Builder(builder: (context) {
-      return Card(
-        elevation: 5,
-        color: Colors.white,
-        child: Container(
-          height: dh(context, 100)-130,
-          padding: const EdgeInsets.all(10),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: BlocProvider(
-              create: (context) => _modelCubit,
-              child: BlocConsumer<ModelCubit, ModelState>(
-                listener: (context, state) {
-                  if (state is ModelChangedState) {
-                    if (!state.add) {
-                      _componentOperationCubit.updateModel(state.localModel);
-                    } else {
-                      _componentOperationCubit.addModel(state.localModel);
-                    }
+    return Card(
+      elevation: 5,
+      color: Colors.white,
+      child: Container(
+        height: dh(context, 100) - 130,
+        padding: const EdgeInsets.all(10),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (context) => _modelCubit,
+              ),
+              BlocProvider(
+                create: (context) => widget.componentCreationCubit,
+              ),
+              BlocProvider(
+                create: (context) => widget.componentOperationCubit,
+              ),
+              BlocProvider(
+                create: (context) => widget.componentSelectionCubit,
+              ),
+            ],
+            child: BlocConsumer<ModelCubit, ModelState>(
+              listener: (context, state) {
+                if (state is ModelChangedState) {
+                  if (!state.add) {
+                    componentOperationCubit.updateModel(state.localModel);
+                  } else {
+                    componentOperationCubit.addModel(state.localModel);
                   }
-                },
-                builder: (context, state) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Models',
-                        style: AppFontStyle.roboto(15,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      AddModelTile(),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Column(
-                        children: _componentOperationCubit.models.map((model) {
-                          return Container(
+                }
+              },
+              builder: (context, state) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Models',
+                          style: AppFontStyle.roboto(15,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () {
+                            widget.overlayEntry.remove();
+                          },
+                          child: const Icon(
+                            Icons.close,
+                          ),
+                        )
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    AddModelTile(),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Column(
+                      children: componentOperationCubit.models.map<Widget>((model) {
+                        return Container(
+                          padding: const EdgeInsets.all(5),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              EditableTextView(text: model.name, onChange: (data){
+                                setState(() {
+                                  model.name=data;
+                                });
+                                _modelCubit.changed(model);
+                              }),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              AddVariableTile(model: model),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              ...model.variables.map((variable) => Container(
+                                padding: const EdgeInsets.all(5),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      variable.name,
+                                      style: AppFontStyle.roboto(13),
+                                    ),
+                                    const SizedBox(
+                                      width: 20,
+                                    ),
+                                    Text(
+                                      variable.dataType.name,
+                                      style: AppFontStyle.roboto(13,
+                                          color: AppColors.theme),
+                                    ),
+                                  ],
+                                ),
+                              ))
+                            ],
+                          ),
+                        );
+                      }).toList(growable: false),
+                    ),
+                    Column(
+                      children: componentOperationCubit.models.map<Widget>((LocalModel model) {
+                        return Container(
                             padding: const EdgeInsets.all(5),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  model.name,
-                                  style: AppFontStyle.roboto(14,
-                                      fontWeight: FontWeight.bold),
-                                ),
+                                // Text(
+                                //   model.name,
+                                //   style: AppFontStyle.roboto(14,
+                                //       fontWeight: FontWeight.bold),
+                                // ),
+                                EditableTextView(text: model.name, onChange: (data){
+                                  setState(() {
+                                    model.name=data;
+                                  });
+                                  _modelCubit.changed(model);
+                                }),
                                 const SizedBox(
                                   height: 10,
                                 ),
-                                AddVariableTile(model: model),
+                                AddModelValue(model: model),
                                 const SizedBox(
                                   height: 10,
                                 ),
-                                ...model.variables.map((variable) => Container(
-                                      padding: const EdgeInsets.all(5),
-                                      child: Row(
-                                        children: [
-                                          Text(
-                                            variable.name,
-                                            style: AppFontStyle.roboto(13),
-                                          ),
-                                          const SizedBox(
-                                            width: 20,
-                                          ),
-                                          Text(
-                                            variable.dataType.name,
-                                            style: AppFontStyle.roboto(13,
-                                                color: AppColors.theme),
-                                          ),
-                                        ],
-                                      ),
-                                    ))
+                                ModelValues(
+                                  model: model,
+                                )
                               ],
-                            ),
-                          );
-                        }).toList(growable: false),
-                      ),
-                      Column(
-                        children: _componentOperationCubit.models.map((model) {
-                          return Container(
-                              padding: const EdgeInsets.all(5),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    model.name,
-                                    style: AppFontStyle.roboto(14,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  AddModelValue(model: model),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  ModelValues(
-                                    model: model,
-                                  )
-                                ],
-                              ));
-                        }).toList(growable: false),
-                      )
-                    ],
-                  );
-                },
-              ),
+                            ));
+                      }).toList(growable: false),
+                    )
+                  ],
+                );
+              },
             ),
           ),
         ),
-      );
-    });
+      ),
+    );
   }
 }
 
@@ -167,7 +212,9 @@ class ModelValues extends StatelessWidget {
           .map((valueList) => Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
-                  color: valueList.key%2==0?const Color(0xfff2f2f2):const Color(0xfff9f9f9),
+                  color: valueList.key % 2 == 0
+                      ? const Color(0xfff2f2f2)
+                      : const Color(0xfff9f9f9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Stack(
@@ -204,7 +251,8 @@ class ModelValues extends StatelessWidget {
                         child: InkWell(
                             onTap: () {
                               model.removeValues(valueList.key);
-                              BlocProvider.of<ModelCubit>(context, listen: false)
+                              BlocProvider.of<ModelCubit>(context,
+                                      listen: false)
                                   .changed(model);
                               BlocProvider.of<ComponentCreationCubit>(context,
                                       listen: false)
@@ -290,10 +338,11 @@ class _AddModelValueState extends State<AddModelValue> {
                         child: InkWell(
                             onTap: () {
                               widget.model.removeVariable(entry.key);
-                              BlocProvider.of<ModelCubit>(context, listen: false)
+                              BlocProvider.of<ModelCubit>(context,
+                                      listen: false)
                                   .changed(widget.model);
                               BlocProvider.of<ComponentCreationCubit>(context,
-                                  listen: false)
+                                      listen: false)
                                   .changedComponent();
                             },
                             child: const Icon(
@@ -458,10 +507,16 @@ class _AddVariableTileState extends State<AddVariableTile> {
   }
 }
 
-class AddModelTile extends StatelessWidget {
-  final TextEditingController _controller = TextEditingController();
+class AddModelTile extends StatefulWidget {
 
   AddModelTile({Key? key}) : super(key: key);
+
+  @override
+  State<AddModelTile> createState() => _AddModelTileState();
+}
+
+class _AddModelTileState extends State<AddModelTile> {
+  final TextEditingController _controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {

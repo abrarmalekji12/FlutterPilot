@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import '../common/custom_popup_builder_menu_button.dart';
 import '../common/custom_popup_menu_button.dart';
 import 'package:shimmer/shimmer.dart';
 import '../common/app_text_field.dart';
+import '../common/custom_text_field.dart';
 import '../common/logger.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
@@ -34,25 +36,36 @@ class ComponentSelectionDialog extends StatefulWidget {
       _ComponentSelectionDialogState();
 }
 
-class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
-  String filter = '';
+class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
+    with SingleTickerProviderStateMixin {
+  static String filter = '';
   int selectedIndex = 0;
   List<String> filtered = [];
   final ScrollController _favouriteScrollController = ScrollController();
+  final ScrollController _basicComponentScrollController = ScrollController();
   List<CustomComponent> filteredCustomComponents = [];
   final focusNode = FocusNode();
+  final _textFieldFocusNode = FocusNode();
   final componentNames = componentList.keys.toList();
-  final TextEditingController controller = TextEditingController();
+  late final TabController _tabController;
+  final RefreshController _refreshController = RefreshController();
+  final TextEditingController _controller = TextEditingController();
 
   _ComponentSelectionDialogState();
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: widget.shouldShowFavourites?2:1, vsync: this);
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      _textFieldFocusNode.requestFocus();
+      _controller.text=filter;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+
     final componentOperationCubit = widget.componentOperationCubit;
     return Material(
       color: Colors.transparent,
@@ -66,8 +79,10 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                 widget.onSelection(componentList[filtered[selectedIndex]]!());
                 Get.back();
               } else if (key.physicalKey == PhysicalKeyboardKey.arrowDown) {
-                selectedIndex = (selectedIndex + 4) % filtered.length;
-                setState(() {});
+                if(selectedIndex+4<filtered.length){
+                  selectedIndex = (selectedIndex + 4);
+                  setState(() {});
+                }
               } else if (key.physicalKey == PhysicalKeyboardKey.arrowUp) {
                 selectedIndex = (selectedIndex - 4 < 0)
                     ? selectedIndex + 4
@@ -79,9 +94,19 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                     : selectedIndex - 1;
                 setState(() {});
               } else if (key.physicalKey == PhysicalKeyboardKey.arrowRight) {
-                selectedIndex = (selectedIndex + 1) % filtered.length;
-                setState(() {});
+                if(selectedIndex+1<filtered.length){
+                  selectedIndex = (selectedIndex + 1);
+                  setState(() {});
+                }
               }
+                WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+                  if(GlobalObjectKey(filtered[selectedIndex]).currentContext!=null) {
+                    Scrollable.ensureVisible(
+                      GlobalObjectKey(filtered[selectedIndex]).currentContext!,alignment: 0.5);
+                  }
+
+                });
+
             }
           },
           child: GestureDetector(
@@ -108,7 +133,8 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppTextField(
-                      controller: controller,
+                      controller: _controller,
+                      node: _textFieldFocusNode,
                       key: const GlobalObjectKey('search'),
                       onChange: (value) {
                         filter = value.toLowerCase();
@@ -116,31 +142,125 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                         setState2(() {});
                       },
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Text(
-                        'Basic widgets',
-                        style: AppFontStyle.roboto(14,
-                            color: const Color(0xff494949),
-                            fontWeight: FontWeight.bold),
-                      ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    TabBar(
+                      tabs: [
+                        Tab(
+                          child: Text(
+                            'Basic widgets',
+                            style: AppFontStyle.roboto(14,
+                                color: const Color(0xff494949),
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        if(widget.shouldShowFavourites)
+                        Tab(
+
+                          child: Text(
+                            'Favourites',
+                            style: AppFontStyle.roboto(14,
+                                color: const Color(0xff494949),
+                                fontWeight: FontWeight.bold),
+                          ),
+                        )
+                      ],
+                      controller: _tabController,
+                    ),
+
+                    const SizedBox(
+                      height: 10,
                     ),
                     Expanded(
                       flex: 4,
-                      child: GridView(
-                        controller: ScrollController(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4, childAspectRatio: 3.5),
-                        children: filtered
-                            .asMap()
-                            .entries
-                            .map(
-                              (entry) => BasicComponentTile(selectedIndex,
-                                  entry, componentOperationCubit, widget),
-                            )
-                            .toList(),
-                      ),
+                      child: TabBarView(controller: _tabController, children: [
+                        GridView(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 4, childAspectRatio: 3.5),
+                          controller: _basicComponentScrollController,
+                          children: filtered
+                              .asMap()
+                              .entries
+                              .map(
+                                (entry) => BasicComponentTile(selectedIndex,
+                                    entry, componentOperationCubit, widget),
+                              )
+                              .toList(),
+                        ),
+                        if(widget.shouldShowFavourites)
+                        OverflowBox(
+                          child: RuntimeProvider(
+                            runtimeMode: RuntimeMode.viewOnly,
+                            child:
+                                LayoutBuilder(builder: (context, constraints) {
+                              return BlocBuilder<ComponentOperationCubit,
+                                  ComponentOperationState>(
+                                buildWhen: (context, state) {
+                                  return state is ComponentUpdatedState;
+                                },
+                                bloc: componentOperationCubit,
+                                builder: (context, state) {
+                                  if (state is ComponentOperationLoadingState) {
+                                    return Shimmer.fromColors(
+                                      baseColor: const Color(0xfff2f2f2),
+                                      highlightColor: Colors.white,
+                                      child: ListView.builder(
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          return Container(
+                                            height: 100,
+                                            padding: const EdgeInsets.all(10),
+                                            margin: const EdgeInsets.only(
+                                                bottom: 10),
+                                            decoration: BoxDecoration(
+                                                color: const Color(0xfff2f2f2),
+                                                borderRadius:
+                                                    BorderRadius.circular(10)),
+                                          );
+                                        },
+                                        itemCount: 10,
+                                      ),
+                                    );
+                                  }
+
+                                  return SmartRefresher(
+                                    controller: _refreshController,
+                                    onRefresh: () {
+                                      componentOperationCubit
+                                          .loadFavourites()
+                                          .then((value) {
+                                        _refreshController.refreshCompleted();
+                                        setState2(() {
+
+                                        });
+                                      });
+                                    },
+                                    child: SingleChildScrollView(
+                                      controller: _favouriteScrollController,
+                                      child: Wrap(
+                                        children: componentOperationCubit
+                                            .favouriteList
+                                            .where((element) => element
+                                                .projectName
+                                                .toLowerCase()
+                                                .contains(filter))
+                                            .map((model) => FavouriteWidget(
+                                                model, constraints, setState2,
+                                                componentOperationCubit:
+                                                    componentOperationCubit,
+                                                widget: widget))
+                                            .toList(),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }),
+                          ),
+                        )
+                      ]),
                     ),
                     // Padding(
                     //   padding: const EdgeInsets.all(10),
@@ -187,89 +307,17 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog> {
                     //     itemCount: filteredCustomComponents.length,
                     //   ),
                     // ),
-                    if (widget.shouldShowFavourites) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Favourites',
-                              style: AppFontStyle.roboto(14,
-                                  color: const Color(0xff494949),
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(
-                              width: 20,
-                            ),
-                            InkWell(
-                              onTap: () {
-                                componentOperationCubit.loadFavourites();
-                              },
-                              child: const Icon(
-                                Icons.refresh,
-                                size: 20,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 6,
-                        child: RuntimeProvider(
-                          runtimeMode: RuntimeMode.viewOnly,
-                          child: LayoutBuilder(builder: (context, constraints) {
-                            return BlocBuilder<ComponentOperationCubit,
-                                ComponentOperationState>(
-                              buildWhen: (context,state){
-                                return state is ComponentUpdatedState;
-                              },
-                              bloc: componentOperationCubit,
-                              builder: (context, state) {
-                                if (state is ComponentOperationLoadingState) {
-                                  return Shimmer.fromColors(
-                                    baseColor: const Color(0xfff2f2f2),
-                                    highlightColor: Colors.white,
-                                    child: ListView.builder(
-                                      itemBuilder:
-                                          (BuildContext context, int index) {
-                                        return Container(
-                                          height: 100,
-                                          padding: const EdgeInsets.all(10),
-                                          margin:
-                                              const EdgeInsets.only(bottom: 10),
-                                          decoration: BoxDecoration(
-                                              color: const Color(0xfff2f2f2),
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                        );
-                                      },
-                                      itemCount: 10,
-                                    ),
-                                  );
-                                }
 
-                                return SingleChildScrollView(
-                                  controller: _favouriteScrollController,
-                                  child: Wrap(
-                                    children: componentOperationCubit
-                                        .favouriteList
-                                        .where((element) => element.projectName
-                                            .toLowerCase()
-                                            .contains(filter))
-                                        .map((model) => FavouriteWidget(
-                                            model, constraints, setState2,
-                                            componentOperationCubit:
-                                                componentOperationCubit,
-                                            widget: widget))
-                                        .toList(),
-                                  ),
-                                );
-                              },
-                            );
-                          }),
-                        ),
-                      ),
-                    ]
+                    // if (widget.shouldShowFavourites) ...[
+                    //   Padding(
+                    //     padding: const EdgeInsets.symmetric(vertical: 10),
+                    //     child: ,
+                    //   ),
+                    //   Expanded(
+                    //     flex: 6,
+                    //     child: ,
+                    //   ),
+                    // ]
                   ],
                 );
               }),
@@ -388,6 +436,7 @@ class BasicComponentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
+      key: GlobalObjectKey(entry.value),
       padding: const EdgeInsets.only(bottom: 5),
       child: Card(
         elevation: 2,

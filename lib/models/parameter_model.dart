@@ -179,11 +179,76 @@ abstract class Parameter {
     }
   }
 }
+class BooleanParameter extends Parameter {
+  bool val;
+  late final String Function(bool) evaluate;
+  final CompilerEnable compiler = CompilerEnable();
+
+  BooleanParameter(
+      {required String displayName,
+        ParameterInfo? info,
+        required bool required,
+        required this.val,
+        String Function(bool)? evaluate})
+      : super(displayName, info, required) {
+    if (evaluate == null) {
+      this.evaluate = (value) => value.toString();
+    } else {
+      this.evaluate = evaluate;
+    }
+  }
+
+  @override
+  String code(bool clean) {
+    if (compiler.code.isNotEmpty && !clean) {
+      return  info?.code('`${compiler.code}`')??'`${compiler.code}`';
+    }
+    return info?.code(evaluate(val)) ?? evaluate(val).toString();
+  }
+
+  @override
+  bool fromCode(String code) {
+    final paramCode = info?.fromCode(code) ?? code;
+    if (paramCode[0] == '`' && paramCode[paramCode.length - 1] == '`') {
+      compiler.code = paramCode.substring(1, paramCode.length - 1);
+
+    } else {
+      if (paramCode == 'true' || paramCode == 'false') {
+        val = paramCode == 'true';
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  get rawValue {
+    final result = compiler.code.isNotEmpty
+        ? ComponentOperationCubit.codeProcessor.process<bool>(compiler.code)
+        : null;
+    if (result != null) {
+      val = result as bool;
+    }
+    return val;
+
+  }
+
+  @override
+  get value{
+    final result = compiler.code.isNotEmpty
+        ? ComponentOperationCubit.codeProcessor.process<bool>(compiler.code)
+        : null;
+    if (result != null) {
+        val = result as bool;
+    }
+    return val;
+  }
+}
 
 class SimpleParameter<T> extends Parameter {
   T? val;
   final ParamInputType inputType;
-  late final CompilerEnable compiler = CompilerEnable();
+  final CompilerEnable compiler = CompilerEnable();
   T? defaultValue;
 
   late final dynamic Function(T) evaluate;
@@ -846,48 +911,6 @@ class NullParameter extends Parameter {
   bool fromCode(String code) => code.toLowerCase() == 'null';
 }
 
-class BooleanParameter extends Parameter {
-  bool val;
-  late final String Function(bool) evaluate;
-
-  BooleanParameter(
-      {required String displayName,
-      ParameterInfo? info,
-      required bool required,
-      required this.val,
-      String Function(bool)? evaluate})
-      : super(displayName, info, required) {
-    if (evaluate == null) {
-      this.evaluate = (value) => value.toString();
-    } else {
-      this.evaluate = evaluate;
-    }
-  }
-
-  @override
-  // TODO: implement code
-  String code(bool clean) {
-    return info?.code(evaluate(val)) ?? evaluate(val).toString();
-  }
-
-  @override
-  bool fromCode(String code) {
-    final processedCode = info?.fromCode(code) ?? code;
-    if (processedCode == 'true' || processedCode == 'false') {
-      val = processedCode == 'true';
-      return true;
-    }
-    return false;
-  }
-
-  @override
-  // TODO: implement rawValue
-  get rawValue => val;
-
-  @override
-  // TODO: implement value
-  get value => val;
-}
 
 class ComponentParameter extends Parameter {
   VisualBoxCubit? visualBoxCubit;

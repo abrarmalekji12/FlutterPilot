@@ -301,7 +301,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
       alignment: Alignment.topRight,
       child: Container(
         padding: const EdgeInsets.all(10),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -319,13 +319,13 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                 );
               },
               child: Container(
-                width: 100,
+                width: 80,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: kElevationToShadow[1],
                   color: Colors.blueAccent,
                 ),
-                padding: const EdgeInsets.all(7),
+                padding: const EdgeInsets.all(4),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
@@ -333,7 +333,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                     const Icon(
                       Icons.code,
                       color: Colors.white,
-                      size: 18,
+                      size: 16,
                     ),
                     const Spacer(),
                     Text(
@@ -346,7 +346,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
               ),
             ),
             const SizedBox(
-              height: 5,
+              width: 5,
             ),
             InkWell(
               highlightColor: Colors.blueAccent.shade200,
@@ -362,7 +362,8 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                     componentOperationCubit:
                         BlocProvider.of<ComponentOperationCubit>(context,
                             listen: false),
-                    screenConfigCubit: BlocProvider.of<ScreenConfigCubit>(context,
+                    screenConfigCubit: BlocProvider.of<ScreenConfigCubit>(
+                        context,
                         listen: false),
                   ),
                 ).then((value) {
@@ -371,8 +372,8 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                 });
               },
               child: Container(
-                width: 100,
-                padding: const EdgeInsets.all(7),
+                width: 80,
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: Colors.green.shade500,
                   borderRadius: BorderRadius.circular(10),
@@ -385,7 +386,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                     const Icon(
                       Icons.play_arrow,
                       color: Colors.white,
-                      size: 18,
+                      size: 16,
                     ),
                     const Spacer(),
                     Text(
@@ -398,7 +399,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
               ),
             ),
             const SizedBox(
-              height: 5,
+              width: 5,
             ),
             InkWell(
               highlightColor: Colors.blue.shade200,
@@ -408,20 +409,21 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                   () => PreviewPage(
                       BlocProvider.of<ComponentOperationCubit>(context,
                           listen: false),
-                      BlocProvider.of<ScreenConfigCubit>(context, listen: false)),
+                      BlocProvider.of<ScreenConfigCubit>(context,
+                          listen: false)),
                 )?.then((value) {
-                  BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                  BlocProvider.of<ComponentCreationCubit>(context,
+                          listen: false)
                       .changedComponent();
                 });
               },
               child: Container(
-                width: 100,
-                padding: const EdgeInsets.all(7),
+                width: 80,
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: kElevationToShadow[1],
-                  color: Colors.deepPurpleAccent.shade400
-                ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: kElevationToShadow[1],
+                    color: Colors.deepPurpleAccent.shade400),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
@@ -429,7 +431,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                     const Icon(
                       Icons.preview,
                       color: Colors.white,
-                      size: 18,
+                      size: 16,
                     ),
                     const Spacer(),
                     Text(
@@ -456,62 +458,65 @@ class VariableShowHideMenu extends StatefulWidget {
 }
 
 class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
-  bool _variableBoxOpen = false;
+  OverlayEntry? _overlayEntry;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_variableBoxOpen)
-          TweenAnimationBuilder(
-            tween: Tween<double>(begin: 1, end: 0),
-            builder: (context, double value, _) {
-              return Transform.translate(
-                offset: Offset(0, value * (-300)),
-                child: const SizedBox(
-                  width: 450,
-                  child: VariableBox(),
-                ),
-              );
-            },
-            duration: const Duration(milliseconds: 200),
-          ),
-        InkWell(
-          onTap: () {
-            setState(() {
-              _variableBoxOpen = !_variableBoxOpen;
-            });
-          },
-          child: Container(
-            width: 100,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: kElevationToShadow[1],
-            ),
-            padding: const EdgeInsets.all(7),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.build,
-                  color: _variableBoxOpen ? AppColors.theme : Colors.black,
-                  size: 18,
-                ),
-                const Spacer(),
-                Text(
-                  'Variables',
-                  style: AppFontStyle.roboto(13,
-                      color: _variableBoxOpen ? AppColors.theme : Colors.black,
-                      fontWeight: FontWeight.w500),
-                ),
-                const Spacer(),
-              ],
+  void initState() {
+    super.initState();
+    _overlayEntry = OverlayEntry(
+      builder: (_) => Material(
+        color: Colors.transparent,
+        child: Center(
+          child: SizedBox(
+            width: 500,
+            child: VariableBox(
+              overlayEntry: _overlayEntry!,
+              componentOperationCubit: BlocProvider.of<ComponentOperationCubit>(
+                  context,
+                  listen: false),
+              componentSelectionCubit: BlocProvider.of<ComponentSelectionCubit>(
+                  context,
+                  listen: false),
+              componentCreationCubit: BlocProvider.of<ComponentCreationCubit>(
+                  context,
+                  listen: false),
             ),
           ),
         ),
-      ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Overlay.of(context)!.insert(_overlayEntry!);
+      },
+      child: Container(
+        width: 100,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: kElevationToShadow[1]),
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.build,
+              color: Colors.black,
+              size: 18,
+            ),
+            const Spacer(),
+            Text(
+              'Variables',
+              style: AppFontStyle.roboto(13,
+                  color: Colors.black, fontWeight: FontWeight.w500),
+            ),
+            const Spacer(),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -524,62 +529,65 @@ class ModelShowHideMenu extends StatefulWidget {
 }
 
 class _ModelShowHideMenuState extends State<ModelShowHideMenu> {
-  bool _modelBoxOpen = false;
+  OverlayEntry? _overlayEntry;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_modelBoxOpen)
-          TweenAnimationBuilder(
-            tween: Tween<double>(begin: 1, end: 0),
-            builder: (context, double value, _) {
-              return Transform.translate(
-                offset: Offset(0, value * (-300)),
-                child: const SizedBox(
-                  width: 450,
-                  child: ModelBox(),
-                ),
-              );
-            },
-            duration: const Duration(milliseconds: 200),
-          ),
-        InkWell(
-          onTap: () {
-            setState(() {
-              _modelBoxOpen = !_modelBoxOpen;
-            });
-          },
-          child: Container(
-            width: 100,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: kElevationToShadow[1],
-            ),
-            padding: const EdgeInsets.all(7),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.storage,
-                  size: 18,
-                  color: _modelBoxOpen ? AppColors.theme : Colors.black,
-                ),
-                const Spacer(),
-                Text(
-                  'Models',
-                  style: AppFontStyle.roboto(13,
-                      color: _modelBoxOpen ? AppColors.theme : Colors.black,
-                      fontWeight: FontWeight.w500),
-                ),
-                const Spacer(),
-              ],
+  void initState() {
+    super.initState();
+    _overlayEntry = OverlayEntry(
+      builder: (_) => Material(
+        color: Colors.transparent,
+        child: Center(
+          child: SizedBox(
+            width: 500,
+            child: ModelBox(
+              overlayEntry: _overlayEntry!,
+              componentOperationCubit: BlocProvider.of<ComponentOperationCubit>(
+                  context,
+                  listen: false),
+              componentCreationCubit: BlocProvider.of<ComponentCreationCubit>(
+                  context,
+                  listen: false),
+              componentSelectionCubit: BlocProvider.of<ComponentSelectionCubit>(
+                  context,
+                  listen: false),
             ),
           ),
         ),
-      ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Overlay.of(context)!.insert(_overlayEntry!);
+      },
+      child: Container(
+        width: 100,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: kElevationToShadow[1]),
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.storage,
+              size: 18,
+              color: Colors.black,
+            ),
+            const Spacer(),
+            Text(
+              'Models',
+              style: AppFontStyle.roboto(13,
+                  color: Colors.black, fontWeight: FontWeight.w500),
+            ),
+            const Spacer(),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -674,23 +682,11 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
           child: const ComponentTree(),
         ),
         Expanded(
-          child: Stack(
-            children: [
-              CenterMainSide(_componentSelectionCubit, _componentCreationCubit,
-                  _componentOperationCubit, _screenConfigCubit),
-              const ToolbarButtons(),
-              const Positioned(
-                top: 120,
-                right: 10,
-                child: VariableShowHideMenu(),
-              ),
-              const Positioned(
-                top: 160,
-                right: 10,
-                child: ModelShowHideMenu(),
-              )
-            ],
-          ),
+          child: CenterMainSide(
+              _componentSelectionCubit,
+              _componentCreationCubit,
+              _componentOperationCubit,
+              _screenConfigCubit),
         ),
         SizedBox(
           width: dw(context, 25),
@@ -868,6 +864,8 @@ class CenterMainSide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+
     return RuntimeProvider(
       runtimeMode: RuntimeMode.edit,
       child: Container(
@@ -880,17 +878,34 @@ class CenterMainSide extends StatelessWidget {
         ),
         child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
           builder: (_, state) {
-            return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
-              builder: (context, state) {
-                logger('======== COMPONENT CREATION ');
-                return Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const ScreenConfigSelection(),
+            return Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    children: const [
+                      ToolbarButtons(),
                       Expanded(
-                        child: EmulationView(
+                        child: Center(
+                          child: ScreenConfigSelection(),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      VariableShowHideMenu(),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      ModelShowHideMenu()
+                    ],
+                  ),
+                  Expanded(
+                    child: BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
+                      builder: (context, state) {
+                        logger('======== COMPONENT CREATION ');
+                        return EmulationView(
                           widget: GestureDetector(
                             onSecondaryTapDown: (event) {
                               onSecondaryTapDown(context, event);
@@ -909,12 +924,12 @@ class CenterMainSide extends StatelessWidget {
                             ),
                           ),
                           screenConfig: _screenConfigCubit.screenConfig,
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
-                );
-              },
+                ],
+              ),
             );
           },
         ),

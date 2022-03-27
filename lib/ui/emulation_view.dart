@@ -23,7 +23,10 @@ class EmulationView extends StatelessWidget {
           height: screenConfig.height * (2 - screenConfig.scale),
           child: FittedBox(
             fit: BoxFit.fill,
-            child: SizedBox(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(width: 1,color: Colors.grey.shade600)
+              ),
               width: screenConfig.width,
               height: screenConfig.height,
               child: widget,

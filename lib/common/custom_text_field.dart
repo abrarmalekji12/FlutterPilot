@@ -5,8 +5,9 @@ class CustomTextField extends StatelessWidget {
   final String? hint;
   final TextEditingController? controller;
   final FormFieldValidator<String>? validator;
+  final FocusNode? focusNode;
   const CustomTextField(
-      {Key? key, required this.onChange, this.hint, this.controller, this.validator})
+      {Key? key, required this.onChange, this.hint, this.controller, this.validator, this.focusNode})
       : super(key: key);
 
   @override
@@ -14,6 +15,7 @@ class CustomTextField extends StatelessWidget {
     return TextFormField(
       onChanged: onChange,
       controller: controller,
+      focusNode: focusNode,
       validator: validator,
       textAlignVertical: TextAlignVertical.center,
       decoration: InputDecoration(

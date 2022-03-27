@@ -19,6 +19,16 @@ class BoundaryPainter extends CustomPainter {
     myPaint.color = Colors.blueAccent;
     for (final boundary in boundaries) {
       canvas.drawRect(boundary.rect, myPaint);
+      final span2 = TextSpan(
+          text: boundary.name,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.black.withOpacity(0.1),
+            fontWeight: FontWeight.bold,
+          ));
+      TextPainter(text: span2, textDirection: TextDirection.ltr)
+        ..layout()
+        ..paint(canvas, boundary.rect.topLeft.translate(-1, -21));
       final span = TextSpan(
           text: boundary.name,
           style: const TextStyle(
@@ -29,6 +39,7 @@ class BoundaryPainter extends CustomPainter {
       TextPainter(text: span, textDirection: TextDirection.ltr)
         ..layout()
         ..paint(canvas, boundary.rect.topLeft.translate(0, -20));
+
     }
 
 

@@ -38,6 +38,7 @@ dependencies:
   shimmer: ^2.0.0
   code_text_field: ^1.0.2
   dart_style: ^2.2.2
+  pull_to_refresh: ^2.0.0
   widget_arrows: ^0.1.8
 
 dev_dependencies:

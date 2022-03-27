@@ -267,10 +267,9 @@ abstract class Component {
 
   key(BuildContext context) => RuntimeProvider.of(context) != RuntimeMode.edit
       ? (RuntimeProvider.of(context) != RuntimeMode.preview
-      ? ObjectKey(this)
-      : GlobalObjectKey(uniqueId+id))
+          ? ObjectKey(this)
+          : GlobalObjectKey(uniqueId + id))
       : GlobalObjectKey(this);
-
 
   Widget build(BuildContext context) {
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
@@ -283,11 +282,12 @@ abstract class Component {
       key: RuntimeProvider.of(context) != RuntimeMode.edit
           ? (RuntimeProvider.of(context) != RuntimeMode.preview
               ? ObjectKey(this)
-              : GlobalObjectKey(uniqueId+id))
+              : GlobalObjectKey(uniqueId + id))
           : GlobalObjectKey(this),
       child: create(context),
     );
   }
+
   Widget buildWithoutKey(BuildContext context) {
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
@@ -722,11 +722,27 @@ abstract class Holder extends Component {
 abstract class ClickableHolder extends Holder with Clickable {
   ClickableHolder(String name, List<Parameter> parameters)
       : super(name, parameters);
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: RuntimeProvider.of(context) != RuntimeMode.run,
+      child: super.build(context),
+    );
+  }
 }
 
 abstract class ClickableComponent extends Component with Clickable {
   ClickableComponent(String name, List<Parameter> parameters)
       : super(name, parameters);
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: RuntimeProvider.of(context) != RuntimeMode.run,
+      child: super.build(context),
+    );
+  }
 }
 
 mixin Clickable {
@@ -822,12 +838,11 @@ abstract class CustomNamedHolder extends Component {
   }
 
   void addOrUpdateChildWithKey(String key, Component? component) {
-    if(childMap.containsKey(key)) {
+    if (childMap.containsKey(key)) {
       childMap[key]?.setParent(null);
       childMap[key] = component;
       component?.setParent(this);
-    }
-    else if(component!=null){
+    } else if (component != null) {
       childrenMap[key]!.add(component);
       component.setParent(this);
     }

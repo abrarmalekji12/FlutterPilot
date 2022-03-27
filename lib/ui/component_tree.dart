@@ -1549,13 +1549,10 @@ class ComponentModificationMenu extends StatelessWidget {
                     .map(
                       (item) => CustomPopupMenuItem<String>(
                         value: item,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            item,
-                            style: AppFontStyle.roboto(13,
-                                fontWeight: FontWeight.w500),
-                          ),
+                        child: Text(
+                          item,
+                          style: AppFontStyle.roboto(13,
+                              fontWeight: FontWeight.w500),
                         ),
                       ),
                     )
@@ -1751,11 +1748,13 @@ class ComponentModificationMenu extends StatelessWidget {
   // }
 
   void replaceWith(Component oldComponent, Component comp) {
-    for (final source in oldComponent.parameters) {
-      for (final dest in comp.parameters) {
-        if (source.runtimeType == dest.runtimeType &&
-            dest.displayName == source.displayName) {
-          copyValueSourceToDest(source, dest);
+    if(oldComponent.runtimeType != comp.runtimeType) {
+      for (final source in oldComponent.parameters) {
+        for (final dest in comp.parameters) {
+          if (source.runtimeType == dest.runtimeType &&
+              dest.displayName == source.displayName) {
+            copyValueSourceToDest(source, dest);
+          }
         }
       }
     }
@@ -1782,8 +1781,7 @@ class ComponentModificationMenu extends StatelessWidget {
       Map<String, Component> components, Component component) {
     final List<String> sameComponents = [];
     for (final key in components.keys) {
-      if (components[key].runtimeType != component.runtimeType &&
-          (components[key]!.childCount == component.childCount)) {
+      if (components[key]!.childCount == component.childCount) {
         sameComponents.add(key);
       }
     }
@@ -1793,9 +1791,9 @@ class ComponentModificationMenu extends StatelessWidget {
   List<String> getTypeComponents(
       Map<String, Component> components, List<int> types) {
     final List<String> sameComponents = [];
-    for (final key in components.keys) {
-      if (types.contains(components[key]!.type)) {
-        sameComponents.add(key);
+    for (final entry in components.entries) {
+      if (types.contains(entry.value.type)) {
+        sameComponents.add(entry.key);
       }
     }
     return sameComponents;

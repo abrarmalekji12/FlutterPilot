@@ -1,106 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+    <!--
+      If you are serving your web app in a path other than the root, change the
+      href value below to reflect the base path you are serving from.
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
+      The path provided below has to start and end with a slash "/" in order for
+      it to work correctly.
 
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+      For more details:
+      * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
 
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
+      This is a placeholder for base href that will be replaced by the value of
+      the `--base-href` argument provided to `flutter build`.
+    -->
 
-<!--  <!DOCTYPE html>-->
-<!--  <html>-->
-<!--  <head>-->
-<!--    <style>-->
-<!-- img {-->
-<!--  animation: blink 2s infinite;-->
-<!--  padding:10px 10px;-->
-<!--  background-color:#0A223E;-->
-<!--  border-radius:0px;-->
-<!--  width:50px;-->
-<!--  height:50px;-->
-<!--  position:absolute;-->
-<!--  top:50%;-->
-<!--  left:50%;-->
-<!--  margin-left:-25px;-->
-<!--  margin-top:-25px;-->
-<!--}-->
+    <!--  <!DOCTYPE html>-->
+    <!--  <html>-->
+    <!--  <head>-->
+        <style>
+     img {
+      animation: blink 2s infinite;
+      padding:10px 10px;
+      background-color:#0A223E;
+      border-radius:0px;
+      width:50px;
+      height:50px;
+      position:absolute;
+      top:50%;
+      left:50%;
+      margin-left:-25px;
+      margin-top:-25px;
+    }
 
-<!--@keyframes blink {-->
-<!--  0% {-->
-<!--   transform:rotate(0deg);-->
-<!--  }-->
-<!--  25% {-->
-<!--    -->
-<!--   transform:rotate(90deg);-->
-<!--   border-radius:16px;-->
-<!--  }-->
-<!--  50% {-->
-<!--    transform:rotate(180deg);-->
-<!--    border-radius:36px;-->
-<!--  }-->
-<!--  -->
+    @keyframes blink {
+      0% {
+       transform:rotate(0deg);
+      }
+      25% {
 
-<!--  75% {-->
-<!--     transform:rotate(270deg);-->
-<!--      border-radius:16px;-->
-<!--  }-->
-
-<!--  100% {-->
-<!--    transform:rotate(360deg);-->
-<!--     border-radius:0px;-->
-<!--  }-->
-<!--}-->
-
-<!--</style>-->
-<!--    <title>Page Title</title>-->
-<!--  </head>-->
-<!--<body>-->
-<!--<div class="parent" id="root">-->
-<!--  <center>-->
-<!--    <img src="https://allfreemockups.com/wp-content/uploads/2020/06/1200px-BMW.svg_.png" width="20%">-->
-<!--  </center>-->
-<!--  &lt;!&ndash; End Animated Text &ndash;&gt;-->
-<!--</div>-->
-
-<!--</body>-->
-<!--</html>-->
+       transform:rotate(90deg);
+       border-radius:16px;
+      }
+      50% {
+        transform:rotate(180deg);
+        border-radius:36px;
+      }
 
 
-<base href="$FLUTTER_BASE_HREF">
+      75% {
+         transform:rotate(270deg);
+          border-radius:16px;
+      }
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+      100% {
+        transform:rotate(360deg);
+         border-radius:0px;
+      }
+    }
 
-  <!-- iOS meta tags & icons -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="flutter_builder">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    </style>
+    <!--    <title>Page Title</title>-->
+    <!--  </head>-->
+    <!--<body>-->
+    <!--<div class="parent" id="root">-->
+    <!--  <center>-->
+    <!--    <img src="https://allfreemockups.com/wp-content/uploads/2020/06/1200px-BMW.svg_.png" width="20%">-->
+    <!--  </center>-->
+    <!--  &lt;!&ndash; End Animated Text &ndash;&gt;-->
+    <!--</div>-->
 
-  <title>flutter_builder</title>
-  <link rel="manifest" href="manifest.json">
+    <!--</body>-->
+    <!--</html>-->
+
+
+    <base href="$FLUTTER_BASE_HREF">
+
+    <meta charset="UTF-8">
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+    <meta name="description" content="A new Flutter project.">
+
+    <!-- iOS meta tags & icons -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="flutter_builder">
+    <link rel="apple-touch-icon" href="icons/fvb_logo.png">
+
+    <link rel="icon" href="icons/fvb_logo.png">
+
+    <title>Flutter Builder</title>
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <!-- This script installs service_worker.js to provide PWA functionality to
-       application. For more information, see:
-       https://developers.google.com/web/fundamentals/primers/service-workers -->
-  <script>
+<!-- This script installs service_worker.js to provide PWA functionality to
+     application. For more information, see:
+     https://developers.google.com/web/fundamentals/primers/service-workers -->
+<script>
   document.addEventListener('wheel', function(e) {
     e.ctrlKey && e.preventDefault();
   }, {
     passive: false,
   });
+
 </script>
-  <script>
+<script>
   window.addEventListener('keydown', function(e) {
     if (event.metaKey || event.ctrlKey) {
       switch (event.key) {
@@ -111,8 +114,9 @@
       }
     }
   });
+
 </script>
-  <script>
+<script>
     var serviceWorkerVersion = null;
     var scriptLoaded = false;
     function loadMainDartJs() {
@@ -175,6 +179,12 @@
       // Service workers not supported. Just drop the <script> tag.
       loadMainDartJs();
     }
-  </script>
+
+</script>
+<center>
+    <img
+            src="icons/fvb_logo.png"
+    />
+</center>
 </body>
 </html>

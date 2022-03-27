@@ -4,7 +4,7 @@ import '../ui/models_view.dart';
 import 'variable_model.dart';
 
 class LocalModel {
-  final String name;
+  String name;
   List<DynamicVariableModel> variables = [];
   List<List<dynamic>> values = [];
 
