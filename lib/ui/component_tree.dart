@@ -1551,7 +1551,7 @@ class ComponentModificationMenu extends StatelessWidget {
                         value: item,
                         child: Text(
                           item,
-                          style: AppFontStyle.roboto(13,
+                          style: AppFontStyle.roboto(12,
                               fontWeight: FontWeight.w500),
                         ),
                       ),

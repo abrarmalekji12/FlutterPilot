@@ -7,8 +7,8 @@ class EditableTextView extends StatefulWidget {
   final String text;
   final void Function(String) onChange;
 
-  const EditableTextView({Key? key, required this.text, required this.onChange})
-      : super(key: key);
+  EditableTextView({Key? key, required this.text, required this.onChange})
+      : super(key:key);
 
   @override
   _EditableTextViewState createState() => _EditableTextViewState();
@@ -31,6 +31,7 @@ class _EditableTextViewState extends State<EditableTextView> {
         width: 20.0*_controller.text.length,
         padding: const EdgeInsets.all(5),
         child: BorderTextField(
+          focusNode: FocusNode()..requestFocus(),
           controller: _controller,
           onSubmitted: (data) {
             widget.onChange.call(data);
@@ -42,7 +43,6 @@ class _EditableTextViewState extends State<EditableTextView> {
       );
     }
     return MouseRegion(
-      key: ObjectKey(widget.text),
       onEnter: (_) {
         setState(() {
           touchMode = true;

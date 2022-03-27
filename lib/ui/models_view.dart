@@ -118,7 +118,7 @@ class _ModelBoxState extends State<ModelBox> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              EditableTextView(text: model.name, onChange: (data){
+                              EditableTextView(key:ObjectKey(model.name),text: model.name, onChange: (data){
                                 setState(() {
                                   model.name=data;
                                 });
@@ -167,7 +167,7 @@ class _ModelBoxState extends State<ModelBox> {
                                 //   style: AppFontStyle.roboto(14,
                                 //       fontWeight: FontWeight.bold),
                                 // ),
-                                EditableTextView(text: model.name, onChange: (data){
+                                EditableTextView(key:ObjectKey(model.name),text: model.name, onChange: (data){
                                   setState(() {
                                     model.name=data;
                                   });

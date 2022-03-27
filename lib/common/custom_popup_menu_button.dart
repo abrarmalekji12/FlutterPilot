@@ -36,6 +36,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
   bool expanded = false;
   late List<CustomPopupMenuItem> allItems, filteredItems;
 
+  final TextEditingController _textEditingController=TextEditingController();
   late double minimumBoxHeight;
   final FocusNode _searchFocusNode = FocusNode();
   String _searchText = '';
@@ -94,13 +95,24 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                     children: [
                                       SearchTextField(
                                         hint: 'Search ..',
+                                        onSubmitted: (){
+                                          if(filteredItems.isNotEmpty){
+                                            widget.onSelected(
+                                                filteredItems.first.value as T);
+                                            overlayEntry?.remove();
+
+                                            setState(() {
+                                              expanded = false;
+                                            });
+                                          }
+                                        },
                                         focusColor: AppColors.theme,
                                         onTextChange: (text) {
                                           _searchText = text.toLowerCase();
                                           setStateForMenu(() {});
                                         },
                                         focusNode: _searchFocusNode
-                                          ..requestFocus(),
+                                          ..requestFocus(), controller:_textEditingController ,
                                       ),
                                       Expanded(
                                         child: ListView.builder(

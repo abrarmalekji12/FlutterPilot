@@ -26,6 +26,7 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
   List<ImageData>? filteredImageDataList;
   final _controller = ScrollController();
   final _focusNode = FocusNode();
+  final TextEditingController controller=TextEditingController();
   String _searchText = '';
 
   @override
@@ -106,6 +107,7 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: SearchTextField(
+                    controller: controller,
                     hint: 'Search image..',
                     focusColor: AppColors.theme,
                     onTextChange: (text) {

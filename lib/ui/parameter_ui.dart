@@ -850,8 +850,7 @@ class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
   }
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 35,
+    return Padding(
       padding: const EdgeInsets.all(5.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -864,7 +863,7 @@ class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
           ),
 
           SizedBox(
-            width: 250,
+            width: 150,
             child: BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
               buildWhen: (state1, state2) {
                 if (state2 is ParameterChangeState &&
