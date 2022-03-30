@@ -27,6 +27,8 @@ abstract class Component {
   late final String uniqueId;
   bool isConstant;
   Component? parent;
+  Component? cloneOf;
+  final List<Component> cloneElements=[];
   Rect? boundary;
   int? depth;
 
@@ -96,6 +98,9 @@ abstract class Component {
                 ?.currentScreen.models
                 .firstWhereOrNull((element) => element.name == fieldList[1]);
             break;
+          case 'len':
+            (this as BuilderComponent).itemLengthParameter.fromCode( fieldList[1]);
+            break;
           case 'action':
             if (this is Clickable) {
               final list = fieldList[1].substring(1, fieldList[1].length - 1);
@@ -118,11 +123,13 @@ abstract class Component {
   ScrollController initScrollController(BuildContext context) {
     final ScrollController scrollController = ScrollController();
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
-      scrollController.addListener(() {
-        forEach((Component component) {
-          component.lookForUIChanges(context);
+      if(!scrollController.hasListeners) {
+        scrollController.addListener(() {
+        forEach((final Component component) {
+          component.lookForUIChanges(context,checkSameCount: false);
         });
       });
+      }
     }
 
     return scrollController;
@@ -170,14 +177,14 @@ abstract class Component {
         if (comp is BuilderComponent) {
           int index = -1;
           for (int i = 0; i < parameterCodes.length; i++) {
-            if (parameterCodes[i].startsWith('builder:')) {
+            if (parameterCodes[i].startsWith('${comp.builderName}:')) {
               index = i;
               break;
             }
           }
           if (index != -1) {
             final childCode = parameterCodes.removeAt(index);
-            final builderCode = childCode.replaceFirst('builder:', '');
+            final builderCode = childCode.replaceFirst('${comp.builderName}:', '');
             comp.updateChild(Component.fromCode(
                 builderCode.substring(builderCode.indexOf('return') + 6,
                     builderCode.lastIndexOf(';')),
@@ -396,7 +403,7 @@ abstract class Component {
     return _root;
   }
 
-  void lookForUIChanges(BuildContext context) async {
+  void lookForUIChanges(BuildContext context,{bool checkSameCount=true}) async {
     final RenderBox renderBox =
         GlobalObjectKey(this).currentContext!.findRenderObject() as RenderBox;
     final ancestorRenderBox = const GlobalObjectKey('device window')
@@ -405,7 +412,7 @@ abstract class Component {
     Offset position =
         renderBox.localToGlobal(Offset.zero, ancestor: ancestorRenderBox);
     int sameCount = 0;
-    while (sameCount < 5) {
+    while (sameCount < (checkSameCount?5:1)) {
       if ((boundary?.left ?? position.dx) - position.dx < 0.5 &&
           (boundary?.top ?? position.dy) - position.dy < 0.5 &&
           (boundary?.width ?? renderBox.size.width) - renderBox.size.width <
@@ -507,6 +514,8 @@ abstract class Component {
     } else {
       comp.parameters = parameters;
     }
+    comp.cloneOf=this;
+    cloneElements.add(comp);
     comp.parent = parent;
     return comp;
   }
@@ -609,6 +618,8 @@ abstract class MultiHolder extends Component {
       comp.parameters = parameters;
     }
     comp.parent = parent;
+    comp.cloneOf=this;
+    cloneElements.add(comp);
     comp.children =
         children.map((e) => e.clone(comp, cloneParam: cloneParam)).toList();
     return comp;
@@ -708,6 +719,8 @@ abstract class Holder extends Component {
       comp.parameters = parameters;
     }
     comp.parent = parent;
+    comp.cloneOf=this;
+    cloneElements.add(comp);
     comp.child = child?.clone(comp, cloneParam: cloneParam);
     return comp;
   }
@@ -917,7 +930,9 @@ abstract class CustomNamedHolder extends Component {
     } else {
       comp.parameters = parameters;
     }
+    comp.cloneOf=this;
     comp.parent = parent;
+    cloneElements.add(comp);
     comp.childMap = childMap.map((key, value) =>
         MapEntry(key, value?.clone(comp, cloneParam: cloneParam)));
     comp.childrenMap = childrenMap.map((key, value) => MapEntry(
@@ -941,6 +956,7 @@ abstract class CustomNamedHolder extends Component {
       comp?.setParent(this);
       return compKey;
     }
+    return null;
   }
 
   @override
@@ -950,7 +966,6 @@ abstract class CustomNamedHolder extends Component {
 abstract class CustomComponent extends Component {
   String? extensionName;
   Component? root;
-  CustomComponent? cloneOf;
   List<CustomComponent> objects = [];
 
   CustomComponent(
@@ -958,9 +973,9 @@ abstract class CustomComponent extends Component {
       : super(name, []);
 
   CustomComponent get getRootClone {
-    CustomComponent? rootClone = cloneOf;
+    CustomComponent? rootClone = cloneOf as CustomComponent?;
     while (rootClone!.cloneOf != null) {
-      rootClone = rootClone.cloneOf;
+      rootClone = rootClone.cloneOf as CustomComponent?;
     }
     return rootClone;
   }
@@ -1057,7 +1072,7 @@ abstract class CustomComponent extends Component {
     }
     comp2.root = root?.clone(parent, cloneParam: cloneParam);
     comp2.cloneOf = this;
-
+    cloneElements.add(comp2);
     return comp2;
   }
 

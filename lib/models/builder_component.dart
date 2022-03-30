@@ -10,8 +10,10 @@ import 'parameter_model.dart';
 abstract class BuilderComponent extends Holder {
   LocalModel? model;
   final List<Component> builtList = [];
+  final SimpleParameter<int> itemLengthParameter=SimpleParameter<int>(name: 'count',defaultValue: 5);
+  final String builderName;
 
-  BuilderComponent(String name, List<Parameter> parameters)
+  BuilderComponent(String name, List<Parameter> parameters, {this.builderName='itemBuilder'})
       : super(name, parameters);
 
   @override
@@ -24,13 +26,15 @@ abstract class BuilderComponent extends Holder {
     if (child == null) {
       return Container();
     }
-    for (int i = 0; i < (model?.variables.length ?? 0); i++) {
-      ComponentOperationCubit.codeProcessor
-          .modelVariables[model!.variables[i].name] = model!.values[index][i];
+    if(model!=null) {
+      for (int i = 0; i < (model?.variables.length ?? 0); i++) {
+        ComponentOperationCubit.codeProcessor
+            .modelVariables[model!.variables[i].name] = model!.values[index][i];
+      }
+      ComponentOperationCubit.codeProcessor.modelVariables['index'] = index;
+      ComponentOperationCubit.codeProcessor.modelVariables['count'] =
+          model!.values.length;
     }
-    ComponentOperationCubit.codeProcessor.modelVariables['index'] = index;
-    ComponentOperationCubit.codeProcessor.modelVariables['count'] =
-        model!.values.length;
     final component = child!.clone(this);
     final widget = (component.build(context));
     if (index < builtList.length) {
@@ -45,6 +49,7 @@ abstract class BuilderComponent extends Holder {
 
   void init() {
     builtList.clear();
+    child?.forEach((p0) {p0.cloneElements.clear();});
     // WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
     //   for (int i = 0; i < (model?.variables.length ?? 0); i++) {
     //     ComponentOperationCubit.codeProcessor
@@ -57,12 +62,13 @@ abstract class BuilderComponent extends Holder {
 
   @override
   String code({bool clean = true}) {
+
     final middle = parametersCode(clean);
     String itemCode =
         child?.code(clean: clean) ?? CContainer().code(clean: clean);
     String name = this.name;
     if (!clean) {
-      name += '[id=$id|model=${model?.name}]';
+      name += '[id=$id|model=${model?.name}|len=${itemLengthParameter.code(false)}]';
     }
     // final List<DynamicVariableModel> usedVariables = [];
 
@@ -102,17 +108,23 @@ abstract class BuilderComponent extends Holder {
         }
       }
     }
-    return '''$name($middle builder:(_,index){ return $itemCode; }''' +
+    return '''$name($middle $builderName:(_,index){ return $itemCode; }''' +
         itemCount +
         '),';
     // return '$name(\n${middle}child:${child!.code(clean: clean)}\n)';
   }
 
-  int get count => model?.values.length ?? 0;
+  int get count {
+    final int length=itemLengthParameter.value;
+    if(model==null||length<model!.values.length){
+      return length;
+    }
+    return model!.values.length;
+  }
 }
 
 class CListViewBuilder extends BuilderComponent {
-  CListViewBuilder() : super('ListView.Builder', []);
+  CListViewBuilder() : super('ListView.builder', []);
 
   @override
   Widget create(BuildContext context) {
@@ -128,7 +140,7 @@ class CListViewBuilder extends BuilderComponent {
 
 class CGridViewBuilder extends BuilderComponent {
   CGridViewBuilder()
-      : super('GridView.Builder', [
+      : super('GridView.builder', [
           Parameters.sliverDelegate(),
         ]);
 

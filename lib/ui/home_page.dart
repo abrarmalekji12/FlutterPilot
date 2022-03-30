@@ -12,6 +12,7 @@ import '../constant/string_constant.dart';
 import '../cubit/action_edit/action_edit_cubit.dart';
 import '../models/builder_component.dart';
 import '../models/component_selection.dart';
+import '../models/parameter_model.dart';
 import '../runtime_provider.dart';
 import 'action_widgets.dart';
 import 'build_view/build_view.dart';
@@ -791,6 +792,7 @@ class _BuilderComponentSettingsState extends State<BuilderComponentSettings> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Attach Model',
@@ -842,7 +844,11 @@ class _BuilderComponentSettingsState extends State<BuilderComponentSettings> {
               style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
             ),
           ),
-        )
+        ),
+        const SizedBox(
+          height: 10,
+        ),
+        SimpleParameterWidget(parameter: widget.component.itemLengthParameter)
       ],
     );
   }
@@ -979,8 +985,9 @@ class CenterMainSide extends StatelessWidget {
             root: rootClone,
           );
         } else {
+          //tappedComp,
           _componentSelectionCubit.changeComponentSelection(
-            ComponentSelectionModel.unique(tappedComp),
+            ComponentSelectionModel([tappedComp.cloneOf??tappedComp],[tappedComp],tappedComp.cloneOf??tappedComp),
             root: lastRoot,
           );
         }
@@ -996,7 +1003,7 @@ class CenterMainSide extends StatelessWidget {
         contextPopup.init(
             child: Material(
               child: ComponentModificationMenu(
-                component: component,
+                component: component.cloneOf??component,
                 ancestor: _componentSelectionCubit.currentSelectedRoot,
                 componentCreationCubit: _componentCreationCubit,
                 componentOperationCubit: _componentOperationCubit,

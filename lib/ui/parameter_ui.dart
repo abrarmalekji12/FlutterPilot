@@ -864,20 +864,17 @@ class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
 
           SizedBox(
             width: 150,
-            child: BlocBuilder<ParameterBuildCubit, ParameterBuildState>(
-              buildWhen: (state1, state2) {
-                if (state2 is ParameterChangeState &&
-                    (state2).parameter == widget.parameter) return true;
-                return false;
-              },
-              builder: (context, state) {
-                return DynamicValueField<bool>(onProcessedResult: (code,value){
-                  widget.parameter.compiler.code=code;
-                  widget.parameter.val=value;
-                  return true;
-                }, textEditingController: _textEditingController);
-              },
-            ),
+            child: DynamicValueField<bool>(onProcessedResult: (code,value){
+              widget.parameter.compiler.code=code;
+              widget.parameter.val=value;
+              BlocProvider.of<ParameterBuildCubit>(context,
+                  listen: false)
+                  .parameterChanged(context, widget.parameter);
+              BlocProvider.of<ComponentCreationCubit>(context,
+                  listen: false)
+                  .changedComponent();
+              return true;
+            }, textEditingController: _textEditingController),
           )
         ],
       ),

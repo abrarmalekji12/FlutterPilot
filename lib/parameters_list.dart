@@ -88,10 +88,26 @@ class Parameters {
                   ..withNamedParamInfoAndSameDisplayName('crossAxisCount')
                   ..withRequired(true)
                   ..withDefaultValue(2),
+                Parameters.widthParameter()
+                  ..withNamedParamInfoAndSameDisplayName('mainAxisSpacing')
+                  ..withRequired(true)
+                  ..withDefaultValue(0),
+                Parameters.widthParameter()
+                  ..withNamedParamInfoAndSameDisplayName('crossAxisSpacing')
+                  ..withRequired(true)
+                  ..withDefaultValue(0),
+                Parameters.widthParameter()
+                  ..withNamedParamInfoAndSameDisplayName('childAspectRatio')
+                  ..withRequired(true)
+                  ..withDefaultValue(1),
               ],
               evaluate: (params) {
                 return SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: params[0].value);
+                  crossAxisCount: params[0].value,
+                  mainAxisSpacing: params[1].value,
+                  crossAxisSpacing: params[2].value,
+                  childAspectRatio: params[3].value,
+                );
               },
               name: 'Fixed cross count',
               info: InnerObjectParameterInfo(
@@ -108,7 +124,7 @@ class Parameters {
                   ..withRequired(true)
                   ..withDefaultValue(0),
                 Parameters.widthParameter()
-                  ..withNamedParamInfoAndSameDisplayName('mainAxisSpacing')
+                  ..withNamedParamInfoAndSameDisplayName('crossAxisSpacing')
                   ..withRequired(true)
                   ..withDefaultValue(0),
                 Parameters.widthParameter()
@@ -130,7 +146,7 @@ class Parameters {
                       'SliverGridDelegateWithFixedCrossAxisCount')),
         ],
         required: true,
-        info: NamedParameterInfo('delegate'),
+        info: NamedParameterInfo('gridDelegate'),
       );
 
   static ComplexParameter inputDecorationParameter() => ComplexParameter(
@@ -436,8 +452,8 @@ class Parameters {
         'mail': Icons.mail,
         'mail_outline': Icons.mail_outline,
         'work': Icons.work,
-        'location_on_rounded':Icons.location_on_rounded,
-        'build':Icons.build,
+        'location_on_rounded': Icons.location_on_rounded,
+        'build': Icons.build,
       },
       defaultValue: 'close',
       required: true);

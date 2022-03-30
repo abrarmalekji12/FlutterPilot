@@ -977,70 +977,74 @@ class _SublistWidgetState extends State<SublistWidget> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () {
-                  widget.componentOperationCubit
-                      .expandedTree[widget.component] = (!(widget
-                          .componentOperationCubit
-                          .expandedTree[widget.component] ??
-                      true));
-                  setState(() {});
-                },
-                child: Icon(
-                  open ? Icons.arrow_drop_down : Icons.arrow_drop_up,
-                  color: open ? Colors.grey.shade400 : Colors.grey.shade700,
-                  size: 20,
+          OnHoverMenuChangeWidget(
+            buildWidget: (showMenu) => Row(
+              children: [
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    widget.componentOperationCubit
+                        .expandedTree[widget.component] = (!(widget
+                            .componentOperationCubit
+                            .expandedTree[widget.component] ??
+                        true));
+                    setState(() {});
+                  },
+                  child: Icon(
+                    open ? Icons.arrow_drop_down : Icons.arrow_drop_up,
+                    color: open ? Colors.grey.shade400 : Colors.grey.shade700,
+                    size: 20,
+                  ),
                 ),
-              ),
-              DragTarget(
-                onWillAccept: (object) {
-                  return true;
-                },
-                onAccept: (object) {
-                  debugPrint('ACCEPTED $object');
-                  performReversibleOperation(() {
-                    BlocProvider.of<ComponentOperationCubit>(context,
-                            listen: false)
-                        .removeComponentAndRefresh(
-                            context, object as Component);
-                    BlocProvider.of<ComponentOperationCubit>(context,
-                            listen: false)
-                        .addOperation(
-                      widget.component,
-                      object,
-                      widget.ancestor,
+                DragTarget(
+                  onWillAccept: (object) {
+                    return true;
+                  },
+                  onAccept: (object) {
+                    debugPrint('ACCEPTED $object');
+                    performReversibleOperation(() {
+                      BlocProvider.of<ComponentOperationCubit>(context,
+                              listen: false)
+                          .removeComponentAndRefresh(
+                              context, object as Component);
+                      BlocProvider.of<ComponentOperationCubit>(context,
+                              listen: false)
+                          .addOperation(
+                        widget.component,
+                        object,
+                        widget.ancestor,
+                      );
+                      BlocProvider.of<ComponentCreationCubit>(context,
+                              listen: false)
+                          .changedComponent();
+                      BlocProvider.of<ComponentSelectionCubit>(context,
+                              listen: false)
+                          .changeComponentSelection(
+                              ComponentSelectionModel.unique(object),
+                              root: widget.ancestor);
+                    });
+                  },
+                  builder: (context, list1, list2) {
+                    return ComponentTile(
+                      component: widget.component,
+                      ancestor: widget.ancestor,
+                      componentSelectionCubit: widget.componentSelectionCubit,
                     );
-                    BlocProvider.of<ComponentCreationCubit>(context,
-                            listen: false)
-                        .changedComponent();
-                    BlocProvider.of<ComponentSelectionCubit>(context,
-                            listen: false)
-                        .changeComponentSelection(
-                            ComponentSelectionModel.unique(object),
-                            root: widget.ancestor);
-                  });
-                },
-                builder: (context, list1, list2) {
-                  return ComponentTile(
-                    component: widget.component,
-                    ancestor: widget.ancestor,
-                    componentSelectionCubit: widget.componentSelectionCubit,
-                  );
-                },
-              ),
-              const Spacer(),
-              ComponentModificationMenu(
-                component: widget.component,
-                ancestor: widget.ancestor,
-                componentParameter: widget.componentParameter,
-                componentOperationCubit: widget.componentOperationCubit,
-                componentCreationCubit: widget.componentCreationCubit,
-                componentSelectionCubit: widget.componentSelectionCubit,
-              )
-            ],
+                  },
+                ),
+                if(showMenu)...[
+                const Spacer(),
+                ComponentModificationMenu(
+                  component: widget.component,
+                  ancestor: widget.ancestor,
+                  componentParameter: widget.componentParameter,
+                  componentOperationCubit: widget.componentOperationCubit,
+                  componentCreationCubit: widget.componentCreationCubit,
+                  componentSelectionCubit: widget.componentSelectionCubit,
+                )
+    ]
+              ],
+            ),
           ),
           if ((widget.component as MultiHolder).children.isNotEmpty)
             Visibility(
@@ -1068,46 +1072,53 @@ class _SublistWidgetState extends State<SublistWidget> {
     } else if (widget.component is Holder) {
       return Column(
         children: [
-          Row(
-            children: [
-              DragTarget(onWillAccept: (object) {
-                return true;
-              }, onAccept: (object) {
-                debugPrint('ACCEPTED $object');
-                performReversibleOperation(() {
-                  BlocProvider.of<ComponentOperationCubit>(context,
-                          listen: false)
-                      .removeComponent(object as Component);
-                  BlocProvider.of<ComponentOperationCubit>(context,
-                          listen: false)
-                      .addOperation(widget.component, object, widget.ancestor);
-                  BlocProvider.of<ComponentCreationCubit>(context,
-                          listen: false)
-                      .changedComponent();
-                  BlocProvider.of<ComponentSelectionCubit>(context,
-                          listen: false)
-                      .changeComponentSelection(
-                          ComponentSelectionModel.unique(object),
-                          root: widget.ancestor);
-                });
-              }, builder: (context, list1, list2) {
-                return ComponentTile(
-                  component: widget.component,
-                  ancestor: widget.ancestor,
-                  componentSelectionCubit: widget.componentSelectionCubit,
-                );
-              }),
-              const Spacer(),
-              ComponentModificationMenu(
-                component: widget.component,
-                ancestor: widget.ancestor,
-                componentParameter: widget.componentParameter,
-                componentOperationCubit: widget.componentOperationCubit,
-                componentCreationCubit: widget.componentCreationCubit,
-                componentSelectionCubit: widget.componentSelectionCubit,
-              )
-            ],
-          ),
+          OnHoverMenuChangeWidget(
+              buildWidget: (showMenu) => Row(
+                    children: [
+                      DragTarget(onWillAccept: (object) {
+                        return true;
+                      }, onAccept: (object) {
+                        debugPrint('ACCEPTED $object');
+                        performReversibleOperation(() {
+                          BlocProvider.of<ComponentOperationCubit>(context,
+                                  listen: false)
+                              .removeComponent(object as Component);
+                          BlocProvider.of<ComponentOperationCubit>(context,
+                                  listen: false)
+                              .addOperation(
+                                  widget.component, object, widget.ancestor);
+                          BlocProvider.of<ComponentCreationCubit>(context,
+                                  listen: false)
+                              .changedComponent();
+                          BlocProvider.of<ComponentSelectionCubit>(context,
+                                  listen: false)
+                              .changeComponentSelection(
+                                  ComponentSelectionModel.unique(object),
+                                  root: widget.ancestor);
+                        });
+                      }, builder: (context, list1, list2) {
+                        return ComponentTile(
+                          component: widget.component,
+                          ancestor: widget.ancestor,
+                          componentSelectionCubit:
+                              widget.componentSelectionCubit,
+                        );
+                      }),
+                      if (showMenu) ...[
+                        const Spacer(),
+                        ComponentModificationMenu(
+                          component: widget.component,
+                          ancestor: widget.ancestor,
+                          componentParameter: widget.componentParameter,
+                          componentOperationCubit:
+                              widget.componentOperationCubit,
+                          componentCreationCubit: widget.componentCreationCubit,
+                          componentSelectionCubit:
+                              widget.componentSelectionCubit,
+                        )
+                      ]
+                    ],
+                  )),
           if ((widget.component as Holder).child != null)
             SingleChildWidget(
                 component: widget.component,
@@ -1129,25 +1140,36 @@ class _SublistWidgetState extends State<SublistWidget> {
     } else if (widget.component is CustomNamedHolder) {
       return Column(
         children: [
-          Row(
-            children: [
-              ComponentTile(
-                component: widget.component,
-                ancestor: widget.ancestor,
-                componentSelectionCubit: widget.componentSelectionCubit,
-              ),
-              const Spacer(),
-              ComponentModificationMenu(
-                component: widget.component,
-                customNamed: null,
-                componentParameter: widget.componentParameter,
-                ancestor: widget.ancestor,
-                componentOperationCubit: widget.componentOperationCubit,
-                componentCreationCubit: widget.componentCreationCubit,
-                componentSelectionCubit: widget.componentSelectionCubit,
-              ),
-            ],
-          ),
+          OnHoverMenuChangeWidget(
+              buildWidget: (showMenu) => Row(
+                    children: [
+                      Row(
+                        children: [
+                          ComponentTile(
+                            component: widget.component,
+                            ancestor: widget.ancestor,
+                            componentSelectionCubit:
+                                widget.componentSelectionCubit,
+                          ),
+                          if (showMenu) ...[
+                            const Spacer(),
+                            ComponentModificationMenu(
+                              component: widget.component,
+                              customNamed: null,
+                              componentParameter: widget.componentParameter,
+                              ancestor: widget.ancestor,
+                              componentOperationCubit:
+                                  widget.componentOperationCubit,
+                              componentCreationCubit:
+                                  widget.componentCreationCubit,
+                              componentSelectionCubit:
+                                  widget.componentSelectionCubit,
+                            ),
+                          ]
+                        ],
+                      ),
+                    ],
+                  )),
           Padding(
             padding: const EdgeInsets.only(left: 5, top: 0),
             child: Column(children: [
@@ -1155,7 +1177,7 @@ class _SublistWidgetState extends State<SublistWidget> {
                   in (widget.component as CustomNamedHolder).childMap.keys) ...[
                 Column(
                   children: [
-                    Row(
+                    OnHoverMenuChangeWidget(buildWidget: (showMenu)=>Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
@@ -1164,18 +1186,19 @@ class _SublistWidgetState extends State<SublistWidget> {
                               color: const Color(0xff494949),
                               fontWeight: FontWeight.w500),
                         ),
+                        if(showMenu)
                         ComponentModificationMenu(
                             component: widget.component,
                             customNamed: child,
                             ancestor: widget.ancestor,
                             componentSelectionCubit:
-                                widget.componentSelectionCubit,
+                            widget.componentSelectionCubit,
                             componentOperationCubit:
-                                widget.componentOperationCubit,
+                            widget.componentOperationCubit,
                             componentCreationCubit:
-                                widget.componentCreationCubit),
+                            widget.componentCreationCubit),
                       ],
-                    ),
+                    )),
                     if ((widget.component as CustomNamedHolder)
                             .childMap[child] !=
                         null)
@@ -1194,31 +1217,33 @@ class _SublistWidgetState extends State<SublistWidget> {
                   height: 5,
                 )
               ],
-              for (final child
-                  in (widget.component as CustomNamedHolder).childrenMap.keys) ...[
+              for (final child in (widget.component as CustomNamedHolder)
+                  .childrenMap
+                  .keys) ...[
                 Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          child,
-                          style: AppFontStyle.roboto(12,
-                              color: const Color(0xff494949),
-                              fontWeight: FontWeight.w500),
-                        ),
-                        ComponentModificationMenu(
-                            component: widget.component,
-                            customNamed: child,
-                            ancestor: widget.ancestor,
-                            componentSelectionCubit:
-                                widget.componentSelectionCubit,
-                            componentOperationCubit:
-                                widget.componentOperationCubit,
-                            componentCreationCubit:
-                                widget.componentCreationCubit),
-                      ],
-                    ),
+                  OnHoverMenuChangeWidget(buildWidget: (showMenu)=>  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        child,
+                        style: AppFontStyle.roboto(12,
+                            color: const Color(0xff494949),
+                            fontWeight: FontWeight.w500),
+                      ),
+                      if(showMenu)
+                      ComponentModificationMenu(
+                          component: widget.component,
+                          customNamed: child,
+                          ancestor: widget.ancestor,
+                          componentSelectionCubit:
+                          widget.componentSelectionCubit,
+                          componentOperationCubit:
+                          widget.componentOperationCubit,
+                          componentCreationCubit:
+                          widget.componentCreationCubit),
+                    ],
+                  )),
                     if ((widget.component as CustomNamedHolder)
                             .childrenMap[child] !=
                         null)
@@ -1242,13 +1267,14 @@ class _SublistWidgetState extends State<SublistWidget> {
         ],
       );
     } else if (widget.component is CustomComponent) {
-      return Row(
+      return OnHoverMenuChangeWidget(buildWidget: (showMenu)=>Row(
         children: [
           ComponentTile(
             component: widget.component,
             ancestor: widget.ancestor,
             componentSelectionCubit: widget.componentSelectionCubit,
           ),
+          if(showMenu) ... [
           const Spacer(),
           ComponentModificationMenu(
             component: widget.component,
@@ -1258,29 +1284,32 @@ class _SublistWidgetState extends State<SublistWidget> {
             componentCreationCubit: widget.componentCreationCubit,
             componentSelectionCubit: widget.componentSelectionCubit,
           )
+    ]
         ],
-      );
+      ));
     }
     return Column(
       children: [
-        Row(
-          children: [
-            ComponentTile(
-              component: widget.component,
-              ancestor: widget.ancestor,
-              componentSelectionCubit: widget.componentSelectionCubit,
-            ),
-            const Spacer(),
-            ComponentModificationMenu(
-              component: widget.component,
-              ancestor: widget.ancestor,
-              componentParameter: widget.componentParameter,
-              componentOperationCubit: widget.componentOperationCubit,
-              componentCreationCubit: widget.componentCreationCubit,
-              componentSelectionCubit: widget.componentSelectionCubit,
-            )
-          ],
-        ),
+      OnHoverMenuChangeWidget(buildWidget: (showMenu)=>  Row(
+        children: [
+          ComponentTile(
+            component: widget.component,
+            ancestor: widget.ancestor,
+            componentSelectionCubit: widget.componentSelectionCubit,
+          ),
+          if(showMenu) ... [
+          const Spacer(),
+          ComponentModificationMenu(
+            component: widget.component,
+            ancestor: widget.ancestor,
+            componentParameter: widget.componentParameter,
+            componentOperationCubit: widget.componentOperationCubit,
+            componentCreationCubit: widget.componentCreationCubit,
+            componentSelectionCubit: widget.componentSelectionCubit,
+          )
+    ]
+        ],
+      ),),
         if (widget.component.componentParameters.isNotEmpty)
           ComponentParameterWidget(
               component: widget.component,
@@ -1322,6 +1351,43 @@ class _SublistWidgetState extends State<SublistWidget> {
       });
       widget.componentCreationCubit.changedComponent();
     });
+  }
+}
+
+class OnHoverMenuChangeWidget extends StatefulWidget {
+  final Widget Function(bool) buildWidget;
+
+  const OnHoverMenuChangeWidget({Key? key, required this.buildWidget})
+      : super(key: key);
+
+  @override
+  _OnHoverMenuChangeWidgetState createState() =>
+      _OnHoverMenuChangeWidgetState();
+}
+
+class _OnHoverMenuChangeWidgetState extends State<OnHoverMenuChangeWidget> {
+  bool showMenu = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) {
+        setState(() {
+          showMenu = true;
+        });
+      },
+      onExit: (_) {
+        setState(() {
+          showMenu = false;
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: showMenu ? const Color(0xfff1f1f1) : null),
+        child: widget.buildWidget.call(showMenu),
+      ),
+    );
   }
 }
 
@@ -1748,7 +1814,7 @@ class ComponentModificationMenu extends StatelessWidget {
   // }
 
   void replaceWith(Component oldComponent, Component comp) {
-    if(oldComponent.runtimeType != comp.runtimeType) {
+    if (oldComponent.runtimeType != comp.runtimeType) {
       for (final source in oldComponent.parameters) {
         for (final dest in comp.parameters) {
           if (source.runtimeType == dest.runtimeType &&
@@ -1965,8 +2031,9 @@ class ComponentTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             hoverColor: const Color(0xffADD8FF),
             onTap: () {
+
               componentSelectionCubit.changeComponentSelection(
-                  ComponentSelectionModel.unique(component),
+                  ComponentSelectionModel([component],[component,...component.cloneElements],component),
                   root: ancestor,
                   scroll: false);
               if (GlobalObjectKey(component).currentContext != null) {

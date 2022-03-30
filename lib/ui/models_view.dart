@@ -13,7 +13,7 @@ import '../cubit/model/model_cubit.dart';
 import '../models/local_model.dart';
 import '../models/variable_model.dart';
 
-enum DataType { int, double, string }
+enum DataType { int, double, string , bool , dynamic }
 
 class ModelBox extends StatefulWidget {
   final OverlayEntry overlayEntry;
@@ -112,7 +112,7 @@ class _ModelBoxState extends State<ModelBox> {
                       height: 10,
                     ),
                     Column(
-                      children: componentOperationCubit.models.map<Widget>((model) {
+                      children: componentOperationCubit.models.map<Widget>((LocalModel model) {
                         return Container(
                           padding: const EdgeInsets.all(5),
                           child: Column(
@@ -288,12 +288,13 @@ class _AddModelValueState extends State<AddModelValue> {
   @override
   void initState() {
     super.initState();
+    _controllers = List.generate(
+        widget.model.variables.length, (index) => TextEditingController());
+
   }
 
   @override
   Widget build(BuildContext context) {
-    _controllers = List.generate(
-        widget.model.variables.length, (index) => TextEditingController());
 
     return Container(
       decoration: BoxDecoration(

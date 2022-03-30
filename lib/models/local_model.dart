@@ -38,28 +38,33 @@ class LocalModel {
     ];
     ''';
   }
-  static String valueToCode(dynamic value){
-  switch(value.runtimeType){
-    case double :
-    case int :
-      return '$value';
-    case String :
-      return '\'$value\'';
-  }
-  return '$value';
+
+  static String valueToCode(dynamic value) {
+    switch (value.runtimeType) {
+      case double:
+      case int:
+        return '$value';
+      case String:
+        return '\'$value\'';
+    }
+    return '$value';
   }
 
-  static String getDartDataType(final DataType dataType){
-    switch(dataType){
-
+  static String getDartDataType(final DataType dataType) {
+    switch (dataType) {
       case DataType.int:
         return 'int';
       case DataType.double:
         return 'double';
       case DataType.string:
         return 'String';
+      case DataType.dynamic:
+        return 'dynamic';
+      case DataType.bool:
+        return 'bool';
     }
   }
+
   toJson() {
     final valueList = [];
     for (final value in values) {
@@ -78,17 +83,18 @@ class LocalModel {
 
   void addVariable(DynamicVariableModel dynamicVariableModel) {
     variables.add(dynamicVariableModel);
-    for(final value in values){
+    for (final value in values) {
       value.add(null);
     }
   }
 
   void removeVariable(int index) {
     variables.removeAt(index);
-    for(final value in values){
+    for (final value in values) {
       value.removeAt(index);
     }
   }
+
   void removeValues(int index) {
     values.removeAt(index);
   }

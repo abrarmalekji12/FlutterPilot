@@ -215,7 +215,7 @@ abstract class FireBridge {
   }
 
   static Future<void> addToFavourites(
-      int userId, Component component, String projectName) async {
+      int userId, Component component, String projectName,double width,double height) async {
     await FirebaseFirestore.instance
         .collection('us$userId|${Strings.kFavourites}')
         .doc('${DateTime.now().millisecondsSinceEpoch}')
@@ -223,8 +223,8 @@ abstract class FireBridge {
       'code': CodeOperations.trim(component.code(clean: false)),
       'id': component.id,
       'project_name': projectName,
-      'width': component.boundary!.width,
-      'height': component.boundary!.height,
+      'width': width,
+      'height': height,
     });
   }
 

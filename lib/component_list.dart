@@ -74,6 +74,8 @@ final componentList = <String, Component Function()>{
   'FloatingActionButton': () => CFloatingActionButton(),
   'IconButton': () => CIconButton(),
   'Placeholder': () => CPlaceholder(),
+  'ListView.builder': () => CListViewBuilder(),
+  'GridView.builder': () => CGridViewBuilder(),
   'ListView.Builder': () => CListViewBuilder(),
   'GridView.Builder': () => CGridViewBuilder(),
   'DropDownButton': () => CDropDownButton(),
@@ -100,6 +102,7 @@ class CMaterialApp extends CustomNamedHolder {
 
   @override
   Widget create(BuildContext context) {
+
     return MaterialApp(
       home: childMap['home']?.build(context),
       color: parameters[0].value,

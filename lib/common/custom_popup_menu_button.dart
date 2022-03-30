@@ -31,7 +31,7 @@ class CustomPopupMenuButton<T> extends StatefulWidget {
 }
 
 class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
-  GlobalKey globalKey = GlobalKey();
+  final GlobalKey globalKey = GlobalKey();
   OverlayEntry? overlayEntry;
   bool expanded = false;
   late List<CustomPopupMenuItem> allItems, filteredItems;
@@ -40,6 +40,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
   late double minimumBoxHeight;
   final FocusNode _searchFocusNode = FocusNode();
   String _searchText = '';
+  late double left,top;
 
   @override
   void didChangeDependencies() {
@@ -55,6 +56,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
       filteredItems = allItems
           .where((element) => element.value.toLowerCase().contains(_searchText))
           .toList();
+
       return GestureDetector(
         onTap: () {
           overlayEntry?.remove();
@@ -67,8 +69,8 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
           child: Stack(
             children: [
               Positioned(
-                left: getLeftPosition(),
-                top: getTopPosition(),
+                left: left,
+                top: top,
                 child: TweenAnimationBuilder(
                     tween: Tween<double>(begin: 0.5, end: 1),
                     curve: Curves.bounceOut,
@@ -177,7 +179,11 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
         onTap: () {
           if (!(overlayEntry?.mounted ?? false)) {
             _searchText = '';
+            allItems = widget.itemBuilder(context);
+            left=getLeftPosition();
+            top=getTopPosition();
             Overlay.of(context)?.insert(overlayEntry!);
+
             setState(() {
               expanded = true;
             });
@@ -212,7 +218,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
   }
 
   double getLeftPosition() {
-    RenderBox renderBox =
+    final RenderBox renderBox =
         globalKey.currentContext!.findRenderObject()! as RenderBox;
     final translation = renderBox.getTransformTo(null).getTranslation();
     final offset = Offset(translation.x, translation.y);

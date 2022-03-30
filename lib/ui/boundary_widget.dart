@@ -27,15 +27,17 @@ class BoundaryWidget extends StatelessWidget {
                 painter: BoundaryPainter(
                     boundaries: boundaries,
                     errorBoundary:
-                        BlocProvider.of<VisualBoxCubit>(context, listen: false)
-                                    .errorMessage !=
-                                null
-                            ? Provider.of<ComponentOperationCubit>(context,
-                                    listen: false)
-                                .flutterProject!
-                                .rootComponent!
-                                .boundary!
-                            : null),
+                    BlocProvider
+                        .of<VisualBoxCubit>(context, listen: false)
+                        .errorMessage !=
+                        null
+                        ? BlocProvider
+                        .of<ComponentOperationCubit>(context,
+                        listen: false)
+                        .flutterProject!
+                        .rootComponent!
+                        .boundary!
+                        : null),
               );
             },
           );
@@ -45,7 +47,8 @@ class BoundaryWidget extends StatelessWidget {
   }
 
   List<Boundary> getAllBoundaries(BuildContext context) {
-    return BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+    return BlocProvider
+        .of<ComponentSelectionCubit>(context, listen: false)
         .currentSelected
         .visualSelection
         .where((element) => element.boundary != null)

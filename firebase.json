@@ -8,7 +8,7 @@
     ],
     "headers": [
       {
-        "source": "/**",p
+        "source": "/**",
         "headers": [
           {
             "key": "Cache-Control",

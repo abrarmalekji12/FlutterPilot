@@ -223,7 +223,7 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
     //     .format(widget.componentOperationCubit.flutterProject!.code(screen)));
     // return  code=_dartFormatter.format(widget.componentOperationCubit.flutterProject!.code(screen));
     return code = _dartFormatter
-        .format(widget.componentOperationCubit.flutterProject!.code(screen));
+        .format(code=widget.componentOperationCubit.flutterProject!.code(screen));
   }
 
   void downloadImages() {

@@ -13,6 +13,7 @@ import '../../models/project_model.dart';
 import '../../firestore/firestore_bridge.dart';
 import '../../models/component_model.dart';
 import '../../runtime_provider.dart';
+import '../../ui/visual_model.dart';
 import '../component_creation/component_creation_cubit.dart';
 import '../visual_box_drawer/visual_box_cubit.dart';
 
@@ -34,6 +35,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   RevertWork get revertWork => flutterProject!.currentScreen.revertWork;
 
   get byteCache => bytesCache;
+
   void addedComponent(Component component, Component root) {
     if (root is CustomComponent) {
       updateGlobalCustomComponent(root);
@@ -54,13 +56,11 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       ComponentOperationCubit.codeProcessor.variables[variable.name] = variable;
     }
   }
+
   static void removeVariables(final UIScreen screen) {
-
     ComponentOperationCubit.codeProcessor.variables
-        .removeWhere((key, value)=>screen.name==value.screen);
+        .removeWhere((key, value) => screen.name == value.screen);
   }
-
-
 
   void changeProjectScreen(final UIScreen screen) {
     flutterProject!.currentScreen = screen;
@@ -96,7 +96,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     if (componentParameterOperation) {
       componentParameter!.addComponent(comp);
     } else if (customNamed != null) {
-      (component as CustomNamedHolder).addOrUpdateChildWithKey(customNamed, comp);
+      (component as CustomNamedHolder)
+          .addOrUpdateChildWithKey(customNamed, comp);
     } else {
       if (component is Holder) {
         component.updateChild(comp);
@@ -143,9 +144,9 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<List<ImageData>?> loadAllImages() async {
     emit(ComponentOperationLoadingState());
     final imageList = await FireBridge.loadAllImages(flutterProject!.userId);
-    for(final ImageData image in imageList??[]){
-      if(image.imageName!=null) {
-        byteCache[image.imageName!]=image.bytes!;
+    for (final ImageData image in imageList ?? []) {
+      if (image.imageName != null) {
+        byteCache[image.imageName!] = image.bytes!;
       }
     }
     emit(ComponentOperationInitial());
@@ -290,7 +291,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
     final parent = component.parent!;
     if (component is CustomComponent) {
-      component.cloneOf?.objects.remove(component);
+      (component.cloneOf as CustomComponent?)?.objects.remove(component);
     }
     switch (parent.type) {
       case 2:
@@ -451,8 +452,21 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     } else {
       favouriteList.add(model);
     }
+    final Rect? boundary;
+    if(component.boundary==null){
+      boundary=component.cloneElements.firstWhere((element) => element.boundary!=null).boundary!;
+    }
+    else{
+      boundary=null;
+    }
     await FireBridge.addToFavourites(
-        flutterProject!.userId, component, flutterProject!.name);
+        flutterProject!.userId,
+        component,
+        flutterProject!.name,
+        component.boundary?.width ?? boundary?.width ??
+            1,
+        component.boundary?.height ?? boundary?.height ??
+            1);
     emit(ComponentUpdatedState());
   }
 
