@@ -446,6 +446,8 @@ class CodeOutput {
 }
 
 /*
+import 'dart:math' as math;
+
 void main() {
   CodeProcessor cd = CodeProcessor();
   cd.modelVariables['name'] = 'Abrar';
@@ -453,7 +455,7 @@ void main() {
   cd.modelVariables['ac'] = false;
   cd.variables['acd']= VariableModel('acd', false, true, null, DataType.dynamic);
 
-  print(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{13%5}} '));
+  print(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{randBool()}} '));
 
 }
 
@@ -515,6 +517,36 @@ class CodeProcessor {
     else {
       return small;
     }
+  }
+    ''');
+
+        functions['randInt']=  FunctionModel<dynamic>('randInt', (arguments) {
+      if(arguments.length==1){
+        return math.Random.secure().nextInt(arguments[0]??100);
+      }
+
+    }, '''
+    double randInt(int max){
+    return math.Random.secure().nextInt(max??100);
+  }
+    ''');
+
+       functions['randDouble']=  FunctionModel<dynamic>('randDouble', (arguments) {
+        return math.Random.secure().nextDouble();
+
+
+    }, '''
+    double randDouble(){
+    return math.Random.secure().nextDouble();
+  }
+    ''');
+      functions['randBool']=  FunctionModel<dynamic>('randBool', (arguments) {
+        return math.Random.secure().nextBool();
+
+
+    }, '''
+    double randBool(){
+    return math.Random.secure().nextBool();
   }
     ''');
   }
