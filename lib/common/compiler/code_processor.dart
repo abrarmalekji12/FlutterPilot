@@ -447,6 +447,7 @@ class CodeOutput {
 
 /*
 import 'dart:math' as math;
+  import 'package:flutter/material.dart' as cu;
 
 void main() {
   CodeProcessor cd = CodeProcessor();
@@ -455,7 +456,7 @@ void main() {
   cd.modelVariables['ac'] = false;
   cd.variables['acd']= VariableModel('acd', false, true, null, DataType.dynamic);
 cd.variables['pi']= VariableModel('pi',math.pi, true, null, DataType.double);
-  print(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{math.sin(pi/3)}} '));
+  print(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{randColor()}} '));
 
 
 }
@@ -521,10 +522,11 @@ class CodeProcessor {
   }
     ''');
 
-        functions['randInt']=  FunctionModel<dynamic>('randInt', (arguments) {
+        functions['randInt']=  FunctionModel<int>('randInt', (arguments) {
       if(arguments.length==1){
         return math.Random.secure().nextInt(arguments[0]??100);
       }
+          return 0;
 
     }, '''
     double randInt(int max){
@@ -532,7 +534,7 @@ class CodeProcessor {
   }
     ''');
 
-       functions['randDouble']=  FunctionModel<dynamic>('randDouble', (arguments) {
+       functions['randDouble']=  FunctionModel<double>('randDouble', (arguments) {
         return math.Random.secure().nextDouble();
 
 
@@ -541,7 +543,7 @@ class CodeProcessor {
     return math.Random.secure().nextDouble();
   }
     ''');
-      functions['randBool']=  FunctionModel<dynamic>('randBool', (arguments) {
+      functions['randBool']=  FunctionModel<bool>('randBool', (arguments) {
         return math.Random.secure().nextBool();
 
 
@@ -550,10 +552,19 @@ class CodeProcessor {
     return math.Random.secure().nextBool();
   }
     ''');
-     functions['math.sin']=  FunctionModel<dynamic>('math.sin', (arguments) {
+     functions['randColor']=  FunctionModel<String>('randColor', (arguments) {
+        return '#'+cu.Colors.primaries[math.Random().nextInt(cu.Colors.primaries.length)].value.toRadixString(16);
+
+
+    }, '''
+    double randColor(){
+    return math.Random.secure().nextBool();
+  }
+    ''');
+     functions['math.sin']=  FunctionModel<double>('math.sin', (arguments) {
         return math.sin(arguments[0]);
     }, ''' ''');
-    functions['math.cos']=  FunctionModel<dynamic>('math.cos', (arguments) {
+    functions['math.cos']=  FunctionModel<double>('math.cos', (arguments) {
         return math.cos(arguments[0]);
     }, ''' ''');
   }
