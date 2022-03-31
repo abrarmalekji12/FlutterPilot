@@ -454,8 +454,9 @@ void main() {
   cd.modelVariables['a'] = 1;
   cd.modelVariables['ac'] = false;
   cd.variables['acd']= VariableModel('acd', false, true, null, DataType.dynamic);
+cd.variables['pi']= VariableModel('pi',math.pi, true, null, DataType.double);
+  print(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{math.sin(pi/3)}} '));
 
-  print(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{randBool()}} '));
 
 }
 
@@ -549,6 +550,12 @@ class CodeProcessor {
     return math.Random.secure().nextBool();
   }
     ''');
+     functions['math.sin']=  FunctionModel<dynamic>('math.sin', (arguments) {
+        return math.sin(arguments[0]);
+    }, ''' ''');
+    functions['math.cos']=  FunctionModel<dynamic>('math.cos', (arguments) {
+        return math.cos(arguments[0]);
+    }, ''' ''');
   }
 
   void addVariable(String name, VariableModel value) {
@@ -692,7 +699,7 @@ class CodeProcessor {
       final String nextToken = input[n];
       final ch = nextToken.codeUnits.first;
 
-      if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || ch == dotCodeUnit) {
+      if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || (ch == dotCodeUnit&&variable.isEmpty)) {
         if (ch != dotCodeUnit && variable.isNotEmpty) {
           variable += number + nextToken;
           number = '';
@@ -700,7 +707,8 @@ class CodeProcessor {
           number += nextToken;
         }
       } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
-          ch == underScoreCodeUnit) {
+          ch == underScoreCodeUnit||
+          ch == dotCodeUnit) {
         variable += nextToken;
       } else if (ch == '"'.codeUnits.first) {
         if (variable.isEmpty) {
