@@ -18,6 +18,15 @@ import 'parameter_model.dart';
 import '../component_list.dart';
 import 'project_model.dart';
 
+
+mixin operations{
+  void addChildOperation(Component component,{String? attributeName});
+  bool canAddChild({String? attributeName});
+  bool canRemoveChild({String? attributeName});
+  void removeChildOperation(Component component,{String? attributeName});
+  int  getChildCount({String? attributeName});
+  void replaceChildOperation(Component component,{String? attributeName});
+}
 abstract class Component {
   late List<ParameterRuleModel> paramRules;
   List<Parameter> parameters;

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_strategy/url_strategy.dart';
 import 'common/shared_preferences.dart';
 import 'cubit/authentication/authentication_cubit.dart';
 import 'ui/authentication/login.dart';
@@ -13,6 +14,7 @@ import 'constant/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  setPathUrlStrategy();
   await Preferences.load();
   runApp(const MyApp());
 }
