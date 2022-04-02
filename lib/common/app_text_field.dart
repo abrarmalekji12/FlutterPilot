@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/constant/font_style.dart';
+import '../constant/font_style.dart';
 
 import 'logger.dart';
 

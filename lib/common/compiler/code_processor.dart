@@ -446,14 +446,18 @@ class CodeOutput {
 }
 
 /*
+import 'dart:math' as math;
+  import 'package:flutter/material.dart' as cu;
+
 void main() {
   CodeProcessor cd = CodeProcessor();
   cd.modelVariables['name'] = 'Abrar';
   cd.modelVariables['a'] = 1;
   cd.modelVariables['ac'] = false;
   cd.variables['acd']= VariableModel('acd', false, true, null, DataType.dynamic);
+cd.variables['pi']= VariableModel('pi',math.pi, true, null, DataType.double);
+  print(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{randColor()}} '));
 
-  print(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{13%5}} '));
 
 }
 
@@ -517,6 +521,52 @@ class CodeProcessor {
     }
   }
     ''');
+
+        functions['randInt']=  FunctionModel<int>('randInt', (arguments) {
+      if(arguments.length==1){
+        return math.Random.secure().nextInt(arguments[0]??100);
+      }
+          return 0;
+
+    }, '''
+    double randInt(int max){
+    return math.Random.secure().nextInt(max??100);
+  }
+    ''');
+
+       functions['randDouble']=  FunctionModel<double>('randDouble', (arguments) {
+        return math.Random.secure().nextDouble();
+
+
+    }, '''
+    double randDouble(){
+    return math.Random.secure().nextDouble();
+  }
+    ''');
+      functions['randBool']=  FunctionModel<bool>('randBool', (arguments) {
+        return math.Random.secure().nextBool();
+
+
+    }, '''
+    double randBool(){
+    return math.Random.secure().nextBool();
+  }
+    ''');
+     functions['randColor']=  FunctionModel<String>('randColor', (arguments) {
+        return '#'+cu.Colors.primaries[math.Random().nextInt(cu.Colors.primaries.length)].value.toRadixString(16);
+
+
+    }, '''
+    double randColor(){
+    return math.Random.secure().nextBool();
+  }
+    ''');
+     functions['math.sin']=  FunctionModel<double>('math.sin', (arguments) {
+        return math.sin(arguments[0]);
+    }, ''' ''');
+    functions['math.cos']=  FunctionModel<double>('math.cos', (arguments) {
+        return math.cos(arguments[0]);
+    }, ''' ''');
   }
 
   void addVariable(String name, VariableModel value) {
@@ -660,7 +710,7 @@ class CodeProcessor {
       final String nextToken = input[n];
       final ch = nextToken.codeUnits.first;
 
-      if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || ch == dotCodeUnit) {
+      if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || (ch == dotCodeUnit&&variable.isEmpty)) {
         if (ch != dotCodeUnit && variable.isNotEmpty) {
           variable += number + nextToken;
           number = '';
@@ -668,7 +718,8 @@ class CodeProcessor {
           number += nextToken;
         }
       } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
-          ch == underScoreCodeUnit) {
+          ch == underScoreCodeUnit||
+          ch == dotCodeUnit) {
         variable += nextToken;
       } else if (ch == '"'.codeUnits.first) {
         if (variable.isEmpty) {
