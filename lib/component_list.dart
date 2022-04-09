@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import 'constant/app_colors.dart';
+import 'constant/font_style.dart';
 import 'models/builder_component.dart';
 import 'models/component_model.dart';
 import 'models/other_model.dart';
@@ -78,6 +79,7 @@ final componentList = <String, Component Function()>{
   'GridView.builder': () => CGridViewBuilder(),
   'ListView.Builder': () => CListViewBuilder(),
   'GridView.Builder': () => CGridViewBuilder(),
+  'NotRecognizedWidget' : () => CNotRecognizedWidget(),
   'DropDownButton': () => CDropDownButton(),
   'DropDownMenuItem': () => CDropDownMenuItem(),
 };
@@ -128,6 +130,19 @@ class CRichText extends Component {
   }
 }
 
+class CNotRecognizedWidget extends Component {
+  CNotRecognizedWidget()
+      : super('NotRecognized', [
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Container(
+      child: Text('Not recognized widget $name',style: AppFontStyle.roboto(14,color: Colors.red.shade800),),
+      color:  const Color(0xfff1f1f1),
+    );
+  }
+}
 class CCheckbox extends Component {
   CCheckbox()
       : super('Checkbox', [

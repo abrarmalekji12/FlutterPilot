@@ -51,7 +51,15 @@ class BoundaryWidget extends StatelessWidget {
         .of<ComponentSelectionCubit>(context, listen: false)
         .currentSelected
         .visualSelection
-        .where((element) => element.boundary != null)
+        .where((element) => element.boundary != null).where((element) {
+          if(GlobalObjectKey(element).currentContext!=null) {
+            return true;
+          }
+          else{
+            element.cloneOf?.cloneElements.remove(element);
+            return false;
+          }
+    })
         .map<Boundary>((e) => Boundary(e.boundary!, e.name))
         .toList(growable: false);
   }

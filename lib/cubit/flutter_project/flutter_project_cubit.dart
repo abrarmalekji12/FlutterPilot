@@ -88,7 +88,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
 
       if (flutterProject.rootComponent != null) {
         final List<ImageData> imageDataList = [];
-        componentOperationCubit.flutterProject = flutterProject;
+        componentOperationCubit.setFlutterProject = flutterProject;
         await componentOperationCubit.loadFavourites();
         final idList = componentOperationCubit.flutterProject!.favouriteList
             .map((e) => e.component.id)

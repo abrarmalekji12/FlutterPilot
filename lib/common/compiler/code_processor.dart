@@ -1,7 +1,7 @@
 import 'dart:core';
-import 'dart:math';
+import 'dart:math' as math;
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import '../../code_to_component.dart';
 import '../../models/function_model.dart';
 import '../../models/other_model.dart';
@@ -60,24 +60,74 @@ class CodeProcessor {
   }
     ''');
 
-    functions['ifElse'] = FunctionModel<dynamic>('ifElse', (arguments) {
-      if (arguments.length >= 2) {
-        if (arguments[0] == true) {
+    functions['if']=  FunctionModel<dynamic>('if', (arguments) {
+      if(arguments.length>=2){
+        if(arguments[0]==true){
           return arguments[1];
-        } else if (arguments.length == 3) {
+        }
+        else if(arguments.length==3){
           return arguments[2];
         }
       }
     }, '''
-    double ifElse(dynamic expression,dynamic ifTrue,[dynamic elseTrue]){
-    if(expression==true){
-    return ifTrue;
+    double res(double large,double medium,[double? small]){
+    if(dw>tabletWidthLimit){
+      return large;
     }
-    else if(elseTrue!=null){
-    return elseTrue;
+    else if(dw>phoneWidthLimit||small==null){
+      return medium;
     }
+    else {
+      return small;
     }
+  }
     ''');
+
+    functions['randInt']=  FunctionModel<int>('randInt', (arguments) {
+      if(arguments.length==1){
+        return math.Random.secure().nextInt(arguments[0]??100);
+      }
+      return 0;
+
+    }, '''
+    double randInt(int max){
+    return math.Random.secure().nextInt(max??100);
+  }
+    ''');
+
+    functions['randDouble']=  FunctionModel<double>('randDouble', (arguments) {
+      return math.Random.secure().nextDouble();
+
+
+    }, '''
+    double randDouble(){
+    return math.Random.secure().nextDouble();
+  }
+    ''');
+    functions['randBool']=  FunctionModel<bool>('randBool', (arguments) {
+      return math.Random.secure().nextBool();
+
+
+    }, '''
+    double randBool(){
+    return math.Random.secure().nextBool();
+  }
+    ''');
+    functions['randColor']=  FunctionModel<String>('randColor', (arguments) {
+      return '#'+Colors.primaries[math.Random().nextInt(Colors.primaries.length)].value.toRadixString(16);
+
+
+    }, '''
+    double randColor(){
+    return math.Random.secure().nextBool();
+  }
+    ''');
+    functions['math.sin']=  FunctionModel<double>('math.sin', (arguments) {
+      return math.sin(arguments[0]);
+    }, ''' ''');
+    functions['math.cos']=  FunctionModel<double>('math.cos', (arguments) {
+      return math.cos(arguments[0]);
+    }, ''' ''');
   }
 
   void addVariable(String name, VariableModel value) {
@@ -93,9 +143,8 @@ class CodeProcessor {
         ch == '<'.codeUnits[0] ||
         ch == '>'.codeUnits[0] ||
         ch == '&'.codeUnits[0] ||
-        ch == '%'.codeUnits[0] ||
-        ch == '!'.codeUnits[0] ||
         ch == '~'.codeUnits[0] ||
+        ch == '%'.codeUnits[0] ||
         ch == '|'.codeUnits[0];
   }
 
@@ -115,105 +164,73 @@ class CodeProcessor {
   }
 
   void processOperator(String t, valueStack, operatorStack) {
-    bool error = false;
     dynamic a, b;
     if (valueStack.isEmpty) {
       error = true;
-      print('error 1');
+     debugPrint('error 1');
       return;
     } else {
-      b =  valueStack.pop()!;
+      b = valueStack.peek!;
+      valueStack.pop();
     }
-    if (valueStack.isEmpty && t != '-' && t != '!') {
+    if (valueStack.isEmpty && t != '-') {
       error = true;
-      print('error 2');
+
+     debugPrint('error 2');
       return;
     } else if (valueStack.isNotEmpty) {
-      a = valueStack.pop()!;
+      a = valueStack.peek!;
+      valueStack.pop();
     }
     late dynamic r;
-    switch (t) {
-      case '--' :
-      case '+':
-        r = a + b;
-        break;
-      case '-':
-        if (a == null) {
-          r = -b;
-        } else {
-          r = a - b;
-        }
-        break;
-      case '*':
-        r = a * b;
-        break;
-      case '/':
-        r = a / b;
-        break;
-      case '~/':
-        r = a ~/ b;
-        break;
-      case '*-':
-        r= a * -b;
-        break;
-      case '**' :
-        r=pow(a,int.parse(b.toString()));
-        break;
-      case '/-':
-        r = a / -b;
-        break;
-      case '%':
-        r = a % b;
-        break;
-      case '<':
-        r = a < b;
-        break;
-      case '>':
-        r = a > b;
-        break;
-      case '!':
-        r = !b;
-        break;
-      case '=':
-        if (variables.containsKey(a)) {
-          variables[a]?.value = b;
-        } else if (modelVariables.containsKey(a)) {
-          modelVariables[a] = b;
-        } else {
-          print('assign $a = $b');
-          variables[a] = VariableModel(a, b, true, null, DataType.dynamic,'');
-        }
-        r = b;
-        break;
-      case '<=':
-        r = a <= b;
-        break;
-      case '>=':
-        r = a >= b;
-        break;
-      case '>>':
-        r= a>> b;
-        break;
-      case '<<':
-        r= a<<b;
-        break;
-      case '&&':
-        r = (a as bool) && (b as bool);
-        break;
-      case '||':
-        r = (a as bool) || (b as bool);
-        break;
-      case '==':
-        r = a == b;
-        break;
-      case '!=':
-        r = a != b;
-        break;
-      default:
-        error = true;
-
-        print('error 3');
-        r = null;
+    if (t == '+') {
+      r = a + b;
+    } else if (t == '-') {
+      if (a == null) {
+        r = -b;
+      } else {
+        r = a - b;
+      }
+    } else if (t == '*') {
+      r = a * b;
+    } else if (t == '/') {
+      r = a / b;
+    } else if (t == '~/') {
+      r = a ~/ b;
+    }  else if (t == '/-') {
+      r = a /- b;
+    } else if (t == '%') {
+      r = a % b;
+    } else if (t == '<') {
+      r = a < b;
+    } else if (t == '>') {
+      r = a > b;
+    } else if (t == '=') {
+      if (variables.containsKey(a)) {
+        variables[a]?.value = b;
+      } else if (modelVariables.containsKey(a)) {
+        modelVariables[a] = b;
+      } else {
+        debugPrint('= $b');
+        variables[a] = VariableModel(a, b, true, null, DataType.dynamic,'');
+      }
+      r = b;
+    } else if (t == '<=') {
+      r = a <= b;
+    } else if (t == '>=') {
+      r = a >= b;
+    } else if (t == '&&') {
+      r = (a as bool) && (b as bool);
+    } else if (t == '||') {
+      r = (a as bool) || (b as bool);
+    } else if (t == '==') {
+      r = a == b;
+    } else if (t == '!=') {
+      r = a != b;
+    } else {
+      error = true;
+      debugPrint('error 3');
+      r = null;
     }
     valueStack.push(r);
   }
@@ -236,21 +253,17 @@ class CodeProcessor {
     return code;
   }
 
-  dynamic process<T>(final String inputWithoutTrim, {bool resolve = false}) {
+  dynamic process<T>(final String input, {bool resolve = false}) {
     final Stack2<dynamic> valueStack = Stack2<dynamic>();
     final Stack2<String> operatorStack = Stack2<String>();
     String number = '';
     String variable = '';
     error = false;
     if ((T == String||T == ImageData) && !resolve) {
-      return processString(inputWithoutTrim);
-    }else if(T == Color && inputWithoutTrim.startsWith('#')){
-      return inputWithoutTrim;
+      return processString(input);
+    }else if(T == Color && input.startsWith('#')){
+      return input;
     }
-    else if(inputWithoutTrim.contains('{{')){
-      return null;
-    }
-    final String input=inputWithoutTrim.replaceAll(' ','');
     for (int n = 0; n < input.length; n++) {
       if (error) {
         return null;
@@ -258,7 +271,7 @@ class CodeProcessor {
       final String nextToken = input[n];
       final ch = nextToken.codeUnits.first;
 
-      if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || ch == dotCodeUnit) {
+      if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || (ch == dotCodeUnit&&variable.isEmpty)) {
         if (ch != dotCodeUnit && variable.isNotEmpty) {
           variable += number + nextToken;
           number = '';
@@ -266,7 +279,8 @@ class CodeProcessor {
           number += nextToken;
         }
       } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
-          ch == underScoreCodeUnit) {
+          ch == underScoreCodeUnit||
+          ch == dotCodeUnit) {
         variable += nextToken;
       } else if (ch == '"'.codeUnits.first) {
         if (variable.isEmpty) {
@@ -287,23 +301,21 @@ class CodeProcessor {
           for (int m = n + 1; m < input.length; m++) {
             if (input[m] == '(') {
               count++;
-            } else if (count == 0 && input[m] == ')') {
-              if ((m-n-1)==0&&functions[variable] == null) {
+            }
+            if (count == 0 && input[m] == ')') {
+              if (functions[variable] == null) {
                 return null;
               }
               final argument =
               CodeOperations.splitByComma(input.substring(n + 1, m));
-              valueStack.push(functions[variable]!
+
+              return functions[variable]!
                   .perform
-                  .call(argument.map((e) => process(e)).toList()));
-              variable = '';
-              n = m;
-              break;
+                  .call(argument.map((e) => process(e)).toList());
             } else if (input[m] == ')') {
               count--;
             }
           }
-          continue;
         }
         if (number.isNotEmpty) {
           final parse = double.tryParse(number);
@@ -319,7 +331,7 @@ class CodeProcessor {
             operator = input[n - 1] + operator;
             operatorStack.pop();
           }
-          if (operator == '=' && variable.isNotEmpty) {
+          if (operator == '=') {
             valueStack.push(variable);
             variable = '';
           }
@@ -372,18 +384,20 @@ class CodeProcessor {
       variable = '';
     }
 
+    debugPrint('stacks $valueStack ${operatorStack._list}');
     // Empty out the operator stack at the end of the input
     while (operatorStack.isNotEmpty) {
-      final String topOperator = operatorStack.pop()!;
+      final String topOperator = operatorStack.peek!;
+      operatorStack.pop();
       processOperator(topOperator, valueStack, operatorStack);
     }
 
     // Print the result if no error has been seen.
     if (!error && valueStack.isNotEmpty) {
-      final result = valueStack.pop();
+      final result =valueStack.pop();
 
       if (operatorStack.isNotEmpty || valueStack.isNotEmpty) {
-        print('Expression error.');
+        debugPrint('Expression error.');
       } else {
         // debugPrint('The result is $input = $result');
         return result;
@@ -393,16 +407,21 @@ class CodeProcessor {
   }
 
   bool resolveVariable(String variable, valueStack) {
+    late dynamic value;
     if (variables.containsKey(variable)) {
-      valueStack.push(variables[variable]!.value);
+      value = variables[variable]!.value;
     } else if (modelVariables.containsKey(variable)) {
-      valueStack.push(modelVariables[variable]!);
-    } else if (variable == 'true') {
-      valueStack.push(true);
-    } else if (variable == 'false') {
-      valueStack.push(false);
+      value = modelVariables[variable]!;
     } else {
+      value = null;
       return false;
+    }
+    if (value == 'true') {
+      valueStack.push(true);
+    } else if (value == 'false') {
+      valueStack.push(false);
+    } else if (value != null) {
+      valueStack.push(value);
     }
 
     return true;
@@ -456,7 +475,7 @@ void main() {
   cd.modelVariables['ac'] = false;
   cd.variables['acd']= VariableModel('acd', false, true, null, DataType.dynamic);
 cd.variables['pi']= VariableModel('pi',math.pi, true, null, DataType.double);
-  print(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{randColor()}} '));
+ debugPrint(cd.process<String>('my name is {{name}} {{b=10}} {{a}}  {{randColor()}} '));
 
 
 }
@@ -607,7 +626,7 @@ class CodeProcessor {
     dynamic a, b;
     if (valueStack.isEmpty) {
       error = true;
-      print('error 1');
+     debugPrint('error 1');
       return;
     } else {
       b = valueStack.peek!;
@@ -616,7 +635,7 @@ class CodeProcessor {
     if (valueStack.isEmpty && t != '-') {
       error = true;
 
-      print('error 2');
+     debugPrint('error 2');
       return;
     } else if (valueStack.isNotEmpty) {
       a = valueStack.peek!;
@@ -651,7 +670,7 @@ class CodeProcessor {
       } else if (modelVariables.containsKey(a)) {
         modelVariables[a] = b;
       } else {
-        print('= $b');
+       debugPrint('= $b');
         variables[a] = VariableModel(a, b, true, null, DataType.dynamic);
       }
       r = b;
@@ -670,7 +689,7 @@ class CodeProcessor {
     } else {
       error = true;
 
-      print('error 3');
+     debugPrint('error 3');
       r = null;
     }
     valueStack.push(r);
@@ -823,7 +842,7 @@ class CodeProcessor {
       variable = '';
     }
 
-    print('stacks ${valueStack} ${operatorStack._list}');
+   debugPrint('stacks ${valueStack} ${operatorStack._list}');
     // Empty out the operator stack at the end of the input
     while (operatorStack.isNotEmpty) {
       final String topOperator = operatorStack.peek!;
@@ -836,7 +855,7 @@ class CodeProcessor {
       final result =valueStack.pop();
 
       if (operatorStack.isNotEmpty || valueStack.isNotEmpty) {
-        print('Expression error.');
+        debugPrint('Expression error.');
       } else {
         // debugPrint('The result is $input = $result');
         return result;

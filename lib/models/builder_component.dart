@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_builder/models/parameter_info_model.dart';
 
 import '../component_list.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -10,16 +11,19 @@ import 'parameter_model.dart';
 abstract class BuilderComponent extends Holder {
   LocalModel? model;
   final List<Component> builtList = [];
-  final SimpleParameter<int> itemLengthParameter=SimpleParameter<int>(name: 'count',defaultValue: 5);
+   SimpleParameter<int> itemLengthParameter=SimpleParameter<int>(name: 'count',defaultValue: 5,required: true);
   final String builderName;
 
   BuilderComponent(String name, List<Parameter> parameters, {this.builderName='itemBuilder'})
-      : super(name, parameters);
+      : super(name, parameters){
+    itemLengthParameter;
+  }
 
   @override
   Component clone(Component? parent, {bool cloneParam = false}) {
     return (super.clone(parent, cloneParam: cloneParam) as BuilderComponent)
-      ..model = model;
+      ..model = model
+    ..itemLengthParameter=itemLengthParameter;
   }
 
   Widget builder(BuildContext context, int index) {
@@ -115,21 +119,27 @@ abstract class BuilderComponent extends Holder {
   }
 
   int get count {
-    final int length=itemLengthParameter.value;
+    final length=itemLengthParameter.value;
+    print('VAL ${itemLengthParameter.compiler.code}');
     if(model==null||length<model!.values.length){
       return length;
     }
+
     return model!.values.length;
   }
 }
 
 class CListViewBuilder extends BuilderComponent {
-  CListViewBuilder() : super('ListView.builder', []);
+  CListViewBuilder() : super('ListView.builder', [
+    Parameters.axisParameter()
+      ..withInfo(NamedParameterInfo('scrollDirection'))
+  ]);
 
   @override
   Widget create(BuildContext context) {
     init();
     return ListView.builder(
+      scrollDirection: parameters[0].value,
       itemBuilder: (context, index) {
         return builder(context, index);
       },

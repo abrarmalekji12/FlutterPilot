@@ -63,6 +63,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                     children: [
                       IconButton(
                           onPressed: () {
+                            ComponentOperationCubit.currentFlutterProject=null;
                             Get.back();
                           },
                           icon: const Icon(
@@ -390,85 +391,88 @@ class _ComponentTreeState extends State<ComponentTree> {
                                       componentCreationCubit:
                                           _componentCreationCubit),
                                 ),
-                                // Padding(
-                                //   padding: const EdgeInsets.all(10),
-                                //   child: Row(
-                                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                //     children: [
-                                //       Text(
-                                //         'Custom Widgets',
-                                //         style: AppFontStyle.roboto(14,
-                                //             color: const Color(0xff494949),
-                                //             fontWeight: FontWeight.bold),
-                                //       ),
-                                //       InkWell(
-                                //         borderRadius: BorderRadius.circular(10),
-                                //         onTap: () {
-                                //           //ADD Custom Widgets
-                                //           showCustomWidgetRename(
-                                //               context, 'Enter widget name', (name) {
-                                //             Get.back();
-                                //
-                                //             BlocProvider.of<ComponentOperationCubit>(
-                                //                     context,
-                                //                     listen: false)
-                                //                 .addCustomComponent(name);
-                                //           });
-                                //         },
-                                //         child: const CircleAvatar(
-                                //           radius: 10,
-                                //           backgroundColor: AppColors.theme,
-                                //           child: Icon(
-                                //             Icons.add,
-                                //             size: 15,
-                                //             color: Colors.white,
-                                //           ),
-                                //         ),
-                                //       ),
-                                //     ],
-                                //   ),
-                                // ),
-                                // for (final CustomComponent comp in _componentOperationCubit
-                                //     .flutterProject!.customComponents) ...[
-                                //   Row(
-                                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                //     children: [
-                                //       Container(
-                                //         decoration: BoxDecoration(
-                                //             border: Border.all(
-                                //                 color: AppColors.theme, width: 1.5),
-                                //             borderRadius: BorderRadius.circular(4)),
-                                //         padding: const EdgeInsets.all(5),
-                                //         margin: const EdgeInsets.symmetric(
-                                //             horizontal: 10, vertical: 5),
-                                //         child: Text(
-                                //           comp.name,
-                                //           style: AppFontStyle.roboto(15,
-                                //               color: AppColors.theme,
-                                //               fontWeight: FontWeight.bold),
-                                //         ),
-                                //       ),
-                                //       ComponentModificationMenu(
-                                //         component: comp,
-                                //         ancestor: comp,
-                                //         componentOperationCubit: _componentOperationCubit,
-                                //         componentCreationCubit: _componentCreationCubit,
-                                //         componentSelectionCubit: _componentSelectionCubit,
-                                //       )
-                                //     ],
-                                //   ),
-                                //   if (comp.root != null)
-                                //     Container(
-                                //       alignment: Alignment.topLeft,
-                                //       padding: const EdgeInsets.all(10),
-                                //       child: SublistWidget(
-                                //           component: comp.root!,
-                                //           ancestor: comp,
-                                //           componentSelectionCubit: _componentSelectionCubit,
-                                //           componentOperationCubit: _componentOperationCubit,
-                                //           componentCreationCubit: _componentCreationCubit),
-                                //     ),
-                                // ],
+                                Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Custom Widgets',
+                                        style: AppFontStyle.roboto(14,
+                                            color: const Color(0xff494949),
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      InkWell(
+                                        borderRadius: BorderRadius.circular(10),
+                                        onTap: () {
+                                          //ADD Custom Widgets
+                                          showScreenNameDialog(
+                                              context, 'Enter widget name',
+                                              (name, _) {
+                                            Get.back();
+                                            BlocProvider.of<
+                                                        ComponentOperationCubit>(
+                                                    context,
+                                                    listen: false)
+                                                .addCustomComponent(name);
+                                          }, type: false);
+                                        },
+                                        child: const CircleAvatar(
+                                          radius: 10,
+                                          backgroundColor: AppColors.theme,
+                                          child: Icon(
+                                            Icons.add,
+                                            size: 15,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                for (final CustomComponent comp
+                                    in _componentOperationCubit
+                                        .flutterProject!.customComponents) ...[
+                                  OnHoverMenuChangeWidget(
+                                    buildWidget: (showMenu) => Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        ComponentTile(
+                                            component: comp,
+                                            ancestor: comp,
+                                            componentSelectionCubit:
+                                                _componentSelectionCubit),
+                                        if (showMenu)
+                                          ComponentModificationMenu(
+                                            component: comp,
+                                            ancestor: comp,
+                                            componentOperationCubit:
+                                                _componentOperationCubit,
+                                            componentCreationCubit:
+                                                _componentCreationCubit,
+                                            componentSelectionCubit:
+                                                _componentSelectionCubit,
+                                          )
+                                      ],
+                                    ),
+                                  ),
+                                  if (comp.root != null)
+                                    Container(
+                                      alignment: Alignment.topLeft,
+                                      padding: const EdgeInsets.all(6),
+                                      child: SublistWidget(
+                                          component: comp.root!,
+                                          ancestor: comp,
+                                          componentSelectionCubit:
+                                              _componentSelectionCubit,
+                                          componentOperationCubit:
+                                              _componentOperationCubit,
+                                          componentCreationCubit:
+                                              _componentCreationCubit),
+                                    ),
+                                ],
                                 const SizedBox(
                                   height: 100,
                                 ),
@@ -522,7 +526,8 @@ class _ComponentTreeState extends State<ComponentTree> {
   }
 
   void showScreenNameDialog(
-      BuildContext context, String title, Function(String, String) onSubmit) {
+      BuildContext context, String title, Function(String, String) onSubmit,
+      {bool type = true}) {
     CustomDialog.show(
       context,
       GestureDetector(
@@ -530,6 +535,7 @@ class _ComponentTreeState extends State<ComponentTree> {
         child: NewScreenNameDialog(
           title: title,
           onSubmit: onSubmit,
+          type: type,
         ),
       ),
     );
@@ -539,9 +545,10 @@ class _ComponentTreeState extends State<ComponentTree> {
 class NewScreenNameDialog extends StatefulWidget {
   final String title;
   final Function onSubmit;
+  final bool type;
 
   const NewScreenNameDialog(
-      {Key? key, required this.title, required this.onSubmit})
+      {Key? key, required this.title, required this.onSubmit, this.type = true})
       : super(key: key);
 
   @override
@@ -579,56 +586,58 @@ class _NewScreenNameDialogState extends State<NewScreenNameDialog> {
               },
             ),
           ),
-          const SizedBox(
-            height: 20,
-          ),
-          Row(
-            children: [
-              Text(
-                'Type',
-                style: AppFontStyle.roboto(13, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(
-                width: 20,
-              ),
-              Expanded(
-                  child: CustomDropdownButton<String>(
-                style: AppFontStyle.roboto(14),
-                value: type,
-                hint: null,
-                items: ['screen', 'dialog']
-                    .map<CustomDropdownMenuItem<String>>(
-                      (e) => CustomDropdownMenuItem<String>(
-                        value: e,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            e,
-                            style: AppFontStyle.roboto(14,
-                                fontWeight: FontWeight.w500),
+          if (widget.type) ...[
+            const SizedBox(
+              height: 20,
+            ),
+            Row(
+              children: [
+                Text(
+                  'Type',
+                  style: AppFontStyle.roboto(13, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(
+                  width: 20,
+                ),
+                Expanded(
+                    child: CustomDropdownButton<String>(
+                  style: AppFontStyle.roboto(14),
+                  value: type,
+                  hint: null,
+                  items: ['screen', 'dialog']
+                      .map<CustomDropdownMenuItem<String>>(
+                        (e) => CustomDropdownMenuItem<String>(
+                          value: e,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              e,
+                              style: AppFontStyle.roboto(14,
+                                  fontWeight: FontWeight.w500),
+                            ),
                           ),
                         ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      type = value;
+                    });
+                  },
+                  selectedItemBuilder: (context, e) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        e,
+                        style: AppFontStyle.roboto(14,
+                            fontWeight: FontWeight.w500),
                       ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    type = value;
-                  });
-                },
-                selectedItemBuilder: (context, e) {
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      e,
-                      style:
-                          AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-                    ),
-                  );
-                },
-              )),
-            ],
-          ),
+                    );
+                  },
+                )),
+              ],
+            )
+          ],
           const SizedBox(
             height: 20,
           ),
@@ -1006,7 +1015,7 @@ class _SublistWidgetState extends State<SublistWidget> {
                       BlocProvider.of<ComponentOperationCubit>(context,
                               listen: false)
                           .removeComponentAndRefresh(
-                              context, object as Component);
+                              context, object as Component, widget.ancestor);
                       BlocProvider.of<ComponentOperationCubit>(context,
                               listen: false)
                           .addOperation(
@@ -1032,17 +1041,17 @@ class _SublistWidgetState extends State<SublistWidget> {
                     );
                   },
                 ),
-                if(showMenu)...[
-                const Spacer(),
-                ComponentModificationMenu(
-                  component: widget.component,
-                  ancestor: widget.ancestor,
-                  componentParameter: widget.componentParameter,
-                  componentOperationCubit: widget.componentOperationCubit,
-                  componentCreationCubit: widget.componentCreationCubit,
-                  componentSelectionCubit: widget.componentSelectionCubit,
-                )
-    ]
+                if (showMenu) ...[
+                  const Spacer(),
+                  ComponentModificationMenu(
+                    component: widget.component,
+                    ancestor: widget.ancestor,
+                    componentParameter: widget.componentParameter,
+                    componentOperationCubit: widget.componentOperationCubit,
+                    componentCreationCubit: widget.componentCreationCubit,
+                    componentSelectionCubit: widget.componentSelectionCubit,
+                  )
+                ]
               ],
             ),
           ),
@@ -1082,7 +1091,8 @@ class _SublistWidgetState extends State<SublistWidget> {
                         performReversibleOperation(() {
                           BlocProvider.of<ComponentOperationCubit>(context,
                                   listen: false)
-                              .removeComponent(object as Component);
+                              .removeComponent(
+                                  object as Component, widget.ancestor);
                           BlocProvider.of<ComponentOperationCubit>(context,
                                   listen: false)
                               .addOperation(
@@ -1143,62 +1153,58 @@ class _SublistWidgetState extends State<SublistWidget> {
           OnHoverMenuChangeWidget(
               buildWidget: (showMenu) => Row(
                     children: [
-                      Row(
-                        children: [
-                          ComponentTile(
-                            component: widget.component,
-                            ancestor: widget.ancestor,
-                            componentSelectionCubit:
-                                widget.componentSelectionCubit,
-                          ),
-                          if (showMenu) ...[
-                            const Spacer(),
-                            ComponentModificationMenu(
-                              component: widget.component,
-                              customNamed: null,
-                              componentParameter: widget.componentParameter,
-                              ancestor: widget.ancestor,
-                              componentOperationCubit:
-                                  widget.componentOperationCubit,
-                              componentCreationCubit:
-                                  widget.componentCreationCubit,
-                              componentSelectionCubit:
-                                  widget.componentSelectionCubit,
-                            ),
-                          ]
-                        ],
+                      ComponentTile(
+                        component: widget.component,
+                        ancestor: widget.ancestor,
+                        componentSelectionCubit: widget.componentSelectionCubit,
                       ),
+                      if (showMenu) ...[
+                        const Spacer(),
+                        ComponentModificationMenu(
+                          component: widget.component,
+                          customNamed: null,
+                          componentParameter: widget.componentParameter,
+                          ancestor: widget.ancestor,
+                          componentOperationCubit:
+                              widget.componentOperationCubit,
+                          componentCreationCubit: widget.componentCreationCubit,
+                          componentSelectionCubit:
+                              widget.componentSelectionCubit,
+                        ),
+                      ]
                     ],
                   )),
           Padding(
-            padding: const EdgeInsets.only(left: 5, top: 0),
+            padding: const EdgeInsets.only(left: 5, top: 10),
             child: Column(children: [
               for (final child
                   in (widget.component as CustomNamedHolder).childMap.keys) ...[
                 Column(
                   children: [
-                    OnHoverMenuChangeWidget(buildWidget: (showMenu)=>Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          child,
-                          style: AppFontStyle.roboto(12,
-                              color: const Color(0xff494949),
-                              fontWeight: FontWeight.w500),
-                        ),
-                        if(showMenu)
-                        ComponentModificationMenu(
-                            component: widget.component,
-                            customNamed: child,
-                            ancestor: widget.ancestor,
-                            componentSelectionCubit:
-                            widget.componentSelectionCubit,
-                            componentOperationCubit:
-                            widget.componentOperationCubit,
-                            componentCreationCubit:
-                            widget.componentCreationCubit),
-                      ],
-                    )),
+                    OnHoverMenuChangeWidget(
+                        buildWidget: (showMenu) => Row(
+                              children: [
+                                Text(
+                                  child,
+                                  style: AppFontStyle.roboto(12,
+                                      color: const Color(0xff494949),
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                if (showMenu) ...[
+                                  const Spacer(),
+                                  ComponentModificationMenu(
+                                      component: widget.component,
+                                      customNamed: child,
+                                      ancestor: widget.ancestor,
+                                      componentSelectionCubit:
+                                          widget.componentSelectionCubit,
+                                      componentOperationCubit:
+                                          widget.componentOperationCubit,
+                                      componentCreationCubit:
+                                          widget.componentCreationCubit),
+                                ]
+                              ],
+                            )),
                     if ((widget.component as CustomNamedHolder)
                             .childMap[child] !=
                         null)
@@ -1222,28 +1228,29 @@ class _SublistWidgetState extends State<SublistWidget> {
                   .keys) ...[
                 Column(
                   children: [
-                  OnHoverMenuChangeWidget(buildWidget: (showMenu)=>  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        child,
-                        style: AppFontStyle.roboto(12,
-                            color: const Color(0xff494949),
-                            fontWeight: FontWeight.w500),
-                      ),
-                      if(showMenu)
-                      ComponentModificationMenu(
-                          component: widget.component,
-                          customNamed: child,
-                          ancestor: widget.ancestor,
-                          componentSelectionCubit:
-                          widget.componentSelectionCubit,
-                          componentOperationCubit:
-                          widget.componentOperationCubit,
-                          componentCreationCubit:
-                          widget.componentCreationCubit),
-                    ],
-                  )),
+                    OnHoverMenuChangeWidget(
+                        buildWidget: (showMenu) => Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  child,
+                                  style: AppFontStyle.roboto(12,
+                                      color: const Color(0xff494949),
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                if (showMenu)
+                                  ComponentModificationMenu(
+                                      component: widget.component,
+                                      customNamed: child,
+                                      ancestor: widget.ancestor,
+                                      componentSelectionCubit:
+                                          widget.componentSelectionCubit,
+                                      componentOperationCubit:
+                                          widget.componentOperationCubit,
+                                      componentCreationCubit:
+                                          widget.componentCreationCubit),
+                              ],
+                            )),
                     if ((widget.component as CustomNamedHolder)
                             .childrenMap[child] !=
                         null)
@@ -1267,49 +1274,52 @@ class _SublistWidgetState extends State<SublistWidget> {
         ],
       );
     } else if (widget.component is CustomComponent) {
-      return OnHoverMenuChangeWidget(buildWidget: (showMenu)=>Row(
-        children: [
-          ComponentTile(
-            component: widget.component,
-            ancestor: widget.ancestor,
-            componentSelectionCubit: widget.componentSelectionCubit,
-          ),
-          if(showMenu) ... [
-          const Spacer(),
-          ComponentModificationMenu(
-            component: widget.component,
-            ancestor: widget.ancestor,
-            componentParameter: widget.componentParameter,
-            componentOperationCubit: widget.componentOperationCubit,
-            componentCreationCubit: widget.componentCreationCubit,
-            componentSelectionCubit: widget.componentSelectionCubit,
-          )
-    ]
-        ],
-      ));
+      return OnHoverMenuChangeWidget(
+          buildWidget: (showMenu) => Row(
+                children: [
+                  ComponentTile(
+                    component: widget.component,
+                    ancestor: widget.ancestor,
+                    componentSelectionCubit: widget.componentSelectionCubit,
+                  ),
+                  if (showMenu) ...[
+                    const Spacer(),
+                    ComponentModificationMenu(
+                      component: widget.component,
+                      ancestor: widget.ancestor,
+                      componentParameter: widget.componentParameter,
+                      componentOperationCubit: widget.componentOperationCubit,
+                      componentCreationCubit: widget.componentCreationCubit,
+                      componentSelectionCubit: widget.componentSelectionCubit,
+                    )
+                  ]
+                ],
+              ));
     }
     return Column(
       children: [
-      OnHoverMenuChangeWidget(buildWidget: (showMenu)=>  Row(
-        children: [
-          ComponentTile(
-            component: widget.component,
-            ancestor: widget.ancestor,
-            componentSelectionCubit: widget.componentSelectionCubit,
+        OnHoverMenuChangeWidget(
+          buildWidget: (showMenu) => Row(
+            children: [
+              ComponentTile(
+                component: widget.component,
+                ancestor: widget.ancestor,
+                componentSelectionCubit: widget.componentSelectionCubit,
+              ),
+              if (showMenu) ...[
+                const Spacer(),
+                ComponentModificationMenu(
+                  component: widget.component,
+                  ancestor: widget.ancestor,
+                  componentParameter: widget.componentParameter,
+                  componentOperationCubit: widget.componentOperationCubit,
+                  componentCreationCubit: widget.componentCreationCubit,
+                  componentSelectionCubit: widget.componentSelectionCubit,
+                )
+              ]
+            ],
           ),
-          if(showMenu) ... [
-          const Spacer(),
-          ComponentModificationMenu(
-            component: widget.component,
-            ancestor: widget.ancestor,
-            componentParameter: widget.componentParameter,
-            componentOperationCubit: widget.componentOperationCubit,
-            componentCreationCubit: widget.componentCreationCubit,
-            componentSelectionCubit: widget.componentSelectionCubit,
-          )
-    ]
-        ],
-      ),),
+        ),
         if (widget.component.componentParameters.isNotEmpty)
           ComponentParameterWidget(
               component: widget.component,
@@ -1377,9 +1387,8 @@ class _OnHoverMenuChangeWidgetState extends State<OnHoverMenuChangeWidget> {
         });
       },
       onExit: (_) {
-        setState(() {
-          showMenu = false;
-        });
+        showMenu = false;
+        setState(() {});
       },
       child: Container(
         decoration: BoxDecoration(
@@ -1639,14 +1648,15 @@ class ComponentModificationMenu extends StatelessWidget {
                 } else if (e == 'delete') {
                   componentOperationCubit.deleteCustomComponent(
                       context, component as CustomComponent);
+                  componentCreationCubit.changedComponent();
                 } else if (e == 'remove') {
                   if (ancestor is CustomComponent) {
-                    final parent = component.parent!;
-                    (ancestor as CustomComponent).notifyChanged();
+                    componentOperationCubit.removeComponentAndRefresh(
+                        context, component, ancestor);
                     componentSelectionCubit.changeComponentSelection(
-                        ComponentSelectionModel.unique(parent),
+                        ComponentSelectionModel.unique(
+                            component.parent ?? ancestor),
                         root: ancestor);
-                    componentOperationCubit.removedComponent();
                     componentCreationCubit.changedComponent();
                   } else {
                     performReversibleOperation(() {
@@ -1657,12 +1667,14 @@ class ComponentModificationMenu extends StatelessWidget {
                                 componentParameter!, component);
                         componentCreationCubit.changedComponent();
                       } else {
-                        final parent = component.parent!;
+                        final parent = component.parent;
                         componentOperationCubit.removeComponentAndRefresh(
-                            context, component);
-                        componentSelectionCubit.changeComponentSelection(
-                            ComponentSelectionModel.unique(parent),
-                            root: ancestor);
+                            context, component, ancestor);
+                        if (parent != null) {
+                          componentSelectionCubit.changeComponentSelection(
+                              ComponentSelectionModel.unique(parent),
+                              root: ancestor);
+                        }
                         componentCreationCubit.changedComponent();
                       }
                     });
@@ -1692,11 +1704,14 @@ class ComponentModificationMenu extends StatelessWidget {
                               removeAll: true);
                       componentCreationCubit.changedComponent();
                     } else {
-                      final parent = component.parent!;
-                      componentOperationCubit.removeAllComponent(component);
-                      componentSelectionCubit.changeComponentSelection(
-                          ComponentSelectionModel.unique(parent),
-                          root: ancestor);
+                      final parent = component.parent;
+                      componentOperationCubit.removeAllComponent(
+                          component, ancestor);
+                      if (parent != null) {
+                        componentSelectionCubit.changeComponentSelection(
+                            ComponentSelectionModel.unique(parent),
+                            root: ancestor);
+                      }
                       componentOperationCubit.removedComponent();
                       componentCreationCubit.changedComponent();
                     }
@@ -1706,10 +1721,10 @@ class ComponentModificationMenu extends StatelessWidget {
                   final Component wrapperComp = componentList[compName]!();
                   performReversibleOperation(() {
                     wrapWithComponent(component, wrapperComp);
-                    componentCreationCubit.changedComponent();
-
                     componentOperationCubit.addedComponent(
                         wrapperComp, ancestor);
+
+                    componentCreationCubit.changedComponent();
 
                     componentSelectionCubit.changeComponentSelection(
                         ComponentSelectionModel.unique(wrapperComp),
@@ -1737,7 +1752,13 @@ class ComponentModificationMenu extends StatelessWidget {
       componentParameter!.components.removeAt(index);
       componentParameter!.components.insert(index, wrapperComp);
     } else {
-      replaceChildOfParent(component, wrapperComp);
+      if (ancestor is CustomComponent &&
+          (ancestor as CustomComponent).root == component) {
+
+        (ancestor as CustomComponent).root = wrapperComp;
+      } else {
+        replaceChildOfParent(component, wrapperComp);
+      }
     }
     switch (wrapperComp.type) {
       case 2:
@@ -1745,12 +1766,14 @@ class ComponentModificationMenu extends StatelessWidget {
         (wrapperComp as MultiHolder).addChild(component);
         break;
       case 3:
-        (wrapperComp as Holder).updateChild(component);
-        break;
       //Holder
+       (wrapperComp as Holder).updateChild(component);
+        break;
+
     }
     if (ancestor is CustomComponent) {
-      (ancestor as CustomComponent).notifyChanged();
+      componentOperationCubit
+          .refreshCustomComponents(ancestor as CustomComponent);
     }
   }
 
@@ -2018,22 +2041,24 @@ class ComponentTile extends StatelessWidget {
         builder: (context, state) {
           late final bool selected;
           final selectedComponent = componentSelectionCubit.currentSelected;
-          if (component is CustomComponent) {
-            selected = (component as CustomComponent).cloneOf ==
-                    componentSelectionCubit.currentSelectedRoot ||
-                (componentSelectionCubit.currentSelected.treeSelection
-                    .contains(component));
-          } else {
-            selected = (selectedComponent.treeSelection.contains(component));
-          }
+          // if (component is CustomComponent) {
+          //   selected = (component as CustomComponent).cloneOf ==
+          //           componentSelectionCubit.currentSelectedRoot ||
+          //       (componentSelectionCubit.currentSelected.treeSelection
+          //           .contains(component));
+          // } else {
+          selected = (selectedComponent.treeSelection.contains(component));
+          // }
 
           return InkWell(
             borderRadius: BorderRadius.circular(10),
             hoverColor: const Color(0xffADD8FF),
             onTap: () {
-
+              final List<Component> clones = component.getAllClones();
+              print('CLONES >>> ${clones.length} ');
               componentSelectionCubit.changeComponentSelection(
-                  ComponentSelectionModel([component],[component,...component.cloneElements],component),
+                  ComponentSelectionModel(
+                      [component], [component, ...clones], component),
                   root: ancestor,
                   scroll: false);
               if (GlobalObjectKey(component).currentContext != null) {

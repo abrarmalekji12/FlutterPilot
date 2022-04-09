@@ -56,7 +56,7 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: widget.shouldShowFavourites?2:1, vsync: this);
+    _tabController = TabController(length: widget.shouldShowFavourites?3:2, vsync: this);
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       _textFieldFocusNode.requestFocus();
       _controller.text=filter;
@@ -155,6 +155,14 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
+                        Tab(
+                          child: Text(
+                            'Custom widgets',
+                            style: AppFontStyle.roboto(14,
+                                color: const Color(0xff494949),
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
                         if(widget.shouldShowFavourites)
                         Tab(
 
@@ -164,7 +172,8 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                                 color: const Color(0xff494949),
                                 fontWeight: FontWeight.bold),
                           ),
-                        )
+                        ),
+
                       ],
                       controller: _tabController,
                     ),
@@ -188,6 +197,41 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                                     entry, componentOperationCubit, widget),
                               )
                               .toList(),
+                        ),
+                        GridView.builder(
+                          gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2, childAspectRatio: 3.5),
+                          controller: ScrollController(),
+                          itemBuilder: (context, i) {
+                            return InkWell(
+                              onTap: () {
+                                final customComponentClone =
+                                filteredCustomComponents[i]
+                                    .createInstance(null);
+                                print('objects length ${filteredCustomComponents[i].objects.length}');
+                                widget.onSelection(customComponentClone);
+                                Get.back();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Card(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: Center(
+                                    child: Text(
+                                      filteredCustomComponents[i].name,
+                                      style: AppFontStyle.roboto(12,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          itemCount: filteredCustomComponents.length,
                         ),
                         if(widget.shouldShowFavourites)
                         OverflowBox(
@@ -262,62 +306,9 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                         )
                       ]),
                     ),
-                    // Padding(
-                    //   padding: const EdgeInsets.all(10),
-                    //   child: Text(
-                    //     'custom widgets',
-                    //     style: AppFontStyle.roboto(14,
-                    //         color: const Color(0xff494949)),
-                    //   ),
-                    // ),
-                    // Expanded(
-                    //   flex: 4,
-                    //   child: GridView.builder(
-                    //     gridDelegate:
-                    //         const SliverGridDelegateWithFixedCrossAxisCount(
-                    //             crossAxisCount: 2, childAspectRatio: 3.5),
-                    //     controller: ScrollController(),
-                    //     itemBuilder: (context, i) {
-                    //       return InkWell(
-                    //         onTap: () {
-                    //           final customComponentClone =
-                    //               filteredCustomComponents[i]
-                    //                   .createInstance(null);
-                    //           widget.onSelection(customComponentClone);
-                    //           Get.back();
-                    //         },
-                    //         child: Padding(
-                    //           padding: const EdgeInsets.only(bottom: 10),
-                    //           child: Card(
-                    //             elevation: 2,
-                    //             shape: RoundedRectangleBorder(
-                    //                 borderRadius: BorderRadius.circular(10)),
-                    //             child: Center(
-                    //               child: Text(
-                    //                 filteredCustomComponents[i].name,
-                    //                 style: AppFontStyle.roboto(12,
-                    //                     color: Colors.black,
-                    //                     fontWeight: FontWeight.w500),
-                    //               ),
-                    //             ),
-                    //           ),
-                    //         ),
-                    //       );
-                    //     },
-                    //     itemCount: filteredCustomComponents.length,
-                    //   ),
-                    // ),
 
-                    // if (widget.shouldShowFavourites) ...[
-                    //   Padding(
-                    //     padding: const EdgeInsets.symmetric(vertical: 10),
-                    //     child: ,
-                    //   ),
-                    //   Expanded(
-                    //     flex: 6,
-                    //     child: ,
-                    //   ),
-                    // ]
+
+
                   ],
                 );
               }),

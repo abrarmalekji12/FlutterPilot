@@ -2,14 +2,15 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
+import '../../component_list.dart';
 import '../../models/component_model.dart';
 import '../../models/component_selection.dart';
 
 part 'component_selection_state.dart';
 
 class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
-  late ComponentSelectionModel currentSelected;
-  late Component currentSelectedRoot;
+  ComponentSelectionModel currentSelected=ComponentSelectionModel.unique(CNotRecognizedWidget());
+  Component currentSelectedRoot=CNotRecognizedWidget();
   Component? lastTapped;
 
   ComponentSelectionCubit() : super(ComponentSelectionInitial());

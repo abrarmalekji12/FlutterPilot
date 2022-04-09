@@ -955,10 +955,10 @@ class ComponentParameter extends Parameter {
     if (multiple) {
       final componentCodes = CodeOperations.splitByComma(paramCode);
       for (final compCode in componentCodes) {
-        components.add(Component.fromCode(compCode, null)!);
+        components.add(Component.fromCode(compCode, ComponentOperationCubit.currentFlutterProject!)!);
       }
     } else {
-      components.add(Component.fromCode(paramCode, null)!);
+      components.add(Component.fromCode(paramCode,  ComponentOperationCubit.currentFlutterProject!)!);
     }
     return true;
   }

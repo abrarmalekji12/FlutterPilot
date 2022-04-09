@@ -20,7 +20,7 @@ import '../visual_box_drawer/visual_box_cubit.dart';
 part 'component_operation_state.dart';
 
 class ComponentOperationCubit extends Cubit<ComponentOperationState> {
-  FlutterProject? flutterProject;
+  static FlutterProject? currentFlutterProject;
   static final CodeProcessor codeProcessor = CodeProcessor();
   final Map<Component, bool> expandedTree = {};
   final Map<String, List<Component>> sameComponentCollection = {};
@@ -35,6 +35,11 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   RevertWork get revertWork => flutterProject!.currentScreen.revertWork;
 
   get byteCache => bytesCache;
+
+  FlutterProject? get flutterProject => currentFlutterProject;
+
+  set setFlutterProject(FlutterProject project) =>
+      currentFlutterProject = project;
 
   void addedComponent(Component component, Component root) {
     if (root is CustomComponent) {
@@ -80,8 +85,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       {String? newName}) async {
     emit(ComponentOperationLoadingState());
     try {
-      await FireBridge.updateGlobalCustomComponent(
-          flutterProject!.userId, flutterProject!.name, customComponent,
+      await FireBridge.saveComponent(flutterProject!, customComponent,
           newName: newName);
       emit(ComponentOperationInitial());
     } on Exception {
@@ -115,8 +119,42 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         if (component == ancestor) {
           ancestor.root = comp;
         }
-        ancestor.notifyChanged();
+        refreshCustomComponents(ancestor);
       }
+    }
+  }
+
+  void refreshCustomComponents(CustomComponent customComponent) {
+    customComponent.notifyChanged();
+    final Map<String, List<String>> map = {};
+
+    for (final CustomComponent comp in flutterProject?.customComponents ?? []) {
+      if (customComponent != comp) {
+        map[comp.name] = [];
+        comp.forEach((p0) {
+          if (p0 is CustomComponent) {
+            map[comp.name]!.add(p0.name);
+          }
+        });
+      }
+    }
+
+    print('map $map');
+    final List<String> changeOrder = [customComponent.name];
+    final list = map.entries.toList();
+    list.sort((prev, next) => prev.value.length >= next.value.length ? 1 : -1);
+
+    print('map list $list');
+    int index = 0;
+    while (index < list.length) {
+      for (final comp in changeOrder) {
+        if (list[index].value.contains(comp)) {
+          (flutterProject!.customComponents.firstWhere((element) => element.name==list[index].key)).notifyChanged();
+          changeOrder.add(list[index].key);
+          break;
+        }
+      }
+      index++;
     }
   }
 
@@ -216,7 +254,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     final old = children.removeAt(oldIndex);
     children.insert(newIndex, old);
     if (ancestor is CustomComponent) {
-      ancestor.notifyChanged();
+      refreshCustomComponents(ancestor);
     }
     BlocProvider.of<ComponentCreationCubit>(context, listen: false)
         .changedComponent();
@@ -228,13 +266,13 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     final component = StatelessComponent(name: name);
     flutterProject?.customComponents.add(component);
     FireBridge.addNewGlobalCustomComponent(
-        flutterProject!.userId, flutterProject!.name, component);
+        flutterProject!.userId, flutterProject!, component);
     if (root != null) {
       component.root = root;
       final instance = component.createInstance(root.parent);
       replaceChildOfParent(root, instance);
       root.parent = null;
-      component.notifyChanged();
+      refreshCustomComponents(root as CustomComponent);
     }
     emit(ComponentUpdatedState());
   }
@@ -262,10 +300,21 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   void deleteCustomComponent(BuildContext context, CustomComponent component) {
     for (CustomComponent component in component.objects) {
-      removeComponentAndRefresh(context, component);
+      removeComponentAndRefresh(context, component, component);
     }
     flutterProject?.customComponents.remove(component);
+    deleteCustomComponentOnCloud(component);
     emit(ComponentUpdatedState());
+  }
+
+  Future<void> deleteCustomComponentOnCloud(CustomComponent component) async {
+    emit(ComponentOperationLoadingState());
+    await FireBridge.deleteGlobalCustomComponent(
+        flutterProject!.userId, flutterProject!, component);
+    for (final customComp in currentFlutterProject!.customComponents) {
+      await FireBridge.saveComponent(flutterProject!, customComp);
+    }
+    emit(ComponentOperationInitial());
   }
 
   void removeRootComponentFromComponentParameter(
@@ -285,8 +334,20 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  void removeComponent(Component component) {
-    if (component.parent == null) {
+  void removeComponent(Component component, Component ancestor) {
+
+    if(ancestor is CustomComponent&&component.parent==null){
+      switch (component.type) {
+        case 1:
+          break;
+        case 2:
+          ancestor.root=((component as MultiHolder).children)[0];
+          component.children.clear();
+          break;
+        case 3:
+          ancestor.root=(component as Holder).child;
+          break;
+      }
       return;
     }
     final parent = component.parent!;
@@ -381,8 +442,12 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
   }
 
-  void removeComponentAndRefresh(BuildContext context, Component component) {
-    removeComponent(component);
+  void removeComponentAndRefresh(
+      BuildContext context, Component component, Component ancestor) {
+    removeComponent(component,ancestor);
+    if (ancestor is CustomComponent) {
+      refreshCustomComponents(ancestor);
+    }
     emit(ComponentUpdatedState());
   }
 
@@ -453,20 +518,19 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       favouriteList.add(model);
     }
     final Rect? boundary;
-    if(component.boundary==null){
-      boundary=component.cloneElements.firstWhere((element) => element.boundary!=null).boundary!;
-    }
-    else{
-      boundary=null;
+    if (component.boundary == null) {
+      boundary = component.cloneElements
+          .firstWhere((element) => element.boundary != null)
+          .boundary!;
+    } else {
+      boundary = null;
     }
     await FireBridge.addToFavourites(
         flutterProject!.userId,
         component,
         flutterProject!.name,
-        component.boundary?.width ?? boundary?.width ??
-            1,
-        component.boundary?.height ?? boundary?.height ??
-            1);
+        component.boundary?.width ?? boundary?.width ?? 1,
+        component.boundary?.height ?? boundary?.height ?? 1);
     emit(ComponentUpdatedState());
   }
 
@@ -515,7 +579,21 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
             (component as CustomNamedHolder).childMap[customNamed] == null);
   }
 
-  void removeAllComponent(Component component) {
+  void removeAllComponent(Component component,Component ancestor) {
+    if(ancestor is CustomComponent&&component.parent==null){
+      ancestor.root=null;
+      switch (component.type) {
+        case 1:
+          break;
+        case 2:
+          (component as MultiHolder).children.clear();
+          break;
+        case 3:
+          (component as Holder).child=null;
+          break;
+      }
+      return;
+    }
     final parent = component.parent!;
     if (component.type == 2) {
       (component as MultiHolder).children.clear();
@@ -536,6 +614,9 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       case 5:
         (parent as CustomComponent).updateRoot(component);
         break;
+    }
+    if(ancestor is CustomComponent){
+      refreshCustomComponents(ancestor);
     }
   }
 

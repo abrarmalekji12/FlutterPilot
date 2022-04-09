@@ -973,25 +973,26 @@ class CenterMainSide extends StatelessWidget {
     }
     if (tappedComp != null) {
       _componentSelectionCubit.lastTapped = tappedComp;
-      final lastRoot = tappedComp.getCustomComponentRoot();
-      logger('==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
-      if (lastRoot != null) {
-        if (lastRoot is CustomComponent) {
-          final rootClone = lastRoot.getRootClone;
-          _componentSelectionCubit.changeComponentSelection(
-            ComponentSelectionModel.unique(
-                CustomComponent.findSameLevelComponent(
-                    rootClone, lastRoot, tappedComp)),
-            root: rootClone,
-          );
-        } else {
+      // final lastRoot = tappedComp.getCustomComponentRoot();
+      // logger('==== CUSTOM ROOT FOUND == ${lastRoot?.name}');
+      // if (lastRoot != null) {
+      //   if (lastRoot is CustomComponent) {
+      //     final rootClone = lastRoot.getRootClone;
+      //     _componentSelectionCubit.changeComponentSelection(
+      //       ComponentSelectionModel.unique(
+      //           CustomComponent.findSameLevelComponent(
+      //               rootClone, lastRoot, tappedComp)),
+      //       root: rootClone,
+      //     );
+      //   } else {
           //tappedComp,
+          final original=tappedComp.getOriginal()??tappedComp;
           _componentSelectionCubit.changeComponentSelection(
-            ComponentSelectionModel([tappedComp.cloneOf??tappedComp],[tappedComp],tappedComp.cloneOf??tappedComp),
-            root: lastRoot,
+            ComponentSelectionModel([original],[tappedComp],original),
+            root: _componentSelectionCubit.currentSelectedRoot,
           );
-        }
-      }
+        // }
+      // }
     }
   }
 
