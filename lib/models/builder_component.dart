@@ -8,6 +8,8 @@ import 'component_model.dart';
 import 'local_model.dart';
 import 'parameter_model.dart';
 
+double abc=20;
+
 abstract class BuilderComponent extends Holder {
   LocalModel? model;
   final List<Component> builtList = [];

@@ -101,10 +101,15 @@ class FlutterProject {
     ''' : ''}
     import 'package:flutter/material.dart';
     import 'package:google_fonts/google_fonts.dart';
+    import 'dart:math' as math;
     
     ${screen.models.map((e) => e.implementationCode).join(' ')}
     
     ${screen == mainScreen ? '''
+    
+    $staticVariablesCode
+    $dynamicVariablesDefinitionCode
+     
     void main(){
     runApp(const $className());
     } 
@@ -118,16 +123,17 @@ class FlutterProject {
 
     class _${className}State extends State<$className> {
     ${screen.models.map((e) => e.declarationCode).join(' ')}
-     $staticVariablesCode
-     $dynamicVariablesDefinitionCode
+   
      @override
      Widget build(BuildContext context) {
          $dynamicVariableAssignmentCode
           return ${screen.rootComponent!.code()};
       }
-      $functionImplementationCode 
+     
     }
 
+ $functionImplementationCode 
+ 
     $implementationCode
     
   Color? hexToColor(String hexString) {

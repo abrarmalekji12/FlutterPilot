@@ -60,7 +60,7 @@ class CodeProcessor {
   }
     ''');
 
-    functions['if']=  FunctionModel<dynamic>('if', (arguments) {
+    functions['ifElse']=  FunctionModel<dynamic>('ifElse', (arguments) {
       if(arguments.length>=2){
         if(arguments[0]==true){
           return arguments[1];
@@ -70,16 +70,11 @@ class CodeProcessor {
         }
       }
     }, '''
-    double res(double large,double medium,[double? small]){
-    if(dw>tabletWidthLimit){
-      return large;
+    double? ifElse(bool expression,double ifTrue,[double? elseTrue]){
+    if(expression){
+      return ifTrue;
     }
-    else if(dw>phoneWidthLimit||small==null){
-      return medium;
-    }
-    else {
-      return small;
-    }
+    return elseTrue;
   }
     ''');
 
@@ -90,7 +85,7 @@ class CodeProcessor {
       return 0;
 
     }, '''
-    double randInt(int max){
+    int randInt(int? max){
     return math.Random.secure().nextInt(max??100);
   }
     ''');
@@ -109,7 +104,7 @@ class CodeProcessor {
 
 
     }, '''
-    double randBool(){
+    bool randBool(){
     return math.Random.secure().nextBool();
   }
     ''');
@@ -118,8 +113,8 @@ class CodeProcessor {
 
 
     }, '''
-    double randColor(){
-    return math.Random.secure().nextBool();
+    String randColor(){
+    return '#'+Colors.primaries[math.Random().nextInt(Colors.primaries.length)].value.toRadixString(16);
   }
     ''');
     functions['math.sin']=  FunctionModel<double>('math.sin', (arguments) {
