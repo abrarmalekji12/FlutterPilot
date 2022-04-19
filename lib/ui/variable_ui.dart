@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../common/custom_text_field.dart';
+import '../common/editable_textview.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/component_creation/component_creation_cubit.dart';
@@ -323,14 +324,22 @@ class _EditVariableState extends State<EditVariable> {
             Expanded(
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  widget.variable.key,
-                  style: AppFontStyle.roboto(
-                    15,
-                    color: widget.variable.value.runtimeAssigned
-                        ? Colors.black
-                        : AppColors.theme,
-                    fontWeight: FontWeight.w500,
+                child: SizedBox(
+                  height: 48,
+                  child: EditableTextView(
+                    enableEditing: !widget.variable.value.fixed,
+                    text:   widget.variable.key,
+                    textStyle:  AppFontStyle.roboto(
+                      15,
+                      color: widget.variable.value.fixed
+                          ? Colors.black
+                          : AppColors.theme,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    onChange: (String data) {
+                      // widget.componentCreationCubit.changedComponent();
+                      // widget.componentSelectionCubit.emit(ComponentSelectionChange());
+                    },
                   ),
                 ),
               ),
@@ -340,7 +349,7 @@ class _EditVariableState extends State<EditVariable> {
               width: 20,
               ),
             ),
-            if (!widget.variable.value.runtimeAssigned)
+            if (!widget.variable.value.fixed)
               Expanded(
                 child: CustomTextField(
                   controller: _textEditingController,

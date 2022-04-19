@@ -76,7 +76,7 @@ class FlutterProject {
     String dynamicVariableAssignmentCode = '';
     for (final variable
         in ComponentOperationCubit.codeProcessor.variables.entries) {
-      if (!variable.value.runtimeAssigned) {
+      if (!variable.value.fixed) {
         staticVariablesCode +=
             'const ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
       } else {
