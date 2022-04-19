@@ -39,8 +39,6 @@ class _VariableBoxState extends State<VariableBox> {
 
   @override
   Widget build(BuildContext context) {
-
-
     final variables = ComponentOperationCubit.codeProcessor.variables.entries
         .toList(growable: false);
     return Card(
@@ -74,67 +72,64 @@ class _VariableBoxState extends State<VariableBox> {
               height: 10,
             ),
             SizedBox(
-              height: 50,
+              height: 48,
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _controller1,
-                      style:
-                          AppFontStyle.roboto(13, fontWeight: FontWeight.w600),
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.all(5),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black, width: 1),
-                        ),
-                      ),
+                    child: CustomTextField(
+                      controller: _controller1, onChange: (data) {
+                    },
                     ),
                   ),
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: Text(
-                        'type',
+                        'Type',
                         style: AppFontStyle.roboto(13,
-                            color: Colors.black, fontWeight: FontWeight.w600),
+                            color: Colors.black, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: CustomDropdownButton<DataType>(
-                      style: AppFontStyle.roboto(14),
-                      value: dataType,
-                      hint: null,
-                      items: DataType.values
-                          .map<CustomDropdownMenuItem<DataType>>(
-                            (e) => CustomDropdownMenuItem<DataType>(
-                              value: e,
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  e.name,
-                                  style: AppFontStyle.roboto(14,
-                                      fontWeight: FontWeight.w500),
+                  SizedBox(
+                    width: 150,
+                    child: Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: CustomDropdownButton<DataType>(
+                        style: AppFontStyle.roboto(14),
+                        value: dataType,
+                        hint: null,
+                        items: DataType.values
+                            .map<CustomDropdownMenuItem<DataType>>(
+                              (e) => CustomDropdownMenuItem<DataType>(
+                                value: e,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    e.name,
+                                    style: AppFontStyle.roboto(13,
+                                        fontWeight: FontWeight.w500),
+                                  ),
                                 ),
                               ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            dataType = value;
+                          });
+                        },
+                        selectedItemBuilder: (context, e) {
+                          return Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              e.name,
+                              style: AppFontStyle.roboto(13,
+                                  fontWeight: FontWeight.w500),
                             ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          dataType = value;
-                        });
-                      },
-                      selectedItemBuilder: (context, e) {
-                        return Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            e.name,
-                            style: AppFontStyle.roboto(14,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                   Center(
@@ -142,22 +137,16 @@ class _VariableBoxState extends State<VariableBox> {
                       padding: const EdgeInsets.all(5.0),
                       child: Text(
                         ' = ',
-                        style: AppFontStyle.roboto(15,
-                            color: Colors.black, fontWeight: FontWeight.w600),
+                        style: AppFontStyle.roboto(14,
+                            color: Colors.black, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
                   Expanded(
-                    child: TextField(
-                      controller: _controller2,
-                      style:
-                          AppFontStyle.roboto(13, fontWeight: FontWeight.w600),
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.all(5),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black, width: 1),
-                        ),
-                      ),
+                    child: CustomTextField(
+                      controller: _controller2, onChange: (String data) {
+
+                    },
                     ),
                   ),
                   const SizedBox(
@@ -317,108 +306,121 @@ class _EditVariableState extends State<EditVariable> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerLeft,
+        if (widget.variable.value.description != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 10,bottom: 5),
             child: Text(
-              widget.variable.key,
-              style: AppFontStyle.roboto(
-                15,
-                color: widget.variable.value.runtimeAssigned
-                    ? Colors.black
-                    : AppColors.theme,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(5.0),
-            child: Text(
-              ' = ',
-              style: AppFontStyle.roboto(15,
+              widget.variable.value.description!,
+              style: AppFontStyle.roboto(12,
                   color: Colors.black, fontWeight: FontWeight.w600),
             ),
           ),
-        ),
-        if (!widget.variable.value.runtimeAssigned)
-          Expanded(
-            child: CustomTextField(
-              controller: _textEditingController,
-              onChange: (val) {
-                late final dynamic value;
-                switch (widget.variable.value.dataType) {
-                  case DataType.int:
-                    value = int.tryParse(val);
-                    break;
-                  case DataType.double:
-                    value = double.tryParse(val);
-                    break;
-                  case DataType.string:
-                    value = val;
-                    break;
-                  case DataType.bool:
-                    value = val =='true';
-                    break;
-                  case DataType.dynamic:
-                    if(double.tryParse(val)!=null){
-                      value = double.tryParse(val);
-                    }else if(int.tryParse(val)!=null) {
-                      value = int.tryParse(val);
-                    }else if(val=='true' || val =='false'){
-                      value =  val =='true';
-                    }
-                    else{
-                      value =val;
-                    }
-                    break;
-                }
-                if (value != null) {
-                  ComponentOperationCubit.codeProcessor
-                      .variables[widget.variable.key]!.value = value;
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    widget.componentOperationCubit.updateVariable(
-                        ComponentOperationCubit
-                            .codeProcessor.variables[widget.variable.key]!);
-                    widget.componentCreationCubit.changedComponent();
-                    widget.componentSelectionCubit
-                        .emit(ComponentSelectionChange());
-                  });
-                }
-              },
-            ),
-          ),
-        if (widget.variable.value.description != null)
-          Expanded(
-            child: Center(
-              child: Text(
-                widget.variable.value.description!,
-                style: AppFontStyle.roboto(12,
-                    color: Colors.black, fontWeight: FontWeight.w600),
+        Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.variable.key,
+                  style: AppFontStyle.roboto(
+                    15,
+                    color: widget.variable.value.runtimeAssigned
+                        ? Colors.black
+                        : AppColors.theme,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ),
-          ),
-        if (widget.variable.value.deletable) ...[
-          const SizedBox(
-            width: 20,
-          ),
-          IconButton(
-            onPressed: () {
-              ComponentOperationCubit.codeProcessor.variables
-                  .remove(widget.variable.key);
-              widget.componentCreationCubit.changedComponent();
-              widget.componentSelectionCubit.emit(ComponentSelectionChange());
-              setState(() {});
-            },
-            icon: const Icon(
-              Icons.delete,
-              color: Colors.red,
+            const Center(
+              child: SizedBox(
+              width: 20,
+              ),
             ),
-          )
-        ]
+            if (!widget.variable.value.runtimeAssigned)
+              Expanded(
+                child: CustomTextField(
+                  controller: _textEditingController,
+
+                  onChange: (val) {
+                    late final dynamic value;
+                    switch (widget.variable.value.dataType) {
+                      case DataType.int:
+                        value = int.tryParse(val);
+                        break;
+                      case DataType.double:
+                        value = double.tryParse(val);
+                        break;
+                      case DataType.string:
+                        value = val;
+                        break;
+                      case DataType.bool:
+                        value = val =='true';
+                        break;
+                      case DataType.dynamic:
+                        if(double.tryParse(val)!=null){
+                          value = double.tryParse(val);
+                        }else if(int.tryParse(val)!=null) {
+                          value = int.tryParse(val);
+                        }else if(val=='true' || val =='false'){
+                          value =  val =='true';
+                        }
+                        else{
+                          value =val;
+                        }
+                        break;
+                    }
+                    if (value != null) {
+                      ComponentOperationCubit.codeProcessor
+                          .variables[widget.variable.key]!.value = value;
+                      Future.delayed(const Duration(milliseconds: 500), () {
+                        widget.componentOperationCubit.updateVariable(
+                            ComponentOperationCubit
+                                .codeProcessor.variables[widget.variable.key]!);
+                        widget.componentCreationCubit.changedComponent();
+                        widget.componentSelectionCubit
+                            .emit(ComponentSelectionChange());
+                      });
+                    }
+                  },
+                ),
+              ),
+
+            if (widget.variable.value.deletable) ...[
+              const SizedBox(
+                width: 10,
+              ),
+              InkWell(
+                onTap: () {
+                  ComponentOperationCubit.codeProcessor.variables
+                      .remove(widget.variable.key);
+                  widget.componentCreationCubit.changedComponent();
+                  widget.componentSelectionCubit.emit(ComponentSelectionChange());
+                  setState(() {});
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: const CircleAvatar(
+                  radius: 12,
+                  backgroundColor: AppColors.lightGray,
+                  child: Padding(
+                    padding: EdgeInsets.all(3),
+                    child: Icon(
+                      Icons.delete,
+                      color: Colors.red,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              )
+            ]
+            else
+              const SizedBox(width: 34)
+          ],
+        ),
+
       ],
     );
   }
