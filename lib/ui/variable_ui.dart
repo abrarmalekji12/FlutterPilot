@@ -7,6 +7,7 @@ import '../constant/font_style.dart';
 import '../cubit/component_creation/component_creation_cubit.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/component_selection/component_selection_cubit.dart';
+import '../models/local_model.dart';
 import '../models/variable_model.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -38,6 +39,8 @@ class _VariableBoxState extends State<VariableBox> {
 
   @override
   Widget build(BuildContext context) {
+
+
     final variables = ComponentOperationCubit.codeProcessor.variables.entries
         .toList(growable: false);
     return Card(
@@ -211,6 +214,21 @@ class _VariableBoxState extends State<VariableBox> {
                         case DataType.string:
                           value = _controller2.text;
                           break;
+                        case DataType.bool:
+                          value = _controller2.text=='true';
+                          break;
+                        case DataType.dynamic:
+                          if(double.tryParse(_controller2.text)!=null){
+                            value = double.tryParse(_controller2.text);
+                          }else if(int.tryParse(_controller2.text)!=null) {
+                            value = int.tryParse(_controller2.text);
+                          }else if(_controller2.text=='true' || _controller2.text=='false'){
+                            value = _controller2.text=='true';
+                          }
+                          else{
+                            value = _controller2.text;
+                          }
+                            break;
                       }
                       if (value == null) {
                         Fluttertoast.showToast(
@@ -268,6 +286,7 @@ class _VariableBoxState extends State<VariableBox> {
       ),
     );
   }
+
 }
 
 class EditVariable extends StatefulWidget {
@@ -340,6 +359,21 @@ class _EditVariableState extends State<EditVariable> {
                     break;
                   case DataType.string:
                     value = val;
+                    break;
+                  case DataType.bool:
+                    value = val =='true';
+                    break;
+                  case DataType.dynamic:
+                    if(double.tryParse(val)!=null){
+                      value = double.tryParse(val);
+                    }else if(int.tryParse(val)!=null) {
+                      value = int.tryParse(val);
+                    }else if(val=='true' || val =='false'){
+                      value =  val =='true';
+                    }
+                    else{
+                      value =val;
+                    }
                     break;
                 }
                 if (value != null) {

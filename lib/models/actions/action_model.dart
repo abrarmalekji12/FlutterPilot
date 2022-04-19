@@ -3,11 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/route_manager.dart';
 
+import '../../common/in_use_common/material_alert_dialog.dart';
+import '../../common/material_alert.dart';
 import '../../constant/font_style.dart';
 import '../../constant/string_constant.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../cubit/stack_action/stack_action_cubit.dart';
 import '../../parameters_list.dart';
+import '../../ui/code_view_widget.dart';
 import '../parameter_model.dart';
 import '../project_model.dart';
 
@@ -19,6 +22,8 @@ abstract class ActionModel {
   void perform(BuildContext context);
 
   String metaCode();
+
+  String code();
 }
 
 class NewPageInStackAction extends ActionModel {
@@ -42,6 +47,14 @@ class NewPageInStackAction extends ActionModel {
   @override
   String metaCode() {
     return 'NPISA<${(arguments[0] as UIScreen?)?.name}>';
+  }
+
+  @override
+  String code() {
+    if(arguments[0]==null){
+      return '';
+    }
+    return 'Navigator.push(context,MaterialPageRoute(builder: (_)=> const ${(arguments[0] as UIScreen).name}()))';
   }
 }
 
@@ -68,6 +81,15 @@ class ReplaceCurrentPageInStackAction extends ActionModel {
   String metaCode() {
     return 'RCPISA<${(arguments[0] as UIScreen?)?.name}>';
   }
+
+  @override
+  String code() {
+    if(arguments[0]==null){
+      return '';
+    }
+    return 'Navigator.pushReplacement(context,MaterialPageRoute(builder: (_)=> const ${(arguments[0] as UIScreen).name}()))';
+
+  }
 }
 
 class GoBackInStackAction extends ActionModel {
@@ -81,10 +103,10 @@ class GoBackInStackAction extends ActionModel {
     Navigator.pop(context);
   }
 
+  @override
   String code() {
-    return '';
+    return 'Navigator.pop(context)';
   }
-
   @override
   String metaCode() {
     return 'NBISA';
@@ -106,6 +128,11 @@ class ShowDialogInStackAction extends ActionModel {
   String metaCode() {
     return 'SDISA<${arguments.join('-')}>';
   }
+  @override
+  String code() {
+    return 'showDialog(context: context, builder: (_)=> MaterialSimpleAlertDialog(title:\'${ arguments[0]}\'${arguments[1]!=null?',subtitle: \'${ arguments[1]}\'':''}, positiveButtonText: ${arguments[2]},${arguments[3]!=null?'negativeButtonText: \'${arguments[3]}\',':''}))';
+  }
+
 }
 
 class ShowCustomDialogInStackAction extends ActionModel {
@@ -125,6 +152,13 @@ class ShowCustomDialogInStackAction extends ActionModel {
   @override
   String metaCode() {
     return 'SCDISA<${(arguments[0] as UIScreen?)?.name}>';
+  }
+  @override
+  String code() {
+    if(arguments[0]==null){
+      return '';
+    }
+    return 'showDialog(context: context, builder: (_)=> const ${(arguments[0] as UIScreen).name}())';
   }
 }
 
@@ -175,6 +209,14 @@ class ShowBottomSheetInStackAction extends ActionModel {
   String metaCode() {
     return 'SBSISA<${(arguments[0] as UIScreen?)?.name}>';
   }
+
+  @override
+  String code() {
+    if(arguments[0]==null){
+      return '';
+    }
+    return 'showBottomSheet(context: context, builder: (_)=> const ${(arguments[0] as UIScreen).name}())';
+  }
 }
 
 class ShowSnackBarAction extends ActionModel {
@@ -223,6 +265,19 @@ class ShowSnackBarAction extends ActionModel {
   @override
   String metaCode() {
     return 'SSBA<${(arguments[0] as Parameter).code(false)}-${(arguments[1] as Parameter).code(false)}>';
+  }
+
+  @override
+  String code() {
+    return '''ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+        ${(arguments[0] as SimpleParameter).code(true)},
+        style: AppFontStyle.roboto(14, color: Colors.white),
+        textAlign: TextAlign.center,
+      ),
+      // backgroundColor: Colors.grey,
+      duration: Duration(seconds:  ${(arguments[1] as SimpleParameter).code(true)}),
+    ))''';
   }
 }
 

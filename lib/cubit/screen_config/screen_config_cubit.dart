@@ -28,10 +28,10 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
     screenConfig = screenConfigs[0];
     ComponentOperationCubit.codeProcessor.variables['dw'] = VariableModel(
         'dw', screenConfig.width, true, 'device width', DataType.double, '',
-        assignmentCode: 'MediaQuery.of(context).size.width', deletable: false);
+        assignmentCode: 'MediaQuery.maybeOf(context)?.size.width??0', deletable: false);
     ComponentOperationCubit.codeProcessor.variables['dh'] = VariableModel(
         'dh', screenConfig.height, true, 'device height', DataType.double, '',
-        assignmentCode: 'MediaQuery.of(context).size.height', deletable: false);
+        assignmentCode: 'MediaQuery.maybeOf(context)?.size.height??0', deletable: false);
   }
 
   void applyCurrentSizeToVariables() {

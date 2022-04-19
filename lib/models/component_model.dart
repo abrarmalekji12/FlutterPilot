@@ -153,7 +153,7 @@ abstract class Component {
 
   static Component? fromCode(
       String? code, final FlutterProject flutterProject) {
-    if (code == null) {
+    if (code == null||code.isEmpty) {
       return null;
     }
     final String name = code.substring(0, code.indexOf('(', 0));
@@ -280,10 +280,6 @@ abstract class Component {
       if (custom != null) {
         return custom.createInstance(null);
       } else {
-        Fluttertoast.showToast(
-            msg:
-                'No widget with name $compName found in code $code, please clear cookies and reload App.',
-            timeInSecForIosWeb: 5);
         return CNotRecognizedWidget()..name = compName;
       }
     }
@@ -292,7 +288,7 @@ abstract class Component {
 
   key(BuildContext context) => RuntimeProvider.of(context) != RuntimeMode.edit
       ? (RuntimeProvider.of(context) != RuntimeMode.preview
-          ? ObjectKey(this)
+          ? null
           : GlobalObjectKey(uniqueId + id))
       : GlobalObjectKey(this);
 
@@ -304,11 +300,7 @@ abstract class Component {
     }
 
     return ComponentWidget(
-      key: RuntimeProvider.of(context) != RuntimeMode.edit
-          ? (RuntimeProvider.of(context) != RuntimeMode.preview
-              ? ObjectKey(this)
-              : GlobalObjectKey(uniqueId + id))
-          : GlobalObjectKey(this),
+      key: key(context),
       child: create(context),
     );
   }
@@ -343,6 +335,27 @@ abstract class Component {
       tracer = tracer.parent;
     }
     return tracer;
+  }
+
+
+
+  Component? getRootCustomComponent(FlutterProject flutterProject) {
+    Component? _tracer = this, _root = this;
+    final List<Component> tree = [];
+    while (_tracer != null && _tracer is! CustomComponent) {
+      print('======= TRACER FIND CUSTOM ROOT ${_tracer.parent?.name}');
+      tree.add(_tracer);
+      _root = _tracer;
+      _tracer = _tracer.parent;
+    }
+
+    for(final custom in flutterProject.customComponents)
+      {
+        if(custom.root == _root){
+          return custom;
+        }
+      }
+    return flutterProject.rootComponent;
   }
 
   Component? getCustomComponentRoot() {
@@ -456,6 +469,9 @@ abstract class Component {
 
   String parametersCode(bool clean) {
     String middle = '';
+    if(this is Clickable&&clean){
+      middle+='${(this as Clickable).clickableParamName}:(){${(this as Clickable).eventCode}},';
+    }
     for (final parameter in parameters) {
       final paramCode = parameter.code(clean);
       if (paramCode.isNotEmpty) {
@@ -768,6 +784,7 @@ abstract class Holder extends Component {
 }
 
 abstract class ClickableHolder extends Holder with Clickable {
+
   ClickableHolder(String name, List<Parameter> parameters)
       : super(name, parameters);
 
@@ -777,6 +794,12 @@ abstract class ClickableHolder extends Holder with Clickable {
       ignoring: RuntimeProvider.of(context) != RuntimeMode.run,
       child: super.build(context),
     );
+  }
+  @override
+  Component clone(Component? parent, {bool cloneParam = false}) {
+    final cloneComp=super.clone(parent, cloneParam: cloneParam);
+    (cloneComp as Clickable).actionList.addAll(actionList);
+    return cloneComp;
   }
 }
 
@@ -791,6 +814,12 @@ abstract class ClickableComponent extends Component with Clickable {
       child: super.build(context),
     );
   }
+  @override
+  Component clone(Component? parent, {bool cloneParam = false}) {
+    final cloneComp=super.clone(parent, cloneParam: cloneParam);
+    (cloneComp as Clickable).actionList.addAll(actionList);
+    return cloneComp;
+  }
 }
 
 mixin Clickable {
@@ -802,6 +831,18 @@ mixin Clickable {
         action.perform(context);
       }
     }
+  }
+  String get clickableParamName;
+
+  String get eventCode {
+    String code='';
+    for(final action in actionList){
+      final actionCode=action.code();
+      if(actionCode.isNotEmpty) {
+        code+=actionCode+';\n';
+      }
+    }
+    return code;
   }
 
   List<String>? getParams(final String code) {
@@ -1027,7 +1068,11 @@ abstract class CustomComponent extends Component {
 
   @override
   Widget create(BuildContext context) {
-    return root?.build(context) ?? Container();
+    return Builder(
+      builder: (context) {
+        return root?.build(context) ?? Container();
+      }
+    );
   }
 
   void updateRoot(Component? root) {
@@ -1052,7 +1097,7 @@ abstract class CustomComponent extends Component {
         lookForUIChanges(context);
       });
     }
-    return ComponentWidget(key: GlobalObjectKey(this), child: create(context));
+    return ComponentWidget(key:key(context), child: create(context));
   }
 
   @override

@@ -57,9 +57,11 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
   void initState() {
     super.initState();
     _tabController = TabController(length: widget.shouldShowFavourites?3:2, vsync: this);
+    _controller.text=filter;
+    _controller.selection=TextSelection(baseOffset: 0, extentOffset: filter.length);
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       _textFieldFocusNode.requestFocus();
-      _controller.text=filter;
+
     });
   }
 
@@ -104,7 +106,6 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                     Scrollable.ensureVisible(
                       GlobalObjectKey(filtered[selectedIndex]).currentContext!,alignment: 0.5);
                   }
-
                 });
 
             }

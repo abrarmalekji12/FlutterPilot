@@ -1,5 +1,6 @@
 import 'dart:core';
 import 'dart:math' as math;
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import '../../code_to_component.dart';
@@ -17,7 +18,7 @@ Color? colorToHex(String hexString) {
   buffer.write(hexString.replaceFirst('#', ''));
   final colorInt = int.tryParse(buffer.toString(), radix: 16);
   if (colorInt == null) {
-    return null;
+    return null; // Not a valid hex color string (or not a color).
   }
   return Color(colorInt);
 }
@@ -178,54 +179,93 @@ class CodeProcessor {
       valueStack.pop();
     }
     late dynamic r;
-    if (t == '+') {
-      r = a + b;
-    } else if (t == '-') {
-      if (a == null) {
-        r = -b;
-      } else {
-        r = a - b;
-      }
-    } else if (t == '*') {
-      r = a * b;
-    } else if (t == '/') {
-      r = a / b;
-    } else if (t == '~/') {
-      r = a ~/ b;
-    }  else if (t == '/-') {
-      r = a /- b;
-    } else if (t == '%') {
-      r = a % b;
-    } else if (t == '<') {
-      r = a < b;
-    } else if (t == '>') {
-      r = a > b;
-    } else if (t == '=') {
-      if (variables.containsKey(a)) {
-        variables[a]?.value = b;
-      } else if (modelVariables.containsKey(a)) {
-        modelVariables[a] = b;
-      } else {
-        debugPrint('= $b');
-        variables[a] = VariableModel(a, b, true, null, DataType.dynamic,'');
-      }
-      r = b;
-    } else if (t == '<=') {
-      r = a <= b;
-    } else if (t == '>=') {
-      r = a >= b;
-    } else if (t == '&&') {
-      r = (a as bool) && (b as bool);
-    } else if (t == '||') {
-      r = (a as bool) || (b as bool);
-    } else if (t == '==') {
-      r = a == b;
-    } else if (t == '!=') {
-      r = a != b;
-    } else {
-      error = true;
-      debugPrint('error 3');
-      r = null;
+    switch (t) {
+      case '--' :
+      case '+':
+        r = a + b;
+        break;
+      case '-':
+        if (a == null) {
+          r = -b;
+        } else {
+          r = a - b;
+        }
+        break;
+      case '*':
+        r = a * b;
+        break;
+      case '/':
+        r = a / b;
+        break;
+      case '~/':
+        r = a ~/ b;
+        break;
+      case '*-':
+        r= a * -b;
+        break;
+      case '**' :
+        r=pow(a,int.parse(b.toString()));
+        break;
+      case '/-':
+        r = a / -b;
+        break;
+      case '%':
+        if(a is int&&b is int) {
+          r = a % b;
+        }else{
+          error=true;
+          return;
+        }
+        break;
+      case '<':
+        r = a < b;
+        break;
+      case '>':
+        r = a > b;
+        break;
+      case '!':
+        r = !b;
+        break;
+      case '=':
+        if (variables.containsKey(a)) {
+          variables[a]?.value = b;
+        } else if (modelVariables.containsKey(a)) {
+          modelVariables[a] = b;
+        } else {
+          debugPrint('= $b');
+          variables[a] = VariableModel(a, b, false, null, DataType.dynamic,'');
+        }
+        r = b;
+        break;
+      case '<=':
+        r = a <= b;
+        break;
+      case '>=':
+        r = a >= b;
+        break;
+      case '>>':
+        r= a>> b;
+        break;
+      case '<<':
+        r= a<<b;
+        break;
+      case '&&':
+        r = (a as bool) && (b as bool);
+        break;
+      case '||':
+        r = (a as bool) || (b as bool);
+        break;
+      case '==':
+        r = a.toString() == b.toString();
+        break;
+      case '!=':
+        r = a != b;
+        break;
+      default:
+        error = true;
+
+        print('error 3');
+        r = null;
     }
     valueStack.push(r);
   }
@@ -303,14 +343,17 @@ class CodeProcessor {
               }
               final argument =
               CodeOperations.splitByComma(input.substring(n + 1, m));
-
-              return functions[variable]!
+              valueStack.push(functions[variable]!
                   .perform
-                  .call(argument.map((e) => process(e)).toList());
+                  .call(argument.map((e) => process(e)).toList()));
+             variable='';
+              n = m;
+               break;
             } else if (input[m] == ')') {
               count--;
             }
           }
+          continue;
         }
         if (number.isNotEmpty) {
           final parse = double.tryParse(number);
@@ -326,7 +369,7 @@ class CodeProcessor {
             operator = input[n - 1] + operator;
             operatorStack.pop();
           }
-          if (operator == '=') {
+          if (operator == '=' && variable.isNotEmpty) {
             valueStack.push(variable);
             variable = '';
           }
@@ -336,9 +379,7 @@ class CodeProcessor {
           } else {
             while (operatorStack.isNotEmpty &&
                 getPrecedence(operator) <= getPrecedence(operatorStack.peek!)) {
-              final String pickOperator = operatorStack.peek!;
-              operatorStack.pop();
-              processOperator(pickOperator, valueStack, operatorStack);
+              processOperator(operatorStack.pop()!, valueStack, operatorStack);
             }
             operatorStack.push(operator);
           }
@@ -402,23 +443,17 @@ class CodeProcessor {
   }
 
   bool resolveVariable(String variable, valueStack) {
-    late dynamic value;
     if (variables.containsKey(variable)) {
-      value = variables[variable]!.value;
+      valueStack.push(variables[variable]!.value);
     } else if (modelVariables.containsKey(variable)) {
-      value = modelVariables[variable]!;
+      valueStack.push(modelVariables[variable]!);
+    } else if (variable == 'true') {
+      valueStack.push(true);
+    } else if (variable == 'false') {
+      valueStack.push(false);
     } else {
-      value = null;
       return false;
     }
-    if (value == 'true') {
-      valueStack.push(true);
-    } else if (value == 'false') {
-      valueStack.push(false);
-    } else if (value != null) {
-      valueStack.push(value);
-    }
-
     return true;
   }
 }

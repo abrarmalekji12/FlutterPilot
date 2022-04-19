@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import '../common/shared_preferences.dart';
+import '../component_list.dart';
 import '../constant/preference_key.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../models/local_model.dart';
@@ -124,55 +125,6 @@ abstract class FireBridge {
     });
   }
 
-  static Future<void> saveFlutterProject(
-      int userId, FlutterProject project) async {
-    final List<CustomComponent> components = project.customComponents;
-    final projectInfo = <String, dynamic>{
-      'project_name': project.name,
-      'root': CodeOperations.trim(project.rootComponent?.code(clean: false)),
-      // 'variables':
-      //     project.variables.map((e) => e.toJson()).toList(growable: false),
-      // 'models': project.models.map((e) => e.toJson()).toList(growable: false),
-      'device': 'iPhone X',
-      'current_screen': 'HomePage',
-      'main_screen': 'HomePage',
-    };
-    final response = await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject)
-        .collection(project.name)
-        .add(projectInfo);
-    final jsonList =
-        project.uiScreens.map((e) => e.toJson()).toList(growable: false);
-    for (final screenJson in jsonList) {
-      await FirebaseFirestore.instance
-          .collection('us$userId')
-          .doc(Strings.kFlutterProject)
-          .collection(project.name)
-          .doc(screenJson['name'])
-          .set(screenJson);
-    }
-
-    project.docId = response.id;
-    for (final component in components) {
-      await FirebaseFirestore.instance
-          .collection('us$userId')
-          .doc(Strings.kFlutterProject)
-          .collection(project.name)
-          .add({
-        'name': component.name,
-        'code': component.root != null
-            ? (CodeOperations.trim(component.root!.code(clean: false)))
-            : null
-      });
-    }
-    await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProjectInfo)
-        .update({
-      'projects': FieldValue.arrayUnion([project.name])
-    });
-  }
 
   static Future<List<FavouriteModel>> loadFavourites(final int userId) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot;
@@ -273,6 +225,65 @@ abstract class FireBridge {
     return projectList;
   }
 
+  static Future<void> saveFlutterProject(
+      int userId, FlutterProject project) async {
+    final List<CustomComponent> components = project.customComponents;
+    final projectInfo = <String, dynamic>{
+      'project_name': project.name,
+      'root': CodeOperations.trim(project.rootComponent?.code(clean: false)),
+      // 'variables':
+      //     project.variables.map((e) => e.toJson()).toList(growable: false),
+      // 'models': project.models.map((e) => e.toJson()).toList(growable: false),
+      'device': 'iPhone X',
+      'current_screen': 'HomePage',
+      'main_screen': 'HomePage',
+    };
+    final response = await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(project.name)
+        .add(projectInfo);
+    final jsonList =
+    project.uiScreens.map((e) => e.toJson()).toList(growable: false);
+    for (final screenJson in jsonList) {
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(project.name)
+          .doc(screenJson['name'])
+          .set(screenJson);
+    }
+
+    project.docId = response.id;
+    for (final component in components) {
+      final String type;
+      switch (component.runtimeType) {
+        case StatelessComponent:
+          type = 'stateless';
+          break;
+        default:
+          type = 'other';
+          break;
+      }
+
+      await FirePath.customComponentReference(
+          project.userId, project.docId!, component.name)
+          .set({
+        'name': component.name,
+        'code': component.root != null
+            ? (CodeOperations.trim(component.root!.code(clean: false)))
+            : null,
+        'type': type,
+      });
+    }
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProjectInfo)
+        .update({
+      'projects': FieldValue.arrayUnion([project.name])
+    });
+  }
+
   static Future<FlutterProject?> loadFlutterProject(
       int userId, String name) async {
     final snapshot = await FirebaseFirestore.instance
@@ -332,7 +343,11 @@ abstract class FireBridge {
       if (flutterProject.uiScreens.isNotEmpty) {
         flutterProject.currentScreen = flutterProject.uiScreens.first;
       } else {
-        flutterProject.uiScreens.add(UIScreen.mainUI());
+        final ui=UIScreen.mainUI();
+        flutterProject.uiScreens.add(ui);
+        final custom=StatelessComponent(name: 'MainPage')..root=CScaffold();
+        flutterProject.customComponents.add(custom);
+        (ui.rootComponent as CMaterialApp).childMap['home']=custom.createInstance(null);
         flutterProject.currentScreen = flutterProject.uiScreens.first;
         addUIScreen(userId, flutterProject, flutterProject.currentScreen);
       }

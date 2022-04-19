@@ -85,7 +85,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                     decoration: const BoxDecoration(
                         border: Border(
                             bottom:
-                                BorderSide(color: Color(0xf2f2f2), width: 1))),
+                                BorderSide(color: Color(0xfff2f2f2), width: 1))),
                   ),
                   Text(
                     'Projects',
@@ -118,7 +118,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.length < 3) {
-                          return 'Project name should be greater than 3';
+                          return 'Project name should be greater than 3 characters';
                         }
                         return null;
                       },

@@ -63,7 +63,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                     children: [
                       IconButton(
                           onPressed: () {
-                            ComponentOperationCubit.currentFlutterProject=null;
+                            ComponentOperationCubit.currentFlutterProject =
+                                null;
                             Get.back();
                           },
                           icon: const Icon(
@@ -1445,12 +1446,11 @@ class ComponentModificationMenu extends StatelessWidget {
                 //rename
                 showCustomWidgetRename(context, 'Rename ${component.name}',
                     (value) {
-                  component.name = AppTextField.changedValue;
-                  for (Component comp
-                      in (component as CustomComponent).objects) {
-                    comp.name = component.name;
-                  }
                   Get.back();
+                  componentOperationCubit.updateGlobalCustomComponent(
+                      component as CustomComponent,
+                      newName: AppTextField.changedValue);
+
                   componentOperationCubit.emit(ComponentUpdatedState());
                 });
               },
@@ -1651,13 +1651,24 @@ class ComponentModificationMenu extends StatelessWidget {
                   componentCreationCubit.changedComponent();
                 } else if (e == 'remove') {
                   if (ancestor is CustomComponent) {
-                    componentOperationCubit.removeComponentAndRefresh(
-                        context, component, ancestor);
-                    componentSelectionCubit.changeComponentSelection(
-                        ComponentSelectionModel.unique(
-                            component.parent ?? ancestor),
-                        root: ancestor);
-                    componentCreationCubit.changedComponent();
+                    performReversibleOperation(() {
+                      if (component.parent == null &&
+                          componentParameter != null) {
+                        componentOperationCubit
+                            .removeRootComponentFromComponentParameter(
+                                componentParameter!, component);
+                        componentOperationCubit.refreshCustomComponents(
+                            ancestor as CustomComponent);
+                      } else {
+                        componentOperationCubit.removeComponentAndRefresh(
+                            context, component, ancestor);
+                        componentSelectionCubit.changeComponentSelection(
+                            ComponentSelectionModel.unique(
+                                component.parent ?? ancestor),
+                            root: ancestor);
+                      }
+                      componentCreationCubit.changedComponent();
+                    });
                   } else {
                     performReversibleOperation(() {
                       if (component.parent == null &&
@@ -1754,7 +1765,6 @@ class ComponentModificationMenu extends StatelessWidget {
     } else {
       if (ancestor is CustomComponent &&
           (ancestor as CustomComponent).root == component) {
-
         (ancestor as CustomComponent).root = wrapperComp;
       } else {
         replaceChildOfParent(component, wrapperComp);
@@ -1766,10 +1776,9 @@ class ComponentModificationMenu extends StatelessWidget {
         (wrapperComp as MultiHolder).addChild(component);
         break;
       case 3:
-      //Holder
-       (wrapperComp as Holder).updateChild(component);
+        //Holder
+        (wrapperComp as Holder).updateChild(component);
         break;
-
     }
     if (ancestor is CustomComponent) {
       componentOperationCubit
@@ -1778,32 +1787,64 @@ class ComponentModificationMenu extends StatelessWidget {
   }
 
   void performReversibleOperation(void Function() work) {
-    final operation = Operation(
-        CodeOperations.trim(componentOperationCubit
-            .flutterProject!.rootComponent!
-            .code(clean: false))!,
-        componentSelectionCubit.currentSelected.treeSelection.first.id);
+    final Operation operation;
+    if (ancestor is CustomComponent) {
+      operation = Operation(
+          CodeOperations.trim(
+                  (ancestor as CustomComponent).root?.code(clean: false)) ??
+              '',
+          componentSelectionCubit.currentSelected.treeSelection.first.id);
+    } else {
+      operation = Operation(
+          CodeOperations.trim(componentOperationCubit
+              .flutterProject!.rootComponent!
+              .code(clean: false))!,
+          componentSelectionCubit.currentSelected.treeSelection.first.id);
+    }
     componentOperationCubit.revertWork.add(operation, work, (p0) {
       final Operation operation = p0;
-      componentOperationCubit.flutterProject!.setRootComponent =
-          Component.fromCode(
-              operation.code, componentOperationCubit.flutterProject!);
-      componentOperationCubit.emit(ComponentUpdatedState());
-      componentOperationCubit.flutterProject!.rootComponent!.forEach((comp) {
-        if (comp.name == 'Image.asset') {
-          final imageData = (comp.parameters[0].value as ImageData);
-          if (componentOperationCubit.byteCache
-              .containsKey(imageData.imageName)) {
-            imageData.bytes =
-                componentOperationCubit.byteCache[imageData.imageName];
+      if (ancestor is CustomComponent) {
+        (ancestor as CustomComponent).root = Component.fromCode(
+            operation.code, componentOperationCubit.flutterProject!);
+        componentOperationCubit.emit(ComponentUpdatedState());
+        componentOperationCubit
+            .refreshCustomComponents(ancestor as CustomComponent);
+        (ancestor as CustomComponent).root?.forEach((comp) {
+          if (comp.name == 'Image.asset') {
+            final imageData = (comp.parameters[0].value as ImageData);
+            if (componentOperationCubit.byteCache
+                .containsKey(imageData.imageName)) {
+              imageData.bytes =
+                  componentOperationCubit.byteCache[imageData.imageName];
+            }
           }
-        }
-        if (comp.id == operation.selectedId) {
-          componentSelectionCubit.changeComponentSelection(
-              ComponentSelectionModel.unique(comp),
-              root: ancestor);
-        }
-      });
+          if (comp.id == operation.selectedId) {
+            componentSelectionCubit.changeComponentSelection(
+                ComponentSelectionModel.unique(comp),
+                root: ancestor);
+          }
+        });
+      } else {
+        componentOperationCubit.flutterProject!.setRootComponent =
+            Component.fromCode(
+                operation.code, componentOperationCubit.flutterProject!);
+        componentOperationCubit.emit(ComponentUpdatedState());
+        componentOperationCubit.flutterProject!.rootComponent!.forEach((comp) {
+          if (comp.name == 'Image.asset') {
+            final imageData = (comp.parameters[0].value as ImageData);
+            if (componentOperationCubit.byteCache
+                .containsKey(imageData.imageName)) {
+              imageData.bytes =
+                  componentOperationCubit.byteCache[imageData.imageName];
+            }
+          }
+          if (comp.id == operation.selectedId) {
+            componentSelectionCubit.changeComponentSelection(
+                ComponentSelectionModel.unique(comp),
+                root: ancestor);
+          }
+        });
+      }
       componentCreationCubit.changedComponent();
     });
   }

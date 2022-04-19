@@ -70,10 +70,15 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     flutterProjectCubit = FlutterProjectCubit(widget.userId);
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    if(componentOperationCubit.flutterProject?.name!=widget.projectName) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       flutterProjectCubit.loadFlutterProject(
           componentSelectionCubit, componentOperationCubit, widget.projectName);
     });
+    }
+    else{
+      AppLoader.hide();
+    }
     if (_streamSubscription != null) {
       _streamSubscription?.cancel();
     }
@@ -721,15 +726,17 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                       child: BlocListener<ComponentCreationCubit,
                           ComponentCreationState>(
                         listener: (context, state) {
-                          if (state is ComponentCreationChangeState &&
-                              _componentSelectionCubit.currentSelectedRoot
-                                  is CustomComponent) {
-                            _componentOperationCubit
-                                .updateGlobalCustomComponent(
-                                    _componentSelectionCubit.currentSelectedRoot
-                                        as CustomComponent);
-                          } else {
-                            _componentOperationCubit.updateRootComponent();
+                          if (state is ComponentCreationChangeState) {
+                            if (_componentSelectionCubit.currentSelectedRoot
+                                is CustomComponent) {
+                              _componentOperationCubit
+                                  .updateGlobalCustomComponent(
+                                      _componentSelectionCubit
+                                              .currentSelectedRoot
+                                          as CustomComponent);
+                            } else {
+                              _componentOperationCubit.updateRootComponent();
+                            }
                           }
                         },
                         child: ListView(
@@ -870,8 +877,6 @@ class CenterMainSide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-
     return RuntimeProvider(
       runtimeMode: RuntimeMode.edit,
       child: Container(
@@ -908,7 +913,8 @@ class CenterMainSide extends StatelessWidget {
                     ],
                   ),
                   Expanded(
-                    child: BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
+                    child: BlocBuilder<ComponentCreationCubit,
+                        ComponentCreationState>(
                       builder: (context, state) {
                         logger('======== COMPONENT CREATION ');
                         return EmulationView(
@@ -985,13 +991,13 @@ class CenterMainSide extends StatelessWidget {
       //       root: rootClone,
       //     );
       //   } else {
-          //tappedComp,
-          final original=tappedComp.getOriginal()??tappedComp;
-          _componentSelectionCubit.changeComponentSelection(
-            ComponentSelectionModel([original],[tappedComp],original),
-            root: _componentSelectionCubit.currentSelectedRoot,
-          );
-        // }
+      //tappedComp,
+      final original = tappedComp.getOriginal() ?? tappedComp;
+      _componentSelectionCubit.changeComponentSelection(
+        ComponentSelectionModel([original], [tappedComp], original),
+        root: original!=tappedComp?original.getRootCustomComponent(ComponentOperationCubit.currentFlutterProject!)!:_componentSelectionCubit.currentSelectedRoot,
+      );
+      // }
       // }
     }
   }
@@ -1004,7 +1010,7 @@ class CenterMainSide extends StatelessWidget {
         contextPopup.init(
             child: Material(
               child: ComponentModificationMenu(
-                component: component.cloneOf??component,
+                component: component.cloneOf ?? component,
                 ancestor: _componentSelectionCubit.currentSelectedRoot,
                 componentCreationCubit: _componentCreationCubit,
                 componentOperationCubit: _componentOperationCubit,

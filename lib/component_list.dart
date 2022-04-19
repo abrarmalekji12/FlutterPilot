@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import 'constant/app_colors.dart';
@@ -10,7 +9,6 @@ import 'models/parameter_info_model.dart';
 import 'models/parameter_model.dart';
 import 'models/parameter_rule_model.dart';
 import 'parameters_list.dart';
-import 'runtime_provider.dart';
 
 final componentList = <String, Component Function()>{
   'MaterialApp': () => CMaterialApp(),
@@ -31,6 +29,8 @@ final componentList = <String, Component Function()>{
   'Visibility': () => CVisibility(),
   'Material': () => CMaterial(),
   'Expanded': () => CExpanded(),
+  'IntrinsicWidth' : ()=> CIntrinsicWidth(),
+  'IntrinsicHeight' : ()=> CIntrinsicHeight(),
   'Spacer': () => CSpacer(),
   'Center': () => CCenter(),
   'Align': () => CAlign(),
@@ -79,7 +79,7 @@ final componentList = <String, Component Function()>{
   'GridView.builder': () => CGridViewBuilder(),
   'ListView.Builder': () => CListViewBuilder(),
   'GridView.Builder': () => CGridViewBuilder(),
-  'NotRecognizedWidget' : () => CNotRecognizedWidget(),
+  'NotRecognizedWidget': () => CNotRecognizedWidget(),
   'DropDownButton': () => CDropDownButton(),
   'DropDownMenuItem': () => CDropDownMenuItem(),
 };
@@ -104,7 +104,6 @@ class CMaterialApp extends CustomNamedHolder {
 
   @override
   Widget create(BuildContext context) {
-
     return MaterialApp(
       home: childMap['home']?.build(context),
       color: parameters[0].value,
@@ -131,18 +130,20 @@ class CRichText extends Component {
 }
 
 class CNotRecognizedWidget extends Component {
-  CNotRecognizedWidget()
-      : super('NotRecognized', [
-  ]);
+  CNotRecognizedWidget() : super('NotRecognized', []);
 
   @override
   Widget create(BuildContext context) {
     return Container(
-      child: Text('Not recognized widget $name',style: AppFontStyle.roboto(14,color: Colors.red.shade800),),
-      color:  const Color(0xfff1f1f1),
+      child: Text(
+        'Not recognized widget $name',
+        style: AppFontStyle.roboto(14, color: Colors.red.shade800),
+      ),
+      color: const Color(0xfff1f1f1),
     );
   }
 }
+
 class CCheckbox extends Component {
   CCheckbox()
       : super('Checkbox', [
@@ -245,6 +246,44 @@ class CExpanded extends Holder {
   }
 }
 
+class CIntrinsicWidth extends Holder {
+  CIntrinsicWidth()
+      : super(
+            'IntrinsicWidth',
+            [
+              Parameters.widthParameter()
+                ..withDefaultValue(null)
+                ..withNamedParamInfoAndSameDisplayName('stepWidth'),
+              Parameters.widthParameter()
+                ..withDefaultValue(null)
+                ..withNamedParamInfoAndSameDisplayName('stepHeight')
+            ],
+            required: false);
+
+  @override
+  Widget create(BuildContext context) {
+    return IntrinsicWidth(
+      child: child?.build(context),
+      stepWidth: parameters[0].value,
+      stepHeight: parameters[1].value,
+    );
+  }
+}
+class CIntrinsicHeight extends Holder {
+  CIntrinsicHeight()
+      : super(
+      'IntrinsicWidth',
+      [
+      ],
+      required: false);
+
+  @override
+  Widget create(BuildContext context) {
+    return IntrinsicHeight(
+      child: child?.build(context),
+    );
+  }
+}
 class CSafeArea extends Holder {
   CSafeArea()
       : super(
@@ -634,7 +673,9 @@ class CAppBar extends CustomNamedHolder {
         ], {
           'title': null,
           'leading': null,
-        }, []);
+        }, [
+          'actions'
+        ]);
 
   @override
   Widget create(BuildContext context) {
@@ -642,6 +683,10 @@ class CAppBar extends CustomNamedHolder {
       backgroundColor: parameters[0].value,
       title: childMap['title']?.build(context),
       leading: childMap['leading']?.build(context),
+      actions: childrenMap['actions']
+          ?.map((e) => e.build(context))
+          .toList(growable: false),
+      automaticallyImplyLeading: false,
     );
   }
 }
@@ -663,9 +708,7 @@ class CScaffold extends CustomNamedHolder {
           'floatingActionButton': null,
           'bottomNavigationBar': null,
           'bottomSheet': null,
-        }, [
-          'actions'
-        ]);
+        }, []);
 
   @override
   Widget create(BuildContext context) {
@@ -687,18 +730,18 @@ class CScaffold extends CustomNamedHolder {
 }
 
 class CDropDownButton extends CustomNamedHolder {
-  CDropDownButton() : super('DropDownButton', [], {
-    'icon':null,
-
-  }, [
-    'items'
-  ]);
+  CDropDownButton()
+      : super('DropDownButton', [], {
+          'icon': null,
+        }, [
+          'items'
+        ]);
 
   @override
   Widget create(BuildContext context) {
     return DropdownButton<String>(
-      icon: childMap['icon']?.build(context),
-        items: (childrenMap['items']??[])
+        icon: childMap['icon']?.build(context),
+        items: (childrenMap['items'] ?? [])
             .map<DropdownMenuItem<String>>(
                 (e) => e.buildWithoutKey(context) as DropdownMenuItem<String>)
             .toList(),
@@ -823,6 +866,9 @@ class CDropDownMenuItem extends ClickableHolder {
             ..withNamedParamInfoAndSameDisplayName('value')
             ..withRequired(false)
         ]);
+
+  @override
+  String get clickableParamName => 'onTap';
 
   @override
   Widget create(BuildContext context) {
@@ -956,6 +1002,9 @@ class COutlinedButton extends ClickableHolder {
       style: parameters[0].value,
     );
   }
+
+  @override
+  String get clickableParamName => 'onPressed';
 }
 
 class CElevatedButton extends ClickableHolder {
@@ -974,6 +1023,9 @@ class CElevatedButton extends ClickableHolder {
       style: parameters[0].value,
     );
   }
+
+  @override
+  String get clickableParamName => 'onPressed';
 }
 
 // class CBottomNavigationBar extends Cu {
@@ -1021,6 +1073,9 @@ class CInkWell extends ClickableHolder {
       borderRadius: parameters[5].value,
     );
   }
+
+  @override
+  String get clickableParamName => 'onTap';
 }
 
 class CGestureDetector extends ClickableHolder {
@@ -1035,6 +1090,9 @@ class CGestureDetector extends ClickableHolder {
       child: child?.build(context) ?? Container(),
     );
   }
+
+  @override
+  String get clickableParamName => 'onTap';
 }
 
 class CFloatingActionButton extends ClickableHolder {
@@ -1083,6 +1141,9 @@ class CFloatingActionButton extends ClickableHolder {
       splashColor: parameters[9].value,
     );
   }
+
+  @override
+  String get clickableParamName => 'onPressed';
 }
 
 class CTextButton extends ClickableHolder {
@@ -1098,6 +1159,9 @@ class CTextButton extends ClickableHolder {
       style: parameters[0].value,
     );
   }
+
+  @override
+  String get clickableParamName => 'onPressed';
 }
 
 class CLinearProgressIndicator extends Component {
@@ -1488,6 +1552,9 @@ class CIconButton extends ClickableComponent {
         ]) {
     addComponentParameters([parameters[0] as ComponentParameter]);
   }
+
+  @override
+  String get clickableParamName => 'onPressed';
 
   @override
   Widget create(BuildContext context) {

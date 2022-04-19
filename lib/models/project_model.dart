@@ -32,13 +32,18 @@ class FlutterProject {
 
   factory FlutterProject.createNewProject(String name, int userId) {
     final FlutterProject flutterProject = FlutterProject(name, userId, null);
-    flutterProject.uiScreens.add(UIScreen.mainUI());
+    final ui=UIScreen.mainUI();
+    flutterProject.uiScreens.add(ui);
+    final custom=StatelessComponent(name: 'MainPage')..root=CScaffold();
+    flutterProject.customComponents.add(custom);
+    (ui.rootComponent as CMaterialApp).childMap['home']=custom.createInstance(null);
+
     flutterProject.currentScreen = flutterProject.uiScreens.first;
     flutterProject.mainScreen = flutterProject.uiScreens.first;
     return flutterProject;
   }
 
-  get rootComponent => currentScreen.rootComponent;
+  Component? get rootComponent => currentScreen.rootComponent;
 
   set setRootComponent(Component? root) {
     currentScreen.rootComponent = root;
@@ -73,7 +78,7 @@ class FlutterProject {
         in ComponentOperationCubit.codeProcessor.variables.entries) {
       if (!variable.value.runtimeAssigned) {
         staticVariablesCode +=
-            'static const ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
+            'const ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
       } else {
         dynamicVariablesDefinitionCode +=
             'late ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key};';
@@ -92,7 +97,7 @@ class FlutterProject {
     final className = screen.name[0].toUpperCase() + screen.name.substring(1);
     // ${rootComponent!.code()}
     return ''' 
-   
+  
     ${screen == mainScreen ? '''
      // copy all the images to assets/images/ folder
     // 
@@ -113,26 +118,7 @@ class FlutterProject {
     void main(){
     runApp(const $className());
     } 
-    ''' : ''}
-    class $className extends StatefulWidget {
-    const $className({Key? key}) : super(key: key);
-
-    @override
-   _${className}State createState() => _${className}State();
-    }
-
-    class _${className}State extends State<$className> {
-    ${screen.models.map((e) => e.declarationCode).join(' ')}
-   
-     @override
-     Widget build(BuildContext context) {
-         $dynamicVariableAssignmentCode
-          return ${screen.rootComponent!.code()};
-      }
-     
-    }
-
- $functionImplementationCode 
+     $functionImplementationCode 
  
     $implementationCode
     
@@ -149,12 +135,32 @@ class FlutterProject {
   }
   return Color(colorInt);
 }
+    ''' : ''}
+    class $className extends StatefulWidget {
+    const $className({Key? key}) : super(key: key);
+
+    @override
+   _${className}State createState() => _${className}State();
+    }
+
+    class _${className}State extends State<$className> {
+    ${screen.models.map((e) => e.declarationCode).join(' ')}
+   
+     @override
+     Widget build(BuildContext context) {
+       
+          return ${screen.rootComponent!.code()};
+      }
+     
+    }
+
+
     ''';
   }
 
   Widget run(final BuildContext context, {bool navigator = false}) {
     if (!navigator) {
-      return rootComponent?.build(context);
+      return rootComponent?.build(context)??Container();
     }
 
     final _stackCubit = StackActionCubit();

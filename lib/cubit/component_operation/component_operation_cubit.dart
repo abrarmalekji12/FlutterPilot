@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../common/compiler/code_processor.dart';
 import '../../common/undo/revert_work.dart';
+import '../../component_list.dart';
 import '../../models/local_model.dart';
 import '../../models/variable_model.dart';
 import '../../models/parameter_model.dart';
@@ -87,6 +88,9 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     try {
       await FireBridge.saveComponent(flutterProject!, customComponent,
           newName: newName);
+      for (final Component comp in customComponent.objects) {
+        comp.name = customComponent.name;
+      }
       emit(ComponentOperationInitial());
     } on Exception {
       emit(ComponentOperationErrorState());
@@ -149,7 +153,9 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     while (index < list.length) {
       for (final comp in changeOrder) {
         if (list[index].value.contains(comp)) {
-          (flutterProject!.customComponents.firstWhere((element) => element.name==list[index].key)).notifyChanged();
+          (flutterProject!.customComponents
+                  .firstWhere((element) => element.name == list[index].key))
+              .notifyChanged();
           changeOrder.add(list[index].key);
           break;
         }
@@ -265,15 +271,16 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   void addCustomComponent(String name, {Component? root}) {
     final component = StatelessComponent(name: name);
     flutterProject?.customComponents.add(component);
-    FireBridge.addNewGlobalCustomComponent(
-        flutterProject!.userId, flutterProject!, component);
     if (root != null) {
       component.root = root;
       final instance = component.createInstance(root.parent);
       replaceChildOfParent(root, instance);
       root.parent = null;
-      refreshCustomComponents(root as CustomComponent);
+      refreshCustomComponents(component);
     }
+
+    FireBridge.addNewGlobalCustomComponent(
+        flutterProject!.userId, flutterProject!, component);
     emit(ComponentUpdatedState());
   }
 
@@ -335,17 +342,16 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   void removeComponent(Component component, Component ancestor) {
-
-    if(ancestor is CustomComponent&&component.parent==null){
+    if (ancestor is CustomComponent && component.parent == null) {
       switch (component.type) {
         case 1:
           break;
         case 2:
-          ancestor.root=((component as MultiHolder).children)[0];
+          ancestor.root = ((component as MultiHolder).children)[0];
           component.children.clear();
           break;
         case 3:
-          ancestor.root=(component as Holder).child;
+          ancestor.root = (component as Holder).child;
           break;
       }
       return;
@@ -444,7 +450,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   void removeComponentAndRefresh(
       BuildContext context, Component component, Component ancestor) {
-    removeComponent(component,ancestor);
+    removeComponent(component, ancestor);
     if (ancestor is CustomComponent) {
       refreshCustomComponents(ancestor);
     }
@@ -579,9 +585,9 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
             (component as CustomNamedHolder).childMap[customNamed] == null);
   }
 
-  void removeAllComponent(Component component,Component ancestor) {
-    if(ancestor is CustomComponent&&component.parent==null){
-      ancestor.root=null;
+  void removeAllComponent(Component component, Component ancestor) {
+    if (ancestor is CustomComponent && component.parent == null) {
+      ancestor.root = null;
       switch (component.type) {
         case 1:
           break;
@@ -589,7 +595,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
           (component as MultiHolder).children.clear();
           break;
         case 3:
-          (component as Holder).child=null;
+          (component as Holder).child = null;
           break;
       }
       return;
@@ -615,7 +621,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         (parent as CustomComponent).updateRoot(component);
         break;
     }
-    if(ancestor is CustomComponent){
+    if (ancestor is CustomComponent) {
       refreshCustomComponents(ancestor);
     }
   }

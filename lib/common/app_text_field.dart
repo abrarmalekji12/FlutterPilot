@@ -23,7 +23,6 @@ class AppTextField extends StatelessWidget {
     else{
       focusNode=FocusNode();
     }
-
   }
 
 
