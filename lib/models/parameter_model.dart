@@ -967,7 +967,9 @@ class ComponentParameter extends Parameter {
   get rawValue => components;
 
   dynamic build() {
+
     if (multiple) {
+    if(visualBoxCubit!=null) {
       return components
           .map<Widget>(
             (e) => BlocProvider<VisualBoxCubit>(
@@ -978,14 +980,30 @@ class ComponentParameter extends Parameter {
             ),
           )
           .toList();
+    }else{
+      return components
+          .map<Widget>(
+            (e) => Builder(
+              builder: (context) => e.build(context),
+            ),
+      )
+          .toList();
+    }
     }
     if (components.isNotEmpty) {
-      return BlocProvider<VisualBoxCubit>(
+     if(visualBoxCubit!=null) {
+       return BlocProvider<VisualBoxCubit>(
         create: (_) => visualBoxCubit!,
         child: Builder(
           builder: (context) => components.first.build(context),
         ),
       );
+     }
+     else{
+       return Builder(
+         builder: (context) => components.first.build(context),
+       );
+     }
     }
     return null;
   }
