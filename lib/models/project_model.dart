@@ -35,8 +35,9 @@ class FlutterProject {
     final ui=UIScreen.mainUI();
     flutterProject.uiScreens.add(ui);
     final custom=StatelessComponent(name: 'MainPage')..root=CScaffold();
+
     flutterProject.customComponents.add(custom);
-    (ui.rootComponent as CMaterialApp).childMap['home']=custom.createInstance(null);
+    (ui.rootComponent as CMaterialApp).addOrUpdateChildWithKey('home', custom.createInstance(null));
 
     flutterProject.currentScreen = flutterProject.uiScreens.first;
     flutterProject.mainScreen = flutterProject.uiScreens.first;
