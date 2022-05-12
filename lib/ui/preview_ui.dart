@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'dart:ui' as ui;
 import '../common/custom_popup_menu_button.dart';
+import '../common/interactive_viewer_centered.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -39,8 +40,6 @@ class PreviewPage extends StatefulWidget {
 }
 
 class _PreviewPageState extends State<PreviewPage> {
-  final TransformationController _transformationController =
-      TransformationController();
   final GlobalKey _interactiveViewerKey = GlobalKey();
   final List<UIScreen> screens = [];
   final List<Line> lines = [];
@@ -70,9 +69,6 @@ class _PreviewPageState extends State<PreviewPage> {
         findInteraction(screen);
       }
     }
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      _transformationController.value=Matrix4.identity()..scale(dw(context, 100) / width,dw(context, 100) / width);
-    });
   }
 
   void findInteraction(final UIScreen screen) {
@@ -178,11 +174,11 @@ class _PreviewPageState extends State<PreviewPage> {
             child: RuntimeProvider(
               runtimeMode: RuntimeMode.preview,
               child: Builder(builder: (context) {
-                return InteractiveViewer(
-                    minScale: dw(context, 100) / width,
+                return CustomInteractiveViewer(
+                  minScale: 0.2,
+                    // minScale: dw(context, 100) / width,
                     maxScale: 5.0,
                     constrained: false,
-                    transformationController: _transformationController,
                     child: RepaintBoundary(
                       key: _interactiveViewerKey,
                       child: Container(
