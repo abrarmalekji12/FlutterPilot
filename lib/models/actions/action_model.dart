@@ -27,6 +27,25 @@ abstract class ActionModel {
   String code();
 }
 
+class CustomActionModel extends ActionModel {
+  CustomActionModel(List arguments) : super(arguments);
+
+  @override
+  String code() {
+    return '';
+  }
+
+  @override
+  String metaCode() {
+    return '';
+  }
+
+  @override
+  void perform(BuildContext context) {
+
+  }
+
+}
 class NewPageInStackAction extends ActionModel {
   NewPageInStackAction(final UIScreen? screen) : super([screen]);
 

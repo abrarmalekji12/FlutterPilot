@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+
 import '../../code_to_component.dart';
 import '../../models/function_model.dart';
 import '../../models/other_model.dart';
@@ -29,20 +30,20 @@ class CodeProcessor {
   final Map<String, dynamic> modelVariables = {};
 
   late bool error;
+  String errorMessage = '';
   final capitalACodeUnit = 'A'.codeUnits.first,
       smallZCodeUnit = 'z'.codeUnits.first,
       underScoreCodeUnit = '_'.codeUnits.first;
-  final zeroCodeUnit = '0'.codeUnits.first,
-      nineCodeUnit = '9'.codeUnits.first,
-      dotCodeUnit = '.'.codeUnits.first;
+  final zeroCodeUnit = '0'.codeUnits.first, nineCodeUnit = '9'.codeUnits.first, dotCodeUnit = '.'.codeUnits.first;
 
   CodeProcessor() {
     error = false;
+    variables['pi'] =
+        VariableModel('pi', pi, false, 'it is mathematical value of pi', DataType.double, '', deletable: false);
     functions['res'] = FunctionModel<dynamic>('res', (arguments) {
       if (variables['dw']!.value > variables['tabletWidthLimit']!.value) {
         return arguments[0];
-      } else if (variables['dw']!.value > variables['phoneWidthLimit']!.value ||
-          arguments.length == 2) {
+      } else if (variables['dw']!.value > variables['phoneWidthLimit']!.value || arguments.length == 2) {
         return arguments[1];
       } else {
         return arguments[2];
@@ -61,12 +62,11 @@ class CodeProcessor {
   }
     ''');
 
-    functions['ifElse']=  FunctionModel<dynamic>('ifElse', (arguments) {
-      if(arguments.length>=2){
-        if(arguments[0]==true){
+    functions['ifElse'] = FunctionModel<dynamic>('ifElse', (arguments) {
+      if (arguments.length >= 2) {
+        if (arguments[0] == true) {
           return arguments[1];
-        }
-        else if(arguments.length==3){
+        } else if (arguments.length == 3) {
           return arguments[2];
         }
       }
@@ -79,50 +79,47 @@ class CodeProcessor {
   }
     ''');
 
-    functions['randInt']=  FunctionModel<int>('randInt', (arguments) {
-      if(arguments.length==1){
-        return math.Random.secure().nextInt(arguments[0]??100);
+    functions['randInt'] = FunctionModel<int>('randInt', (arguments) {
+      if (arguments.length == 1) {
+        return math.Random.secure().nextInt(arguments[0] ?? 100);
       }
       return 0;
-
     }, '''
     int randInt(int? max){
     return math.Random.secure().nextInt(max??100);
   }
     ''');
 
-    functions['randDouble']=  FunctionModel<double>('randDouble', (arguments) {
+    functions['randDouble'] = FunctionModel<double>('randDouble', (arguments) {
       return math.Random.secure().nextDouble();
-
-
     }, '''
     double randDouble(){
     return math.Random.secure().nextDouble();
   }
     ''');
-    functions['randBool']=  FunctionModel<bool>('randBool', (arguments) {
+    functions['randBool'] = FunctionModel<bool>('randBool', (arguments) {
       return math.Random.secure().nextBool();
-
-
     }, '''
     bool randBool(){
     return math.Random.secure().nextBool();
   }
     ''');
-    functions['randColor']=  FunctionModel<String>('randColor', (arguments) {
-      return '#'+Colors.primaries[math.Random().nextInt(Colors.primaries.length)].value.toRadixString(16);
-
-
+    functions['randColor'] = FunctionModel<String>('randColor', (arguments) {
+      return '#' + Colors.primaries[math.Random().nextInt(Colors.primaries.length)].value.toRadixString(16);
     }, '''
     String randColor(){
     return '#'+Colors.primaries[math.Random().nextInt(Colors.primaries.length)].value.toRadixString(16);
   }
     ''');
-    functions['math.sin']=  FunctionModel<double>('math.sin', (arguments) {
+    functions['math.sin'] = FunctionModel<double>('math.sin', (arguments) {
       return math.sin(arguments[0]);
     }, ''' ''');
-    functions['math.cos']=  FunctionModel<double>('math.cos', (arguments) {
+    functions['math.cos'] = FunctionModel<double>('math.cos', (arguments) {
       return math.cos(arguments[0]);
+    }, ''' ''');
+
+    functions['print'] = FunctionModel<dynamic>('print', (arguments) {
+      return arguments[0].toString();
     }, ''' ''');
   }
 
@@ -148,12 +145,7 @@ class CodeProcessor {
     if (ch == '+' || ch == '-') {
       return 1;
     }
-    if (ch == '*' ||
-        ch == '/' ||
-        ch == '<' ||
-        ch == '>' ||
-        ch == '<=' ||
-        ch == '>=') {
+    if (ch == '*' || ch == '/' || ch == '<' || ch == '>' || ch == '<=' || ch == '>=') {
       return 2;
     }
     return 0;
@@ -163,16 +155,17 @@ class CodeProcessor {
     dynamic a, b;
     if (valueStack.isEmpty) {
       error = true;
-     debugPrint('error 1');
+      errorMessage = 'ValueStack is Empty, syntax error !!';
+      debugPrint('error 1');
       return;
     } else {
       b = valueStack.peek!;
       valueStack.pop();
     }
-    if (valueStack.isEmpty && t != '-') {
+    if (valueStack.isEmpty && t != '-' && t != '++') {
       error = true;
-
-     debugPrint('error 2');
+      errorMessage = 'Not enough values, syntax error !!';
+      debugPrint('error 2');
       return;
     } else if (valueStack.isNotEmpty) {
       a = valueStack.peek!;
@@ -180,7 +173,7 @@ class CodeProcessor {
     }
     late dynamic r;
     switch (t) {
-      case '--' :
+      case '--':
       case '+':
         r = a + b;
         break;
@@ -201,19 +194,20 @@ class CodeProcessor {
         r = a ~/ b;
         break;
       case '*-':
-        r= a * -b;
+        r = a * -b;
         break;
-      case '**' :
-        r=pow(a,int.parse(b.toString()));
+      case '**':
+        r = pow(a, int.parse(b.toString()));
         break;
       case '/-':
         r = a / -b;
         break;
       case '%':
-        if(a is int&&b is int) {
+        if (a is int && b is int) {
           r = a % b;
-        }else{
-          error=true;
+        } else {
+          error = true;
+          errorMessage = 'Can not do $a % $b, both are not type of int';
           return;
         }
         break;
@@ -232,10 +226,27 @@ class CodeProcessor {
         } else if (modelVariables.containsKey(a)) {
           modelVariables[a] = b;
         } else {
-          debugPrint('= $b');
-          variables[a] = VariableModel(a, b, false, null, DataType.dynamic,'');
+          late final DataType dataType;
+          if (b is double) {
+            dataType = DataType.double;
+          } else if (b is int) {
+            dataType = DataType.int;
+          } else if (b is String) {
+            dataType = DataType.string;
+          } else {
+            throw Exception('Invalid datatype of variable');
+          }
+          variables[a] = VariableModel(a, b, false, null, dataType, '');
         }
-        r = b;
+        r = null;
+        break;
+      case '++':
+        if (variables.containsKey(a)) {
+          variables[a]?.value = variables[a]?.value + 1;
+        } else if (modelVariables.containsKey(a)) {
+          modelVariables[a] = modelVariables[a] + 1;
+        }
+        r = null;
         break;
       case '<=':
         r = a <= b;
@@ -244,10 +255,10 @@ class CodeProcessor {
         r = a >= b;
         break;
       case '>>':
-        r= a>> b;
+        r = a >> b;
         break;
       case '<<':
-        r= a<<b;
+        r = a << b;
         break;
       case '&&':
         r = (a as bool) && (b as bool);
@@ -263,29 +274,75 @@ class CodeProcessor {
         break;
       default:
         error = true;
-
-        print('error 3');
+        errorMessage = 'Operation "$t" not found!!';
         r = null;
     }
     valueStack.push(r);
   }
 
   String? processString(String code) {
-    while (code.contains('{{') && code.contains('}}')) {
-      final si = code.indexOf('{{'), ei = code.indexOf('}}');
+    int si = -1, ei = -1;
+
+    List<int> startList = [];
+    List<int> endList = [];
+    int count = 0;
+    for (int i = 0; i < code.length; i++) {
+      if (code.length - 1 > i) {
+        if (code[i] == '{' && code[i + 1] == '{') {
+          if (count == 0) {
+            startList.add(i);
+          }
+          count++;
+        } else if (code[i] == '}' && code[i + 1] == '}') {
+          count--;
+          if (count == 0) {
+            endList.add(i);
+          }
+        }
+      }
+    }
+    print('list ===== $startList $endList');
+    if (startList.length != endList.length) {
+      error = true;
+      errorMessage = 'Invalid {{ syntax !!';
+    }
+    while (startList.isNotEmpty) {
+      si=startList.removeAt(0);
+      ei=endList.removeAt(0);
       if (si + 2 == ei) {
+        error = true;
+        errorMessage = 'No expression between {{ and }} !!';
         return null;
         // return CodeOutput.right('No variables');
       }
       final variableName = code.substring(si + 2, ei);
       final value = process<String>(variableName, resolve: true);
       if (value != null) {
-        code = code.replaceAll('{{$variableName}}', value.toString());
+        final k1='{{$variableName}}';
+        final v1=value.toString();
+        code = code.replaceAll(k1, v1);
+        for(int i=0;i<startList.length;i++){
+          startList[i]+=v1.length-k1.length;
+          endList[i]+=v1.length-k1.length;
+        }
       } else {
         return code; //CodeOutput.right('No varaible with name $variableName')
       }
     }
     return code;
+  }
+
+  void executeCode(final String input, void Function(String) consoleCallback, void Function(String) onError) {
+    final List<String> instructions = CodeOperations.trim(input.replaceAll('\n', ''))!.split(';');
+    for (final instruction in instructions) {
+      final output = process(instruction);
+      if (error) {
+        onError.call(errorMessage);
+      }
+      if (output != null) {
+        consoleCallback(output.toString());
+      }
+    }
   }
 
   dynamic process<T>(final String input, {bool resolve = false}) {
@@ -294,9 +351,12 @@ class CodeProcessor {
     String number = '';
     String variable = '';
     error = false;
-    if ((T == String||T == ImageData) && !resolve) {
+    if ((T == String || T == ImageData || isString(input)) && !resolve) {
+      if (T != String && T != ImageData) {
+        return processString(input.substring(1, input.length - 1));
+      }
       return processString(input);
-    }else if(T == Color && input.startsWith('#')){
+    } else if (T == Color && input.startsWith('#')) {
       return input;
     }
     for (int n = 0; n < input.length; n++) {
@@ -306,23 +366,20 @@ class CodeProcessor {
       final String nextToken = input[n];
       final ch = nextToken.codeUnits.first;
 
-      if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || (ch == dotCodeUnit&&variable.isEmpty)) {
+      if ((ch >= zeroCodeUnit && ch <= nineCodeUnit) || (ch == dotCodeUnit && variable.isEmpty)) {
         if (ch != dotCodeUnit && variable.isNotEmpty) {
           variable += number + nextToken;
           number = '';
         } else {
           number += nextToken;
         }
-      } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
-          ch == underScoreCodeUnit||
-          ch == dotCodeUnit) {
+      } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) || ch == underScoreCodeUnit || ch == dotCodeUnit) {
         variable += nextToken;
       } else if (ch == '"'.codeUnits.first) {
         if (variable.isEmpty) {
           continue;
         }
-        if (n - variable.length - 1 >= 0 &&
-            input[n - variable.length - 1] == '"') {
+        if (n - variable.length - 1 >= 0 && input[n - variable.length - 1] == '"') {
           return variable;
         } else {
           return null;
@@ -330,6 +387,8 @@ class CodeProcessor {
       } else {
         if (variable.isNotEmpty && ch == '('.codeUnits[0]) {
           if (!functions.containsKey(variable)) {
+            error = true;
+            errorMessage = 'Function $variable is not defined!!';
             return null;
           }
           int count = 0;
@@ -341,14 +400,13 @@ class CodeProcessor {
               if (functions[variable] == null) {
                 return null;
               }
-              final argument =
-              CodeOperations.splitByComma(input.substring(n + 1, m));
-              valueStack.push(functions[variable]!
-                  .perform
-                  .call(argument.map((e) => process(e)).toList()));
-             variable='';
+              final argument = CodeOperations.splitByComma(input.substring(n + 1, m));
+              final output = functions[variable]!.perform.call(argument.map((e) => process(e)).toList());
+              valueStack.push(output);
+
+              variable = '';
               n = m;
-               break;
+              break;
             } else if (input[m] == ')') {
               count--;
             }
@@ -373,12 +431,10 @@ class CodeProcessor {
             valueStack.push(variable);
             variable = '';
           }
-          if (operatorStack.isEmpty ||
-              getPrecedence(operator) > getPrecedence(operatorStack.peek!)) {
+          if (operatorStack.isEmpty || getPrecedence(operator) > getPrecedence(operatorStack.peek!)) {
             operatorStack.push(operator);
           } else {
-            while (operatorStack.isNotEmpty &&
-                getPrecedence(operator) <= getPrecedence(operatorStack.peek!)) {
+            while (operatorStack.isNotEmpty && getPrecedence(operator) <= getPrecedence(operatorStack.peek!)) {
               processOperator(operatorStack.pop()!, valueStack, operatorStack);
             }
             operatorStack.push(operator);
@@ -388,8 +444,7 @@ class CodeProcessor {
           if (index == -1) {
             return null;
           }
-          final innerProcess =
-          process<T>(input.substring(n + 1, index), resolve: true);
+          final innerProcess = process<T>(input.substring(n + 1, index), resolve: true);
           if (innerProcess != null) {
             valueStack.push(innerProcess);
             n = index;
@@ -430,7 +485,7 @@ class CodeProcessor {
 
     // Print the result if no error has been seen.
     if (!error && valueStack.isNotEmpty) {
-      final result =valueStack.pop();
+      final result = valueStack.pop();
 
       if (operatorStack.isNotEmpty || valueStack.isNotEmpty) {
         debugPrint('Expression error.');
@@ -440,6 +495,13 @@ class CodeProcessor {
       }
     }
     return null;
+  }
+
+  bool isString(String value) {
+    if (value.length >= 2) {
+      return value[0] == value[value.length - 1] && (value[0] == '\'' || value[0] == '"');
+    }
+    return false;
   }
 
   bool resolveVariable(String variable, valueStack) {

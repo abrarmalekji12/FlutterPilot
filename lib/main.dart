@@ -5,7 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_strategy/url_strategy.dart';
-import 'common/download_utils.dart';
+import 'common/compiler/code_processor.dart';
+import 'common/logger.dart';
 import 'common/shared_preferences.dart';
 import 'cubit/authentication/authentication_cubit.dart';
 import 'ui/authentication/login.dart';
@@ -17,7 +18,19 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setPathUrlStrategy();
   await Preferences.load();
-  runApp(const MyApp());
+  final CodeProcessor processor=CodeProcessor();
+   processor.executeCode('''
+   b=math.sin(pi/2);
+   r=randInt(100);
+   print("hello {{b}} {{ifElse(r%2==0,"{{r}} is Even","{{r}} is Odd")}}");
+  ''',(message)
+   {
+     logger('console out :: $message');
+   },(error)
+   {
+     logger('Error :: $error ');
+   });
+  // runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
