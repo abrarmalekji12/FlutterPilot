@@ -5,6 +5,7 @@ import '../common/app_text_field.dart';
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../common/custom_text_field.dart';
+import '../common/dynamic_value_editing_controller.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/action_edit/action_edit_cubit.dart';
@@ -16,9 +17,9 @@ import '../models/project_model.dart';
 import 'parameter_ui.dart';
 
 class ActionModelWidget extends StatefulWidget {
-  final Clickable component;
+  final Clickable clickable;
 
-  const ActionModelWidget({Key? key, required this.component})
+  const ActionModelWidget({Key? key, required this.clickable})
       : super(key: key);
 
   @override
@@ -48,6 +49,7 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                 ),
                 CustomPopupMenuButton(
                   itemBuilder: (context) => [
+                    'CustomAction',
                     'NewPageInStackAction',
                     'ReplaceCurrentPageInStackAction',
                     'GoBackInStackAction',
@@ -70,34 +72,39 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                       .toList(growable: false),
                   onSelected: (value) {
                     switch (value) {
+                      case 'CustomAction':
+                        widget.clickable.actionList
+                            .add(CustomAction());
+
+                        break;
                       case 'NewPageInStackAction':
-                        widget.component.actionList
+                        widget.clickable.actionList
                             .add(NewPageInStackAction(null));
 
                         break;
                       case 'ReplaceCurrentPageInStackAction':
-                        widget.component.actionList
+                        widget.clickable.actionList
                             .add(ReplaceCurrentPageInStackAction(null));
 
                         break;
                       case 'GoBackInStackAction':
-                        widget.component.actionList.add(GoBackInStackAction());
+                        widget.clickable.actionList.add(GoBackInStackAction());
 
                         break;
                       case 'ShowDialogInStackAction':
-                        widget.component.actionList
+                        widget.clickable.actionList
                             .add(ShowDialogInStackAction());
                         break;
                       case 'ShowCustomDialogInStackAction':
-                        widget.component.actionList
+                        widget.clickable.actionList
                             .add(ShowCustomDialogInStackAction());
                         break;
                       case 'ShowBottomSheetInStackAction':
-                        widget.component.actionList
+                        widget.clickable.actionList
                             .add(ShowBottomSheetInStackAction(null));
                         break;
                       case 'ShowSnackBarAction':
-                        widget.component.actionList.add(ShowSnackBarAction());
+                        widget.clickable.actionList.add(ShowSnackBarAction());
                         break;
                       // case 'HideBottomSheetInStackAction':
                       //   widget.component.actionList
@@ -128,14 +135,14 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
               builder: (context, state) {
                 return Column(
                   children: [
-                    for (final action in widget.component.actionList)
+                    for (final action in widget.clickable.actionList)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Container(
                               child: ActionModelUIWidget(
-                                  clickableHolder: widget.component,
+                                  clickableHolder: widget.clickable,
                                   actionModel: action),
                               decoration: BoxDecoration(
                                   color: AppColors.msgColor,
@@ -144,7 +151,7 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                           ),
                           InkWell(
                             onTap: () {
-                              widget.component.actionList.remove(action);
+                              widget.clickable.actionList.remove(action);
                               _clickActionCubit.changedState();
 
                               BlocProvider.of<ActionEditCubit>(context,
@@ -183,6 +190,9 @@ class ActionModelUIWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     switch (actionModel.runtimeType) {
+      case CustomAction:
+        return CustomActionWidget( clickableHolder: clickableHolder,
+            action: actionModel as CustomAction);
       case NewPageInStackAction:
         return NewPageInStackActionWidget(
             clickableHolder: clickableHolder,
@@ -322,6 +332,59 @@ class NewPageInStackActionWidget extends StatelessWidget {
       ),
     );
   }
+}
+
+
+class CustomActionWidget extends StatefulWidget {
+  final Clickable clickableHolder;
+  final CustomAction action;
+
+  const CustomActionWidget(
+      {Key? key, required this.clickableHolder, required this.action})
+      : super(key: key);
+
+  @override
+  State<CustomActionWidget> createState() => _CustomActionWidgetState();
+}
+
+class _CustomActionWidgetState extends State<CustomActionWidget> {
+  final DynamicValueEditingController _controller=DynamicValueEditingController();
+
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.text=widget.action.arguments[0];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        children: [
+          Text(
+            'Custom Action',
+            style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          TextField(
+            style: AppFontStyle.roboto(14),
+            maxLines: 10,
+            controller: _controller,
+            onChanged: (value){
+              widget.action.arguments[0]=value;
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+
+
 }
 
 class ReplaceCurrentPageInStackActionWidget extends StatelessWidget {

@@ -57,6 +57,9 @@ class StackActionCubit extends Cubit<StackActionState> {
         ComponentOperationCubit.addVariables(uiScreen);
         break;
       case StackOperation.pop:
+        if(navigationStack.isEmpty){
+          throw Exception('Navigation Stack is Empty !! ');
+        }
         final last=navigationStack.removeLast();
         ComponentOperationCubit.removeVariables(last.uiScreen);
         int index=navigationStack.length;

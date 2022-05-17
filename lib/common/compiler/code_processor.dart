@@ -9,6 +9,7 @@ import '../../models/function_model.dart';
 import '../../models/other_model.dart';
 import '../../models/variable_model.dart';
 import '../../ui/models_view.dart';
+import '../logger.dart';
 
 Color? colorToHex(String hexString) {
   if (hexString.length < 7) {
@@ -118,9 +119,30 @@ class CodeProcessor {
       return math.cos(arguments[0]);
     }, ''' ''');
 
-    functions['print'] = FunctionModel<dynamic>('print', (arguments) {
+    functions['print'] = FunctionModel<String>('print', (arguments) {
       return arguments[0].toString();
     }, ''' ''');
+
+    functions['showSnackbar'] = FunctionModel<dynamic>('showSnackbar', (arguments) {
+      if(arguments.length<2){
+        error=true;
+        errorMessage='showSnackbar requires 2 arguments!!';
+      return null;
+      }
+      return 'api:snackbar|${arguments[0]}|${arguments[1]}';
+    }, ''' ''');
+    functions['newPage'] = FunctionModel<dynamic>('newPage', (arguments) {
+      if(arguments.isEmpty){
+        error=true;
+        errorMessage='newPage requires 1 argument!!';
+        return null;
+      }
+      return 'api:newpage|${arguments[0]}';
+    }, ''' ''');
+    functions['goBack'] = FunctionModel<dynamic>('goBack', (arguments) {
+      return 'api:goback|';
+    }, ''' ''');
+
   }
 
   void addVariable(String name, VariableModel value) {
@@ -156,7 +178,6 @@ class CodeProcessor {
     if (valueStack.isEmpty) {
       error = true;
       errorMessage = 'ValueStack is Empty, syntax error !!';
-      debugPrint('error 1');
       return;
     } else {
       b = valueStack.peek!;
@@ -165,7 +186,6 @@ class CodeProcessor {
     if (valueStack.isEmpty && t != '-' && t != '++') {
       error = true;
       errorMessage = 'Not enough values, syntax error !!';
-      debugPrint('error 2');
       return;
     } else if (valueStack.isNotEmpty) {
       a = valueStack.peek!;
@@ -233,6 +253,8 @@ class CodeProcessor {
             dataType = DataType.int;
           } else if (b is String) {
             dataType = DataType.string;
+          } else if (b is bool) {
+            dataType = DataType.bool;
           } else {
             throw Exception('Invalid datatype of variable');
           }
@@ -241,10 +263,10 @@ class CodeProcessor {
         r = null;
         break;
       case '++':
-        if (variables.containsKey(a)) {
-          variables[a]?.value = variables[a]?.value + 1;
-        } else if (modelVariables.containsKey(a)) {
-          modelVariables[a] = modelVariables[a] + 1;
+        if (variables.containsKey(b)) {
+          variables[b]!.value = variables[b]!.value! + 1;
+        } else if (modelVariables.containsKey(b)) {
+          modelVariables[b] = modelVariables[b] + 1;
         }
         r = null;
         break;
@@ -280,7 +302,7 @@ class CodeProcessor {
     valueStack.push(r);
   }
 
-  String? processString(String code) {
+  String? processString(String code, {void Function(String)? consoleCallback, void Function(String)? onError}) {
     int si = -1, ei = -1;
 
     List<int> startList = [];
@@ -301,14 +323,13 @@ class CodeProcessor {
         }
       }
     }
-    print('list ===== $startList $endList');
     if (startList.length != endList.length) {
       error = true;
       errorMessage = 'Invalid {{ syntax !!';
     }
     while (startList.isNotEmpty) {
-      si=startList.removeAt(0);
-      ei=endList.removeAt(0);
+      si = startList.removeAt(0);
+      ei = endList.removeAt(0);
       if (si + 2 == ei) {
         error = true;
         errorMessage = 'No expression between {{ and }} !!';
@@ -316,14 +337,14 @@ class CodeProcessor {
         // return CodeOutput.right('No variables');
       }
       final variableName = code.substring(si + 2, ei);
-      final value = process<String>(variableName, resolve: true);
+      final value = process<String>(variableName, resolve: true, consoleCallback: consoleCallback, onError: onError);
       if (value != null) {
-        final k1='{{$variableName}}';
-        final v1=value.toString();
+        final k1 = '{{$variableName}}';
+        final v1 = value.toString();
         code = code.replaceAll(k1, v1);
-        for(int i=0;i<startList.length;i++){
-          startList[i]+=v1.length-k1.length;
-          endList[i]+=v1.length-k1.length;
+        for (int i = 0; i < startList.length; i++) {
+          startList[i] += v1.length - k1.length;
+          endList[i] += v1.length - k1.length;
         }
       } else {
         return code; //CodeOutput.right('No varaible with name $variableName')
@@ -333,27 +354,45 @@ class CodeProcessor {
   }
 
   void executeCode(final String input, void Function(String) consoleCallback, void Function(String) onError) {
-    final List<String> instructions = CodeOperations.trim(input.replaceAll('\n', ''))!.split(';');
-    for (final instruction in instructions) {
-      final output = process(instruction);
-      if (error) {
-        onError.call(errorMessage);
+    final trimCode = CodeOperations.trim(input.replaceAll('\n', ''))!;
+    int count = 0;
+    int lastPoint = 0;
+    for (int i = 0; i < trimCode.length; i++) {
+      if (trimCode[i] == '{' || trimCode[i] == '[' || trimCode[i] == '(') {
+        count++;
+      } else if (trimCode[i] == '}' || trimCode[i] == ']' || trimCode[i] == ')') {
+        count--;
       }
-      if (output != null) {
-        consoleCallback(output.toString());
+      if (count == 0 && trimCode[i] == ';') {
+        final output = process(trimCode.substring(lastPoint, i), consoleCallback: consoleCallback, onError: onError);
+        lastPoint = i + 1;
+        if (error) {
+          onError.call(errorMessage);
+        }
+        if (output != null) {
+          consoleCallback(output.toString());
+        }
       }
     }
   }
 
-  dynamic process<T>(final String input, {bool resolve = false}) {
+  dynamic process<T>(final String input,
+      {bool resolve = false, void Function(String)? consoleCallback, void Function(String)? onError}) {
     final Stack2<dynamic> valueStack = Stack2<dynamic>();
     final Stack2<String> operatorStack = Stack2<String>();
     String number = '';
     String variable = '';
     error = false;
+    if (input.length >= 3 &&
+        input[0] == '{' &&
+        input[1] != '{' &&
+        input[input.length - 1] == '}' &&
+        input[input.length - 2] != '}') {
+      return executeCode(input, consoleCallback!, onError!);
+    }
     if ((T == String || T == ImageData || isString(input)) && !resolve) {
       if (T != String && T != ImageData) {
-        return processString(input.substring(1, input.length - 1));
+        return processString(input.substring(1, input.length - 1), consoleCallback: consoleCallback, onError: onError);
       }
       return processString(input);
     } else if (T == Color && input.startsWith('#')) {
@@ -386,7 +425,7 @@ class CodeProcessor {
         }
       } else {
         if (variable.isNotEmpty && ch == '('.codeUnits[0]) {
-          if (!functions.containsKey(variable)) {
+          if (!functions.containsKey(variable) && variable != 'while' && variable != 'if') {
             error = true;
             errorMessage = 'Function $variable is not defined!!';
             return null;
@@ -397,11 +436,40 @@ class CodeProcessor {
               count++;
             }
             if (count == 0 && input[m] == ')') {
-              if (functions[variable] == null) {
-                return null;
+              final argumentList = CodeOperations.splitByComma(input.substring(n + 1, m));
+              if (variable == 'while') {
+                if (argumentList.length == 2) {
+                  final innerCode = argumentList[1].substring(1, argumentList[1].length - 1);
+                  int count = 0;
+                  while (process(argumentList[0]) == true) {
+                    executeCode(innerCode, consoleCallback!, onError!);
+                    count++;
+                    if (count > 1000) {
+                      onError.call('While loop goes infinite!!');
+                      break;
+                    }
+                  }
+                } else {
+                  error = true;
+                  errorMessage = 'Invalid while loop syntax!!';
+                  return;
+                }
+                variable = '';
+                n = m;
+                break;
+              } else if (variable == 'if') {
+                if (argumentList.length > 1) {
+                  if (process(argumentList[0]) == true) {
+                    executeCode(argumentList[1].substring(1, argumentList[1].length - 1), consoleCallback!, onError!);
+                  } else if (argumentList.length > 2) {
+                    executeCode(argumentList[2].substring(1, argumentList[2].length - 1), consoleCallback!, onError!);
+                  }
+                }
+                variable = '';
+                n = m;
+                break;
               }
-              final argument = CodeOperations.splitByComma(input.substring(n + 1, m));
-              final output = functions[variable]!.perform.call(argument.map((e) => process(e)).toList());
+              final output = functions[variable]!.perform.call(argumentList.map((e) => process(e)).toList());
               valueStack.push(output);
 
               variable = '';
@@ -423,11 +491,11 @@ class CodeProcessor {
         }
         if (isOperator(ch)) {
           String operator = input[n];
-          if (n - 1 > 0 && isOperator(input[n - 1].codeUnits.first)) {
+          if (n - 1 >= 0 && isOperator(input[n - 1].codeUnits.first)) {
             operator = input[n - 1] + operator;
             operatorStack.pop();
           }
-          if (operator == '=' && variable.isNotEmpty) {
+          if ((operator == '++' || operator == '=') && variable.isNotEmpty) {
             valueStack.push(variable);
             variable = '';
           }
@@ -444,7 +512,8 @@ class CodeProcessor {
           if (index == -1) {
             return null;
           }
-          final innerProcess = process<T>(input.substring(n + 1, index), resolve: true);
+          final innerProcess = process<T>(input.substring(n + 1, index),
+              resolve: true, consoleCallback: consoleCallback, onError: onError);
           if (innerProcess != null) {
             valueStack.push(innerProcess);
             n = index;
@@ -453,6 +522,7 @@ class CodeProcessor {
             return null;
           }
         }
+
         if (variable.isNotEmpty) {
           if (!resolveVariable(variable, valueStack)) {
             return null;
@@ -475,7 +545,7 @@ class CodeProcessor {
       variable = '';
     }
 
-    debugPrint('stacks $valueStack ${operatorStack._list}');
+    logger('stacks $valueStack ${operatorStack._list}');
     // Empty out the operator stack at the end of the input
     while (operatorStack.isNotEmpty) {
       final String topOperator = operatorStack.peek!;

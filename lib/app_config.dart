@@ -5,7 +5,7 @@ abstract class AppConfig{
 }
 class DevelopmentConfig extends AppConfig{
   @override
-  bool get loggerEnable => true;
+  bool get loggerEnable => false;
 }
 
 class ProductionConfig extends AppConfig {

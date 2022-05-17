@@ -812,7 +812,7 @@ abstract class ClickableHolder extends Holder with Clickable {
   @override
   Component clone(Component? parent, {bool cloneParam = false}) {
     final cloneComp = super.clone(parent, cloneParam: cloneParam);
-    (cloneComp as Clickable).actionList.addAll(actionList);
+    (cloneComp as Clickable).actionList=actionList;
     return cloneComp;
   }
 }
@@ -832,13 +832,13 @@ abstract class ClickableComponent extends Component with Clickable {
   @override
   Component clone(Component? parent, {bool cloneParam = false}) {
     final cloneComp = super.clone(parent, cloneParam: cloneParam);
-    (cloneComp as Clickable).actionList.addAll(actionList);
+    (cloneComp as Clickable).actionList=actionList;
     return cloneComp;
   }
 }
 
 mixin Clickable {
-  final List<ActionModel> actionList = [];
+  List<ActionModel> actionList = [];
 
   void perform(BuildContext context,{Map<String,dynamic>? arguments}) {
     if (RuntimeProvider.of(context) == RuntimeMode.run) {
@@ -847,6 +847,7 @@ mixin Clickable {
       }
     }
   }
+
 
   String get clickableParamName;
 
@@ -863,6 +864,7 @@ mixin Clickable {
     return code;
   }
 
+
   List<String>? getParams(final String code) {
     if (code.isEmpty) {
       return null;
@@ -876,7 +878,9 @@ mixin Clickable {
   }
 
   void fromMetaCodeToAction(String code, final FlutterProject? flutterProject) {
-    if (code.startsWith('NPISA')) {
+    if(code.startsWith('CA')){
+      actionList.add(CustomAction());
+    }if (code.startsWith('NPISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
       actionList
           .add(NewPageInStackAction(getUIScreenWithName(name, flutterProject)));

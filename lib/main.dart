@@ -19,18 +19,27 @@ void main() async {
   setPathUrlStrategy();
   await Preferences.load();
   final CodeProcessor processor=CodeProcessor();
+  // i=0;
+  // while(i<3,{
+  // print('..... {{i}}');
+  // i=i+1;
+  // });
    processor.executeCode('''
-   b=math.sin(pi/2);
-   r=randInt(100);
-   print("hello {{b}} {{ifElse(r%2==0,"{{r}} is Even","{{r}} is Odd")}}");
+   a=randInt(100);
+   if(a>50,{
+   print("a is greater than 50");
+   },{
+   print("a is less than 50");
+   });
+   print("hello {{a}}");
   ''',(message)
    {
-     logger('console out :: $message');
+     print(':: => $message');
    },(error)
    {
-     logger('Error :: $error ');
+     print('XX => $error ');
    });
-  // runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

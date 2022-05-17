@@ -755,7 +755,7 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                                     }
                                   },
                                   child: ActionModelWidget(
-                                    component: _componentSelectionCubit
+                                    clickable: _componentSelectionCubit
                                         .currentSelected
                                         .propertySelection as Clickable,
                                   ),
