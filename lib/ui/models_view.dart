@@ -13,7 +13,7 @@ import '../cubit/model/model_cubit.dart';
 import '../models/local_model.dart';
 import '../models/variable_model.dart';
 
-enum DataType { int, double, string, bool, dynamic }
+enum DataType { int, double, string , bool , dynamic }
 
 class ModelBox extends StatefulWidget {
   final OverlayEntry overlayEntry;
@@ -27,6 +27,7 @@ class ModelBox extends StatefulWidget {
     required this.overlayEntry,
     required this.componentOperationCubit,
     required this.componentCreationCubit,
+
     required this.componentSelectionCubit,
   }) : super(key: key);
 
@@ -89,7 +90,8 @@ class _ModelBoxState extends State<ModelBox> {
                       children: [
                         Text(
                           'Models',
-                          style: AppFontStyle.roboto(15, fontWeight: FontWeight.bold),
+                          style: AppFontStyle.roboto(15,
+                              fontWeight: FontWeight.bold),
                         ),
                         InkWell(
                           borderRadius: BorderRadius.circular(10),
@@ -116,15 +118,12 @@ class _ModelBoxState extends State<ModelBox> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              EditableTextView(
-                                  key: ObjectKey(model.name),
-                                  text: model.name,
-                                  onChange: (data) {
-                                    setState(() {
-                                      model.name = data;
-                                    });
-                                    _modelCubit.changed(model);
-                                  }),
+                              EditableTextView(key:ObjectKey(model.name),text: model.name, onChange: (data){
+                                setState(() {
+                                  model.name=data;
+                                });
+                                _modelCubit.changed(model);
+                              }),
                               const SizedBox(
                                 height: 10,
                               ),
@@ -133,23 +132,24 @@ class _ModelBoxState extends State<ModelBox> {
                                 height: 10,
                               ),
                               ...model.variables.map((variable) => Container(
-                                    padding: const EdgeInsets.all(5),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          variable.name,
-                                          style: AppFontStyle.roboto(13),
-                                        ),
-                                        const SizedBox(
-                                          width: 20,
-                                        ),
-                                        Text(
-                                          variable.dataType.name,
-                                          style: AppFontStyle.roboto(13, color: AppColors.theme),
-                                        ),
-                                      ],
+                                padding: const EdgeInsets.all(5),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      variable.name,
+                                      style: AppFontStyle.roboto(13),
                                     ),
-                                  ))
+                                    const SizedBox(
+                                      width: 20,
+                                    ),
+                                    Text(
+                                      variable.dataType.name,
+                                      style: AppFontStyle.roboto(13,
+                                          color: AppColors.theme),
+                                    ),
+                                  ],
+                                ),
+                              ))
                             ],
                           ),
                         );
@@ -167,15 +167,12 @@ class _ModelBoxState extends State<ModelBox> {
                                 //   style: AppFontStyle.roboto(14,
                                 //       fontWeight: FontWeight.bold),
                                 // ),
-                                EditableTextView(
-                                    key: ObjectKey(model.name),
-                                    text: model.name,
-                                    onChange: (data) {
-                                      setState(() {
-                                        model.name = data;
-                                      });
-                                      _modelCubit.changed(model);
-                                    }),
+                                EditableTextView(key:ObjectKey(model.name),text: model.name, onChange: (data){
+                                  setState(() {
+                                    model.name=data;
+                                  });
+                                  _modelCubit.changed(model);
+                                }),
                                 const SizedBox(
                                   height: 10,
                                 ),
@@ -215,7 +212,9 @@ class ModelValues extends StatelessWidget {
           .map((valueList) => Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
-                  color: valueList.key % 2 == 0 ? const Color(0xfff2f2f2) : const Color(0xfff9f9f9),
+                  color: valueList.key % 2 == 0
+                      ? const Color(0xfff2f2f2)
+                      : const Color(0xfff9f9f9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Stack(
@@ -237,7 +236,8 @@ class ModelValues extends StatelessWidget {
                                     ),
                                     Text(
                                       value.value.toString(),
-                                      style: AppFontStyle.roboto(13, color: AppColors.theme),
+                                      style: AppFontStyle.roboto(13,
+                                          color: AppColors.theme),
                                     ),
                                   ],
                                 ),
@@ -251,8 +251,12 @@ class ModelValues extends StatelessWidget {
                         child: InkWell(
                             onTap: () {
                               model.removeValues(valueList.key);
-                              BlocProvider.of<ModelCubit>(context, listen: false).changed(model);
-                              BlocProvider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
+                              BlocProvider.of<ModelCubit>(context,
+                                      listen: false)
+                                  .changed(model);
+                              BlocProvider.of<ComponentCreationCubit>(context,
+                                      listen: false)
+                                  .changedComponent();
                             },
                             child: const Icon(
                               Icons.delete,
@@ -284,20 +288,18 @@ class _AddModelValueState extends State<AddModelValue> {
   @override
   void initState() {
     super.initState();
+    _controllers = List.generate(
+        widget.model.variables.length, (index) => TextEditingController());
+
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _controllers = widget.model.variables.map((variable) => TextEditingController()).toList();
-  }
-  @override
   Widget build(BuildContext context) {
-    if(_controllers.length != widget.model.variables.length) {
-      _controllers = widget.model.variables.map((variable) => TextEditingController()).toList();
-    }
+
     return Container(
-      decoration: BoxDecoration(color: const Color(0xfff2f2f2), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+          color: const Color(0xfff2f2f2),
+          borderRadius: BorderRadius.circular(8)),
       alignment: Alignment.centerLeft,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,7 +315,8 @@ class _AddModelValueState extends State<AddModelValue> {
                     children: [
                       Text(
                         entry.value.name,
-                        style: AppFontStyle.roboto(14, fontWeight: FontWeight.bold),
+                        style: AppFontStyle.roboto(14,
+                            fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(
                         width: 10,
@@ -325,7 +328,8 @@ class _AddModelValueState extends State<AddModelValue> {
                             contentPadding: const EdgeInsets.all(5),
                             hintText: entry.value.name,
                             enabledBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black, width: 1),
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 1),
                             ),
                           ),
                         ),
@@ -335,8 +339,12 @@ class _AddModelValueState extends State<AddModelValue> {
                         child: InkWell(
                             onTap: () {
                               widget.model.removeVariable(entry.key);
-                              BlocProvider.of<ModelCubit>(context, listen: false).changed(widget.model);
-                              BlocProvider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
+                              BlocProvider.of<ModelCubit>(context,
+                                      listen: false)
+                                  .changed(widget.model);
+                              BlocProvider.of<ComponentCreationCubit>(context,
+                                      listen: false)
+                                  .changedComponent();
                             },
                             child: const Icon(
                               Icons.delete,
@@ -353,51 +361,34 @@ class _AddModelValueState extends State<AddModelValue> {
             height: 5,
           ),
           ElevatedButton(
-            onPressed: () {
-              final valueList = _controllers.asMap().entries.map((e) {
-                if (e.value.text.isEmpty) {
-                  return null;
+              onPressed: () {
+                final valueList = _controllers.asMap().entries.map((e) {
+                  if (e.value.text.isEmpty) {
+                    return null;
+                  }
+                  switch (widget.model.variables[e.key].dataType) {
+                    case DataType.int:
+                      return int.tryParse(e.value.text);
+                    case DataType.double:
+                      return double.tryParse(e.value.text);
+                    case DataType.string:
+                      return e.value.text;
+                  }
+                }).toList();
+                if (!valueList.contains(null)) {
+                  widget.model.values.add(valueList);
+                  BlocProvider.of<ModelCubit>(context, listen: false)
+                      .changed(widget.model);
+
+                  BlocProvider.of<ComponentCreationCubit>(context,
+                          listen: false)
+                      .changedComponent();
                 }
-                final val = e.value.text;
-                late final dynamic value;
-                switch (widget.model.variables[e.key].dataType) {
-                  case DataType.int:
-                    value = int.tryParse(val);
-                    break;
-                  case DataType.double:
-                    value = double.tryParse(val);
-                    break;
-                  case DataType.string:
-                    value = val;
-                    break;
-                  case DataType.bool:
-                    value = val == 'true';
-                    break;
-                  case DataType.dynamic:
-                    if (double.tryParse(val) != null) {
-                      value = double.tryParse(val);
-                    } else if (int.tryParse(val) != null) {
-                      value = int.tryParse(val);
-                    } else if (val == 'true' || val == 'false') {
-                      value = val == 'true';
-                    } else {
-                      value = val;
-                    }
-                    break;
-                }
-                return value;
-              }).toList();
-              if (!valueList.contains(null)) {
-                widget.model.values.add(valueList);
-                BlocProvider.of<ModelCubit>(context, listen: false).changed(widget.model);
-                BlocProvider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
-              }
-            },
-            child: Text(
-              'ADD',
-              style: AppFontStyle.roboto(14, color: Colors.white),
-            ),
-          )
+              },
+              child: Text(
+                'ADD',
+                style: AppFontStyle.roboto(14, color: Colors.white),
+              ))
         ],
       ),
     );
@@ -440,7 +431,8 @@ class _AddVariableTileState extends State<AddVariableTile> {
               padding: const EdgeInsets.all(5.0),
               child: Text(
                 ' of type ',
-                style: AppFontStyle.roboto(13, color: Colors.black, fontWeight: FontWeight.w600),
+                style: AppFontStyle.roboto(13,
+                    color: Colors.black, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -457,7 +449,8 @@ class _AddVariableTileState extends State<AddVariableTile> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           e.name,
-                          style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                          style: AppFontStyle.roboto(14,
+                              fontWeight: FontWeight.w500),
                         ),
                       ),
                     ),
@@ -490,11 +483,15 @@ class _AddVariableTileState extends State<AddVariableTile> {
                 //     .addVariable(ComponentOperationCubit
                 //     .codeProcessor.variables[name]!);
 
-                widget.model.addVariable(DynamicVariableModel(_controller1.text, dataType));
-                BlocProvider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
-                BlocProvider.of<ComponentSelectionCubit>(context, listen: false).emit(ComponentSelectionChange());
+                widget.model.addVariable(
+                    DynamicVariableModel(_controller1.text, dataType));
+                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                    .changedComponent();
+                BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+                    .emit(ComponentSelectionChange());
 
-                BlocProvider.of<ModelCubit>(context, listen: false).changed(widget.model);
+                BlocProvider.of<ModelCubit>(context, listen: false)
+                    .changed(widget.model);
 
                 setState(() {});
                 _controller1.text = '';
@@ -512,6 +509,7 @@ class _AddVariableTileState extends State<AddVariableTile> {
 }
 
 class AddModelTile extends StatefulWidget {
+
   AddModelTile({Key? key}) : super(key: key);
 
   @override
@@ -546,10 +544,15 @@ class _AddModelTileState extends State<AddModelTile> {
             onPressed: () {
               if (_controller.text.isNotEmpty) {
                 final model = LocalModel(_controller.text);
-                BlocProvider.of<ComponentOperationCubit>(context, listen: false).models.add(model);
-                BlocProvider.of<ComponentCreationCubit>(context, listen: false).changedComponent();
-                BlocProvider.of<ComponentSelectionCubit>(context, listen: false).emit(ComponentSelectionChange());
-                BlocProvider.of<ModelCubit>(context, listen: false).changed(model, add: true);
+                BlocProvider.of<ComponentOperationCubit>(context, listen: false)
+                    .models
+                    .add(model);
+                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                    .changedComponent();
+                BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+                    .emit(ComponentSelectionChange());
+                BlocProvider.of<ModelCubit>(context, listen: false)
+                    .changed(model, add: true);
                 _controller.text = '';
               }
             },

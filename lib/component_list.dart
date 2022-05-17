@@ -81,7 +81,9 @@ final componentList = <String, Component Function()>{
   'GridView.Builder': () => CGridViewBuilder(),
   'NotRecognizedWidget': () => CNotRecognizedWidget(),
   'DropDownButton': () => CDropDownButton(),
-  'DropDownMenuItem': () => CDropDownMenuItem(),
+  'DropDownMenuItem': () => CDropdownMenuItem(),
+  'DropdownButton': () => CDropDownButton(),
+  'DropdownMenuItem': () => CDropdownMenuItem(),
 };
 
 class CMaterialApp extends CustomNamedHolder {
@@ -174,7 +176,7 @@ class CPlaceholder extends Component {
   }
 }
 
-class CRadio extends Component {
+class CRadio extends ClickableComponent {
   CRadio()
       : super('Radio', [
           Parameters.shortStringParameter()
@@ -188,11 +190,21 @@ class CRadio extends Component {
   @override
   Widget create(BuildContext context) {
     return Radio<String>(
-      onChanged: (bool) {},
+      onChanged: (value) {
+        perform(context,arguments: {'value':value});
+      },
       value: parameters[0].value,
       groupValue: parameters[1].value,
     );
   }
+
+
+
+  @override
+  String get clickableParamName => 'onChanged';
+
+  @override
+  List<String> get eventParams => ['value'];
 }
 
 class CSwitch extends Component {
@@ -731,7 +743,7 @@ class CScaffold extends CustomNamedHolder {
 
 class CDropDownButton extends CustomNamedHolder {
   CDropDownButton()
-      : super('DropDownButton', [], {
+      : super('DropdownButton', [], {
           'icon': null,
         }, [
           'items'
@@ -858,9 +870,9 @@ class CListView extends MultiHolder {
   }
 }
 
-class CDropDownMenuItem extends ClickableHolder {
-  CDropDownMenuItem()
-      : super('DropDownMenuItem', [
+class CDropdownMenuItem extends ClickableHolder {
+  CDropdownMenuItem()
+      : super('DropdownMenuItem', [
           Parameters.enableParameter()..withChangeNamed('enabled'),
           Parameters.textParameter()
             ..withNamedParamInfoAndSameDisplayName('value')

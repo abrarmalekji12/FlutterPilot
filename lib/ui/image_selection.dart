@@ -32,7 +32,7 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       widget.componentOperationCubit.loadAllImages().then((imageList) {
         setState(() {
           imageDataList = imageList;

@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:highlight/languages/dart.dart';
+import '../common/download_utils.dart';
+import '../common/logger.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -62,7 +64,7 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
                         highlightColor: Colors.blueAccent.shade200,
                         borderRadius: BorderRadius.circular(8),
                         onTap: () {
-                          downloadImages();
+                          downloadProject(screen,code);
                         },
                         child: Card(
                           shape: RoundedRectangleBorder(
@@ -83,7 +85,7 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
                                 ),
                                 const Spacer(),
                                 Text(
-                                  'Download All Images',
+                                  'Download Project',
                                   style: AppFontStyle.roboto(13,
                                       color: Colors.white),
                                 ),
@@ -223,17 +225,32 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
     //     .format(widget.componentOperationCubit.flutterProject!.code(screen)));
     // return  code=_dartFormatter.format(widget.componentOperationCubit.flutterProject!.code(screen));
     return code = _dartFormatter
-        .format(code=widget.componentOperationCubit.flutterProject!.code(screen));
+        .format(code=screen.code(widget.componentOperationCubit.flutterProject!));
   }
 
-  void downloadImages() {
+  void downloadProject(UIScreen screen,String code) {
     final images =
         widget.componentOperationCubit.flutterProject?.getAllUsedImages() ?? [];
+   Map<String,dynamic> imageToBase64Map = {};
     for (final img in images) {
-      AnchorElement(href: 'data:image/png;base64,${base64Encode(img.bytes!)}')
-        ..setAttribute('download', img.imageName!)
-        ..click();
+      if(img.bytes!=null) {
+        imageToBase64Map['asset/images/'+img.imageName!] = img.bytes!;
+      }
     }
+final DartFormatter formatter=DartFormatter();
+    for(final UIScreen uiScreen in widget.componentOperationCubit.flutterProject?.uiScreens ?? []) {
+      final name= uiScreen == widget.componentOperationCubit.flutterProject?.mainScreen?'main':uiScreen.name;
+      if(uiScreen != screen) {
+          imageToBase64Map['lib/$name.dart'] = formatter.format(
+              uiScreen.code(widget.componentOperationCubit.flutterProject!));
+
+        }
+      else{
+        imageToBase64Map['lib/$name.dart'] = code;
+      }
+    }
+
+    DownloadUtils.download(imageToBase64Map, widget.componentOperationCubit.flutterProject!.name);
   }
 }
 

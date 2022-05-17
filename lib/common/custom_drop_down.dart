@@ -106,7 +106,7 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
       );
     });
     html.window.onResize.listen((event) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         overlayEntry?.markNeedsBuild();
       });
     });

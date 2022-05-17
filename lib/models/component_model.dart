@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../runtime_provider.dart';
@@ -109,6 +110,7 @@ abstract class Component {
             (this as BuilderComponent).model = flutterProject
                 ?.currentScreen.models
                 .firstWhereOrNull((element) => element.name == fieldList[1]);
+            logger('model setted ${(this as BuilderComponent).model?.name}');
             break;
           case 'len':
             (this as BuilderComponent)
@@ -151,7 +153,7 @@ abstract class Component {
 
   static Component? fromCode(
       String? code, final FlutterProject flutterProject) {
-    if (code == null||code.isEmpty) {
+    if (code == null || code.isEmpty) {
       return null;
     }
     final String name = code.substring(0, code.indexOf('(', 0));
@@ -227,15 +229,27 @@ abstract class Component {
       case 4:
         final List<String> nameList =
             (comp as CustomNamedHolder).childMap.keys.toList();
+        final List<String> childrenNameList = (comp).childrenMap.keys.toList();
+
         final removeList = [];
         for (int i = 0; i < parameterCodes.length; i++) {
           final colonIndex = parameterCodes[i].indexOf(':');
+          print(parameterCodes[i]);
           final name = parameterCodes[i].substring(0, colonIndex);
           if (nameList.contains(name)) {
             comp.childMap[name] = Component.fromCode(
                 parameterCodes[i].substring(colonIndex + 1), flutterProject)!
               ..setParent(comp);
             nameList.remove(name);
+            removeList.add(parameterCodes[i]);
+          } else if (childrenNameList.contains(name)) {
+            final childrenCode = CodeOperations.splitByComma(
+                parameterCodes[i].substring(colonIndex + 1));
+            comp.childrenMap[name]!.addAll(
+              childrenCode.map(
+                (e) => Component.fromCode(e, flutterProject)!..setParent(comp),
+              ),
+            );
             removeList.add(parameterCodes[i]);
           }
         }
@@ -278,6 +292,10 @@ abstract class Component {
       if (custom != null) {
         return custom.createInstance(null);
       } else {
+        Fluttertoast.showToast(
+            msg:
+                'No widget with name $compName found in code $code, please clear cookies and reload App.',
+            timeInSecForIosWeb: 5);
         return CNotRecognizedWidget()..name = compName;
       }
     }
@@ -292,7 +310,7 @@ abstract class Component {
 
   Widget build(BuildContext context) {
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
       });
     }
@@ -305,7 +323,7 @@ abstract class Component {
 
   Widget buildWithoutKey(BuildContext context) {
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
       });
     }
@@ -335,8 +353,6 @@ abstract class Component {
     return tracer;
   }
 
-
-
   Component? getRootCustomComponent(FlutterProject flutterProject) {
     Component? _tracer = this, _root = this;
     final List<Component> tree = [];
@@ -347,12 +363,11 @@ abstract class Component {
       _tracer = _tracer.parent;
     }
 
-    for(final custom in flutterProject.customComponents)
-      {
-        if(custom.root == _root){
-          return custom;
-        }
+    for (final custom in flutterProject.customComponents) {
+      if (custom.root == _root) {
+        return custom;
       }
+    }
     return flutterProject.rootComponent;
   }
 
@@ -467,8 +482,9 @@ abstract class Component {
 
   String parametersCode(bool clean) {
     String middle = '';
-    if(this is Clickable&&clean){
-      middle+='${(this as Clickable).clickableParamName}:(){${(this as Clickable).eventCode}},';
+    if (this is Clickable && clean) {
+      middle +=
+          '${(this as Clickable).clickableParamName}:(${(this as Clickable).eventParams.join(',')}){${(this as Clickable).eventCode}},';
     }
     for (final parameter in parameters) {
       final paramCode = parameter.code(clean);
@@ -560,14 +576,14 @@ abstract class Component {
   List<Component> getAllClones() {
     final List<Component> clones = [];
     for (final clone in cloneElements) {
-        clones.add(clone);
-        clones.addAll(clone.getAllClones());
-      }
+      clones.add(clone);
+      clones.addAll(clone.getAllClones());
+    }
     return clones;
   }
 
   Component? getOriginal() {
-    if(cloneOf?.cloneOf!=null) {
+    if (cloneOf?.cloneOf != null) {
       return cloneOf?.getOriginal();
     }
     return cloneOf;
@@ -782,7 +798,6 @@ abstract class Holder extends Component {
 }
 
 abstract class ClickableHolder extends Holder with Clickable {
-
   ClickableHolder(String name, List<Parameter> parameters)
       : super(name, parameters);
 
@@ -793,9 +808,10 @@ abstract class ClickableHolder extends Holder with Clickable {
       child: super.build(context),
     );
   }
+
   @override
   Component clone(Component? parent, {bool cloneParam = false}) {
-    final cloneComp=super.clone(parent, cloneParam: cloneParam);
+    final cloneComp = super.clone(parent, cloneParam: cloneParam);
     (cloneComp as Clickable).actionList.addAll(actionList);
     return cloneComp;
   }
@@ -812,9 +828,10 @@ abstract class ClickableComponent extends Component with Clickable {
       child: super.build(context),
     );
   }
+
   @override
   Component clone(Component? parent, {bool cloneParam = false}) {
-    final cloneComp=super.clone(parent, cloneParam: cloneParam);
+    final cloneComp = super.clone(parent, cloneParam: cloneParam);
     (cloneComp as Clickable).actionList.addAll(actionList);
     return cloneComp;
   }
@@ -823,21 +840,24 @@ abstract class ClickableComponent extends Component with Clickable {
 mixin Clickable {
   final List<ActionModel> actionList = [];
 
-  void perform(BuildContext context) {
+  void perform(BuildContext context,{Map<String,dynamic>? arguments}) {
     if (RuntimeProvider.of(context) == RuntimeMode.run) {
       for (final action in actionList) {
         action.perform(context);
       }
     }
   }
+
   String get clickableParamName;
 
+  List<String> get eventParams => [];
+
   String get eventCode {
-    String code='';
-    for(final action in actionList){
-      final actionCode=action.code();
-      if(actionCode.isNotEmpty) {
-        code+=actionCode+';\n';
+    String code = '';
+    for (final action in actionList) {
+      final actionCode = action.code();
+      if (actionCode.isNotEmpty) {
+        code += actionCode + ';\n';
       }
     }
     return code;
@@ -972,6 +992,11 @@ abstract class CustomNamedHolder extends Component {
         }
         child.searchTappedComponent(offset, components);
       }
+      for (final children in childrenMap.values) {
+        for (final child in children) {
+          child.searchTappedComponent(offset, components);
+        }
+      }
       components.add(this);
       return;
     }
@@ -989,6 +1014,14 @@ abstract class CustomNamedHolder extends Component {
       if (childMap[child] != null) {
         childrenCode += '$child:${childMap[child]!.code(clean: clean)},'
             .replaceAll(',,', ',');
+      }
+    }
+
+    for (final child in childrenMap.keys) {
+      if (childrenMap[child]?.isNotEmpty ?? false) {
+        childrenCode +=
+            '$child:[${childrenMap[child]!.map((e) => (e.code(clean: clean) + ',').replaceAll(',,', ',')).join('')}],'
+                .replaceAll(',,', ',');
       }
     }
     return '$name($middle$childrenCode)';
@@ -1037,16 +1070,17 @@ abstract class CustomNamedHolder extends Component {
   int get childCount => -2;
 }
 
-class CustomComponentImpl extends Component{
+class CustomComponentImpl extends Component {
   CustomComponent customComponent;
 
-  CustomComponentImpl(this.customComponent) : super(customComponent.name,[]);
+  CustomComponentImpl(this.customComponent) : super(customComponent.name, []);
 
   @override
   Widget create(BuildContext context) {
     return customComponent.root?.clone(parent).create(context) ?? Container();
   }
 }
+
 abstract class CustomComponent extends Component {
   String? extensionName;
   Component? root;
@@ -1066,11 +1100,9 @@ abstract class CustomComponent extends Component {
 
   @override
   Widget create(BuildContext context) {
-    return Builder(
-      builder: (context) {
-        return root?.build(context) ?? Container();
-      }
-    );
+    return Builder(builder: (context) {
+      return root?.build(context) ?? Container();
+    });
   }
 
   void updateRoot(Component? root) {
@@ -1091,11 +1123,11 @@ abstract class CustomComponent extends Component {
   @override
   Widget build(BuildContext context) {
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
       });
     }
-    return ComponentWidget(key:key(context), child: create(context));
+    return ComponentWidget(key: key(context), child: create(context));
   }
 
   @override
@@ -1112,7 +1144,7 @@ abstract class CustomComponent extends Component {
       final oldObject = objects[i];
       objects[i] = clone(objects[i].parent) as CustomComponent;
       replaceChildOfParent(oldObject, objects[i]);
- }
+    }
   }
 
   void replaceChildOfParent(Component comOld, Component comp) {

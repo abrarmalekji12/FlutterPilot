@@ -217,7 +217,7 @@ class SimpleParameterWidget extends StatelessWidget {
     switch (parameter.inputType) {
       case ParamInputType.longText:
       case ParamInputType.text:
-        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           _textEditingController.text = parameter.compiler.code.isNotEmpty
               ? parameter.compiler.code
               : '${parameter.getValue() ?? ''}';
@@ -301,7 +301,7 @@ class SimpleParameterWidget extends StatelessWidget {
       case ParamInputType.color:
         return ColorInputWidget(parameter: parameter);
       case ParamInputType.sliderZeroToOne:
-        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           _textEditingController.text = parameter.compiler.code.isNotEmpty
               ? parameter.compiler.code
               : '${parameter.getValue() ?? ''}';
@@ -327,7 +327,7 @@ class SimpleParameterWidget extends StatelessWidget {
       case ParamInputType.image:
         return BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
             builder: (context, state) {
-          WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
             if (parameter.compiler.code.isNotEmpty) {
               _textEditingController.text = parameter.compiler.code;
             } else {
@@ -596,7 +596,7 @@ class _ColorInputWidgetState extends State<ColorInputWidget> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _textEditingController.text = widget.parameter.compiler.code;
     });
   }

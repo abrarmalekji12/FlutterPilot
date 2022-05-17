@@ -11,7 +11,7 @@ class AppColors {
     _isOperator = isOperator;
   }
 
-  static const Color lightGray = Color(0xffF2F2F2);
+  static const Color msgColor = Color(0xffF2F2F2);
   static const Color background = Color(0xFF74AAD8);
   // static const Color theme = Color(0xFFFB7A43);
   static const black=Color(0xff000000);

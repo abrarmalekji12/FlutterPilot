@@ -256,24 +256,15 @@ abstract class FireBridge {
 
     project.docId = response.id;
     for (final component in components) {
-      final String type;
-      switch (component.runtimeType) {
-        case StatelessComponent:
-          type = 'stateless';
-          break;
-        default:
-          type = 'other';
-          break;
-      }
-
-      await FirePath.customComponentReference(
-          project.userId, project.docId!, component.name)
-          .set({
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(project.name)
+          .add({
         'name': component.name,
         'code': component.root != null
             ? (CodeOperations.trim(component.root!.code(clean: false)))
-            : null,
-        'type': type,
+            : null
       });
     }
     await FirebaseFirestore.instance
@@ -310,17 +301,19 @@ abstract class FireBridge {
     //   final screen = UIScreen.fromJson(modelJson, flutterProject);
     //   flutterProject.uiScreens.add(screen);
     // }
+
     final customDocs=await FirePath.customComponentsReferenceByProjectName(userId,flutterProject.docId!).get();
+    for (final screenDoc in documents) {
+      final screen = UIScreen.fromJson(screenDoc.data(), flutterProject);
+      flutterProject.uiScreens.add(screen);
+    }
     for (final doc in customDocs.docs) {
       final Map<String,dynamic> componentBody = doc.data()! as Map<String,dynamic>;
       flutterProject.customComponents.add(
           StatelessComponent(name: componentBody['name']));
 
     }
-    for (final screenDoc in documents) {
-      final screen = UIScreen.fromJson(screenDoc.data(), flutterProject);
-      flutterProject.uiScreens.add(screen);
-    }
+
     if (projectInfo['current_screen'] != null) {
       bool initializedMain = false, initializedCurrent = false;
       for (final screen in flutterProject.uiScreens) {

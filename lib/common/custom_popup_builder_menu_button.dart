@@ -71,37 +71,34 @@ class _CustomPopupMenuBuilderButtonState extends State<CustomPopupMenuBuilderBut
                           child: SizedBox(
                             width: 300,
                             height: getCalculatedHeight(),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Card(
-                                elevation: 5,
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: ListView.builder(
-                                  itemBuilder: (context, i) {
-                                    final CustomPopupMenuItem child =
-                                        widget.itemBuilder.call(context, i);
-                                    return InkWell(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: child,
-                                      ),
-                                      onTap: () {
-                                        debugPrint('TYPE ${child.value.runtimeType} ');
-                                        widget.onSelected(child.value);
-                                        overlayEntry?.remove();
-                                        setState(() {
-                                          expanded = false;
-                                        });
-                                      },
-                                      borderRadius: BorderRadius.circular(10),
-                                      splashColor: Colors.grey,
-                                    );
-                                  },
-                                  itemCount: widget.itemCount,
-                                ),
+                            child: Card(
+                              elevation: 5,
+                              color: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: ListView.builder(
+                                itemBuilder: (context, i) {
+                                  final CustomPopupMenuItem child =
+                                      widget.itemBuilder.call(context, i);
+                                  return InkWell(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: child,
+                                    ),
+                                    onTap: () {
+                                      debugPrint('TYPE ${child.value.runtimeType} ');
+                                      widget.onSelected(child.value);
+                                      overlayEntry?.remove();
+                                      setState(() {
+                                        expanded = false;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(10),
+                                    splashColor: Colors.grey,
+                                  );
+                                },
+                                itemCount: widget.itemCount,
                               ),
                             ),
                           ),
@@ -116,7 +113,7 @@ class _CustomPopupMenuBuilderButtonState extends State<CustomPopupMenuBuilderBut
     });
 
     html.window.onResize.listen((event) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         overlayEntry?.markNeedsBuild();
       });
     });

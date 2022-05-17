@@ -43,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _authenticationCubit =
         BlocProvider.of<AuthenticationCubit>(context, listen: false);
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _userNameController.text = _authenticationCubit.authViewModel.userName;
       _passwordController.text = _authenticationCubit.authViewModel.password;
       AppLoader.show(context);

@@ -6,10 +6,8 @@ import 'border_text_field.dart';
 class EditableTextView extends StatefulWidget {
   final String text;
   final void Function(String) onChange;
-  final TextStyle? textStyle;
-  final bool enableEditing;
 
-  EditableTextView({Key? key, required this.text, required this.onChange,this.textStyle,this.enableEditing=true})
+  EditableTextView({Key? key, required this.text, required this.onChange})
       : super(key:key);
 
   @override
@@ -46,9 +44,6 @@ class _EditableTextViewState extends State<EditableTextView> {
     }
     return MouseRegion(
       onEnter: (_) {
-        if(!widget.enableEditing){
-        return;
-      }
         setState(() {
           touchMode = true;
         });
@@ -61,9 +56,6 @@ class _EditableTextViewState extends State<EditableTextView> {
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: () {
-          if(!widget.enableEditing){
-            return;
-          }
           setState(() {
             editMode = true;
           });
@@ -75,10 +67,9 @@ class _EditableTextViewState extends State<EditableTextView> {
             children: [
               Text(
                 _controller.text,
-                style: widget.textStyle??AppFontStyle.roboto(14,
+                style: AppFontStyle.roboto(14,
                     color: Colors.black, fontWeight: FontWeight.w500),
               ),
-              if(widget.enableEditing)...[
               const SizedBox(
                 width: 10,
               ),
@@ -87,7 +78,6 @@ class _EditableTextViewState extends State<EditableTextView> {
                 size: 16,
                 color: touchMode ? Colors.black : Colors.grey,
               )
-      ]
             ],
           ),
         ),

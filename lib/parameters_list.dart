@@ -1110,41 +1110,43 @@ class Parameters {
   static ComplexParameter materialStatePropertyParameter<T>(
           Parameter parameter, String named) =>
       ComplexParameter(
-          params: [parameter],
-          evaluate: (params) {
-            return MaterialStateProperty.all<T>(params[0].value);
-          },
-          info: InnerObjectParameterInfo(
-              innerObjectName: 'MaterialStateProperty.all',
-              namedIfHaveAny: named));
+        params: [parameter],
+        evaluate: (params) {
+          return MaterialStateProperty.all<T>(params[0].value);
+        },
+        info: InnerObjectParameterInfo(
+            innerObjectName: 'MaterialStateProperty.all',
+            namedIfHaveAny: named),
+      );
 
   static buttonStyleParameter() => ComplexParameter(
-          params: [
-            materialStatePropertyParameter<Color?>(
-                backgroundColorParameter()..withChangeNamed(null),
-                'backgroundColor'),
-            materialStatePropertyParameter<Color?>(
-                foregroundColorParameter()..withChangeNamed(null),
-                'foregroundColor'),
-            alignmentParameter(),
-            materialStatePropertyParameter<TextStyle>(
-                googleFontTextStyleParameter()..withChangeNamed(null),
-                'textStyle'),
-            materialStatePropertyParameter<EdgeInsets?>(
-                paddingParameter()..withChangeNamed(null), 'padding'),
-            materialStatePropertyParameter<BorderSide?>(
-                borderSideParameter()..withChangeNamed(null), 'side'),
-          ],
-          evaluate: (params) {
-            return ButtonStyle(
-              backgroundColor: params[0].value,
-              foregroundColor: params[1].value,
-              alignment: params[2].value,
-              textStyle: params[3].value,
-              padding: params[4].value,
-              side: params[5].value,
-            );
-          });
+      info: InnerObjectParameterInfo(
+          namedIfHaveAny: 'style', innerObjectName: 'ButtonStyle'),
+      params: [
+        materialStatePropertyParameter<Color?>(
+            backgroundColorParameter()..withChangeNamed(null),
+            'backgroundColor'),
+        materialStatePropertyParameter<Color?>(
+            foregroundColorParameter()..withChangeNamed(null),
+            'foregroundColor'),
+        alignmentParameter(),
+        materialStatePropertyParameter<TextStyle>(
+            googleFontTextStyleParameter()..withChangeNamed(null), 'textStyle'),
+        materialStatePropertyParameter<EdgeInsets?>(
+            paddingParameter()..withChangeNamed(null), 'padding'),
+        materialStatePropertyParameter<BorderSide?>(
+            borderSideParameter()..withChangeNamed(null), 'side'),
+      ],
+      evaluate: (params) {
+        return ButtonStyle(
+          backgroundColor: params[0].value,
+          foregroundColor: params[1].value,
+          alignment: params[2].value,
+          textStyle: params[3].value,
+          padding: params[4].value,
+          side: params[5].value,
+        );
+      });
 
   static bottomNavigationItem() => ComplexParameter(
           params: [

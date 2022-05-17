@@ -59,7 +59,7 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
     _tabController = TabController(length: widget.shouldShowFavourites?3:2, vsync: this);
     _controller.text=filter;
     _controller.selection=TextSelection(baseOffset: 0, extentOffset: filter.length);
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _textFieldFocusNode.requestFocus();
 
     });
@@ -101,7 +101,7 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                   setState(() {});
                 }
               }
-                WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                   if(GlobalObjectKey(filtered[selectedIndex]).currentContext!=null) {
                     Scrollable.ensureVisible(
                       GlobalObjectKey(filtered[selectedIndex]).currentContext!,alignment: 0.5);

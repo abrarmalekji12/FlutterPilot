@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/route_manager.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../common/in_use_common/material_alert_dialog.dart';
 import '../../common/material_alert.dart';
@@ -54,7 +55,7 @@ class NewPageInStackAction extends ActionModel {
     if(arguments[0]==null){
       return '';
     }
-    return 'Navigator.push(context,MaterialPageRoute(builder: (_)=> const ${(arguments[0] as UIScreen).name}()))';
+    return 'Navigator.push(context,MaterialPageRoute(builder: (_)=> const ${(arguments[0] as UIScreen).getClassName}()))';
   }
 }
 
@@ -87,7 +88,7 @@ class ReplaceCurrentPageInStackAction extends ActionModel {
     if(arguments[0]==null){
       return '';
     }
-    return 'Navigator.pushReplacement(context,MaterialPageRoute(builder: (_)=> const ${(arguments[0] as UIScreen).name}()))';
+    return 'Navigator.pushReplacement(context,MaterialPageRoute(builder: (_)=> const ${(arguments[0] as UIScreen).getClassName}()))';
 
   }
 }
@@ -158,7 +159,7 @@ class ShowCustomDialogInStackAction extends ActionModel {
     if(arguments[0]==null){
       return '';
     }
-    return 'showDialog(context: context, builder: (_)=> const ${(arguments[0] as UIScreen).name}())';
+    return 'showDialog(context: context, builder: (_)=> const ${(arguments[0] as UIScreen).getClassName}())';
   }
 }
 
@@ -215,7 +216,7 @@ class ShowBottomSheetInStackAction extends ActionModel {
     if(arguments[0]==null){
       return '';
     }
-    return 'showBottomSheet(context: context, builder: (_)=> const ${(arguments[0] as UIScreen).name}())';
+    return 'showBottomSheet(context: context, builder: (_)=> const ${(arguments[0] as UIScreen).getClassName}())';
   }
 }
 
@@ -269,16 +270,18 @@ class ShowSnackBarAction extends ActionModel {
 
   @override
   String code() {
+
     return '''ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
         ${(arguments[0] as SimpleParameter).code(true)},
-        style: AppFontStyle.roboto(14, color: Colors.white),
+        style:GoogleFonts.roboto(fontSize: 14,color: Colors.white),
         textAlign: TextAlign.center,
       ),
       // backgroundColor: Colors.grey,
       duration: Duration(seconds:  ${(arguments[1] as SimpleParameter).code(true)}),
     ))''';
   }
+
 }
 
 class CustomPageRoute extends MaterialPageRoute {

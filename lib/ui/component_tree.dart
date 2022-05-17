@@ -506,7 +506,7 @@ class _ComponentTreeState extends State<ComponentTree> {
             !(_componentOperationCubit.expandedTree[comp] ?? true)) {
           _componentOperationCubit.expandedTree[comp] = true;
           setState(() {
-            WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
               ensureVisible();
             });
           });
@@ -1561,11 +1561,12 @@ class ComponentModificationMenu extends StatelessWidget {
               component !=
                   componentOperationCubit.flutterProject!.rootComponent!) ...[
             CustomPopupMenuButton(
+              itemHeight: 60,
               itemBuilder: (context) {
                 final list = getTypeComponents(
                         components,
                         customNamed == null && component != ancestor
-                            ? [2, 3]
+                            ? [2, 3 , 4]
                             : [])
                     .map((e) => 'wrap with $e')
                     .toList();
@@ -1728,10 +1729,11 @@ class ComponentModificationMenu extends StatelessWidget {
                     }
                   });
                 } else if ((e as String).startsWith('wrap')) {
-                  final compName = e.split(' ')[2];
+                  final split=e.split(' ');
+                  final compName = split[2];
                   final Component wrapperComp = componentList[compName]!();
                   performReversibleOperation(() {
-                    wrapWithComponent(component, wrapperComp);
+                    wrapWithComponent(component, wrapperComp,customName: split.length==4?split[3]:null);
                     componentOperationCubit.addedComponent(
                         wrapperComp, ancestor);
 
@@ -1756,7 +1758,7 @@ class ComponentModificationMenu extends StatelessWidget {
   }
 
   void wrapWithComponent(
-      final Component component, final Component wrapperComp) {
+      final Component component, final Component wrapperComp,{String? customName}) {
     if (component.parent == null && componentParameter != null) {
       final index = componentParameter!.components
           .indexWhere((element) => element == component);
@@ -1770,7 +1772,11 @@ class ComponentModificationMenu extends StatelessWidget {
         replaceChildOfParent(component, wrapperComp);
       }
     }
-    switch (wrapperComp.type) {
+    if(customName!=null){
+      (wrapperComp as CustomNamedHolder).addOrUpdateChildWithKey(customName!, component);
+    }
+    else {
+      switch (wrapperComp.type) {
       case 2:
         //MultiHolder
         (wrapperComp as MultiHolder).addChild(component);
@@ -1779,6 +1785,7 @@ class ComponentModificationMenu extends StatelessWidget {
         //Holder
         (wrapperComp as Holder).updateChild(component);
         break;
+    }
     }
     if (ancestor is CustomComponent) {
       componentOperationCubit
@@ -1923,7 +1930,13 @@ class ComponentModificationMenu extends StatelessWidget {
     final List<String> sameComponents = [];
     for (final entry in components.entries) {
       if (types.contains(entry.value.type)) {
-        sameComponents.add(entry.key);
+
+        if(entry.value.type == 4) {
+          sameComponents.addAll((entry.value as CustomNamedHolder).childMap.keys.map((e) => entry.key+' '+e).toList());
+        }
+        else{
+          sameComponents.add(entry.key);
+        }
       }
     }
     return sameComponents;
@@ -2103,7 +2116,7 @@ class ComponentTile extends StatelessWidget {
                   root: ancestor,
                   scroll: false);
               if (GlobalObjectKey(component).currentContext != null) {
-                WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                   Scrollable.ensureVisible(
                       GlobalObjectKey(component).currentContext!,
                       alignment: 0.5);

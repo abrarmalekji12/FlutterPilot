@@ -138,7 +138,7 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                                   clickableHolder: widget.component,
                                   actionModel: action),
                               decoration: BoxDecoration(
-                                  color: AppColors.lightGray,
+                                  color: AppColors.msgColor,
                                   borderRadius: BorderRadius.circular(10)),
                             ),
                           ),

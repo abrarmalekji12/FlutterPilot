@@ -71,7 +71,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     flutterProjectCubit = FlutterProjectCubit(widget.userId);
     if(componentOperationCubit.flutterProject?.name!=widget.projectName) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       flutterProjectCubit.loadFlutterProject(
           componentSelectionCubit, componentOperationCubit, widget.projectName);
     });

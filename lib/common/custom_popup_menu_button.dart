@@ -126,7 +126,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                                 padding:
                                                 const EdgeInsets.all(
                                                     8.0),
-                                                child: filteredItems[i],
+                                                child: filteredItems[i].build(context),
                                               ),
                                               onTap: () {
                                                 widget.onSelected(
@@ -161,7 +161,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
       );
     });
     html.window.onResize.listen((event) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         overlayEntry?.markNeedsBuild();
       });
     });

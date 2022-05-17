@@ -30,7 +30,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
   void initState() {
     super.initState();
     _flutterProjectCubit = FlutterProjectCubit(widget.userId);
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _flutterProjectCubit.loadFlutterProjectList();
     });
   }

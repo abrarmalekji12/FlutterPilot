@@ -36,7 +36,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     super.initState();
     _authenticationCubit =
         BlocProvider.of<AuthenticationCubit>(context, listen: false);
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _userNameController.text = _authenticationCubit.authViewModel.userName;
     });
   }

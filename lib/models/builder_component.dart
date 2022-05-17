@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/models/parameter_info_model.dart';
 
+import '../common/logger.dart';
 import '../component_list.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../parameters_list.dart';
@@ -56,7 +57,7 @@ abstract class BuilderComponent extends Holder {
   void init() {
     builtList.clear();
     child?.forEach((p0) {p0.cloneElements.clear();});
-    // WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
     //   for (int i = 0; i < (model?.variables.length ?? 0); i++) {
     //     ComponentOperationCubit.codeProcessor
     //         .modelVariables.remove(model!.variables[i].name);
@@ -79,25 +80,29 @@ abstract class BuilderComponent extends Holder {
     // final List<DynamicVariableModel> usedVariables = [];
 
     String itemCount = '';
-    if (clean) {
+    if (clean&&model!=null) {
       itemCount = ', itemCount:${model?.listVariableName}.length,';
       int start = 0;
       int gotIndex = -1;
-      while (start < itemCode.length) {
+      logger('ITEM CODE $itemCode');
+      while (start!=-1&&start < itemCode.length) {
         if (gotIndex == -1) {
-          start = itemCode.indexOf('{{', start);
+          start = itemCode.indexOf('\${', start);
+          logger('START ++ $start');
           if (start == -1) {
             break;
           }
           start += 2;
           gotIndex = start;
         } else {
-          start = itemCode.indexOf('}}', start);
+          start = itemCode.indexOf('}', start);
+          logger('START 2 ++ $start');
           if (start == -1) {
             break;
           }
           String innerArea = itemCode.substring(gotIndex, start);
           if (model != null && model!.variables.isNotEmpty) {
+
             for (final variable in model!.variables) {
               innerArea = innerArea.replaceAll(variable.name,
                   '${model!.listVariableName}[index].${variable.name}');
@@ -105,8 +110,9 @@ abstract class BuilderComponent extends Holder {
               //   usedVariables.add(variable);
               // }
             }
+            logger('MODEL + ++ ++ $innerArea');
             itemCode = itemCode.replaceRange(
-                gotIndex - 2, start + 2, '\${$innerArea}');
+                gotIndex - 2, start + 1, '\${$innerArea}');
             gotIndex = -1;
             start += 2;
             continue;

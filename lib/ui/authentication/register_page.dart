@@ -38,7 +38,7 @@ class _RegisterPageState extends State<RegisterPage> {
     super.initState();
     _authenticationCubit =
         BlocProvider.of<AuthenticationCubit>(context, listen: false);
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _authenticationCubit.authViewModel.userName = '';
       _authenticationCubit.authViewModel.password = '';
     });
