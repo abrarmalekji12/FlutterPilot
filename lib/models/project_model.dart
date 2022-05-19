@@ -64,6 +64,101 @@ class FlutterProject {
     return imageList;
   }
 
+  String code(final UIScreen screen) {
+    String implementationCode = '';
+    if (customComponents.isNotEmpty) {
+      for (final customComponent in customComponents) {
+        implementationCode += customComponent.implementationCode();
+      }
+    }
+    logger('IMPL $implementationCode');
+    String staticVariablesCode = '';
+    String dynamicVariablesDefinitionCode = '';
+    String dynamicVariableAssignmentCode = '';
+    for (final variable
+        in ComponentOperationCubit.codeProcessor.variables.entries) {
+      if (!variable.value.fixed) {
+        staticVariablesCode +=
+            'const ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
+      } else {
+        dynamicVariablesDefinitionCode +=
+            'late ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key};';
+        dynamicVariableAssignmentCode +=
+            '${variable.key} = ${variable.value.assignmentCode};';
+      }
+    }
+
+    String functionImplementationCode = '';
+    for (final function
+        in ComponentOperationCubit.codeProcessor.functions.values) {
+      functionImplementationCode += function.functionCode;
+    }
+
+
+    final className = screen.name[0].toUpperCase() + screen.name.substring(1);
+    // ${rootComponent!.code()}
+    return ''' 
+  
+    ${screen == mainScreen ? '''
+     // copy all the images to assets/images/ folder
+    // 
+    // TODO Dependencies (add into pubspec.yaml)
+    // google_fonts: ^2.2.0
+    ''' : ''}
+    import 'package:flutter/material.dart';
+    import 'package:google_fonts/google_fonts.dart';
+    import 'dart:math' as math;
+    
+    ${screen.models.map((e) => e.implementationCode).join(' ')}
+    
+    ${screen == mainScreen ? '''
+    
+    $staticVariablesCode
+    $dynamicVariablesDefinitionCode
+     
+    void main(){
+    runApp(const $className());
+    } 
+     $functionImplementationCode 
+ 
+    $implementationCode
+    
+  Color? hexToColor(String hexString) {
+  if (hexString.length < 7) {
+    return null;
+  }
+  final buffer = StringBuffer();
+  if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+  buffer.write(hexString.replaceFirst('#', ''));
+  final colorInt = int.tryParse(buffer.toString(), radix: 16);
+  if (colorInt == null) {
+    return null;
+  }
+  return Color(colorInt);
+}
+    ''' : ''}
+    class $className extends StatefulWidget {
+    const $className({Key? key}) : super(key: key);
+
+    @override
+   _${className}State createState() => _${className}State();
+    }
+
+    class _${className}State extends State<$className> {
+    ${screen.models.map((e) => e.declarationCode).join(' ')}
+   
+     @override
+     Widget build(BuildContext context) {
+       
+          return ${screen.rootComponent!.code()};
+      }
+     
+    }
+
+
+    ''';
+  }
+
   Widget run(final BuildContext context, {bool navigator = false}) {
     if (!navigator) {
       return rootComponent?.build(context) ?? Container();

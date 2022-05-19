@@ -187,7 +187,6 @@ class _ComponentTreeState extends State<ComponentTree> {
                                               root: value.rootComponent!);
                                       _componentCreationCubit
                                           .changedComponent();
-                                      debugPrint('CHANGE SCREEN DONE');
                                     }
                                   },
                                   selectedItemBuilder: (context, config) {
