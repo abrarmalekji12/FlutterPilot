@@ -143,6 +143,7 @@ class CodeProcessor {
       return 'api:goback|';
     }, ''' ''');
 
+
   }
 
   void addVariable(String name, VariableModel value) {
@@ -425,7 +426,7 @@ class CodeProcessor {
         }
       } else {
         if (variable.isNotEmpty && ch == '('.codeUnits[0]) {
-          if (!functions.containsKey(variable) && variable != 'while' && variable != 'if') {
+          if (!functions.containsKey(variable) && variable != 'while' && variable != 'if'&&variable != 'delayed') {
             error = true;
             errorMessage = 'Function $variable is not defined!!';
             return null;
@@ -464,6 +465,17 @@ class CodeProcessor {
                   } else if (argumentList.length > 2) {
                     executeCode(argumentList[2].substring(1, argumentList[2].length - 1), consoleCallback!, onError!);
                   }
+                }
+                variable = '';
+                n = m;
+                break;
+              }
+              else if(variable == 'delayed'){
+                if (argumentList.length > 1) {
+                final int durationInMillis=int.parse(argumentList[0]);
+                Future.delayed(Duration(milliseconds: durationInMillis),(){
+                  executeCode(argumentList[1].substring(1, argumentList[1].length - 1), consoleCallback!, onError!);
+                });
                 }
                 variable = '';
                 n = m;

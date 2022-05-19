@@ -4,6 +4,12 @@ import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 
 class DynamicValueEditingController extends TextEditingController {
+
+  final Map<String,Color> codeColorMap={
+    'if':Colors.purple,
+    'while':Colors.purple,
+
+  };
   @override
   TextSpan buildTextSpan({required BuildContext context,
     TextStyle? style,
