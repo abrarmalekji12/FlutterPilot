@@ -1627,6 +1627,7 @@ class CInputDecorator extends Component {
 }
 
 class CTextField extends Component {
+
   CTextField()
       : super('TextField', [
           Parameters.googleFontTextStyleParameter(),
@@ -1651,11 +1652,13 @@ class CTextField extends Component {
       (parameters[2] as ComplexParameter).params[12] as ComponentParameter,
     ]);
   }
+  final TextEditingController textEditingController=TextEditingController();
 
   @override
   Widget create(BuildContext context) {
     initComponentParameters(context);
     return TextField(
+      controller: textEditingController,
       style: parameters[0].value,
       readOnly: parameters[1].value,
       decoration: parameters[2].value,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import '../../component_list.dart';
 import '../../constant/font_style.dart';
 import '../../constant/string_constant.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
@@ -86,10 +87,14 @@ class CustomAction extends ActionModel {
                 ),
               );
           break;
+            case 'lookup':
+
+              // return out;
           }
         } else {
           print(':: => $message');
         }
+        return null;
       },
       (error) {
         print('XX => $error');

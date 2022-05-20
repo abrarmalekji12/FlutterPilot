@@ -5,6 +5,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../code_to_component.dart';
+import '../../component_list.dart';
+import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../models/function_model.dart';
 import '../../models/other_model.dart';
 import '../../models/variable_model.dart';
@@ -141,6 +143,24 @@ class CodeProcessor {
     }, ''' ''');
     functions['goBack'] = FunctionModel<dynamic>('goBack', (arguments) {
       return 'api:goback|';
+    }, ''' ''');
+    functions['lookUp'] = FunctionModel<dynamic>('lookUp', (arguments) {
+      final id=arguments[0];
+      String? out;
+      ComponentOperationCubit.currentFlutterProject?.currentScreen.rootComponent?.forEach((p0) {
+        print('here4');
+        if(p0.id==id){
+
+          print('here1');
+          if(p0 is CTextField){
+
+            print('here2 ${(GlobalObjectKey(p0.uniqueId+p0.id).currentWidget as TextField).controller?.text}');
+            out=(GlobalObjectKey(p0.uniqueId+p0.id).currentWidget as TextField).controller?.text;
+          }
+        }
+      });
+      print('here $out');
+      return out;
     }, ''' ''');
 
 
@@ -303,7 +323,7 @@ class CodeProcessor {
     valueStack.push(r);
   }
 
-  String? processString(String code, {void Function(String)? consoleCallback, void Function(String)? onError}) {
+  String? processString(String code, {String? Function(String)? consoleCallback, void Function(String)? onError}) {
     int si = -1, ei = -1;
 
     List<int> startList = [];
@@ -354,7 +374,7 @@ class CodeProcessor {
     return code;
   }
 
-  void executeCode(final String input, void Function(String) consoleCallback, void Function(String) onError) {
+  void executeCode(final String input, String? Function(String) consoleCallback, void Function(String) onError) {
     final trimCode = CodeOperations.trim(input.replaceAll('\n', ''))!;
     int count = 0;
     int lastPoint = 0;
@@ -378,7 +398,7 @@ class CodeProcessor {
   }
 
   dynamic process<T>(final String input,
-      {bool resolve = false, void Function(String)? consoleCallback, void Function(String)? onError}) {
+      {bool resolve = false, String? Function(String)? consoleCallback, void Function(String)? onError}) {
     final Stack2<dynamic> valueStack = Stack2<dynamic>();
     final Stack2<String> operatorStack = Stack2<String>();
     String number = '';

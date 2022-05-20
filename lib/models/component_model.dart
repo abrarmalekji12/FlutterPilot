@@ -1121,6 +1121,9 @@ abstract class CustomComponent extends Component {
       root!.forEach(work);
     }
 
+    for(final clone in cloneElements){
+      clone.forEach(work);
+    }
     forEachInComponentParameter(work);
   }
 

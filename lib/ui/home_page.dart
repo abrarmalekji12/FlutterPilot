@@ -716,6 +716,12 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                     const SizedBox(
                       height: 20,
                     ),
+                    SelectableText(
+                      _componentSelectionCubit
+                          .currentSelected.propertySelection.id,
+                      style:
+                      AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                    ),
                     if (_componentSelectionCubit
                         .currentSelected.propertySelection is BuilderComponent)
                       BuilderComponentSettings(
