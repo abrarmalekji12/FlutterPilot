@@ -564,6 +564,7 @@ abstract class Component {
       comp.parameters = parameters;
     }
     comp.cloneOf = this;
+    comp.id=id;
     cloneElements.add(comp);
     comp.parent = parent;
     return comp;
@@ -1121,6 +1122,9 @@ abstract class CustomComponent extends Component {
       root!.forEach(work);
     }
 
+    for(final object in objects){
+      object.forEach(work);
+    }
     for(final clone in cloneElements){
       clone.forEach(work);
     }

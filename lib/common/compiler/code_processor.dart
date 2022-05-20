@@ -148,14 +148,13 @@ class CodeProcessor {
       final id=arguments[0];
       String? out;
       ComponentOperationCubit.currentFlutterProject?.currentScreen.rootComponent?.forEach((p0) {
-        print('here4');
+        print('here4 ${p0.id}');
         if(p0.id==id){
-
-          print('here1');
+          print('here1 ${p0.runtimeType}');
           if(p0 is CTextField){
 
-            print('here2 ${(GlobalObjectKey(p0.uniqueId+p0.id).currentWidget as TextField).controller?.text}');
-            out=(GlobalObjectKey(p0.uniqueId+p0.id).currentWidget as TextField).controller?.text;
+            print('here2 ${p0.textEditingController.text}');
+            out=p0.textEditingController.text;
           }
         }
       });
