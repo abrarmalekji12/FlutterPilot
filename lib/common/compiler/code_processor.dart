@@ -144,6 +144,14 @@ class CodeProcessor {
     functions['goBack'] = FunctionModel<dynamic>('goBack', (arguments) {
       return 'api:goback|';
     }, ''' ''');
+
+    functions['toInt'] = FunctionModel<int>('toInt', (arguments) {
+      return int.parse(arguments[0]);
+    }, ''' ''');
+    functions['toDouble'] = FunctionModel<double>('toDouble', (arguments) {
+      return double.parse(arguments[0]);
+    }, ''' ''');
+
     functions['lookUp'] = FunctionModel<dynamic>('lookUp', (arguments) {
       final id=arguments[0];
       String? out;
