@@ -53,7 +53,7 @@ class CustomAction extends ActionModel {
                   textAlign: TextAlign.center,
                 ),
                 // backgroundColor: Colors.grey,
-                duration: Duration(seconds: int.parse(split[2])),
+                duration: Duration(milliseconds: (1000*double.parse(split[2])).toInt()),
               ));
               break;
             case 'newpage':
