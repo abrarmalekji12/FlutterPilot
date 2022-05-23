@@ -256,12 +256,19 @@ abstract class FireBridge {
 
     project.docId = response.id;
     for (final component in components) {
-      await FirebaseFirestore.instance
-          .collection('us$userId')
-          .doc(Strings.kFlutterProject)
-          .collection(project.name)
-          .add({
+      final String type;
+      switch (component.runtimeType) {
+        case StatelessComponent:
+          type = 'stateless';
+          break;
+        default:
+          type = 'other';
+          break;
+      }
+      await FirePath.customComponentReference(userId,project.docId!,component.name )
+          .set({
         'name': component.name,
+        'type': type,
         'code': component.root != null
             ? (CodeOperations.trim(component.root!.code(clean: false)))
             : null
@@ -596,16 +603,6 @@ abstract class FireBridge {
         .doc(uiScreen.name)
         .update({'root': CodeOperations.trim(component.code(clean: false))});
     logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
-  }
-
-  static Future<CustomComponent> retrieveComponent(
-      final int userId,
-      final String projectName,
-      final String name,
-      final FlutterProject flutterProject) async {
-    final snapshot = await FirebaseFirestore.instance.collection(name).get();
-    return StatelessComponent(name: name)
-      ..root = Component.fromCode(snapshot.docs[0]['code'], flutterProject);
   }
 
   static Future<void> logout() async {

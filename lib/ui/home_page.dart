@@ -2,17 +2,15 @@ import 'dart:async';
 
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/ui/preview_ui.dart';
+import 'preview_ui.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../common/app_loader.dart';
 import '../common/dialog_selection.dart';
-import '../constant/app_colors.dart';
-import '../constant/string_constant.dart';
 import '../cubit/action_edit/action_edit_cubit.dart';
 import '../models/builder_component.dart';
 import '../models/component_selection.dart';
-import '../models/parameter_model.dart';
 import '../runtime_provider.dart';
 import 'action_widgets.dart';
 import 'build_view/build_view.dart';
@@ -714,13 +712,30 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                           AppFontStyle.roboto(18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(
-                      height: 20,
+                      height: 10,
                     ),
-                    SelectableText(
-                      _componentSelectionCubit
-                          .currentSelected.propertySelection.id,
-                      style:
-                      AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+                    InkWell(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text:_componentSelectionCubit
+                            .currentSelected.propertySelection.id));
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _componentSelectionCubit
+                                .currentSelected.propertySelection.id,
+                            style:
+                            AppFontStyle.roboto(13,color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(width: 20,),
+                          const Icon(Icons.copy, color: Colors.grey,size: 17,),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 10,
                     ),
                     if (_componentSelectionCubit
                         .currentSelected.propertySelection is BuilderComponent)

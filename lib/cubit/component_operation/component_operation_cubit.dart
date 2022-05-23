@@ -91,8 +91,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         comp.name = customComponent.name;
       }
       emit(ComponentOperationInitial());
-    } on Exception {
-      emit(ComponentOperationErrorState());
+    } on Exception  catch(e){
+      emit(ComponentOperationErrorState(e.toString()));
     }
   }
 
@@ -225,8 +225,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
           flutterProject!.currentScreen,
           flutterProject!.rootComponent!);
       emit(ComponentOperationInitial());
-    } on Exception {
-      emit(ComponentOperationErrorState());
+    } on Exception catch(e){
+      emit(ComponentOperationErrorState(e.toString()));
     }
   }
 
@@ -239,8 +239,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       await FireBridge.addUIScreen(
           flutterProject!.userId, flutterProject!, uiScreen);
       emit(ComponentOperationInitial());
-    } on Exception {
-      emit(ComponentOperationErrorState());
+    } on Exception  catch(e) {
+      emit(ComponentOperationErrorState(e.toString()));
     }
   }
 
@@ -516,7 +516,6 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
           ..id = component.id
           ..boundary = component.boundary,
         flutterProject!.name);
-    flutterProject!.favouriteList.add(model);
     if (favouriteList.isNotEmpty) {
       favouriteList.insert(0, model);
     } else {
@@ -530,12 +529,16 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     } else {
       boundary = null;
     }
+    double width,height;
+    width = component.boundary?.width ?? boundary?.width ?? 1;
+    height = component.boundary?.height ?? boundary?.height ?? 1;
+    flutterProject!.favouriteList.add(model ..component.boundary=Rect.fromLTWH(0,0,width,height));
     await FireBridge.addToFavourites(
         flutterProject!.userId,
         component,
         flutterProject!.name,
-        component.boundary?.width ?? boundary?.width ?? 1,
-        component.boundary?.height ?? boundary?.height ?? 1);
+        width,
+        height);
     emit(ComponentUpdatedState());
   }
 

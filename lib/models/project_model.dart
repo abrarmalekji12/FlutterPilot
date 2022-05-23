@@ -212,7 +212,7 @@ class UIScreen {
 
     String functionImplementationCode = '';
     for (final function
-        in ComponentOperationCubit.codeProcessor.functions.values) {
+        in ComponentOperationCubit.codeProcessor.predefinedFunctions.values) {
       functionImplementationCode += function.functionCode;
     }
 
@@ -228,7 +228,7 @@ class UIScreen {
     ''' : ''}
     import 'package:flutter/material.dart';
     import 'package:google_fonts/google_fonts.dart';
-    import 'dart:math' as math;
+    import 'dart:math';
     ${importList.map((e) => '''import '$e.dart'; ''').join('\n')}
     ${models.map((e) => e.implementationCode).join(' ')}
     

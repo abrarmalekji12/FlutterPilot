@@ -62,6 +62,12 @@ class LocalModel {
         return 'dynamic';
       case DataType.bool:
         return 'bool';
+      case DataType.list:
+        return 'List';
+      case DataType.map:
+        return 'Map';
+      case DataType.fvbInstance:
+        return 'Object';
     }
   }
 

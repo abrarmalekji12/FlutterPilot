@@ -457,7 +457,7 @@ class ListParameter<T> extends Parameter {
   @override
   bool fromCode(String code) {
     final processedCode = info?.fromCode(code) ?? code;
-    final valueList = CodeOperations.splitByComma(
+    final valueList = CodeOperations.splitBy(
         processedCode.substring(1, processedCode.length - 1));
     logger('value list $valueList  $code');
     if (valueList.isEmpty) {
@@ -740,7 +740,7 @@ class ChoiceParameter extends Parameter {
           }
           if (parameter is ComplexParameter) {
             logger('CODESSSS START');
-            final codes = CodeOperations.splitByComma(paramCode);
+            final codes = CodeOperations.splitBy(paramCode);
             bool match = true;
             for (final childCode in codes) {
               bool found = false;
@@ -820,7 +820,7 @@ class ComplexParameter extends Parameter {
   bool fromCode(String code) {
     // logger('subcode start $code');
     final paramCodeList =
-        CodeOperations.splitByComma((info?.fromCode(code) ?? code));
+        CodeOperations.splitBy((info?.fromCode(code) ?? code));
     // logger('subcode $paramCodeList');
     for (final Parameter parameter in params) {
       // logger('subcode param ${parameter.displayName}');
@@ -953,7 +953,7 @@ class ComponentParameter extends Parameter {
   bool fromCode(String code) {
     final paramCode = info?.fromCode(code) ?? code;
     if (multiple) {
-      final componentCodes = CodeOperations.splitByComma(paramCode);
+      final componentCodes = CodeOperations.splitBy(paramCode);
       for (final compCode in componentCodes) {
         components.add(Component.fromCode(compCode, ComponentOperationCubit.currentFlutterProject!)!);
       }

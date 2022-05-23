@@ -168,7 +168,7 @@ abstract class Component {
     }
 
     final componentCode = code.replaceFirst('$name(', '');
-    final parameterCodes = CodeOperations.splitByComma(
+    final parameterCodes = CodeOperations.splitBy(
         componentCode.substring(0, componentCode.length - 1));
     switch (comp.type) {
       case 3:
@@ -218,7 +218,7 @@ abstract class Component {
           final code2 = childCode.replaceFirst('children:[', '');
           final List<Component> componentList = [];
           final List<String> childrenCodes =
-              CodeOperations.splitByComma(code2.substring(0, code2.length - 1));
+              CodeOperations.splitBy(code2.substring(0, code2.length - 1));
           for (final childCode in childrenCodes) {
             componentList.add(Component.fromCode(childCode, flutterProject)!
               ..setParent(comp));
@@ -243,7 +243,7 @@ abstract class Component {
             nameList.remove(name);
             removeList.add(parameterCodes[i]);
           } else if (childrenNameList.contains(name)) {
-            final childrenCode = CodeOperations.splitByComma(
+            final childrenCode = CodeOperations.splitBy(
                 parameterCodes[i].substring(colonIndex + 1));
             comp.childrenMap[name]!.addAll(
               childrenCode.map(
@@ -303,9 +303,7 @@ abstract class Component {
   }
 
   key(BuildContext context) => RuntimeProvider.of(context) != RuntimeMode.edit
-      ? (RuntimeProvider.of(context) != RuntimeMode.preview
-          ? null
-          : GlobalObjectKey(uniqueId + id))
+      ? GlobalObjectKey(uniqueId + id)
       : GlobalObjectKey(this);
 
   Widget build(BuildContext context) {
@@ -314,7 +312,6 @@ abstract class Component {
         lookForUIChanges(context);
       });
     }
-
     return ComponentWidget(
       key: key(context),
       child: create(context),
@@ -564,7 +561,9 @@ abstract class Component {
       comp.parameters = parameters;
     }
     comp.cloneOf = this;
-    comp.id=id;
+    if (!cloneParam) {
+      comp.id = id;
+    }
     cloneElements.add(comp);
     comp.parent = parent;
     return comp;
@@ -813,7 +812,7 @@ abstract class ClickableHolder extends Holder with Clickable {
   @override
   Component clone(Component? parent, {bool cloneParam = false}) {
     final cloneComp = super.clone(parent, cloneParam: cloneParam);
-    (cloneComp as Clickable).actionList=actionList;
+    (cloneComp as Clickable).actionList = actionList;
     return cloneComp;
   }
 }
@@ -833,7 +832,7 @@ abstract class ClickableComponent extends Component with Clickable {
   @override
   Component clone(Component? parent, {bool cloneParam = false}) {
     final cloneComp = super.clone(parent, cloneParam: cloneParam);
-    (cloneComp as Clickable).actionList=actionList;
+    (cloneComp as Clickable).actionList = actionList;
     return cloneComp;
   }
 }
@@ -841,14 +840,13 @@ abstract class ClickableComponent extends Component with Clickable {
 mixin Clickable {
   List<ActionModel> actionList = [];
 
-  void perform(BuildContext context,{Map<String,dynamic>? arguments}) {
+  void perform(BuildContext context, {Map<String, dynamic>? arguments}) {
     if (RuntimeProvider.of(context) == RuntimeMode.run) {
       for (final action in actionList) {
         action.perform(context);
       }
     }
   }
-
 
   String get clickableParamName;
 
@@ -865,7 +863,6 @@ mixin Clickable {
     return code;
   }
 
-
   List<String>? getParams(final String code) {
     if (code.isEmpty) {
       return null;
@@ -879,9 +876,10 @@ mixin Clickable {
   }
 
   void fromMetaCodeToAction(String code, final FlutterProject? flutterProject) {
-    if(code.startsWith('CA')){
+    if (code.startsWith('CA')) {
       actionList.add(CustomAction());
-    }if (code.startsWith('NPISA')) {
+    }
+    if (code.startsWith('NPISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
       actionList
           .add(NewPageInStackAction(getUIScreenWithName(name, flutterProject)));
@@ -1122,10 +1120,10 @@ abstract class CustomComponent extends Component {
       root!.forEach(work);
     }
 
-    for(final object in objects){
+    for (final object in objects) {
       object.forEach(work);
     }
-    for(final clone in cloneElements){
+    for (final clone in cloneElements) {
       clone.forEach(work);
     }
     forEachInComponentParameter(work);

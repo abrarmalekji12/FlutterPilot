@@ -1,15 +1,23 @@
+import 'package:get/get.dart';
+
+import 'common/logger.dart';
 
 abstract class CodeOperations {
-  static String? trim(String? code) {
+  static String? trim(String? code, {bool removeBackSlash = true}) {
     if (code == null) {
       return null;
     }
     final List<int> outputString = [];
     bool openString = false;
     for (int i = 0; i < code.length; i++) {
-      if (code[i] == '\'' ||code[i] == '"' || code[i] == '`' || (code[i]=='{'&&i<code.length-1&&code[i+1]=='{')|| (code[i]=='}'&&i<code.length-1&&code[i+1]=='}')) {
+      if (code[i] == '\'' ||
+          code[i] == '"' ||
+          code[i] == '`' ||
+          (code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
+          (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')) {
         openString = !openString;
-      } else if (!openString && (code[i] == ' ' || code[i] == '\n')) {
+      } else if (!openString &&
+          (code[i] == ' ' || (removeBackSlash && code[i] == '\n'))) {
         continue;
       }
       outputString.add(code.codeUnitAt(i));
@@ -17,7 +25,47 @@ abstract class CodeOperations {
     return String.fromCharCodes(outputString);
   }
 
-  static List<String> splitByComma(String paramCode) {
+  static List<String> getFVBInstructionsFromCode(String code){
+    final trimCode = CodeOperations.trim(code)!;
+    int count=0,lastPoint=0;
+    final List<String> instructions=[];
+    for (int i = 0; i < trimCode.length; i++) {
+      if (trimCode[i] == '{' || trimCode[i] == '[' || trimCode[i] == '(') {
+        count++;
+      } else if (trimCode[i] == '}' ||
+          trimCode[i] == ']' ||
+          trimCode[i] == ')') {
+        count--;
+      }
+      if (count == 0 && (trimCode[i] == ';' || trimCode.length == i + 1)) {
+        instructions.add(trimCode.substring(lastPoint,trimCode[i] == ';' ? i:i+1));
+        lastPoint = i + 1;
+      }
+    }
+    return instructions;
+  }
+  static int findCloseBracket(
+    String input,
+    int openIndex,
+    int openBracket,
+    int closeBracket,
+  ) {
+    int count = 0;
+    for (int i = openIndex + 1; i < input.length; i++) {
+      final unit = input[i].codeUnits.first;
+      if (unit == closeBracket) {
+        if (count == 0) {
+          return i;
+        }
+        count--;
+      } else if (unit == openBracket) {
+        count++;
+      }
+    }
+    throw Exception('No close bracket found ${String.fromCharCode(closeBracket)}');
+  }
+
+  static List<String> splitBy(String paramCode, {String splitBy = ','}) {
     if (paramCode.startsWith('[') && paramCode.endsWith(']')) {
       paramCode = paramCode.substring(1, paramCode.length - 1);
     }
@@ -25,17 +73,21 @@ abstract class CodeOperations {
     final List<int> dividers = [-1];
     bool stringQuote = false;
     for (int i = 0; i < paramCode.length; i++) {
-      if (paramCode[i] == '\''||paramCode[i] == '"' || paramCode[i] == '`') {
+      if (paramCode[i] == '\'' || paramCode[i] == '"' || paramCode[i] == '`') {
         stringQuote = !stringQuote;
       }
       if (stringQuote) {
         continue;
       }
-      if (paramCode[i] == ',' && parenthesisCount == 0) {
+      if (paramCode[i] == splitBy && parenthesisCount == 0) {
         dividers.add(i);
-      } else if (paramCode[i] == '(' || paramCode[i] == '[') {
+      } else if (paramCode[i] == '(' ||
+          paramCode[i] == '[' ||
+          paramCode[i] == '{') {
         parenthesisCount++;
-      } else if (paramCode[i] == ')' || paramCode[i] == ']') {
+      } else if (paramCode[i] == ')' ||
+          paramCode[i] == ']' ||
+          paramCode[i] == '}') {
         parenthesisCount--;
       }
     }

@@ -77,7 +77,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
     try {
       ComponentOperationCubit.codeProcessor.variables
           .removeWhere((key, value) => value.deletable);
-      ComponentOperationCubit.codeProcessor.modelVariables.clear();
+      ComponentOperationCubit.codeProcessor.localVariables.clear();
 
       final FlutterProject? flutterProject =
           await FireBridge.loadFlutterProject(userId, projectName);

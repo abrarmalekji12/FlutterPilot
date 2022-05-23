@@ -220,7 +220,6 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
 
   Future<String> formatCode() async {
     // print('INPUT CODE $inputCode');
-    await Future.delayed(const Duration(milliseconds: 500));
     // return Future.microtask(() => code=_dartFormatter
     //     .format(widget.componentOperationCubit.flutterProject!.code(screen)));
     // return  code=_dartFormatter.format(widget.componentOperationCubit.flutterProject!.code(screen));

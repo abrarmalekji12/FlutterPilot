@@ -14,7 +14,8 @@ class ComponentLoadBytesState extends ComponentOperationState {
   final Uint8List? bytes;
 }
 class ComponentOperationErrorState extends ComponentOperationState{
-  ComponentOperationErrorState();
+  final String msg;
+  ComponentOperationErrorState(this.msg);
 }
 
 class ComponentUpdatedState extends ComponentOperationState {

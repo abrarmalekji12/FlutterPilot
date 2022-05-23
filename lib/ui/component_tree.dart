@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../code_to_component.dart';
 import '../common/material_alert.dart';
 import '../models/operation_model.dart';
@@ -97,6 +98,9 @@ class _ComponentTreeState extends State<ComponentTree> {
                         size: 20,
                       );
                     } else if (state is ComponentOperationErrorState) {
+                      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                        Fluttertoast.showToast(msg: state.msg,timeInSecForIosWeb: 10);
+                      });
                       return InkWell(
                         onTap: () {},
                         borderRadius: BorderRadius.circular(10),

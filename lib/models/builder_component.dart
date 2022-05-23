@@ -36,10 +36,10 @@ abstract class BuilderComponent extends Holder {
     if(model!=null) {
       for (int i = 0; i < (model?.variables.length ?? 0); i++) {
         ComponentOperationCubit.codeProcessor
-            .modelVariables[model!.variables[i].name] = model!.values[index][i];
+            .localVariables[model!.variables[i].name] = model!.values[index][i];
       }
-      ComponentOperationCubit.codeProcessor.modelVariables['index'] = index;
-      ComponentOperationCubit.codeProcessor.modelVariables['count'] =
+      ComponentOperationCubit.codeProcessor.localVariables['index'] = index;
+      ComponentOperationCubit.codeProcessor.localVariables['count'] =
           model!.values.length;
     }
     final component = child!.clone(this);
