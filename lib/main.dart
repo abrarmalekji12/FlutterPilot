@@ -41,20 +41,17 @@ void main() async {
   await Preferences.load();
   final CodeProcessor processor = CodeProcessor();
   const code='''
- class ABC{
- a=10;
- b=34;
- }
- c=ABC();
-   ''';
+  color="abcd";
+ print(color);
+ ''';
 
   processor.executeCode(code, (message) {
     print(':: => $message');
   }, (error) {
     print('XX => $error ');
   });
-  final FVBEngine engine=FVBEngine();
-  print('DART CODE \n${engine.fvbToDart(code)}');
+  // final FVBEngine engine=FVBEngine();
+  // print('DART CODE \n${engine.fvbToDart(code)}');
   // runApp(const MyApp());
 }
 

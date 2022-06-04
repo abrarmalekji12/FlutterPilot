@@ -26,7 +26,7 @@ class LocalModel {
 
   String get implementationCode {
     return '''
-    class $name{${variables.map((e) => 'final ${getDartDataType(e.dataType)} ${e.name};').join(' ')} $name( ${variables.map((e) => 'this.${e.name}').join(',')});
+    class $name{${variables.map((e) => 'final ${dataTypeToCode(e.dataType)} ${e.name};').join(' ')} $name( ${variables.map((e) => 'this.${e.name}').join(',')});
     }
     ''';
   }
@@ -50,7 +50,29 @@ class LocalModel {
     return '$value';
   }
 
-  static String getDartDataType(final DataType dataType) {
+  static DataType codeToDatatype(final String dataType) {
+    switch (dataType) {
+      case 'int':
+        return DataType.int;
+      case 'double':
+        return DataType.double;
+      case 'String':
+        return DataType.string;
+      case 'bool':
+        return DataType.bool;
+      case 'List':
+        return DataType.list;
+      case 'Map':
+        return DataType.map;
+      case 'Object':
+        return DataType.fvbInstance;
+      case 'dynamic':
+      default:
+        return DataType.dynamic;
+    }
+  }
+
+  static String dataTypeToCode(final DataType dataType) {
     switch (dataType) {
       case DataType.int:
         return 'int';

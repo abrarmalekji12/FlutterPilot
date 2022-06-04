@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -98,10 +99,11 @@ abstract class Component {
 
   void metaInfoFromCode(
       final String metaCode, final FlutterProject? flutterProject) {
-    final list = metaCode.substring(1, metaCode.length - 1).split('|');
+    final list = CodeOperations.splitBy(metaCode.substring(1, metaCode.length - 1),splitBy: '|');
     for (final value in list) {
       if (value.isNotEmpty) {
-        final fieldList = value.split('=');
+        final equalIndex=value.indexOf('=');
+        final fieldList = [value.substring(0,equalIndex), value.substring(equalIndex + 1)];
         switch (fieldList[0]) {
           case 'id':
             id = fieldList[1];
@@ -876,10 +878,12 @@ mixin Clickable {
   }
 
   void fromMetaCodeToAction(String code, final FlutterProject? flutterProject) {
+    print('CODE $code');
     if (code.startsWith('CA')) {
-      actionList.add(CustomAction());
+     final endIndex=CodeOperations.findCloseBracket(code, 2, '<'.codeUnits.first, '>'.codeUnits.first);
+      actionList.add(CustomAction(code: String.fromCharCodes(base64Decode(code.substring(3,endIndex)))));
     }
-    if (code.startsWith('NPISA')) {
+    else if (code.startsWith('NPISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
       actionList
           .add(NewPageInStackAction(getUIScreenWithName(name, flutterProject)));
@@ -910,7 +914,7 @@ mixin Clickable {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
       UIScreen? selectedUiScreen;
       for (final uiScreen in flutterProject?.uiScreens ?? []) {
-        if (uiScreen.name == name) {
+        if (uiScreen.variableName == name) {
           selectedUiScreen = uiScreen;
           break;
         }
@@ -921,7 +925,7 @@ mixin Clickable {
 
   UIScreen? getUIScreenWithName(String name, FlutterProject? flutterProject) {
     for (final uiScreen in flutterProject?.uiScreens ?? []) {
-      if (uiScreen.name == name) {
+      if (uiScreen.variableName == name) {
         return uiScreen;
       }
     }

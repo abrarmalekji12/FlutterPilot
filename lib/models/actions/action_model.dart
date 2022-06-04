@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import '../../common/converter/code_converter.dart';
 import '../../component_list.dart';
 import '../../constant/font_style.dart';
 import '../../constant/string_constant.dart';
@@ -24,16 +27,16 @@ abstract class ActionModel {
 }
 
 class CustomAction extends ActionModel {
-  CustomAction() : super(['']);
+  CustomAction({String code=''}) : super([code]);
 
   @override
   String code() {
-    return '';
+    return FVBEngine().fvbToDart(arguments[0]);
   }
 
   @override
   String metaCode() {
-    return 'CA';
+    return 'CA<${base64Encode((arguments[0] as String).codeUnits)}>';
   }
 
   @override

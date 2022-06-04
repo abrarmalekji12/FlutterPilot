@@ -201,10 +201,10 @@ class UIScreen {
         in ComponentOperationCubit.codeProcessor.variables.entries) {
       if (!variable.value.runtimeAssigned) {
         staticVariablesCode +=
-            'const ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
+            'const ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
       } else {
         dynamicVariablesDefinitionCode +=
-            'late ${LocalModel.getDartDataType(variable.value.dataType)} ${variable.key};';
+            'late ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key};';
         dynamicVariableAssignmentCode +=
             '${variable.key} = ${variable.value.assignmentCode};';
       }
