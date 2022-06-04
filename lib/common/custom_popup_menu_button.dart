@@ -36,11 +36,11 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
   bool expanded = false;
   late List<CustomPopupMenuItem> allItems, filteredItems;
 
-  final TextEditingController _textEditingController=TextEditingController();
+  final TextEditingController _textEditingController = TextEditingController();
   late double minimumBoxHeight;
   final FocusNode _searchFocusNode = FocusNode();
   String _searchText = '';
-  late double left,top;
+  late double left, top;
 
   @override
   void didChangeDependencies() {
@@ -97,8 +97,8 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                     children: [
                                       SearchTextField(
                                         hint: 'Search ..',
-                                        onSubmitted: (){
-                                          if(filteredItems.isNotEmpty){
+                                        onSubmitted: () {
+                                          if (filteredItems.isNotEmpty) {
                                             widget.onSelected(
                                                 filteredItems.first.value as T);
                                             overlayEntry?.remove();
@@ -114,23 +114,25 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                           setStateForMenu(() {});
                                         },
                                         focusNode: _searchFocusNode
-                                          ..requestFocus(), controller:_textEditingController ,
+                                          ..requestFocus(),
+                                        controller: _textEditingController,
                                       ),
                                       Expanded(
                                         child: ListView.builder(
                                           itemCount: filteredItems.length,
-                                          itemBuilder:(_,i) {
-                                            return  InkWell(
+                                          itemBuilder: (_, i) {
+                                            return InkWell(
                                               child: Container(
                                                 height: widget.itemHeight,
                                                 padding:
-                                                const EdgeInsets.all(
-                                                    8.0),
-                                                child: filteredItems[i].build(context),
+                                                    const EdgeInsets.all(8.0),
+                                                child: filteredItems[i]
+                                                    .build(context),
                                               ),
                                               onTap: () {
                                                 widget.onSelected(
-                                                    filteredItems[i].value as T);
+                                                    filteredItems[i].value
+                                                        as T);
                                                 overlayEntry?.remove();
 
                                                 setState(() {
@@ -138,8 +140,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                                 });
                                               },
                                               borderRadius:
-                                              BorderRadius.circular(
-                                                  10),
+                                                  BorderRadius.circular(10),
                                               splashColor: Colors.grey,
                                             );
                                           },
@@ -180,8 +181,8 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
           if (!(overlayEntry?.mounted ?? false)) {
             _searchText = '';
             allItems = widget.itemBuilder(context);
-            left=getLeftPosition();
-            top=getTopPosition();
+            left = getLeftPosition();
+            top = getTopPosition();
             Overlay.of(context)?.insert(overlayEntry!);
 
             setState(() {

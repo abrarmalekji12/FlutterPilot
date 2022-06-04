@@ -16,9 +16,9 @@ class ContextPopup {
   //     : super();
   void init(
       {required Widget child,
-        required Offset offset,
-        required double width,
-        required double height}) {
+      required Offset offset,
+      required double width,
+      required double height}) {
     this.child = child;
     this.offset = offset;
     this.width = width;
@@ -27,22 +27,23 @@ class ContextPopup {
 
   ContextPopup();
 
-  void show(BuildContext context, {bool animate = true,void Function()? onHide}) {
+  void show(BuildContext context,
+      {bool animate = true, void Function()? onHide}) {
     if (Overlay.of(context) != null) {
       final BtnLocation location = _getSuitableLocation(context);
       if (!location.isOriginal && outRange != null) {
         overlay = OverlayEntry(builder: (context) {
           return Stack(
             children: [
-                Material(
-                  color: Colors.transparent,
-                  child: GestureDetector(
-                    onTap: () {
-                      onHide?.call();
-                      overlay?.remove();
-                    },
-                  ),
+              Material(
+                color: Colors.transparent,
+                child: GestureDetector(
+                  onTap: () {
+                    onHide?.call();
+                    overlay?.remove();
+                  },
                 ),
+              ),
               Positioned(
                 left: location.offset.dx,
                 top: location.offset.dy,
@@ -56,13 +57,11 @@ class ContextPopup {
                         decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: const [
-                            BoxShadow(
-                              color: Color(0xffd3d3d3),
-                              offset: Offset(2,2),
-                              blurRadius: 2
-                            )
-                          ]
-                        ),
+                              BoxShadow(
+                                  color: Color(0xffd3d3d3),
+                                  offset: Offset(2, 2),
+                                  blurRadius: 2)
+                            ]),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
@@ -84,33 +83,33 @@ class ContextPopup {
         overlay = OverlayEntry(builder: (context) {
           return Stack(
             children: [
-                Material(
-                  color: Colors.transparent,
-                  child: GestureDetector(
-                    onTap: () {
-                      overlay?.remove();
-                    },
-                  ),
+              Material(
+                color: Colors.transparent,
+                child: GestureDetector(
+                  onTap: () {
+                    overlay?.remove();
+                  },
                 ),
+              ),
               Positioned(
                 left: location.offset.dx,
                 top: location.offset.dy,
                 child: TweenAnimationBuilder(
                   builder: (_, double value, __) {
-                    return Transform.scale(scale: value, child: Container(
-                      padding: const EdgeInsets.all(5),
-                        decoration:  BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                            color: Colors.white,
-                            boxShadow: const [
-                              BoxShadow(
-                                  color: Color(0xffd3d3d3),
-                                  offset: Offset(2,2),
-                                  blurRadius: 2
-                              )
-                            ]
-                        ),
-                        child: child));
+                    return Transform.scale(
+                        scale: value,
+                        child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                color: Colors.white,
+                                boxShadow: const [
+                                  BoxShadow(
+                                      color: Color(0xffd3d3d3),
+                                      offset: Offset(2, 2),
+                                      blurRadius: 2)
+                                ]),
+                            child: child));
                   },
                   tween: Tween<double>(begin: animate ? 0.0 : 1.0, end: 1.0),
                   duration: const Duration(milliseconds: 400),

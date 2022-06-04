@@ -64,7 +64,7 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
                         highlightColor: Colors.blueAccent.shade200,
                         borderRadius: BorderRadius.circular(8),
                         onTap: () {
-                          downloadProject(screen,code);
+                          downloadProject(screen, code);
                         },
                         child: Card(
                           shape: RoundedRectangleBorder(
@@ -223,33 +223,36 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
     // return Future.microtask(() => code=_dartFormatter
     //     .format(widget.componentOperationCubit.flutterProject!.code(screen)));
     // return  code=_dartFormatter.format(widget.componentOperationCubit.flutterProject!.code(screen));
-    return code = _dartFormatter
-        .format(code=screen.code(widget.componentOperationCubit.flutterProject!));
+    return code = _dartFormatter.format(
+        code = screen.code(widget.componentOperationCubit.flutterProject!));
   }
 
-  void downloadProject(UIScreen screen,String code) {
+  void downloadProject(UIScreen screen, String code) {
     final images =
         widget.componentOperationCubit.flutterProject?.getAllUsedImages() ?? [];
-   Map<String,dynamic> imageToBase64Map = {};
+    Map<String, dynamic> imageToBase64Map = {};
     for (final img in images) {
-      if(img.bytes!=null) {
-        imageToBase64Map['asset/images/'+img.imageName!] = img.bytes!;
+      if (img.bytes != null) {
+        imageToBase64Map['asset/images/' + img.imageName!] = img.bytes!;
       }
     }
-final DartFormatter formatter=DartFormatter();
-    for(final UIScreen uiScreen in widget.componentOperationCubit.flutterProject?.uiScreens ?? []) {
-      final name= uiScreen == widget.componentOperationCubit.flutterProject?.mainScreen?'main':uiScreen.name;
-      if(uiScreen != screen) {
-          imageToBase64Map['lib/$name.dart'] = formatter.format(
-              uiScreen.code(widget.componentOperationCubit.flutterProject!));
-
-        }
-      else{
+    final DartFormatter formatter = DartFormatter();
+    for (final UIScreen uiScreen
+        in widget.componentOperationCubit.flutterProject?.uiScreens ?? []) {
+      final name =
+          uiScreen == widget.componentOperationCubit.flutterProject?.mainScreen
+              ? 'main'
+              : uiScreen.name;
+      if (uiScreen != screen) {
+        imageToBase64Map['lib/$name.dart'] = formatter.format(
+            uiScreen.code(widget.componentOperationCubit.flutterProject!));
+      } else {
         imageToBase64Map['lib/$name.dart'] = code;
       }
     }
 
-    DownloadUtils.download(imageToBase64Map, widget.componentOperationCubit.flutterProject!.name);
+    DownloadUtils.download(
+        imageToBase64Map, widget.componentOperationCubit.flutterProject!.name);
   }
 }
 

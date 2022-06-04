@@ -30,7 +30,7 @@ class DialogSelection extends StatefulWidget {
 
 class _DialogSelectionState extends State<DialogSelection> {
   late List<dynamic> data;
-  final TextEditingController _textEditingController=TextEditingController();
+  final TextEditingController _textEditingController = TextEditingController();
   FocusNode focusNode = FocusNode();
 
   @override
@@ -113,7 +113,8 @@ class _DialogSelectionState extends State<DialogSelection> {
             setState(() {});
           },
           hint: 'Search ${widget.title}',
-          focusColor: AppColors.theme, controller: _textEditingController,
+          focusColor: AppColors.theme,
+          controller: _textEditingController,
         ),
         Expanded(
           child: Padding(

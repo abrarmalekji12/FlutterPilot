@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 class CustomDialog {
   static Future<void> show(BuildContext context, Widget widget,
-      {bool closeOnOutsideClick = true,void Function()? onDismiss}) async {
+      {bool closeOnOutsideClick = true, void Function()? onDismiss}) async {
     // final initialPosition = getPosition(sourceKey);
     // final initialPositionDifference = Offset(
     //     initialPosition.dx - (Get.width / 2),
@@ -54,7 +54,7 @@ class CustomDialog {
 
   static Offset getPosition(GlobalKey globalKey) {
     RenderBox renderBox =
-    globalKey.currentContext!.findRenderObject()! as RenderBox;
+        globalKey.currentContext!.findRenderObject()! as RenderBox;
     // buttonSize = renderBox.size;
 
     Offset position = renderBox.localToGlobal(Offset.zero);

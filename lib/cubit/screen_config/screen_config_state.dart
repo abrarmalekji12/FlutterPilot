@@ -5,6 +5,4 @@ abstract class ScreenConfigState {}
 
 class ScreenConfigInitial extends ScreenConfigState {}
 
-class ScreenConfigChangeState extends ScreenConfigState {
-
-}
+class ScreenConfigChangeState extends ScreenConfigState {}

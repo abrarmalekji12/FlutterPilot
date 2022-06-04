@@ -99,11 +99,16 @@ abstract class Component {
 
   void metaInfoFromCode(
       final String metaCode, final FlutterProject? flutterProject) {
-    final list = CodeOperations.splitBy(metaCode.substring(1, metaCode.length - 1),splitBy: '|');
+    final list = CodeOperations.splitBy(
+        metaCode.substring(1, metaCode.length - 1),
+        splitBy: '|');
     for (final value in list) {
       if (value.isNotEmpty) {
-        final equalIndex=value.indexOf('=');
-        final fieldList = [value.substring(0,equalIndex), value.substring(equalIndex + 1)];
+        final equalIndex = value.indexOf('=');
+        final fieldList = [
+          value.substring(0, equalIndex),
+          value.substring(equalIndex + 1)
+        ];
         switch (fieldList[0]) {
           case 'id':
             id = fieldList[1];
@@ -231,7 +236,7 @@ abstract class Component {
       case 4:
         final List<String> nameList =
             (comp as CustomNamedHolder).childMap.keys.toList();
-        final List<String> childrenNameList = (comp).childrenMap.keys.toList();
+        final List<String> childrenNameList = comp.childrenMap.keys.toList();
 
         final removeList = [];
         for (int i = 0; i < parameterCodes.length; i++) {
@@ -246,7 +251,7 @@ abstract class Component {
             removeList.add(parameterCodes[i]);
           } else if (childrenNameList.contains(name)) {
             final childrenCode = CodeOperations.splitBy(
-                parameterCodes[i].substring(colonIndex + 1));
+                parameterCodes[i].substring(colonIndex + 2,parameterCodes[i].length-1));
             comp.childrenMap[name]!.addAll(
               childrenCode.map(
                 (e) => Component.fromCode(e, flutterProject)!..setParent(comp),
@@ -880,10 +885,12 @@ mixin Clickable {
   void fromMetaCodeToAction(String code, final FlutterProject? flutterProject) {
     print('CODE $code');
     if (code.startsWith('CA')) {
-     final endIndex=CodeOperations.findCloseBracket(code, 2, '<'.codeUnits.first, '>'.codeUnits.first);
-      actionList.add(CustomAction(code: String.fromCharCodes(base64Decode(code.substring(3,endIndex)))));
-    }
-    else if (code.startsWith('NPISA')) {
+      final endIndex = CodeOperations.findCloseBracket(
+          code, 2, '<'.codeUnits.first, '>'.codeUnits.first);
+      actionList.add(CustomAction(
+          code:
+              String.fromCharCodes(base64Decode(code.substring(3, endIndex)))));
+    } else if (code.startsWith('NPISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
       actionList
           .add(NewPageInStackAction(getUIScreenWithName(name, flutterProject)));
@@ -913,8 +920,8 @@ mixin Clickable {
     } else if (code.startsWith('SCDISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
       UIScreen? selectedUiScreen;
-      for (final uiScreen in flutterProject?.uiScreens ?? []) {
-        if (uiScreen.variableName == name) {
+      for (final UIScreen uiScreen in flutterProject?.uiScreens ?? []) {
+        if (uiScreen.name == name) {
           selectedUiScreen = uiScreen;
           break;
         }
@@ -924,8 +931,8 @@ mixin Clickable {
   }
 
   UIScreen? getUIScreenWithName(String name, FlutterProject? flutterProject) {
-    for (final uiScreen in flutterProject?.uiScreens ?? []) {
-      if (uiScreen.variableName == name) {
+    for (final UIScreen uiScreen in flutterProject?.uiScreens ?? []) {
+      if (uiScreen.name == name) {
         return uiScreen;
       }
     }

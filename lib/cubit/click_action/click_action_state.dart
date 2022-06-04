@@ -5,6 +5,4 @@ abstract class ClickActionState {}
 
 class ClickActionInitial extends ClickActionState {}
 
-class ClickActionListChangeState extends ClickActionState{
-
-}
+class ClickActionListChangeState extends ClickActionState {}

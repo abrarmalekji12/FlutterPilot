@@ -73,8 +73,7 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                   onSelected: (value) {
                     switch (value) {
                       case 'CustomAction':
-                        widget.clickable.actionList
-                            .add(CustomAction());
+                        widget.clickable.actionList.add(CustomAction());
 
                         break;
                       case 'NewPageInStackAction':
@@ -191,7 +190,8 @@ class ActionModelUIWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (actionModel.runtimeType) {
       case CustomAction:
-        return CustomActionWidget( clickableHolder: clickableHolder,
+        return CustomActionWidget(
+            clickableHolder: clickableHolder,
             action: actionModel as CustomAction);
       case NewPageInStackAction:
         return NewPageInStackActionWidget(
@@ -334,7 +334,6 @@ class NewPageInStackActionWidget extends StatelessWidget {
   }
 }
 
-
 class CustomActionWidget extends StatefulWidget {
   final Clickable clickableHolder;
   final CustomAction action;
@@ -348,13 +347,13 @@ class CustomActionWidget extends StatefulWidget {
 }
 
 class _CustomActionWidgetState extends State<CustomActionWidget> {
-  final DynamicValueEditingController _controller=DynamicValueEditingController();
-
+  final DynamicValueEditingController _controller =
+      DynamicValueEditingController();
 
   @override
   void initState() {
     super.initState();
-    _controller.text=widget.action.arguments[0];
+    _controller.text = widget.action.arguments[0];
   }
 
   @override
@@ -374,17 +373,14 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
             style: AppFontStyle.roboto(14),
             maxLines: 10,
             controller: _controller,
-            onChanged: (value){
-              widget.action.arguments[0]=value;
+            onChanged: (value) {
+              widget.action.arguments[0] = value;
             },
           )
         ],
       ),
     );
   }
-
-
-
 }
 
 class ReplaceCurrentPageInStackActionWidget extends StatelessWidget {

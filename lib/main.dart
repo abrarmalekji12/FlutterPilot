@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_strategy/url_strategy.dart';
 import 'common/compiler/code_processor.dart';
-import 'common/converter/code_converter.dart';
 import 'common/shared_preferences.dart';
 import 'cubit/authentication/authentication_cubit.dart';
 import 'ui/authentication/login.dart';
@@ -34,15 +33,26 @@ import 'constant/app_colors.dart';
 // sort(arr);
 // print("{{arr}}");
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setPathUrlStrategy();
   await Preferences.load();
   final CodeProcessor processor = CodeProcessor();
-  const code='''
-  color="abcd";
- print(color);
+  const code = '''
+  class Student {
+  name:String;
+  age:int;
+  Student(this.name,this.age);
+  
+  toJson(){
+  return {
+  'name': name,
+  'age': age
+  };
+  }
+  }
+  list=[3,5,45];  
+  print(list[2]>list[1]);
  ''';
 
   processor.executeCode(code, (message) {
@@ -52,7 +62,7 @@ void main() async {
   });
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  // runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

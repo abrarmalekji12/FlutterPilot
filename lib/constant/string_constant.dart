@@ -6,12 +6,12 @@ abstract class Strings {
   static const kFavourites = 'favourites';
   static const kStorage = 'storage';
   static const kImages = 'images';
+}
 
-  }
-const deviceScaffoldMessenger='DEVICE SCAFFOLD MESSENGER';
+const deviceScaffoldMessenger = 'DEVICE SCAFFOLD MESSENGER';
 const wEmailRegex =
     "^[a-zA-Z0-9.a-zA-Z0-9.!#\$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+.[a-zA-Z]+";
 const minPasswordLength = 6;
 
-const navigationKey='device navigation';
-const dialogNavigationKey='Dialog Navigator Key';
+const navigationKey = 'device navigation';
+const dialogNavigationKey = 'Dialog Navigator Key';

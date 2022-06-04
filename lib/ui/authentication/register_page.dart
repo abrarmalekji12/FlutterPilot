@@ -71,8 +71,7 @@ class _RegisterPageState extends State<RegisterPage> {
             scrollDirection: Axis.vertical,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.max,
               children: [
                 Image.asset(
@@ -84,10 +83,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   height: 30,
                 ),
                 Column(
-                  mainAxisAlignment:
-                  MainAxisAlignment.start,
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
@@ -110,37 +107,33 @@ class _RegisterPageState extends State<RegisterPage> {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text:
-                            'Already having account? /',
+                            text: 'Already having account? /',
                             style: GoogleFonts.getFont(
                               'Roboto',
                               textStyle: const TextStyle(
                                 fontSize: 15,
                                 color: Color(0xff9c9da2),
-                                fontWeight:
-                                FontWeight.w500,
-                                fontStyle:
-                                FontStyle.normal,
+                                fontWeight: FontWeight.w500,
+                                fontStyle: FontStyle.normal,
                               ),
                             ),
                           ),
                           TextSpan(
                             text: ' Login',
-                            recognizer:
-                            TapGestureRecognizer()
+                            recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.pushReplacement(context, CustomPageRoute(builder: (_)=>const LoginPage()));
-
+                                Navigator.pushReplacement(
+                                    context,
+                                    CustomPageRoute(
+                                        builder: (_) => const LoginPage()));
                               },
                             style: GoogleFonts.getFont(
                               'Lato',
                               textStyle: const TextStyle(
                                 fontSize: 17,
                                 color: Color(0xff1a1b26),
-                                fontWeight:
-                                FontWeight.w600,
-                                fontStyle:
-                                FontStyle.normal,
+                                fontWeight: FontWeight.w600,
+                                fontStyle: FontStyle.normal,
                               ),
                             ),
                           ),
@@ -157,8 +150,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: const Color(0xfffdce84),
-                      borderRadius:
-                      BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(10),
                       shape: BoxShape.rectangle,
                     ),
                     child: TextFormField(
@@ -173,18 +165,16 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                       validator: (value) {
-                        return (!(value?.isValidEmail()??false))
+                        return (!(value?.isValidEmail() ?? false))
                             ? 'Invalid email'
                             : null;
                       },
                       onChanged: (value) {
-                        _authenticationCubit.authViewModel
-                            .userName = value;
+                        _authenticationCubit.authViewModel.userName = value;
                       },
                       readOnly: false,
                       decoration: InputDecoration(
-                        contentPadding:
-                        const EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 5,
                         ),
@@ -220,15 +210,13 @@ class _RegisterPageState extends State<RegisterPage> {
                           'ABeeZee',
                           textStyle: const TextStyle(
                             fontSize: 13,
-
                             color: Colors.red,
                             fontWeight: FontWeight.w400,
                             fontStyle: FontStyle.normal,
                           ),
                         ),
                         border: UnderlineInputBorder(
-                          borderRadius:
-                          BorderRadius.circular(0),
+                          borderRadius: BorderRadius.circular(0),
                           borderSide: BorderSide.none,
                         ),
                         suffixIcon: const Padding(
@@ -240,17 +228,13 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             child: CircleAvatar(
                                 radius: 10,
-                                backgroundColor:
-                                Color(0xffffffff),
-                                foregroundColor:
-                                Color(0xffffffff),
+                                backgroundColor: Color(0xffffffff),
+                                foregroundColor: Color(0xffffffff),
                                 child: Icon(
                                   Icons.person,
-                                  color:
-                                  Color(0xff3b403f),
+                                  color: Color(0xff3b403f),
                                 ))),
-                        iconColor:
-                        const Color(0xffffffff),
+                        iconColor: const Color(0xffffffff),
                         prefixText: '',
                         prefixStyle: GoogleFonts.getFont(
                           'ABeeZee',
@@ -271,14 +255,11 @@ class _RegisterPageState extends State<RegisterPage> {
                             fontStyle: FontStyle.normal,
                           ),
                         ),
-                        enabledBorder:
-                        UnderlineInputBorder(
-                          borderRadius:
-                          BorderRadius.circular(0),
+                        enabledBorder: UnderlineInputBorder(
+                          borderRadius: BorderRadius.circular(0),
                           borderSide: BorderSide.none,
                         ),
-                        fillColor:
-                        const Color(0xfffdce84),
+                        fillColor: const Color(0xfffdce84),
                         enabled: true,
                       ),
                     )),
@@ -290,15 +271,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: const Color(0xfff5f5f5),
-                    borderRadius:
-                    BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10),
                     shape: BoxShape.rectangle,
                   ),
                   child: PasswordBox(
                     controller: _passwordController,
                     onChanged: (value) {
-                      _authenticationCubit
-                          .authViewModel.password = value;
+                      _authenticationCubit.authViewModel.password = value;
                     },
                   ),
                 ),
@@ -310,19 +289,21 @@ class _RegisterPageState extends State<RegisterPage> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: const Color(0xfff5f5f5),
-                    borderRadius:
-                    BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10),
                     shape: BoxShape.rectangle,
                   ),
                   child: PasswordBox(
                     text: 'Confirm Password',
-                    validator: (value){
-                      return value!=_authenticationCubit.authViewModel.password?'Please enter same password':null;
+                    validator: (value) {
+                      return value !=
+                              _authenticationCubit.authViewModel.password
+                          ? 'Please enter same password'
+                          : null;
                     },
                     controller: _confirmPasswordController,
                     onChanged: (value) {
-                      _authenticationCubit
-                          .authViewModel.confirmPassword = value;
+                      _authenticationCubit.authViewModel.confirmPassword =
+                          value;
                     },
                   ),
                 ),
@@ -331,14 +312,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 InkWell(
                   onTap: () {
-                    if (_formKey.currentState
-                        ?.validate() ??
-                        false) {
+                    if (_formKey.currentState?.validate() ?? false) {
                       _authenticationCubit.register(
-                          _authenticationCubit
-                              .authViewModel.userName,
-                          _authenticationCubit
-                              .authViewModel.password);
+                          _authenticationCubit.authViewModel.userName,
+                          _authenticationCubit.authViewModel.password);
                     }
                   },
                   child: Container(
@@ -346,8 +323,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: const Color(0xffb12341),
-                      borderRadius:
-                      BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(10),
                       shape: BoxShape.rectangle,
                     ),
                     child: Text(
@@ -370,20 +346,21 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 Center(
                     child: Text(
-                      'Skip Now',
-                      style: GoogleFonts.getFont(
-                        'ABeeZee',
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xff464646),
-                          fontWeight: FontWeight.w500,
-                          fontStyle: FontStyle.normal,
-                        ),
-                      ),
-                      textAlign: TextAlign.left,
-                    )),
+                  'Skip Now',
+                  style: GoogleFonts.getFont(
+                    'ABeeZee',
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xff464646),
+                      fontWeight: FontWeight.w500,
+                      fontStyle: FontStyle.normal,
+                    ),
+                  ),
+                  textAlign: TextAlign.left,
+                )),
               ],
-            )), formKey: _formKey,
+            )),
+        formKey: _formKey,
       ),
     );
   }

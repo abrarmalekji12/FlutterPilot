@@ -7,9 +7,8 @@ import '../../view_model/auth_viewmodel.dart';
 part 'authentication_state.dart';
 
 class AuthenticationCubit extends Cubit<AuthenticationState> {
-  final AuthViewModel authViewModel=AuthViewModel();
+  final AuthViewModel authViewModel = AuthViewModel();
   AuthenticationCubit() : super(AuthenticationInitial());
-
 
   Future<void> loginWithPreferences() async {
     // emit(AuthLoadingState());
@@ -20,9 +19,9 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       } else {
         emit(AuthenticationInitial());
       }
-    } on Exception catch(error){
-      final errorMsg=error.toString();
-      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']')+1)));
+    } on Exception catch (error) {
+      final errorMsg = error.toString();
+      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']') + 1)));
     }
   }
 
@@ -33,24 +32,25 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       if (response.userId != null) {
         emit(AuthSuccessState(response.userId!));
       } else {
-        emit(AuthFailedState(response.error??''));
+        emit(AuthFailedState(response.error ?? ''));
       }
-    } on Exception catch(error){
-      final errorMsg=error.toString();
-      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']')+1)));
+    } on Exception catch (error) {
+      final errorMsg = error.toString();
+      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']') + 1)));
     }
   }
 
-  Future<void> logout()async{
+  Future<void> logout() async {
     emit(AuthLoadingState());
     try {
       await FireBridge.logout();
       emit(AuthSuccessState(-1));
-    } on Exception catch(error){
-      final errorMsg=error.toString();
-      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']')+1)));
+    } on Exception catch (error) {
+      final errorMsg = error.toString();
+      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']') + 1)));
     }
   }
+
   Future<void> resetPassword(final String userName) async {
     emit(AuthLoadingState());
 
@@ -61,9 +61,9 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       } else {
         emit(AuthFailedState(response));
       }
-    } on Exception catch(error){
-      final errorMsg=error.toString();
-      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']')+1)));
+    } on Exception catch (error) {
+      final errorMsg = error.toString();
+      emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']') + 1)));
     }
   }
 
@@ -74,11 +74,10 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       if (response.userId != null) {
         emit(AuthSuccessState(response.userId!));
       } else {
-        emit(AuthFailedState(response.error??''));
+        emit(AuthFailedState(response.error ?? ''));
       }
-    } on Exception  catch(error){
+    } on Exception catch (error) {
       emit(AuthErrorState(error.toString()));
     }
   }
-
 }

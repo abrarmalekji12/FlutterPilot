@@ -6,6 +6,6 @@ abstract class ComponentSelectionState {}
 class ComponentSelectionInitial extends ComponentSelectionState {}
 
 class ComponentSelectionChange extends ComponentSelectionState {
-  ComponentSelectionChange({this.scroll=true});
+  ComponentSelectionChange({this.scroll = true});
   final bool scroll;
 }

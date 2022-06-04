@@ -5,7 +5,6 @@ import '../../constant/app_colors.dart';
 import '../../constant/font_style.dart';
 import '../../cubit/stack_action/stack_action_cubit.dart';
 
-
 class MaterialSimpleAlertDialog extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -33,29 +32,29 @@ class MaterialSimpleAlertDialog extends StatelessWidget {
             decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
-                boxShadow:
-                kElevationToShadow[1]
-            ),
+                boxShadow: kElevationToShadow[1]),
             width: 350,
             child: Padding(
-              padding: const EdgeInsets.only(left: 24.0, top: 24, bottom: 12, right: 12),
+              padding: const EdgeInsets.only(
+                  left: 24.0, top: 24, bottom: 12, right: 12),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(title,
-                      style: AppFontStyle.roboto(18,color: Colors.black)
+                      style: AppFontStyle.roboto(18, color: Colors.black)
                           .copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(
                     height: 24,
                   ),
-                  if(subtitle?.isNotEmpty??false) ...[
+                  if (subtitle?.isNotEmpty ?? false) ...[
                     Padding(
-                      padding: const EdgeInsets.only(right:40),
+                      padding: const EdgeInsets.only(right: 40),
                       child: Text(
                         subtitle!,
-                        style: AppFontStyle.roboto(15, color: const Color(0xff666666))
+                        style: AppFontStyle.roboto(15,
+                                color: const Color(0xff666666))
                             .copyWith(fontWeight: FontWeight.normal),
                         textAlign: TextAlign.start,
                       ),
@@ -71,14 +70,16 @@ class MaterialSimpleAlertDialog extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        if(negativeButtonText!=null) ... [
+                        if (negativeButtonText != null) ...[
                           MaterialDialogButton(
                             buttonHeight: 30,
                             buttonWidth: 100,
                             buttonText: negativeButtonText!,
                             onPress: () {
                               onNegativeTap?.call();
-                              BlocProvider.of<StackActionCubit>(context,listen: false).back();
+                              BlocProvider.of<StackActionCubit>(context,
+                                      listen: false)
+                                  .back();
                             },
                           ),
                           const SizedBox(
@@ -91,7 +92,9 @@ class MaterialSimpleAlertDialog extends StatelessWidget {
                           buttonText: positiveButtonText,
                           onPress: () {
                             onPositiveTap?.call();
-                            BlocProvider.of<StackActionCubit>(context,listen: false).back();
+                            BlocProvider.of<StackActionCubit>(context,
+                                    listen: false)
+                                .back();
                           },
                         ),
                       ],
@@ -105,7 +108,6 @@ class MaterialSimpleAlertDialog extends StatelessWidget {
   }
 }
 
-
 class MaterialDialogButton extends StatelessWidget {
   final double buttonWidth, buttonHeight;
   final String buttonText;
@@ -113,18 +115,21 @@ class MaterialDialogButton extends StatelessWidget {
 
   const MaterialDialogButton(
       {Key? key,
-        required this.buttonWidth,
-        required this.buttonHeight,
-        required this.onPress,
-        required this.buttonText})
+      required this.buttonWidth,
+      required this.buttonHeight,
+      required this.onPress,
+      required this.buttonText})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final buttonStyle = AppFontStyle.roboto( 14, color: Theme.of(context).primaryColor,).copyWith(fontWeight: FontWeight.w700);
+    final buttonStyle = AppFontStyle.roboto(
+      14,
+      color: Theme.of(context).primaryColor,
+    ).copyWith(fontWeight: FontWeight.w700);
     return InkWell(
       hoverColor: Theme.of(context).primaryColor.withOpacity(0.1),
-      splashColor:Theme.of(context).primaryColor.withOpacity(0.3) ,
+      splashColor: Theme.of(context).primaryColor.withOpacity(0.3),
       borderRadius: BorderRadius.circular(2),
       child: Container(
         padding: const EdgeInsets.all(5),

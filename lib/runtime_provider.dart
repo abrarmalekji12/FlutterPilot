@@ -11,8 +11,8 @@ class RuntimeProvider extends InheritedWidget {
       : super(key: key, child: child);
 
   static RuntimeMode of(BuildContext context) {
-    final RuntimeProvider? result = context.dependOnInheritedWidgetOfExactType<
-        RuntimeProvider>();
+    final RuntimeProvider? result =
+        context.dependOnInheritedWidgetOfExactType<RuntimeProvider>();
     assert(result != null, 'No runtimeMode found in context');
     return result!.runtimeMode;
   }
@@ -22,5 +22,3 @@ class RuntimeProvider extends InheritedWidget {
     return false;
   }
 }
-
-

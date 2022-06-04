@@ -9,16 +9,18 @@ import 'component_model.dart';
 import 'local_model.dart';
 import 'parameter_model.dart';
 
-double abc=20;
+double abc = 20;
 
 abstract class BuilderComponent extends Holder {
   LocalModel? model;
   final List<Component> builtList = [];
-   SimpleParameter<int> itemLengthParameter=SimpleParameter<int>(name: 'count',defaultValue: 5,required: true);
+  SimpleParameter<int> itemLengthParameter =
+      SimpleParameter<int>(name: 'count', defaultValue: 5, required: true);
   final String builderName;
 
-  BuilderComponent(String name, List<Parameter> parameters, {this.builderName='itemBuilder'})
-      : super(name, parameters){
+  BuilderComponent(String name, List<Parameter> parameters,
+      {this.builderName = 'itemBuilder'})
+      : super(name, parameters) {
     itemLengthParameter;
   }
 
@@ -26,14 +28,14 @@ abstract class BuilderComponent extends Holder {
   Component clone(Component? parent, {bool cloneParam = false}) {
     return (super.clone(parent, cloneParam: cloneParam) as BuilderComponent)
       ..model = model
-    ..itemLengthParameter=itemLengthParameter;
+      ..itemLengthParameter = itemLengthParameter;
   }
 
   Widget builder(BuildContext context, int index) {
     if (child == null) {
       return Container();
     }
-    if(model!=null) {
+    if (model != null) {
       for (int i = 0; i < (model?.variables.length ?? 0); i++) {
         ComponentOperationCubit.codeProcessor
             .localVariables[model!.variables[i].name] = model!.values[index][i];
@@ -56,7 +58,9 @@ abstract class BuilderComponent extends Holder {
 
   void init() {
     builtList.clear();
-    child?.forEach((p0) {p0.cloneElements.clear();});
+    child?.forEach((p0) {
+      p0.cloneElements.clear();
+    });
     // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
     //   for (int i = 0; i < (model?.variables.length ?? 0); i++) {
     //     ComponentOperationCubit.codeProcessor
@@ -69,23 +73,23 @@ abstract class BuilderComponent extends Holder {
 
   @override
   String code({bool clean = true}) {
-
     final middle = parametersCode(clean);
     String itemCode =
         child?.code(clean: clean) ?? CContainer().code(clean: clean);
     String name = this.name;
     if (!clean) {
-      name += '[id=$id|model=${model?.name}|len=${itemLengthParameter.code(false)}]';
+      name +=
+          '[id=$id|model=${model?.name}|len=${itemLengthParameter.code(false)}]';
     }
     // final List<DynamicVariableModel> usedVariables = [];
 
     String itemCount = '';
-    if (clean&&model!=null) {
+    if (clean && model != null) {
       itemCount = ', itemCount:${model?.listVariableName}.length,';
       int start = 0;
       int gotIndex = -1;
       logger('ITEM CODE $itemCode');
-      while (start!=-1&&start < itemCode.length) {
+      while (start != -1 && start < itemCode.length) {
         if (gotIndex == -1) {
           start = itemCode.indexOf('\${', start);
           logger('START ++ $start');
@@ -102,7 +106,6 @@ abstract class BuilderComponent extends Holder {
           }
           String innerArea = itemCode.substring(gotIndex, start);
           if (model != null && model!.variables.isNotEmpty) {
-
             for (final variable in model!.variables) {
               innerArea = innerArea.replaceAll(variable.name,
                   '${model!.listVariableName}[index].${variable.name}');
@@ -127,9 +130,9 @@ abstract class BuilderComponent extends Holder {
   }
 
   int get count {
-    final length=itemLengthParameter.value;
+    final length = itemLengthParameter.value;
     print('VAL ${itemLengthParameter.compiler.code}');
-    if(model==null||length<model!.values.length){
+    if (model == null || length < model!.values.length) {
       return length;
     }
 
@@ -138,10 +141,11 @@ abstract class BuilderComponent extends Holder {
 }
 
 class CListViewBuilder extends BuilderComponent {
-  CListViewBuilder() : super('ListView.builder', [
-    Parameters.axisParameter()
-      ..withInfo(NamedParameterInfo('scrollDirection'))
-  ]);
+  CListViewBuilder()
+      : super('ListView.builder', [
+          Parameters.axisParameter()
+            ..withInfo(NamedParameterInfo('scrollDirection'))
+        ]);
 
   @override
   Widget create(BuildContext context) {

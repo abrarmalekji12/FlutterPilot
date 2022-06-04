@@ -8,7 +8,7 @@ class EditableTextView extends StatefulWidget {
   final void Function(String) onChange;
 
   EditableTextView({Key? key, required this.text, required this.onChange})
-      : super(key:key);
+      : super(key: key);
 
   @override
   _EditableTextViewState createState() => _EditableTextViewState();
@@ -18,17 +18,17 @@ class _EditableTextViewState extends State<EditableTextView> {
   bool editMode = false;
   bool touchMode = false;
   final TextEditingController _controller = TextEditingController();
-@override
+  @override
   void initState() {
     super.initState();
-    _controller.text=widget.text;
-}
+    _controller.text = widget.text;
+  }
 
   @override
   Widget build(BuildContext context) {
     if (editMode) {
       return Container(
-        width: 20.0*_controller.text.length,
+        width: 20.0 * _controller.text.length,
         padding: const EdgeInsets.all(5),
         child: BorderTextField(
           focusNode: FocusNode()..requestFocus(),
@@ -36,7 +36,7 @@ class _EditableTextViewState extends State<EditableTextView> {
           onSubmitted: (data) {
             widget.onChange.call(data);
             setState(() {
-              editMode=false;
+              editMode = false;
             });
           },
         ),

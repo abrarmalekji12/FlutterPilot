@@ -4,10 +4,10 @@ class AuthResponse {
 
   AuthResponse(this.error, this.userId);
 
-  factory AuthResponse.left(int userId){
+  factory AuthResponse.left(int userId) {
     return AuthResponse(null, userId);
   }
-  factory AuthResponse.right(String error){
-    return AuthResponse(error,null);
+  factory AuthResponse.right(String error) {
+    return AuthResponse(error, null);
   }
 }

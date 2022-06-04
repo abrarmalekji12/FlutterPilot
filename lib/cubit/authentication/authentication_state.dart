@@ -5,24 +5,25 @@ abstract class AuthenticationState {}
 
 class AuthenticationInitial extends AuthenticationState {}
 
-class AuthLoadingState extends AuthenticationState{
+class AuthLoadingState extends AuthenticationState {
   AuthLoadingState();
 }
 
-class AuthErrorState extends AuthenticationState{
+class AuthErrorState extends AuthenticationState {
   AuthErrorState(this.message);
   final String message;
 }
 
-class AuthSuccessState extends AuthenticationState{
+class AuthSuccessState extends AuthenticationState {
   final int userId;
   AuthSuccessState(this.userId);
 }
-class AuthResetPasswordSuccessState extends AuthenticationState{
+
+class AuthResetPasswordSuccessState extends AuthenticationState {
   AuthResetPasswordSuccessState();
 }
 
-class AuthFailedState extends AuthenticationState{
+class AuthFailedState extends AuthenticationState {
   final String message;
   AuthFailedState(this.message);
 }

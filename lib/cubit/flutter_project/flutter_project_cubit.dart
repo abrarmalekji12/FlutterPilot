@@ -39,7 +39,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
   Future<void> createNewProject(final String name) async {
     emit(FlutterProjectLoadingState());
     final flutterProject = FlutterProject.createNewProject(name, userId);
-    ComponentOperationCubit.currentFlutterProject= flutterProject;
+    ComponentOperationCubit.currentFlutterProject = flutterProject;
     flutterProject.currentScreen.variables.addAll([
       VariableModel(
           'tabletWidthLimit',

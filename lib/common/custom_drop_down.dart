@@ -34,13 +34,12 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
 
   OverlayEntry? overlayEntry;
   int state = 0;
-  static const itemHeight=40.0;
+  static const itemHeight = 40.0;
   @override
   void initState() {
     super.initState();
     // selected = widget.value;
     overlayEntry = OverlayEntry(builder: (context) {
-
       return GestureDetector(
         onTap: () {
           overlayEntry?.remove();
@@ -75,24 +74,24 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
                               ),
                               child: ListView.builder(
                                 itemCount: widget.items.length,
-                               itemBuilder: (context,i){
-                                return InkWell(
-                                   child: Container(
-                                     height: itemHeight,
-                                     padding: const EdgeInsets.all(5.0),
-                                     child: widget.items[i].child,
-                                   ),
-                                   onTap: () {
-                                     widget.onChanged(widget.items[i].value);
-                                     overlayEntry?.remove();
-                                     setState(() {
-                                       state = 2;
-                                     });
-                                   },
-                                   borderRadius: BorderRadius.circular(10),
-                                   splashColor: Colors.grey,
-                                 );
-                               },
+                                itemBuilder: (context, i) {
+                                  return InkWell(
+                                    child: Container(
+                                      height: itemHeight,
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: widget.items[i].child,
+                                    ),
+                                    onTap: () {
+                                      widget.onChanged(widget.items[i].value);
+                                      overlayEntry?.remove();
+                                      setState(() {
+                                        state = 2;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(10),
+                                    splashColor: Colors.grey,
+                                  );
+                                },
                               ),
                             ),
                           ),
@@ -120,19 +119,19 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
       splashColor: Colors.grey,
       onTap: widget.enable
           ? () {
-        if (!(overlayEntry?.mounted ?? false)) {
-          Overlay.of(context)?.insert(overlayEntry!);
-          setState(() {
-            state = 1;
-          });
-        }
-      }
+              if (!(overlayEntry?.mounted ?? false)) {
+                Overlay.of(context)?.insert(overlayEntry!);
+                setState(() {
+                  state = 1;
+                });
+              }
+            }
           : null,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xfff2f2f2),width: 2),
+          border: Border.all(color: const Color(0xfff2f2f2), width: 2),
         ),
         padding: const EdgeInsets.all(5),
         child: Row(
@@ -173,42 +172,48 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
 
   double getLeftPosition() {
     final RenderBox renderBox =
-    globalKey.currentContext!.findRenderObject()! as RenderBox;
+        globalKey.currentContext!.findRenderObject()! as RenderBox;
     final Offset position = renderBox.localToGlobal(Offset.zero);
-    final size=MediaQuery.of(context).size;
-    if(position.dx+200>size.width) {
-      return size.width-230;
+    final size = MediaQuery.of(context).size;
+    if (position.dx + 200 > size.width) {
+      return size.width - 230;
     }
     return position.dx;
   }
 
   double getWidth() {
     final RenderBox renderBox =
-    globalKey.currentContext!.findRenderObject()! as RenderBox;
+        globalKey.currentContext!.findRenderObject()! as RenderBox;
     // buttonSize = renderBox.size;
     return renderBox.size.width;
   }
 
   double getCalculatedHeight() {
-    final size=MediaQuery.of(context).size;
-    final height=widget.items.length*itemHeight;
-    final topPosition=getTopPosition();
-    if(topPosition+height>size.height){
-      return size.height-(topPosition);
+    final size = MediaQuery.of(context).size;
+    final height = widget.items.length * itemHeight;
+    final topPosition = getTopPosition();
+    if (topPosition + height > size.height) {
+      return size.height - (topPosition);
     }
     // buttonSize = renderBox.size;
     return height;
   }
+
   double getTopPosition() {
     final RenderBox renderBox =
-    globalKey.currentContext!.findRenderObject()! as RenderBox;
+        globalKey.currentContext!.findRenderObject()! as RenderBox;
     // buttonSize = renderBox.size;
-    final size=MediaQuery.of(context).size;
+    final size = MediaQuery.of(context).size;
 
     final Offset position = renderBox.localToGlobal(Offset.zero);
 
-    if(position.dy+renderBox.size.height+(itemHeight*widget.items.length)>size.height) {
-      return size.height-(itemHeight*widget.items.length)>0?size.height-(itemHeight*widget.items.length):position.dy;
+    if (position.dy +
+            renderBox.size.height +
+            (itemHeight * widget.items.length) >
+        size.height) {
+      return size.height - (itemHeight * widget.items.length) > 0
+          ? size.height - (itemHeight * widget.items.length)
+          : position.dy;
     }
     return position.dy + renderBox.size.height;
   }

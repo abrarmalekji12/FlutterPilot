@@ -91,7 +91,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         comp.name = customComponent.name;
       }
       emit(ComponentOperationInitial());
-    } on Exception  catch(e){
+    } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));
     }
   }
@@ -225,7 +225,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
           flutterProject!.currentScreen,
           flutterProject!.rootComponent!);
       emit(ComponentOperationInitial());
-    } on Exception catch(e){
+    } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));
     }
   }
@@ -239,7 +239,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       await FireBridge.addUIScreen(
           flutterProject!.userId, flutterProject!, uiScreen);
       emit(ComponentOperationInitial());
-    } on Exception  catch(e) {
+    } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));
     }
   }
@@ -529,16 +529,13 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     } else {
       boundary = null;
     }
-    double width,height;
+    double width, height;
     width = component.boundary?.width ?? boundary?.width ?? 1;
     height = component.boundary?.height ?? boundary?.height ?? 1;
-    flutterProject!.favouriteList.add(model ..component.boundary=Rect.fromLTWH(0,0,width,height));
+    flutterProject!.favouriteList
+        .add(model..component.boundary = Rect.fromLTWH(0, 0, width, height));
     await FireBridge.addToFavourites(
-        flutterProject!.userId,
-        component,
-        flutterProject!.name,
-        width,
-        height);
+        flutterProject!.userId, component, flutterProject!.name, width, height);
     emit(ComponentUpdatedState());
   }
 

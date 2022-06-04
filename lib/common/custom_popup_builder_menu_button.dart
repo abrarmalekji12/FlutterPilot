@@ -27,10 +27,12 @@ class CustomPopupMenuBuilderButton extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _CustomPopupMenuBuilderButtonState createState() => _CustomPopupMenuBuilderButtonState();
+  _CustomPopupMenuBuilderButtonState createState() =>
+      _CustomPopupMenuBuilderButtonState();
 }
 
-class _CustomPopupMenuBuilderButtonState extends State<CustomPopupMenuBuilderButton> {
+class _CustomPopupMenuBuilderButtonState
+    extends State<CustomPopupMenuBuilderButton> {
   final GlobalKey globalKey = GlobalKey();
   OverlayEntry? overlayEntry;
   bool expanded = false;
@@ -87,7 +89,8 @@ class _CustomPopupMenuBuilderButtonState extends State<CustomPopupMenuBuilderBut
                                       child: child,
                                     ),
                                     onTap: () {
-                                      debugPrint('TYPE ${child.value.runtimeType} ');
+                                      debugPrint(
+                                          'TYPE ${child.value.runtimeType} ');
                                       widget.onSelected(child.value);
                                       overlayEntry?.remove();
                                       setState(() {

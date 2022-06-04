@@ -26,7 +26,7 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
   List<ImageData>? filteredImageDataList;
   final _controller = ScrollController();
   final _focusNode = FocusNode();
-  final TextEditingController controller=TextEditingController();
+  final TextEditingController controller = TextEditingController();
   String _searchText = '';
 
   @override
@@ -36,7 +36,7 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
       widget.componentOperationCubit.loadAllImages().then((imageList) {
         setState(() {
           imageDataList = imageList;
-          filteredImageDataList=imageDataList;
+          filteredImageDataList = imageDataList;
         });
       });
     });
@@ -80,7 +80,8 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                             logger(
                                 '=== IMAGE SELECTED ${value.name}  || ${value.path}');
                             final imageData = ImageData(bytes, value.name);
-                            widget.componentOperationCubit.byteCache[value.name]=bytes;
+                            widget.componentOperationCubit
+                                .byteCache[value.name] = bytes;
                             widget.componentOperationCubit
                                 .uploadImage(imageData);
                             Get.back(result: imageData);
@@ -114,8 +115,9 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                       _searchText = text.toLowerCase();
                       setState(() {
                         filteredImageDataList = imageDataList!
-                            .where((element) =>
-                                element.imageName!.toLowerCase().contains(_searchText))
+                            .where((element) => element.imageName!
+                                .toLowerCase()
+                                .contains(_searchText))
                             .toList();
                       });
                     },
@@ -155,9 +157,12 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                             itemBuilder: (context, index) {
                               return InkWell(
                                 onTap: () {
-
-                                  widget.componentOperationCubit.byteCache[filteredImageDataList![index].imageName!]=filteredImageDataList![index].bytes!;
-                                  Get.back(result: filteredImageDataList![index]);
+                                  widget.componentOperationCubit.byteCache[
+                                          filteredImageDataList![index]
+                                              .imageName!] =
+                                      filteredImageDataList![index].bytes!;
+                                  Get.back(
+                                      result: filteredImageDataList![index]);
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(5),
@@ -169,7 +174,8 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                                             borderRadius:
                                                 BorderRadius.circular(8),
                                             child: Image.memory(
-                                              filteredImageDataList![index].bytes!,
+                                              filteredImageDataList![index]
+                                                  .bytes!,
                                               fit: BoxFit.contain,
                                             ),
                                           ),
@@ -179,9 +185,12 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                                           child: Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              filteredImageDataList![index].imageName!,
+                                              filteredImageDataList![index]
+                                                  .imageName!,
                                               overflow: TextOverflow.fade,
-                                              style: AppFontStyle.roboto(13,fontWeight: FontWeight.w600,color: Colors.black),
+                                              style: AppFontStyle.roboto(13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.black),
                                             ),
                                           ),
                                         ),
@@ -194,8 +203,9 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                                               color: Colors.red,
                                             ),
                                             onTap: () {
-                                              final imageData = filteredImageDataList!
-                                                  .removeAt(index);
+                                              final imageData =
+                                                  filteredImageDataList!
+                                                      .removeAt(index);
                                               widget.componentOperationCubit
                                                   .deleteImage(
                                                       imageData.imageName!);

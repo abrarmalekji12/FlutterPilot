@@ -35,8 +35,8 @@ class ShowDialogActionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: (){
-        BlocProvider.of<StackActionCubit>(context,listen: false).back();
+      onTap: () {
+        BlocProvider.of<StackActionCubit>(context, listen: false).back();
       },
       child: Container(
         color: Colors.black.withOpacity(0.5),
@@ -60,8 +60,8 @@ class ShowCustomDialogActionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: (){
-        BlocProvider.of<StackActionCubit>(context,listen: false).back();
+      onTap: () {
+        BlocProvider.of<StackActionCubit>(context, listen: false).back();
       },
       child: Material(
         color: Colors.black.withOpacity(0.5),

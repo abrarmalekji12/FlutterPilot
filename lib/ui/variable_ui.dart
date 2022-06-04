@@ -39,8 +39,6 @@ class _VariableBoxState extends State<VariableBox> {
 
   @override
   Widget build(BuildContext context) {
-
-
     final variables = ComponentOperationCubit.codeProcessor.variables.entries
         .toList(growable: false);
     return Card(
@@ -215,20 +213,20 @@ class _VariableBoxState extends State<VariableBox> {
                           value = _controller2.text;
                           break;
                         case DataType.bool:
-                          value = _controller2.text=='true';
+                          value = _controller2.text == 'true';
                           break;
                         case DataType.dynamic:
-                          if(double.tryParse(_controller2.text)!=null){
+                          if (double.tryParse(_controller2.text) != null) {
                             value = double.tryParse(_controller2.text);
-                          }else if(int.tryParse(_controller2.text)!=null) {
+                          } else if (int.tryParse(_controller2.text) != null) {
                             value = int.tryParse(_controller2.text);
-                          }else if(_controller2.text=='true' || _controller2.text=='false'){
-                            value = _controller2.text=='true';
-                          }
-                          else{
+                          } else if (_controller2.text == 'true' ||
+                              _controller2.text == 'false') {
+                            value = _controller2.text == 'true';
+                          } else {
                             value = _controller2.text;
                           }
-                            break;
+                          break;
                       }
                       if (value == null) {
                         Fluttertoast.showToast(
@@ -286,7 +284,6 @@ class _VariableBoxState extends State<VariableBox> {
       ),
     );
   }
-
 }
 
 class EditVariable extends StatefulWidget {
@@ -361,18 +358,17 @@ class _EditVariableState extends State<EditVariable> {
                     value = val;
                     break;
                   case DataType.bool:
-                    value = val =='true';
+                    value = val == 'true';
                     break;
                   case DataType.dynamic:
-                    if(double.tryParse(val)!=null){
+                    if (double.tryParse(val) != null) {
                       value = double.tryParse(val);
-                    }else if(int.tryParse(val)!=null) {
+                    } else if (int.tryParse(val) != null) {
                       value = int.tryParse(val);
-                    }else if(val=='true' || val =='false'){
-                      value =  val =='true';
-                    }
-                    else{
-                      value =val;
+                    } else if (val == 'true' || val == 'false') {
+                      value = val == 'true';
+                    } else {
+                      value = val;
                     }
                     break;
                 }

@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 // ignore: avoid_classes_with_only_static_members
 class AppFontStyle {
   static TextStyle roboto(double fontSize,

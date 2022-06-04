@@ -29,8 +29,8 @@ final componentList = <String, Component Function()>{
   'Visibility': () => CVisibility(),
   'Material': () => CMaterial(),
   'Expanded': () => CExpanded(),
-  'IntrinsicWidth' : ()=> CIntrinsicWidth(),
-  'IntrinsicHeight' : ()=> CIntrinsicHeight(),
+  'IntrinsicWidth': () => CIntrinsicWidth(),
+  'IntrinsicHeight': () => CIntrinsicHeight(),
   'Spacer': () => CSpacer(),
   'Center': () => CCenter(),
   'Align': () => CAlign(),
@@ -191,14 +191,12 @@ class CRadio extends ClickableComponent {
   Widget create(BuildContext context) {
     return Radio<String>(
       onChanged: (value) {
-        perform(context,arguments: {'value':value});
+        perform(context, arguments: {'value': value});
       },
       value: parameters[0].value,
       groupValue: parameters[1].value,
     );
   }
-
-
 
   @override
   String get clickableParamName => 'onChanged';
@@ -281,13 +279,9 @@ class CIntrinsicWidth extends Holder {
     );
   }
 }
+
 class CIntrinsicHeight extends Holder {
-  CIntrinsicHeight()
-      : super(
-      'IntrinsicWidth',
-      [
-      ],
-      required: false);
+  CIntrinsicHeight() : super('IntrinsicWidth', [], required: false);
 
   @override
   Widget create(BuildContext context) {
@@ -296,6 +290,7 @@ class CIntrinsicHeight extends Holder {
     );
   }
 }
+
 class CSafeArea extends Holder {
   CSafeArea()
       : super(
@@ -1627,7 +1622,6 @@ class CInputDecorator extends Component {
 }
 
 class CTextField extends Component {
-
   CTextField()
       : super('TextField', [
           Parameters.googleFontTextStyleParameter(),
@@ -1652,7 +1646,7 @@ class CTextField extends Component {
       (parameters[2] as ComplexParameter).params[12] as ComponentParameter,
     ]);
   }
-  final TextEditingController textEditingController=TextEditingController();
+  final TextEditingController textEditingController = TextEditingController();
 
   @override
   Widget create(BuildContext context) {

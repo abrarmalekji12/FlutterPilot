@@ -13,7 +13,7 @@ import '../cubit/model/model_cubit.dart';
 import '../models/local_model.dart';
 import '../models/variable_model.dart';
 
-enum DataType { int, double, string , bool , dynamic,list,map,fvbInstance }
+enum DataType { int, double, string, bool, dynamic, list, map, fvbInstance }
 
 class ModelBox extends StatefulWidget {
   final OverlayEntry overlayEntry;
@@ -27,7 +27,6 @@ class ModelBox extends StatefulWidget {
     required this.overlayEntry,
     required this.componentOperationCubit,
     required this.componentCreationCubit,
-
     required this.componentSelectionCubit,
   }) : super(key: key);
 
@@ -112,18 +111,22 @@ class _ModelBoxState extends State<ModelBox> {
                       height: 10,
                     ),
                     Column(
-                      children: componentOperationCubit.models.map<Widget>((LocalModel model) {
+                      children: componentOperationCubit.models
+                          .map<Widget>((LocalModel model) {
                         return Container(
                           padding: const EdgeInsets.all(5),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              EditableTextView(key:ObjectKey(model.name),text: model.name, onChange: (data){
-                                setState(() {
-                                  model.name=data;
-                                });
-                                _modelCubit.changed(model);
-                              }),
+                              EditableTextView(
+                                  key: ObjectKey(model.name),
+                                  text: model.name,
+                                  onChange: (data) {
+                                    setState(() {
+                                      model.name = data;
+                                    });
+                                    _modelCubit.changed(model);
+                                  }),
                               const SizedBox(
                                 height: 10,
                               ),
@@ -132,31 +135,32 @@ class _ModelBoxState extends State<ModelBox> {
                                 height: 10,
                               ),
                               ...model.variables.map((variable) => Container(
-                                padding: const EdgeInsets.all(5),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      variable.name,
-                                      style: AppFontStyle.roboto(13),
+                                    padding: const EdgeInsets.all(5),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          variable.name,
+                                          style: AppFontStyle.roboto(13),
+                                        ),
+                                        const SizedBox(
+                                          width: 20,
+                                        ),
+                                        Text(
+                                          variable.dataType.name,
+                                          style: AppFontStyle.roboto(13,
+                                              color: AppColors.theme),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(
-                                      width: 20,
-                                    ),
-                                    Text(
-                                      variable.dataType.name,
-                                      style: AppFontStyle.roboto(13,
-                                          color: AppColors.theme),
-                                    ),
-                                  ],
-                                ),
-                              ))
+                                  ))
                             ],
                           ),
                         );
                       }).toList(growable: false),
                     ),
                     Column(
-                      children: componentOperationCubit.models.map<Widget>((LocalModel model) {
+                      children: componentOperationCubit.models
+                          .map<Widget>((LocalModel model) {
                         return Container(
                             padding: const EdgeInsets.all(5),
                             child: Column(
@@ -167,12 +171,15 @@ class _ModelBoxState extends State<ModelBox> {
                                 //   style: AppFontStyle.roboto(14,
                                 //       fontWeight: FontWeight.bold),
                                 // ),
-                                EditableTextView(key:ObjectKey(model.name),text: model.name, onChange: (data){
-                                  setState(() {
-                                    model.name=data;
-                                  });
-                                  _modelCubit.changed(model);
-                                }),
+                                EditableTextView(
+                                    key: ObjectKey(model.name),
+                                    text: model.name,
+                                    onChange: (data) {
+                                      setState(() {
+                                        model.name = data;
+                                      });
+                                      _modelCubit.changed(model);
+                                    }),
                                 const SizedBox(
                                   height: 10,
                                 ),
@@ -290,12 +297,10 @@ class _AddModelValueState extends State<AddModelValue> {
     super.initState();
     _controllers = List.generate(
         widget.model.variables.length, (index) => TextEditingController());
-
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
       decoration: BoxDecoration(
           color: const Color(0xfff2f2f2),
@@ -509,7 +514,6 @@ class _AddVariableTileState extends State<AddVariableTile> {
 }
 
 class AddModelTile extends StatefulWidget {
-
   AddModelTile({Key? key}) : super(key: key);
 
   @override

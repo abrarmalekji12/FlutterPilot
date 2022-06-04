@@ -7,16 +7,16 @@ class ImageData {
 
   String? imageName;
 
-  ImageData(this.bytes,this.imageName);
+  ImageData(this.bytes, this.imageName);
   @override
   String toString() {
-    return imageName!=null?'\'$imageName\'':'';
+    return imageName != null ? '\'$imageName\'' : '';
   }
 }
-class FavouriteModel{
+
+class FavouriteModel {
   final Component component;
   final String projectName;
-
 
   FavouriteModel(this.component, this.projectName);
 }

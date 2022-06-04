@@ -27,34 +27,34 @@ class MaterialAlertDialog extends StatelessWidget {
       color: Colors.transparent,
       child: Center(
         child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow:
-              kElevationToShadow[1]
-          ),
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: kElevationToShadow[1]),
             width: 350,
             child: Stack(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(left: 24.0, top: 24, bottom: 12, right: 12),
+                  padding: const EdgeInsets.only(
+                      left: 24.0, top: 24, bottom: 12, right: 12),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(title,
-                          style: AppFontStyle.roboto(18,color: Colors.black)
+                          style: AppFontStyle.roboto(18, color: Colors.black)
                               .copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(
                         height: 24,
                       ),
-                      if(subtitle!=null) ...[
+                      if (subtitle != null) ...[
                         Padding(
-                          padding: const EdgeInsets.only(right:40),
+                          padding: const EdgeInsets.only(right: 40),
                           child: Text(
                             subtitle!,
-                            style: AppFontStyle.roboto(14, color: const Color(0xff666666))
+                            style: AppFontStyle.roboto(14,
+                                    color: const Color(0xff666666))
                                 .copyWith(fontWeight: FontWeight.normal),
                             textAlign: TextAlign.start,
                           ),
@@ -70,7 +70,7 @@ class MaterialAlertDialog extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            if(negativeButtonText!=null) ... [
+                            if (negativeButtonText != null) ...[
                               MaterialDialogButton(
                                 buttonHeight: 30,
                                 buttonWidth: 100,
@@ -121,7 +121,6 @@ class MaterialAlertDialog extends StatelessWidget {
   }
 }
 
-
 class MaterialDialogButton extends StatelessWidget {
   final double buttonWidth, buttonHeight;
   final String buttonText;
@@ -129,18 +128,21 @@ class MaterialDialogButton extends StatelessWidget {
 
   const MaterialDialogButton(
       {Key? key,
-        required this.buttonWidth,
-        required this.buttonHeight,
-        required this.onPress,
-        required this.buttonText})
+      required this.buttonWidth,
+      required this.buttonHeight,
+      required this.onPress,
+      required this.buttonText})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final buttonStyle = AppFontStyle.roboto( 14, color: AppColors.theme,).copyWith(fontWeight: FontWeight.w700);
+    final buttonStyle = AppFontStyle.roboto(
+      14,
+      color: AppColors.theme,
+    ).copyWith(fontWeight: FontWeight.w700);
     return InkWell(
       hoverColor: AppColors.theme.withOpacity(0.1),
-      splashColor:AppColors.theme.withOpacity(0.3) ,
+      splashColor: AppColors.theme.withOpacity(0.3),
       borderRadius: BorderRadius.circular(2),
       child: Container(
         padding: const EdgeInsets.all(5),

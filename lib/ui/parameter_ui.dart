@@ -680,9 +680,9 @@ class _ColorInputWidgetState extends State<ColorInputWidget> {
             child: DynamicValueField<Color>(
               key: _editorKey,
               textEditingController: _textEditingController,
-              onErrorCode: (){
+              onErrorCode: () {
                 widget.parameter.compiler.code = '';
-                widget.parameter.val =null;
+                widget.parameter.val = null;
                 BlocProvider.of<ParameterBuildCubit>(context, listen: false)
                     .parameterChanged(context, widget.parameter);
                 BlocProvider.of<ComponentCreationCubit>(context, listen: false)
@@ -832,7 +832,6 @@ class ComplexParameterWidget extends StatelessWidget {
 class BooleanParameterWidget extends StatefulWidget {
   final BooleanParameter parameter;
 
-
   const BooleanParameterWidget({Key? key, required this.parameter})
       : super(key: key);
 
@@ -841,13 +840,14 @@ class BooleanParameterWidget extends StatefulWidget {
 }
 
 class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
-  final TextEditingController _textEditingController=TextEditingController();
+  final TextEditingController _textEditingController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-  _textEditingController.text=widget.parameter.compiler.code;
+    _textEditingController.text = widget.parameter.compiler.code;
   }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -861,20 +861,20 @@ class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
             style: AppFontStyle.roboto(14,
                 color: Colors.black, fontWeight: FontWeight.w500),
           ),
-
           SizedBox(
             width: 150,
-            child: DynamicValueField<bool>(onProcessedResult: (code,value){
-              widget.parameter.compiler.code=code;
-              widget.parameter.val=value;
-              BlocProvider.of<ParameterBuildCubit>(context,
-                  listen: false)
-                  .parameterChanged(context, widget.parameter);
-              BlocProvider.of<ComponentCreationCubit>(context,
-                  listen: false)
-                  .changedComponent();
-              return true;
-            }, textEditingController: _textEditingController),
+            child: DynamicValueField<bool>(
+                onProcessedResult: (code, value) {
+                  widget.parameter.compiler.code = code;
+                  widget.parameter.val = value;
+                  BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                      .parameterChanged(context, widget.parameter);
+                  BlocProvider.of<ComponentCreationCubit>(context,
+                          listen: false)
+                      .changedComponent();
+                  return true;
+                },
+                textEditingController: _textEditingController),
           )
         ],
       ),

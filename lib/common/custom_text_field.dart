@@ -9,7 +9,12 @@ class CustomTextField extends StatelessWidget {
   final FormFieldValidator<String>? validator;
   final FocusNode? focusNode;
   const CustomTextField(
-      {Key? key, required this.onChange, this.hint, this.controller, this.validator, this.focusNode})
+      {Key? key,
+      required this.onChange,
+      this.hint,
+      this.controller,
+      this.validator,
+      this.focusNode})
       : super(key: key);
 
   @override

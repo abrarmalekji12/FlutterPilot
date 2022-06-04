@@ -7,12 +7,12 @@ class VisualBoxCubit extends Cubit<VisualBoxState> {
   String? errorMessage;
   VisualBoxCubit() : super(VisualBoxInitial());
 
-  void visualUpdated(){
+  void visualUpdated() {
     emit(VisualBoxUpdatedState());
   }
 
-  void enableError(String message){
-    errorMessage=message;
+  void enableError(String message) {
+    errorMessage = message;
     emit(VisualBoxUpdatedState());
   }
 }

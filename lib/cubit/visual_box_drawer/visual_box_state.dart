@@ -5,6 +5,4 @@ abstract class VisualBoxState {}
 
 class VisualBoxInitial extends VisualBoxState {}
 
-class VisualBoxUpdatedState extends VisualBoxState{
-
-}
+class VisualBoxUpdatedState extends VisualBoxState {}

@@ -1,17 +1,11 @@
-enum ParamType{
-  int,
-  double,
-  string,
-  other
-}
-enum ParamInputType{
+enum ParamType { int, double, string, other }
+
+enum ParamInputType {
   text,
   longText,
   color,
   sliderZeroToOne,
   image,
 }
-enum ComponentSaveOperation{
-  updateRootComponent,
-  updateCustom
-}
+
+enum ComponentSaveOperation { updateRootComponent, updateCustom }

@@ -5,7 +5,6 @@ abstract class ActionEditState {}
 
 class ActionEditInitial extends ActionEditState {}
 
-
 class ActionChangeState extends ActionEditState {
   ActionChangeState();
 }

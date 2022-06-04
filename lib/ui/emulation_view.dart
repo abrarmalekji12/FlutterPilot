@@ -9,9 +9,7 @@ class EmulationView extends StatelessWidget {
   final ScreenConfig screenConfig;
 
   const EmulationView(
-      {Key? key,
-      required this.widget,
-      required this.screenConfig})
+      {Key? key, required this.widget, required this.screenConfig})
       : super(key: key);
 
   @override
@@ -25,8 +23,7 @@ class EmulationView extends StatelessWidget {
             fit: BoxFit.fill,
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(width: 1,color: Colors.grey.shade600)
-              ),
+                  border: Border.all(width: 1, color: Colors.grey.shade600)),
               width: screenConfig.width,
               height: screenConfig.height,
               child: widget,

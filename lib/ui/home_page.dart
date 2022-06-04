@@ -68,13 +68,12 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     flutterProjectCubit = FlutterProjectCubit(widget.userId);
-    if(componentOperationCubit.flutterProject?.name!=widget.projectName) {
+    if (componentOperationCubit.flutterProject?.name != widget.projectName) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      flutterProjectCubit.loadFlutterProject(
-          componentSelectionCubit, componentOperationCubit, widget.projectName);
-    });
-    }
-    else{
+        flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
+            componentOperationCubit, widget.projectName);
+      });
+    } else {
       AppLoader.hide();
     }
     if (_streamSubscription != null) {
@@ -716,8 +715,9 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                     ),
                     InkWell(
                       onTap: () {
-                        Clipboard.setData(ClipboardData(text:_componentSelectionCubit
-                            .currentSelected.propertySelection.id));
+                        Clipboard.setData(ClipboardData(
+                            text: _componentSelectionCubit
+                                .currentSelected.propertySelection.id));
                       },
                       borderRadius: BorderRadius.circular(10),
                       child: Row(
@@ -726,11 +726,18 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                           Text(
                             _componentSelectionCubit
                                 .currentSelected.propertySelection.id,
-                            style:
-                            AppFontStyle.roboto(13,color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                            style: AppFontStyle.roboto(13,
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.w500),
                           ),
-                          const SizedBox(width: 20,),
-                          const Icon(Icons.copy, color: Colors.grey,size: 17,),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          const Icon(
+                            Icons.copy,
+                            color: Colors.grey,
+                            size: 17,
+                          ),
                         ],
                       ),
                     ),
@@ -1016,7 +1023,10 @@ class CenterMainSide extends StatelessWidget {
       final original = tappedComp.getOriginal() ?? tappedComp;
       _componentSelectionCubit.changeComponentSelection(
         ComponentSelectionModel([original], [tappedComp], original),
-        root: original!=tappedComp?original.getRootCustomComponent(ComponentOperationCubit.currentFlutterProject!)!:_componentSelectionCubit.currentSelectedRoot,
+        root: original != tappedComp
+            ? original.getRootCustomComponent(
+                ComponentOperationCubit.currentFlutterProject!)!
+            : _componentSelectionCubit.currentSelectedRoot,
       );
       // }
       // }

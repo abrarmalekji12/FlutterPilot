@@ -15,10 +15,12 @@ class SearchTextField extends StatelessWidget {
       {required this.onTextChange,
       required this.focusNode,
       required this.hint,
-        required this.controller,
+      required this.controller,
       required this.focusColor,
-        this.onSubmitted,
-      this.text = '',Key? key}):super(key: key);
+      this.onSubmitted,
+      this.text = '',
+      Key? key})
+      : super(key: key);
 
   final Function(String) onTextChange;
 
@@ -34,10 +36,11 @@ class SearchTextField extends StatelessWidget {
         maxLines: 1,
         onChanged: onTextChange,
         autofocus: false,
-        onSubmitted: (data){
+        onSubmitted: (data) {
           onSubmitted?.call();
         },
-        style: AppFontStyle.roboto(15, color: Colors.black, fontWeight: FontWeight.w500),
+        style: AppFontStyle.roboto(15,
+            color: Colors.black, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
             focusColor: Colors.white,
             hoverColor: Colors.white,
@@ -78,23 +81,22 @@ class SearchTextField extends StatelessWidget {
                 fit: BoxFit.fitWidth,
               ),
             )
-          // suffixIcon: IconButton(
-          //   icon: const Icon(
-          //     Icons.clear_rounded,
-          //     size: 20,
-          //     color: Colors.black,
-          //   ),
-          //   onPressed: () {
-          //     _searchController.clear();
-          //     var currentFocus = FocusScope.of(context);
-          //     if (currentFocus.canRequestFocus) {
-          //       FocusScope.of(context).requestFocus(FocusNode());
-          //     }
-          //   },
-          // ),
-        ),
+            // suffixIcon: IconButton(
+            //   icon: const Icon(
+            //     Icons.clear_rounded,
+            //     size: 20,
+            //     color: Colors.black,
+            //   ),
+            //   onPressed: () {
+            //     _searchController.clear();
+            //     var currentFocus = FocusScope.of(context);
+            //     if (currentFocus.canRequestFocus) {
+            //       FocusScope.of(context).requestFocus(FocusNode());
+            //     }
+            //   },
+            // ),
+            ),
       ),
     );
   }
 }
-

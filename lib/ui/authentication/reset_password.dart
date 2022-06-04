@@ -53,7 +53,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         } else if (state is AuthSuccessState) {
           AppLoader.hide();
           Get.off(
-                () => ProjectSelectionPage(
+            () => ProjectSelectionPage(
               userId: state.userId,
             ),
             routeName: '/projects',
@@ -61,14 +61,13 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         } else if (state is AuthFailedState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
-        }
-        else if(state is AuthResetPasswordSuccessState){
+        } else if (state is AuthResetPasswordSuccessState) {
           AppLoader.hide();
-          Fluttertoast.showToast(msg: 'Please check your email box.', timeInSecForIosWeb: 3);
-          Navigator.pushReplacement(context, CustomPageRoute(builder: (_)=>const LoginPage()));
-
-        }
-        else if (state is AuthErrorState) {
+          Fluttertoast.showToast(
+              msg: 'Please check your email box.', timeInSecForIosWeb: 3);
+          Navigator.pushReplacement(
+              context, CustomPageRoute(builder: (_) => const LoginPage()));
+        } else if (state is AuthErrorState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
         }
@@ -90,10 +89,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   height: 30,
                 ),
                 Column(
-                  mainAxisAlignment:
-                  MainAxisAlignment.start,
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
@@ -128,11 +125,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             ),
                           ),
                           TextSpan(
-                            recognizer:
-                            TapGestureRecognizer()
+                            recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.pushReplacement(context, CustomPageRoute(builder: (_)=>const RegisterPage()));
-
+                                Navigator.pushReplacement(
+                                    context,
+                                    CustomPageRoute(
+                                        builder: (_) => const RegisterPage()));
                               },
                             text: ' Create New',
                             style: GoogleFonts.getFont(
@@ -158,8 +156,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: const Color(0xfffdce84),
-                      borderRadius:
-                      BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(10),
                       shape: BoxShape.rectangle,
                     ),
                     child: TextFormField(
@@ -174,18 +171,16 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         ),
                       ),
                       onChanged: (value) {
-                        _authenticationCubit
-                            .authViewModel.userName = value;
+                        _authenticationCubit.authViewModel.userName = value;
                       },
                       validator: (value) {
-                        return (!(value?.isValidEmail()??false))
+                        return (!(value?.isValidEmail() ?? false))
                             ? 'Invalid email'
                             : null;
                       },
                       readOnly: false,
                       decoration: InputDecoration(
-                        contentPadding:
-                        const EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 5,
                         ),
@@ -221,15 +216,13 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           'ABeeZee',
                           textStyle: const TextStyle(
                             fontSize: 13,
-
                             color: Colors.red,
                             fontWeight: FontWeight.w400,
                             fontStyle: FontStyle.normal,
                           ),
                         ),
                         border: UnderlineInputBorder(
-                          borderRadius:
-                          BorderRadius.circular(0),
+                          borderRadius: BorderRadius.circular(0),
                           borderSide: BorderSide.none,
                         ),
                         suffixIcon: const Padding(
@@ -241,10 +234,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             ),
                             child: CircleAvatar(
                                 radius: 10,
-                                backgroundColor:
-                                Color(0xffffffff),
-                                foregroundColor:
-                                Color(0xffffffff),
+                                backgroundColor: Color(0xffffffff),
+                                foregroundColor: Color(0xffffffff),
                                 child: Icon(
                                   Icons.person,
                                   color: Color(0xff3b403f),
@@ -271,8 +262,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           ),
                         ),
                         enabledBorder: UnderlineInputBorder(
-                          borderRadius:
-                          BorderRadius.circular(0),
+                          borderRadius: BorderRadius.circular(0),
                           borderSide: BorderSide.none,
                         ),
                         fillColor: const Color(0xfffdce84),
@@ -282,16 +272,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 const SizedBox(
                   height: 20,
                 ),
-
                 const SizedBox(
                   height: 40,
                 ),
                 InkWell(
                   onTap: () {
-                    if (_formKey.currentState?.validate()??false) {
+                    if (_formKey.currentState?.validate() ?? false) {
                       _authenticationCubit.resetPassword(
-                          _authenticationCubit
-                              .authViewModel.userName);
+                          _authenticationCubit.authViewModel.userName);
                     }
                   },
                   child: Container(
@@ -299,8 +287,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: const Color(0xffb12341),
-                      borderRadius:
-                      BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(10),
                       shape: BoxShape.rectangle,
                     ),
                     child: Text(
@@ -323,20 +310,21 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 ),
                 Center(
                     child: Text(
-                      'Skip Now',
-                      style: GoogleFonts.getFont(
-                        'ABeeZee',
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xff464646),
-                          fontWeight: FontWeight.w500,
-                          fontStyle: FontStyle.normal,
-                        ),
-                      ),
-                      textAlign: TextAlign.left,
-                    )),
+                  'Skip Now',
+                  style: GoogleFonts.getFont(
+                    'ABeeZee',
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xff464646),
+                      fontWeight: FontWeight.w500,
+                      fontStyle: FontStyle.normal,
+                    ),
+                  ),
+                  textAlign: TextAlign.left,
+                )),
               ],
-            )), formKey: _formKey,
+            )),
+        formKey: _formKey,
       ),
     );
   }

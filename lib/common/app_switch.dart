@@ -6,8 +6,12 @@ class AppSwitch extends StatelessWidget {
   final bool value;
   final void Function(bool) onToggle;
   final bool disabled;
-  const AppSwitch({required this.value, required this.onToggle, this.disabled=false,Key? key, })
-      : super(key: key);
+  const AppSwitch({
+    required this.value,
+    required this.onToggle,
+    this.disabled = false,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

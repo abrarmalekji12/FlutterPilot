@@ -39,9 +39,7 @@ class BoundaryPainter extends CustomPainter {
       TextPainter(text: span, textDirection: TextDirection.ltr)
         ..layout()
         ..paint(canvas, boundary.rect.topLeft.translate(0, -20));
-
     }
-
 
     if (errorBoundary != null) {
       myPaint.color = Colors.red;
@@ -51,6 +49,7 @@ class BoundaryPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BoundaryPainter oldDelegate) {
-    return oldDelegate.boundaries != boundaries || oldDelegate.errorBoundary != errorBoundary;
+    return oldDelegate.boundaries != boundaries ||
+        oldDelegate.errorBoundary != errorBoundary;
   }
 }

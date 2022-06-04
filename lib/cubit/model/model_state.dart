@@ -8,5 +8,5 @@ class ModelInitial extends ModelState {}
 class ModelChangedState extends ModelState {
   final LocalModel localModel;
   final bool add;
-  ModelChangedState(this.localModel,{this.add=false});
+  ModelChangedState(this.localModel, {this.add = false});
 }

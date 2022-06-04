@@ -45,16 +45,14 @@ class BuildView extends StatelessWidget {
                       child: GestureDetector(
                         onTap: () {},
                         child: DevicePreview(
-                          tools: const [
-                            DeviceSection()
-                          ],
+                          tools: const [DeviceSection()],
                           builder: (_) {
                             return LayoutBuilder(builder: (_, constraints) {
-                              if(Get.isDialogOpen??false) {
+                              if (Get.isDialogOpen ?? false) {
                                 ComponentOperationCubit
-                                  .codeProcessor
-                                  .variables['dw']!
-                                  .value = constraints.maxWidth;
+                                    .codeProcessor
+                                    .variables['dw']!
+                                    .value = constraints.maxWidth;
 
                                 ComponentOperationCubit
                                     .codeProcessor
@@ -83,7 +81,6 @@ class BuildView extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
                   onTap: () {
-
                     _onDismiss(context);
                   },
                   child: const Icon(Icons.arrow_back),
@@ -98,10 +95,12 @@ class BuildView extends StatelessWidget {
 
   void _onDismiss(BuildContext context) {
     componentOperationCubit.runtimeMode = RuntimeMode.edit;
-    Get.back(closeOverlays: false,);
-    ComponentOperationCubit.changeVariables(componentOperationCubit.flutterProject!.currentScreen);
+    Get.back(
+      closeOverlays: false,
+    );
+    ComponentOperationCubit.changeVariables(
+        componentOperationCubit.flutterProject!.currentScreen);
 
     onDismiss.call();
-
   }
 }

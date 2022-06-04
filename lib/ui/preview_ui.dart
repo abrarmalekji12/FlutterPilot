@@ -175,7 +175,7 @@ class _PreviewPageState extends State<PreviewPage> {
               runtimeMode: RuntimeMode.preview,
               child: Builder(builder: (context) {
                 return CustomInteractiveViewer(
-                  minScale: 0.2,
+                    minScale: 0.2,
                     // minScale: dw(context, 100) / width,
                     maxScale: 5.0,
                     constrained: false,

@@ -351,7 +351,7 @@ class FavouriteWidget extends StatelessWidget {
             onTap: () {
               final component = model.component.clone(null, cloneParam: true);
               component.forEach((p0) {
-                p0.cloneOf=null;
+                p0.cloneOf = null;
               });
               componentOperationCubit
                   .extractSameTypeComponents(model.component);

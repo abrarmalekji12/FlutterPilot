@@ -84,8 +84,8 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                     ),
                     decoration: const BoxDecoration(
                         border: Border(
-                            bottom:
-                                BorderSide(color: Color(0xfff2f2f2), width: 1))),
+                            bottom: BorderSide(
+                                color: Color(0xfff2f2f2), width: 1))),
                   ),
                   Text(
                     'Projects',

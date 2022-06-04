@@ -63,7 +63,7 @@ class FlutterProject {
     }
     return imageList;
   }
-  
+
   Widget run(final BuildContext context, {bool navigator = false}) {
     if (!navigator) {
       return rootComponent?.build(context) ?? Container();
@@ -112,7 +112,7 @@ class FlutterProject {
 class UIScreen {
   String name;
   Component? rootComponent;
-  final List<String> importList=[];
+  final List<String> importList = [];
   final List<LocalModel> models = [];
   final List<VariableModel> variables = [];
   final RevertWork revertWork = RevertWork.init();
@@ -179,18 +179,19 @@ class UIScreen {
         implementationCode += customComponent.implementationCode();
       }
     }
-    final List<String> importList=[];
+    final List<String> importList = [];
     rootComponent?.forEach((component) {
-
-    if(component is Clickable){
-      for (final e in (component as Clickable).actionList) {
-        if(e.arguments.isNotEmpty&&(e.arguments[0] is UIScreen?) && e.arguments[0]!= null){
-          importList.add((e.arguments[0] as UIScreen).name);
+      if (component is Clickable) {
+        for (final e in (component as Clickable).actionList) {
+          if (e.arguments.isNotEmpty &&
+              (e.arguments[0] is UIScreen?) &&
+              e.arguments[0] != null) {
+            importList.add((e.arguments[0] as UIScreen).name);
+          }
         }
       }
-    }
     });
-    if(this != flutterProject.mainScreen&&!importList.contains('main')){
+    if (this != flutterProject.mainScreen && !importList.contains('main')) {
       importList.add('main');
     }
     logger('IMPL $implementationCode');

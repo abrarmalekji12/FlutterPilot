@@ -1,3 +1,3 @@
-class PrefKey{
-  static String UID='UID';
+class PrefKey {
+  static String UID = 'UID';
 }

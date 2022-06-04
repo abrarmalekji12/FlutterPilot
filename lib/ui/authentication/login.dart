@@ -1,4 +1,3 @@
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -411,7 +410,6 @@ class AuthenticationPage extends StatefulWidget {
 
 class _AuthenticationPageState extends State<AuthenticationPage>
     with SingleTickerProviderStateMixin {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -419,8 +417,7 @@ class _AuthenticationPageState extends State<AuthenticationPage>
       resizeToAvoidBottomInset: false,
       body: Container(
           alignment: Alignment.center,
-          decoration: const BoxDecoration(
-              shape: BoxShape.rectangle),
+          decoration: const BoxDecoration(shape: BoxShape.rectangle),
           child: Stack(
             // mainAxisAlignment: MainAxisAlignment.start,
             // crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,9 +443,10 @@ class _AuthenticationPageState extends State<AuthenticationPage>
                   height: 60,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: kElevationToShadow[2],),
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: kElevationToShadow[2],
+                  ),
                 ),
               ),
               Align(
@@ -458,9 +456,8 @@ class _AuthenticationPageState extends State<AuthenticationPage>
                   child: FittedBox(
                     child: Container(
                       width: res(400, 400, dw),
-                      height: ResponsiveWidget.isSmallScreen(context)
-                          ? dh
-                          : null,
+                      height:
+                          ResponsiveWidget.isSmallScreen(context) ? dh : null,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                           color: Colors.white,
@@ -469,8 +466,7 @@ class _AuthenticationPageState extends State<AuthenticationPage>
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 50, horizontal: 20),
-                        child:
-                        Form(key: widget.formKey, child: widget.widget),
+                        child: Form(key: widget.formKey, child: widget.widget),
                       ),
                     ),
                   ),

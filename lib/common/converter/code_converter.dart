@@ -42,17 +42,20 @@ class FVBEngine {
               codeLine.substring(openBracket + 1, closeBracket),
             ),
           );
-        }
-        else if(( whileIndex = codeLine.indexOf('delayed'))!=-1){
-          final openCircleBracket=whileIndex+7;
-          final closeCircleBracket=CodeOperations.findCloseBracket(codeLine, openCircleBracket, '('.codeUnits.first, ')'.codeUnits.first);
-          final openCurlyBracket=closeCircleBracket+1;
-          final closeCurlyBracket=CodeOperations.findCloseBracket(codeLine, openCurlyBracket, '{'.codeUnits.first, '}'.codeUnits.first);
-          final timeCode=codeLine.substring(openCircleBracket+1,closeCircleBracket);
-          final bodyCode=codeLine.substring(openCurlyBracket+1,closeCurlyBracket);
-          codeLine=codeLine.replaceRange(whileIndex, closeCurlyBracket+1, 'Future.delayed(${fvbToDart(timeCode).replaceAll(';', '')},(){\n${fvbToDart(bodyCode)}\n})');
-        }
-        else {
+        } else if ((whileIndex = codeLine.indexOf('delayed')) != -1) {
+          final openCircleBracket = whileIndex + 7;
+          final closeCircleBracket = CodeOperations.findCloseBracket(codeLine,
+              openCircleBracket, '('.codeUnits.first, ')'.codeUnits.first);
+          final openCurlyBracket = closeCircleBracket + 1;
+          final closeCurlyBracket = CodeOperations.findCloseBracket(codeLine,
+              openCurlyBracket, '{'.codeUnits.first, '}'.codeUnits.first);
+          final timeCode =
+              codeLine.substring(openCircleBracket + 1, closeCircleBracket);
+          final bodyCode =
+              codeLine.substring(openCurlyBracket + 1, closeCurlyBracket);
+          codeLine = codeLine.replaceRange(whileIndex, closeCurlyBracket + 1,
+              'Future.delayed(${fvbToDart(timeCode).replaceAll(';', '')},(){\n${fvbToDart(bodyCode)}\n})');
+        } else {
           final int equalIndex = codeLine.indexOf('=');
           if (equalIndex != -1 && codeLine[equalIndex + 1] != '=') {
             final variable = codeLine.substring(0, equalIndex);

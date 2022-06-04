@@ -1,4 +1,3 @@
-
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
@@ -9,17 +8,21 @@ import '../../models/component_selection.dart';
 part 'component_selection_state.dart';
 
 class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
-  ComponentSelectionModel currentSelected=ComponentSelectionModel.unique(CNotRecognizedWidget());
-  Component currentSelectedRoot=CNotRecognizedWidget();
+  ComponentSelectionModel currentSelected =
+      ComponentSelectionModel.unique(CNotRecognizedWidget());
+  Component currentSelectedRoot = CNotRecognizedWidget();
   Component? lastTapped;
 
   ComponentSelectionCubit() : super(ComponentSelectionInitial());
 
-  void init(ComponentSelectionModel currentSelected,  Component currentSelectedRoot){
-    this.currentSelected=currentSelected;
-    this.currentSelectedRoot=currentSelectedRoot;
+  void init(
+      ComponentSelectionModel currentSelected, Component currentSelectedRoot) {
+    this.currentSelected = currentSelected;
+    this.currentSelectedRoot = currentSelectedRoot;
   }
-  void changeComponentSelection(ComponentSelectionModel component, {required Component root,bool scroll=true}) {
+
+  void changeComponentSelection(ComponentSelectionModel component,
+      {required Component root, bool scroll = true}) {
     if (currentSelected != component) {
       currentSelected = component;
       currentSelectedRoot = root;
@@ -27,7 +30,8 @@ class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
       emit(ComponentSelectionChange(scroll: scroll));
     }
   }
-  bool isSelectedInTree(Component component){
+
+  bool isSelectedInTree(Component component) {
     return currentSelected.treeSelection.contains(component);
   }
 }

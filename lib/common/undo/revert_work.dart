@@ -17,7 +17,6 @@ class RevertWork {
 
   void add(
       dynamic oldValue, void Function() work, void Function(dynamic) workUndo) {
-
     _stack.add(Work(oldValue, work, workUndo));
     work.call();
   }
@@ -30,11 +29,10 @@ class RevertWork {
   }
 
   void undo() {
-    if(totalOperations>0) {
+    if (totalOperations > 0) {
       final work = _stack.removeAt(_stack.length - 1);
       work.undoWork.call(work.oldValue);
     }
-
   }
 }
 

@@ -7,7 +7,7 @@ class ReplaceOperation {
 }
 
 class AddOperation {
-  final Component component,newComponent;
+  final Component component, newComponent;
 
   AddOperation(this.component, this.newComponent);
 }
@@ -16,22 +16,23 @@ class RemoveOperation {
   final Component component;
   final Component? parent;
 
-  RemoveOperation(this.component,this.parent);
+  RemoveOperation(this.component, this.parent);
 }
+
 class Operation {
-final String code;
-final String selectedId;
+  final String code;
+  final String selectedId;
 
-  Operation(this.code,this.selectedId);
-
+  Operation(this.code, this.selectedId);
 }
+
 class Operation2 {
   final Component component;
   final String selectedId;
 
-  Operation2(this.component,this.selectedId);
-
+  Operation2(this.component, this.selectedId);
 }
-class CompilerEnable{
-  String code='';
+
+class CompilerEnable {
+  String code = '';
 }

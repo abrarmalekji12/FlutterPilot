@@ -27,17 +27,15 @@ class BoundaryWidget extends StatelessWidget {
                 painter: BoundaryPainter(
                     boundaries: boundaries,
                     errorBoundary:
-                    BlocProvider
-                        .of<VisualBoxCubit>(context, listen: false)
-                        .errorMessage !=
-                        null
-                        ? BlocProvider
-                        .of<ComponentOperationCubit>(context,
-                        listen: false)
-                        .flutterProject!
-                        .rootComponent!
-                        .boundary!
-                        : null),
+                        BlocProvider.of<VisualBoxCubit>(context, listen: false)
+                                    .errorMessage !=
+                                null
+                            ? BlocProvider.of<ComponentOperationCubit>(context,
+                                    listen: false)
+                                .flutterProject!
+                                .rootComponent!
+                                .boundary!
+                            : null),
               );
             },
           );
@@ -47,19 +45,18 @@ class BoundaryWidget extends StatelessWidget {
   }
 
   List<Boundary> getAllBoundaries(BuildContext context) {
-    return BlocProvider
-        .of<ComponentSelectionCubit>(context, listen: false)
+    return BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
         .currentSelected
         .visualSelection
-        .where((element) => element.boundary != null).where((element) {
-          if(GlobalObjectKey(element).currentContext!=null) {
+        .where((element) => element.boundary != null)
+        .where((element) {
+          if (GlobalObjectKey(element).currentContext != null) {
             return true;
-          }
-          else{
+          } else {
             element.cloneOf?.cloneElements.remove(element);
             return false;
           }
-    })
+        })
         .map<Boundary>((e) => Boundary(e.boundary!, e.name))
         .toList(growable: false);
   }

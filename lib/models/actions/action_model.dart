@@ -27,7 +27,7 @@ abstract class ActionModel {
 }
 
 class CustomAction extends ActionModel {
-  CustomAction({String code=''}) : super([code]);
+  CustomAction({String code = ''}) : super([code]);
 
   @override
   String code() {
@@ -50,49 +50,61 @@ class CustomAction extends ActionModel {
           final action = split[0];
           switch (action) {
             case 'snackbar':
-              (const GlobalObjectKey(deviceScaffoldMessenger).currentState as ScaffoldState).showSnackBar(SnackBar(
+              (const GlobalObjectKey(deviceScaffoldMessenger).currentState
+                      as ScaffoldState)
+                  .showSnackBar(SnackBar(
                 content: Text(
                   split[1],
                   style: AppFontStyle.roboto(14, color: Colors.white),
                   textAlign: TextAlign.center,
                 ),
                 // backgroundColor: Colors.grey,
-                duration: Duration(milliseconds: (1000*double.parse(split[2])).toInt()),
+                duration: Duration(
+                    milliseconds: (1000 * double.parse(split[2])).toInt()),
               ));
               break;
             case 'newpage':
-              final UIScreen? screen=ComponentOperationCubit.currentFlutterProject!.uiScreens.firstWhereOrNull((screen)=>screen.name==split[1]);
+              final UIScreen? screen = ComponentOperationCubit
+                  .currentFlutterProject!.uiScreens
+                  .firstWhereOrNull((screen) => screen.name == split[1]);
               if (screen != null) {
                 BlocProvider.of<StackActionCubit>(context, listen: false)
                     .stackOperation(StackOperation.push, uiScreen: screen);
               }
-              (const GlobalObjectKey(navigationKey).currentState as NavigatorState).push(
+              (const GlobalObjectKey(navigationKey).currentState
+                      as NavigatorState)
+                  .push(
                 MaterialPageRoute(
-                  builder: (context) =>screen?.build(context) ?? Container(),
+                  builder: (context) => screen?.build(context) ?? Container(),
                 ),
               );
               break;
             case 'goback':
-              BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(StackOperation.pop);
+              BlocProvider.of<StackActionCubit>(context, listen: false)
+                  .stackOperation(StackOperation.pop);
               Navigator.pop(context);
               break;
             case 'replacepage':
-              final UIScreen? screen=ComponentOperationCubit.currentFlutterProject!.uiScreens.firstWhereOrNull((screen)=>screen.name==split[1]);
+              final UIScreen? screen = ComponentOperationCubit
+                  .currentFlutterProject!.uiScreens
+                  .firstWhereOrNull((screen) => screen.name == split[1]);
 
-              if (screen!= null) {
+              if (screen != null) {
                 BlocProvider.of<StackActionCubit>(context, listen: false)
-                    .stackOperation(StackOperation.replace, uiScreen:screen);
+                    .stackOperation(StackOperation.replace, uiScreen: screen);
               }
 
-              (const GlobalObjectKey(navigationKey).currentState as NavigatorState).pushReplacement(
+              (const GlobalObjectKey(navigationKey).currentState
+                      as NavigatorState)
+                  .pushReplacement(
                 CustomPageRoute(
                   builder: (context) => screen?.build(context) ?? Container(),
                 ),
               );
-          break;
+              break;
             case 'lookup':
 
-              // return out;
+            // return out;
           }
         } else {
           print(':: => $message');
@@ -103,7 +115,8 @@ class CustomAction extends ActionModel {
         print('XX => $error');
       },
     );
-    BlocProvider.of<StackActionCubit>(context, listen: false).emit(StackUpdatedState());
+    BlocProvider.of<StackActionCubit>(context, listen: false)
+        .emit(StackUpdatedState());
   }
 }
 
@@ -113,12 +126,14 @@ class NewPageInStackAction extends ActionModel {
   @override
   void perform(BuildContext context) {
     if ((arguments[0] as UIScreen?) != null) {
-      BlocProvider.of<StackActionCubit>(context, listen: false)
-          .stackOperation(StackOperation.push, uiScreen: (arguments[0] as UIScreen));
+      BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(
+          StackOperation.push,
+          uiScreen: (arguments[0] as UIScreen));
     }
     (const GlobalObjectKey(navigationKey).currentState as NavigatorState).push(
       MaterialPageRoute(
-        builder: (context) => (arguments[0] as UIScreen?)?.build(context) ?? Container(),
+        builder: (context) =>
+            (arguments[0] as UIScreen?)?.build(context) ?? Container(),
       ),
     );
   }
@@ -143,12 +158,15 @@ class ReplaceCurrentPageInStackAction extends ActionModel {
   @override
   void perform(BuildContext context) {
     if ((arguments[0] as UIScreen?) != null) {
-      BlocProvider.of<StackActionCubit>(context, listen: false)
-          .stackOperation(StackOperation.replace, uiScreen: (arguments[0] as UIScreen));
+      BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(
+          StackOperation.replace,
+          uiScreen: (arguments[0] as UIScreen));
     }
-    (const GlobalObjectKey(navigationKey).currentState as NavigatorState).pushReplacement(
+    (const GlobalObjectKey(navigationKey).currentState as NavigatorState)
+        .pushReplacement(
       CustomPageRoute(
-        builder: (context) => (arguments[0] as UIScreen?)?.build(context) ?? Container(),
+        builder: (context) =>
+            (arguments[0] as UIScreen?)?.build(context) ?? Container(),
       ),
     );
   }
@@ -172,7 +190,8 @@ class GoBackInStackAction extends ActionModel {
 
   @override
   void perform(BuildContext context) {
-    BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(StackOperation.pop);
+    BlocProvider.of<StackActionCubit>(context, listen: false)
+        .stackOperation(StackOperation.pop);
     Navigator.pop(context);
   }
 
@@ -188,11 +207,13 @@ class GoBackInStackAction extends ActionModel {
 }
 
 class ShowDialogInStackAction extends ActionModel {
-  ShowDialogInStackAction({List<String>? args}) : super(args ?? ['This is simple dialog', null, 'OK', null]);
+  ShowDialogInStackAction({List<String>? args})
+      : super(args ?? ['This is simple dialog', null, 'OK', null]);
 
   @override
   void perform(BuildContext context) {
-    BlocProvider.of<StackActionCubit>(context, listen: false).showSimpleDialog(this);
+    BlocProvider.of<StackActionCubit>(context, listen: false)
+        .showSimpleDialog(this);
     // (const GlobalObjectKey(navigationKey).currentState as NavigatorState).context;
   }
 
@@ -213,10 +234,12 @@ class ShowCustomDialogInStackAction extends ActionModel {
   @override
   void perform(BuildContext context) {
     if ((arguments[0] as UIScreen?) != null) {
-      BlocProvider.of<StackActionCubit>(context, listen: false)
-          .stackOperation(StackOperation.addOverlay, uiScreen: (arguments[0] as UIScreen));
+      BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(
+          StackOperation.addOverlay,
+          uiScreen: (arguments[0] as UIScreen));
     }
-    BlocProvider.of<StackActionCubit>(context, listen: false).showCustomSimpleDialog(this);
+    BlocProvider.of<StackActionCubit>(context, listen: false)
+        .showCustomSimpleDialog(this);
   }
 
   @override
@@ -259,10 +282,13 @@ class ShowBottomSheetInStackAction extends ActionModel {
   @override
   void perform(BuildContext context) {
     if ((arguments[0] as UIScreen?) != null) {
-      BlocProvider.of<StackActionCubit>(context, listen: false)
-          .stackOperation(StackOperation.addOverlay, uiScreen: (arguments[0] as UIScreen));
+      BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(
+          StackOperation.addOverlay,
+          uiScreen: (arguments[0] as UIScreen));
     }
-    (const GlobalObjectKey(deviceScaffoldMessenger).currentState as ScaffoldState).showBottomSheet(
+    (const GlobalObjectKey(deviceScaffoldMessenger).currentState
+            as ScaffoldState)
+        .showBottomSheet(
       (context) =>
           (arguments[0] as UIScreen?)?.build(context) ??
           Container(
@@ -305,7 +331,9 @@ class ShowSnackBarAction extends ActionModel {
   void perform(BuildContext context) {
     // BlocProvider.of<StackActionCubit>(context, listen: false)
     //     .showSnackBar(this);
-    (const GlobalObjectKey(deviceScaffoldMessenger).currentState as ScaffoldState).showSnackBar(SnackBar(
+    (const GlobalObjectKey(deviceScaffoldMessenger).currentState
+            as ScaffoldState)
+        .showSnackBar(SnackBar(
       content: Text(
         arguments[0].value,
         style: AppFontStyle.roboto(14, color: Colors.white),

@@ -7,14 +7,20 @@ class PasswordBox extends StatefulWidget {
   final String? Function(String)? validator;
   final TextEditingController controller;
 
-  const PasswordBox({Key? key,required this.onChanged, this.text='Password',required this.controller,this.validator}) : super(key: key);
+  const PasswordBox(
+      {Key? key,
+      required this.onChanged,
+      this.text = 'Password',
+      required this.controller,
+      this.validator})
+      : super(key: key);
 
   @override
   State<PasswordBox> createState() => _PasswordBoxState();
 }
 
 class _PasswordBoxState extends State<PasswordBox> {
-  bool showPassword=true;
+  bool showPassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +32,7 @@ class _PasswordBoxState extends State<PasswordBox> {
             ? 'Invalid password'
             : (widget.validator?.call(value));
       },
-      onChanged:widget.onChanged,
+      onChanged: widget.onChanged,
       style: GoogleFonts.getFont(
         'Roboto',
         textStyle: const TextStyle(
@@ -38,8 +44,7 @@ class _PasswordBoxState extends State<PasswordBox> {
       ),
       readOnly: false,
       decoration: InputDecoration(
-        contentPadding:
-        const EdgeInsets.symmetric(
+        contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 5,
         ),
@@ -81,12 +86,10 @@ class _PasswordBoxState extends State<PasswordBox> {
           ),
         ),
         border: UnderlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(0),
+          borderRadius: BorderRadius.circular(0),
           borderSide: BorderSide.none,
         ),
-        iconColor:
-        const Color(0xffffffff),
+        iconColor: const Color(0xffffffff),
         prefixText: '',
         prefixStyle: GoogleFonts.getFont(
           'ABeeZee',
@@ -107,7 +110,8 @@ class _PasswordBoxState extends State<PasswordBox> {
             fontStyle: FontStyle.normal,
           ),
         ),
-        suffixIconConstraints: const BoxConstraints(minHeight: 24, minWidth: 24),
+        suffixIconConstraints:
+            const BoxConstraints(minHeight: 24, minWidth: 24),
         suffixIcon: Padding(
           padding: const EdgeInsets.only(right: 15),
           child: InkWell(
@@ -116,10 +120,8 @@ class _PasswordBoxState extends State<PasswordBox> {
             highlightColor: Colors.transparent,
             overlayColor: MaterialStateProperty.all(Colors.transparent),
             onTap: () {
-              showPassword=!showPassword;
-              setState(() {
-
-              });
+              showPassword = !showPassword;
+              setState(() {});
             },
             child: Icon(
               showPassword ? Icons.visibility_off : Icons.visibility,
@@ -128,14 +130,11 @@ class _PasswordBoxState extends State<PasswordBox> {
             ),
           ),
         ),
-        enabledBorder:
-        UnderlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(0),
+        enabledBorder: UnderlineInputBorder(
+          borderRadius: BorderRadius.circular(0),
           borderSide: BorderSide.none,
         ),
-        fillColor:
-        const Color(0xfffdce84),
+        fillColor: const Color(0xfffdce84),
         enabled: true,
       ),
     );

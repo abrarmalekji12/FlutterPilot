@@ -179,6 +179,7 @@ abstract class Parameter {
     }
   }
 }
+
 class BooleanParameter extends Parameter {
   bool val;
   late final String Function(bool) evaluate;
@@ -186,10 +187,10 @@ class BooleanParameter extends Parameter {
 
   BooleanParameter(
       {required String displayName,
-        ParameterInfo? info,
-        required bool required,
-        required this.val,
-        String Function(bool)? evaluate})
+      ParameterInfo? info,
+      required bool required,
+      required this.val,
+      String Function(bool)? evaluate})
       : super(displayName, info, required) {
     if (evaluate == null) {
       this.evaluate = (value) => value.toString();
@@ -201,7 +202,7 @@ class BooleanParameter extends Parameter {
   @override
   String code(bool clean) {
     if (compiler.code.isNotEmpty && !clean) {
-      return  info?.code('`${compiler.code}`')??'`${compiler.code}`';
+      return info?.code('`${compiler.code}`') ?? '`${compiler.code}`';
     }
     return info?.code(evaluate(val)) ?? evaluate(val).toString();
   }
@@ -211,7 +212,6 @@ class BooleanParameter extends Parameter {
     final paramCode = info?.fromCode(code) ?? code;
     if (paramCode[0] == '`' && paramCode[paramCode.length - 1] == '`') {
       compiler.code = paramCode.substring(1, paramCode.length - 1);
-
     } else {
       if (paramCode == 'true' || paramCode == 'false') {
         val = paramCode == 'true';
@@ -230,16 +230,15 @@ class BooleanParameter extends Parameter {
       val = result as bool;
     }
     return val;
-
   }
 
   @override
-  get value{
+  get value {
     final result = compiler.code.isNotEmpty
         ? ComponentOperationCubit.codeProcessor.process<bool>(compiler.code)
         : null;
     if (result != null) {
-        val = result as bool;
+      val = result as bool;
     }
     return val;
   }
@@ -283,7 +282,8 @@ class SimpleParameter<T> extends Parameter {
       if (T == Color) {
         val = colorToHex(result.toString()) as T?;
       } else if (T == ImageData) {
-        val = ImageData(ComponentOperationCubit.bytesCache[result], result) as T;
+        val =
+            ImageData(ComponentOperationCubit.bytesCache[result], result) as T;
       } else {
         val = result as T;
       }
@@ -373,9 +373,8 @@ class SimpleParameter<T> extends Parameter {
       } else if (T == Color) {
         tempCode =
             'hexToColor(${tempCode.startsWith('#') ? '\'$tempCode\'' : tempCode})!';
-      }
-      else if(T == ImageData){
-        tempCode= '\'assets/images/$tempCode\'';
+      } else if (T == ImageData) {
+        tempCode = '\'assets/images/$tempCode\'';
         debugPrint('TEMP $tempCode ');
       }
     } else {
@@ -911,7 +910,6 @@ class NullParameter extends Parameter {
   bool fromCode(String code) => code.toLowerCase() == 'null';
 }
 
-
 class ComponentParameter extends Parameter {
   VisualBoxCubit? visualBoxCubit;
   final List<Component> components = [];
@@ -953,12 +951,14 @@ class ComponentParameter extends Parameter {
   bool fromCode(String code) {
     final paramCode = info?.fromCode(code) ?? code;
     if (multiple) {
-      final componentCodes = CodeOperations.splitBy(paramCode);
+      final componentCodes = CodeOperations.splitBy(paramCode.substring(1,paramCode.length-1));
       for (final compCode in componentCodes) {
-        components.add(Component.fromCode(compCode, ComponentOperationCubit.currentFlutterProject!)!);
+        components.add(Component.fromCode(
+            compCode, ComponentOperationCubit.currentFlutterProject!)!);
       }
     } else {
-      components.add(Component.fromCode(paramCode,  ComponentOperationCubit.currentFlutterProject!)!);
+      components.add(Component.fromCode(
+          paramCode, ComponentOperationCubit.currentFlutterProject!)!);
     }
     return true;
   }
@@ -967,43 +967,41 @@ class ComponentParameter extends Parameter {
   get rawValue => components;
 
   dynamic build() {
-
     if (multiple) {
-    if(visualBoxCubit!=null) {
-      return components
-          .map<Widget>(
-            (e) => BlocProvider<VisualBoxCubit>(
-              create: (_) => visualBoxCubit!,
-              child: Builder(
+      if (visualBoxCubit != null) {
+        return components
+            .map<Widget>(
+              (e) => BlocProvider<VisualBoxCubit>(
+                create: (_) => visualBoxCubit!,
+                child: Builder(
+                  builder: (context) => e.build(context),
+                ),
+              ),
+            )
+            .toList();
+      } else {
+        return components
+            .map<Widget>(
+              (e) => Builder(
                 builder: (context) => e.build(context),
               ),
-            ),
-          )
-          .toList();
-    }else{
-      return components
-          .map<Widget>(
-            (e) => Builder(
-              builder: (context) => e.build(context),
-            ),
-      )
-          .toList();
-    }
+            )
+            .toList();
+      }
     }
     if (components.isNotEmpty) {
-     if(visualBoxCubit!=null) {
-       return BlocProvider<VisualBoxCubit>(
-        create: (_) => visualBoxCubit!,
-        child: Builder(
+      if (visualBoxCubit != null) {
+        return BlocProvider<VisualBoxCubit>(
+          create: (_) => visualBoxCubit!,
+          child: Builder(
+            builder: (context) => components.first.build(context),
+          ),
+        );
+      } else {
+        return Builder(
           builder: (context) => components.first.build(context),
-        ),
-      );
-     }
-     else{
-       return Builder(
-         builder: (context) => components.first.build(context),
-       );
-     }
+        );
+      }
     }
     return null;
   }

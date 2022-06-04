@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_builder/constant/app_colors.dart';
 import 'package:flutter_builder/constant/font_style.dart';
@@ -6,16 +5,16 @@ import 'package:flutter_builder/constant/font_style.dart';
 class AppButton extends StatefulWidget {
   AppButton(
       {this.title = '',
-        this.onPressed,
-        this.style,
-        this.isEnabled = true,
-        Color? enabledColor,
-        this.textAlign,
-        this.height = 45.0,
-        this.fontSize = 14,
-        this.width,
-        this.border = 0,
-        Key? key})
+      this.onPressed,
+      this.style,
+      this.isEnabled = true,
+      Color? enabledColor,
+      this.textAlign,
+      this.height = 45.0,
+      this.fontSize = 14,
+      this.width,
+      this.border = 0,
+      Key? key})
       : super(key: key) {
     if (enabledColor != null) {
       this.enabledColor = enabledColor;
@@ -72,7 +71,7 @@ class _AppButtonState extends State<AppButton> {
         ),
         style: ButtonStyle(
           backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                (Set<MaterialState> states) {
+            (Set<MaterialState> states) {
               return widget.isEnabled
                   ? widget.enabledColor
                   : const Color(0xffc4c4c4);
@@ -87,12 +86,12 @@ class _AppButtonState extends State<AppButton> {
 class AppIconButton extends StatelessWidget {
   const AppIconButton(
       {required this.icon,
-        required this.background,
-        required this.onPress,
-        this.margin = 10,
-        this.size = 19,
-        this.iconColor = Colors.white,
-        Key? key})
+      required this.background,
+      required this.onPress,
+      this.margin = 10,
+      this.size = 19,
+      this.iconColor = Colors.white,
+      Key? key})
       : super(key: key);
   final IconData icon;
   final Color background, iconColor;
