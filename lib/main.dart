@@ -56,11 +56,16 @@ void main() async {
   fun1=(a,b){
   print("hello {{a}} {{b}}");
   };
+  print("abrar".substring(0,2));
   
-  get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
-  print("{{json.decode(data)["id"]}}");
-  });
  ''';
+  /*
+  get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
+  js=json.decode(data);
+  print("{{js["id"]}}");
+  },(error){
+  });
+  * */
   processor.executeCode(code, (message) {
     print(':: => $message');
   }, (error) {
