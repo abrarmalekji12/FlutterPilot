@@ -13,7 +13,7 @@ import '../cubit/model/model_cubit.dart';
 import '../models/local_model.dart';
 import '../models/variable_model.dart';
 
-enum DataType { int, double, string, bool, dynamic, list, map, fvbInstance }
+enum DataType { int, double, string, bool, dynamic, list, map, fvbInstance,fvbFunction}
 
 class ModelBox extends StatefulWidget {
   final OverlayEntry overlayEntry;

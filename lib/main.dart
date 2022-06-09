@@ -42,7 +42,8 @@ void main() async {
   class Student {
   name:String;
   age:int;
-  Student(this.name,this.age);
+  fun1:Function;
+  Student(this.name,this.age,this.fun1);
   
   toJson(){
   return {
@@ -52,9 +53,14 @@ void main() async {
   }
   }
   list=[3,5,45];  
-  print(list[2]>list[1]);
+  fun1=(a,b){
+  print("hello {{a}} {{b}}");
+  };
+  
+  get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
+  print("{{json.decode(data)["id"]}}");
+  });
  ''';
-
   processor.executeCode(code, (message) {
     print(':: => $message');
   }, (error) {
@@ -62,7 +68,7 @@ void main() async {
   });
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  runApp(const MyApp());
+  // runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

@@ -66,6 +66,8 @@ class LocalModel {
         return DataType.map;
       case 'Object':
         return DataType.fvbInstance;
+      case 'Function':
+        return DataType.fvbFunction;
       case 'dynamic':
       default:
         return DataType.dynamic;
@@ -90,6 +92,8 @@ class LocalModel {
         return 'Map';
       case DataType.fvbInstance:
         return 'Object';
+      case DataType.fvbFunction:
+        return 'Function';
     }
   }
 

@@ -43,6 +43,7 @@ dependencies:
   widget_arrows: ^0.1.8
   url_strategy: ^0.2.0
   flutter_svg: ^1.0.3
+  http: ^0.13.4
 
 dev_dependencies:
   flutter_test:
