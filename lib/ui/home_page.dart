@@ -4,6 +4,7 @@ import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../common/dynamic_value_editing_controller.dart';
 import 'preview_ui.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../common/app_loader.dart';
@@ -595,6 +596,116 @@ class _ModelShowHideMenuState extends State<ModelShowHideMenu> {
   }
 }
 
+class ActionCodeShowHideMenu extends StatefulWidget {
+  const ActionCodeShowHideMenu({Key? key}) : super(key: key);
+
+  @override
+  State<ActionCodeShowHideMenu> createState() => _ActionCodeShowHideMenuState();
+}
+
+class _ActionCodeShowHideMenuState extends State<ActionCodeShowHideMenu> {
+  OverlayEntry? _overlayEntry;
+  final DynamicValueEditingController _dynamicValueEditingController =
+      DynamicValueEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+
+    _dynamicValueEditingController.text=context.read<ComponentOperationCubit>().flutterProject!.actionCode;
+    _overlayEntry = OverlayEntry(
+      builder: (_) {
+        return Material(
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              decoration: BoxDecoration(
+                  color: Colors.white, boxShadow: kElevationToShadow[10]),
+              width: 500,
+              height: 600,
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Custom Action',
+                        style: AppFontStyle.roboto(14,
+                            fontWeight: FontWeight.w500),
+                      ),
+                      InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () {
+                          _overlayEntry?.remove();
+                        },
+                        child: const Icon(
+                          Icons.close,
+                        ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  Expanded(
+                    child: TextField(
+                      style: AppFontStyle.roboto(14),
+                      expands: true,
+                      maxLines: null,
+                      minLines: null,
+                      controller: _dynamicValueEditingController,
+                      onChanged: (value) {
+                        context
+                            .read<ComponentOperationCubit>()
+                            .updateActionCode(value);
+                      },
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Overlay.of(context)!.insert(_overlayEntry!);
+      },
+      child: Container(
+        width: 100,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: kElevationToShadow[1]),
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.code,
+              size: 18,
+              color: Colors.black,
+            ),
+            const Spacer(),
+            Text(
+              'Action Code',
+              style: AppFontStyle.roboto(13,
+                  color: Colors.black, fontWeight: FontWeight.w500),
+            ),
+            const Spacer(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class PrototypeShowcase extends StatelessWidget {
   const PrototypeShowcase({Key? key}) : super(key: key);
 
@@ -937,7 +1048,11 @@ class CenterMainSide extends StatelessWidget {
                       SizedBox(
                         width: 10,
                       ),
-                      ModelShowHideMenu()
+                      ModelShowHideMenu(),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      ActionCodeShowHideMenu()
                     ],
                   ),
                   Expanded(

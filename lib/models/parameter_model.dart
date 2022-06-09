@@ -347,6 +347,7 @@ class SimpleParameter<T> extends Parameter {
     return rawValue;
   }
 
+
   void withDefaultValue(T? value) {
     defaultValue = value;
     if (isRequired) {
@@ -354,6 +355,9 @@ class SimpleParameter<T> extends Parameter {
     }
   }
 
+  get type {
+    return T;
+  }
   @override
   String code(bool clean) {
     if (!isRequired && val == null && (compiler.code.isEmpty)) {

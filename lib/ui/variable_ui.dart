@@ -163,8 +163,7 @@ class _VariableBoxState extends State<VariableBox> {
                   ),
                   IconButton(
                     onPressed: () {
-                      if (_controller1.text.isEmpty ||
-                          _controller2.text.isEmpty) {
+                      if (_controller1.text.isEmpty) {
                         Fluttertoast.showToast(
                             msg: 'Please enter variable name and it\'s value',
                             toastLength: Toast.LENGTH_LONG,

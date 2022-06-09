@@ -349,7 +349,7 @@ class FavouriteWidget extends StatelessWidget {
         children: [
           InkWell(
             onTap: () {
-              final component = model.component.clone(null, cloneParam: true);
+              final component = model.component.clone(null, deepClone: true);
               component.forEach((p0) {
                 p0.cloneOf = null;
               });
@@ -548,7 +548,7 @@ class BasicComponentTile extends StatelessWidget {
                       );
                     },
                     onSelected: (final Component value) {
-                      widget.onSelection(value.clone(null, cloneParam: true));
+                      widget.onSelection(value.clone(null, deepClone: true));
                       Get.back();
                     },
                     itemCount: componentOperationCubit

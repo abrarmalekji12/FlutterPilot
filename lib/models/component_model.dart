@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import '../bloc/state_management/state_management_bloc.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../runtime_provider.dart';
 import 'actions/action_model.dart';
@@ -250,8 +251,8 @@ abstract class Component {
             nameList.remove(name);
             removeList.add(parameterCodes[i]);
           } else if (childrenNameList.contains(name)) {
-            final childrenCode = CodeOperations.splitBy(
-                parameterCodes[i].substring(colonIndex + 2,parameterCodes[i].length-1));
+            final childrenCode = CodeOperations.splitBy(parameterCodes[i]
+                .substring(colonIndex + 2, parameterCodes[i].length - 1));
             comp.childrenMap[name]!.addAll(
               childrenCode.map(
                 (e) => Component.fromCode(e, flutterProject)!..setParent(comp),
@@ -318,6 +319,18 @@ abstract class Component {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
       });
+    }
+    if (RuntimeProvider.of(context) == RuntimeMode.run) {
+      return BlocBuilder<StateManagementBloc, StateManagementState>(
+        buildWhen: (previous, current) =>
+            current is StateManagementUpdatedState && current.id == id,
+        builder: (context, state) {
+          return ComponentWidget(
+            key: key(context),
+            child: create(context),
+          );
+        },
+      );
     }
     return ComponentWidget(
       key: key(context),
@@ -558,20 +571,22 @@ abstract class Component {
     parent = component;
   }
 
-  Component clone(Component? parent, {bool cloneParam = false}) {
+  Component clone(Component? parent, {bool deepClone = false}) {
     final comp = componentList[name]!();
-    if (cloneParam) {
+    if (deepClone) {
       for (int i = 0; i < parameters.length; i++) {
         comp.parameters[i].cloneOf(parameters[i]);
       }
     } else {
       comp.parameters = parameters;
     }
-    comp.cloneOf = this;
-    if (!cloneParam) {
+    if (!deepClone) {
       comp.id = id;
     }
-    cloneElements.add(comp);
+    if(!deepClone) {
+      comp.cloneOf = this;
+      cloneElements.add(comp);
+    }
     comp.parent = parent;
     return comp;
   }
@@ -680,20 +695,10 @@ abstract class MultiHolder extends Component {
   }
 
   @override
-  Component clone(Component? parent, {bool cloneParam = false}) {
-    final comp = componentList[name]!() as MultiHolder;
-    if (cloneParam) {
-      for (int i = 0; i < parameters.length; i++) {
-        comp.parameters[i].cloneOf(parameters[i]);
-      }
-    } else {
-      comp.parameters = parameters;
-    }
-    comp.parent = parent;
-    comp.cloneOf = this;
-    cloneElements.add(comp);
+  Component clone(Component? parent, {bool deepClone = false}) {
+    final comp = super.clone(parent,deepClone: deepClone) as MultiHolder;
     comp.children =
-        children.map((e) => e.clone(comp, cloneParam: cloneParam)).toList();
+        children.map((e) => e.clone(comp, deepClone: deepClone)).toList();
     return comp;
   }
 
@@ -781,19 +786,9 @@ abstract class Holder extends Component {
   }
 
   @override
-  Component clone(Component? parent, {bool cloneParam = false}) {
-    final comp = componentList[name]!() as Holder;
-    if (cloneParam) {
-      for (int i = 0; i < parameters.length; i++) {
-        comp.parameters[i].cloneOf(parameters[i]);
-      }
-    } else {
-      comp.parameters = parameters;
-    }
-    comp.parent = parent;
-    comp.cloneOf = this;
-    cloneElements.add(comp);
-    comp.child = child?.clone(comp, cloneParam: cloneParam);
+  Component clone(Component? parent, {bool deepClone = false}) {
+    final comp = super.clone(parent,deepClone: deepClone) as Holder;
+    comp.child = child?.clone(comp, deepClone: deepClone);
     return comp;
   }
 
@@ -817,9 +812,14 @@ abstract class ClickableHolder extends Holder with Clickable {
   }
 
   @override
-  Component clone(Component? parent, {bool cloneParam = false}) {
-    final cloneComp = super.clone(parent, cloneParam: cloneParam);
-    (cloneComp as Clickable).actionList = actionList;
+  Component clone(Component? parent, {bool deepClone = false}) {
+    final cloneComp = super.clone(parent, deepClone: deepClone);
+    if(deepClone) {
+      (cloneComp as Clickable).actionList = actionList.map((e) => e.clone()).toList();
+    }
+    else{
+      (cloneComp as Clickable).actionList = actionList;
+    }
     return cloneComp;
   }
 }
@@ -837,9 +837,14 @@ abstract class ClickableComponent extends Component with Clickable {
   }
 
   @override
-  Component clone(Component? parent, {bool cloneParam = false}) {
-    final cloneComp = super.clone(parent, cloneParam: cloneParam);
-    (cloneComp as Clickable).actionList = actionList;
+  Component clone(Component? parent, {bool deepClone = false}) {
+    final cloneComp = super.clone(parent, deepClone: deepClone);
+    if(deepClone) {
+      (cloneComp as Clickable).actionList = actionList.map((e) => e.clone()).toList();
+    }
+    else{
+      (cloneComp as Clickable).actionList = actionList;
+    }
     return cloneComp;
   }
 }
@@ -1042,22 +1047,12 @@ abstract class CustomNamedHolder extends Component {
   }
 
   @override
-  Component clone(Component? parent, {bool cloneParam = false}) {
-    final comp = componentList[name]!() as CustomNamedHolder;
-    if (cloneParam) {
-      for (int i = 0; i < parameters.length; i++) {
-        comp.parameters[i].cloneOf(parameters[i]);
-      }
-    } else {
-      comp.parameters = parameters;
-    }
-    comp.cloneOf = this;
-    comp.parent = parent;
-    cloneElements.add(comp);
+  Component clone(Component? parent, {bool deepClone = false}) {
+    final comp = super.clone(parent,deepClone: deepClone) as CustomNamedHolder;
     comp.childMap = childMap.map((key, value) =>
-        MapEntry(key, value?.clone(comp, cloneParam: cloneParam)));
+        MapEntry(key, value?.clone(comp, deepClone: deepClone)));
     comp.childrenMap = childrenMap.map((key, value) => MapEntry(
-        key, value.map((e) => e.clone(comp, cloneParam: cloneParam)).toList()));
+        key, value.map((e) => e.clone(comp, deepClone: deepClone)).toList()));
     return comp;
   }
 
@@ -1195,21 +1190,23 @@ abstract class CustomComponent extends Component {
   int get childCount => 0;
 
   @override
-  Component clone(Component? parent, {bool cloneParam = false}) {
+  Component clone(Component? parent, {bool deepClone = false}) {
     final comp2 = StatelessComponent(
       name: name,
     );
     comp2.name = name;
-    if (cloneParam) {
+    if (deepClone) {
       for (int i = 0; i < parameters.length; i++) {
         comp2.parameters[i].cloneOf(parameters[i]);
       }
     } else {
       comp2.parameters = parameters;
     }
-    comp2.root = root?.clone(parent, cloneParam: cloneParam);
-    comp2.cloneOf = this;
-    cloneElements.add(comp2);
+    comp2.root = root?.clone(parent, deepClone: deepClone);
+    if(!deepClone) {
+      comp2.cloneOf = this;
+      cloneElements.add(comp2);
+    }
     return comp2;
   }
 

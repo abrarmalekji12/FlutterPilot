@@ -9,6 +9,7 @@ import 'models/parameter_info_model.dart';
 import 'models/parameter_model.dart';
 import 'models/parameter_rule_model.dart';
 import 'parameters_list.dart';
+import 'runtime_provider.dart';
 
 final componentList = <String, Component Function()>{
   'MaterialApp': () => CMaterialApp(),
@@ -1652,7 +1653,7 @@ class CTextField extends Component {
   Widget create(BuildContext context) {
     initComponentParameters(context);
     return TextField(
-      controller: textEditingController,
+      controller: RuntimeProvider.of(context)==RuntimeMode.run?textEditingController:null,
       style: parameters[0].value,
       readOnly: parameters[1].value,
       decoration: parameters[2].value,

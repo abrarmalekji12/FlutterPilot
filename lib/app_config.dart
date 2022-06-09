@@ -1,4 +1,4 @@
-final appConfig = DevelopmentConfig();
+final appConfig = ProductionConfig();
 
 abstract class AppConfig {
   bool get loggerEnable;

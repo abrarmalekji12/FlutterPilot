@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/models/parameter_info_model.dart';
-
+import 'parameter_info_model.dart';
 import '../common/logger.dart';
 import '../component_list.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -8,8 +7,6 @@ import '../parameters_list.dart';
 import 'component_model.dart';
 import 'local_model.dart';
 import 'parameter_model.dart';
-
-double abc = 20;
 
 abstract class BuilderComponent extends Holder {
   LocalModel? model;
@@ -25,8 +22,8 @@ abstract class BuilderComponent extends Holder {
   }
 
   @override
-  Component clone(Component? parent, {bool cloneParam = false}) {
-    return (super.clone(parent, cloneParam: cloneParam) as BuilderComponent)
+  Component clone(Component? parent, {bool deepClone = false}) {
+    return (super.clone(parent, deepClone: deepClone) as BuilderComponent)
       ..model = model
       ..itemLengthParameter = itemLengthParameter;
   }
@@ -40,10 +37,10 @@ abstract class BuilderComponent extends Holder {
         ComponentOperationCubit.codeProcessor
             .localVariables[model!.variables[i].name] = model!.values[index][i];
       }
-      ComponentOperationCubit.codeProcessor.localVariables['index'] = index;
-      ComponentOperationCubit.codeProcessor.localVariables['count'] =
-          model!.values.length;
     }
+    ComponentOperationCubit.codeProcessor.localVariables['index'] = index;
+    ComponentOperationCubit.codeProcessor.localVariables['count'] =
+        model?.values.length ?? itemLengthParameter.value;
     final component = child!.clone(this);
     final widget = (component.build(context));
     if (index < builtList.length) {
@@ -131,11 +128,9 @@ abstract class BuilderComponent extends Holder {
 
   int get count {
     final length = itemLengthParameter.value;
-    print('VAL ${itemLengthParameter.compiler.code}');
     if (model == null || length < model!.values.length) {
       return length;
     }
-
     return model!.values.length;
   }
 }

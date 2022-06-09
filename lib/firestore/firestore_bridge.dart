@@ -18,6 +18,7 @@ import '../common/logger.dart';
 import '../constant/string_constant.dart';
 import '../models/component_model.dart';
 import '../network/auth_response/auth_response_model.dart';
+import 'firebase_connection.dart';
 
 abstract class FireBridge {
   static Future<void> init() async {
@@ -30,7 +31,6 @@ abstract class FireBridge {
     //   'messagingSenderId': '357010413683',
     //   'appId': '1:357010413683:web:851137f5a4916cc6587206'
     // }));
-
     await Firebase.initializeApp(
         options: FirebaseOptions.fromMap(const {
       'apiKey': 'AIzaSyDOJQUOBFfomuLrYK6oCXr8-uJMXo-AByg',
@@ -237,6 +237,7 @@ abstract class FireBridge {
       'device': 'iPhone X',
       'current_screen': 'HomePage',
       'main_screen': 'HomePage',
+      'action_code':'',
     };
     final response = await FirebaseFirestore.instance
         .collection('us$userId')
@@ -296,7 +297,7 @@ abstract class FireBridge {
     final projectInfo = projectInfoDoc.data();
     final FlutterProject flutterProject = FlutterProject(
         projectInfo['project_name'], userId, projectInfoDoc.id,
-        device: projectInfo['device']);
+        device: projectInfo['device'],actionCode: projectInfo['action_code']??'');
     // for (final modelJson in projectInfo['models'] ?? []) {
     //   final model = LocalModel.fromJson(modelJson);
     //   flutterProject.models.add(model);
@@ -552,6 +553,15 @@ abstract class FireBridge {
         .update({'current_screen': project.currentScreen.name});
   }
 
+  static Future<void> updateActionCode(
+      int userId, final FlutterProject project) async {
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(project.name)
+        .doc(project.docId)
+        .update({'action_code': project.actionCode});
+  }
   // static Future<void> updateRootComponent(
   //     int userId, String projectName, Component component) async {
   //   final document = await FirebaseFirestore.instance

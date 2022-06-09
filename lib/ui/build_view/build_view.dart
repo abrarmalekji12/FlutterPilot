@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import '../../common/compiler/code_processor.dart';
 import '../../constant/string_constant.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../cubit/screen_config/screen_config_cubit.dart';
+import '../../models/variable_model.dart';
 import '../../runtime_provider.dart';
 
-class BuildView extends StatelessWidget {
+class BuildView extends StatefulWidget {
   final Function onDismiss;
   final ScreenConfigCubit screenConfigCubit;
   final ComponentOperationCubit componentOperationCubit;
@@ -21,8 +23,21 @@ class BuildView extends StatelessWidget {
       : super(key: key);
 
   @override
+  State<BuildView> createState() => _BuildViewState();
+}
+
+class _BuildViewState extends State<BuildView> {
+  late final CacheMemory _cacheMemory;
+
+  @override
+  void initState() {
+    super.initState();
+    _cacheMemory = CacheMemory(ComponentOperationCubit.codeProcessor);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    componentOperationCubit.runtimeMode = RuntimeMode.run;
+    widget.componentOperationCubit.runtimeMode = RuntimeMode.run;
     return GestureDetector(
       onTap: () {
         _onDismiss(context);
@@ -36,7 +51,7 @@ class BuildView extends StatelessWidget {
                 runtimeMode: RuntimeMode.run,
                 child: BlocBuilder<ComponentOperationCubit,
                     ComponentOperationState>(
-                  bloc: componentOperationCubit,
+                  bloc: widget.componentOperationCubit,
                   builder: (_, state) {
                     return Container(
                       decoration: BoxDecoration(
@@ -61,7 +76,8 @@ class BuildView extends StatelessWidget {
                               }
                               return Container(
                                 color: Colors.white,
-                                child: componentOperationCubit.flutterProject!
+                                child: widget
+                                    .componentOperationCubit.flutterProject!
                                     .run(context, navigator: true),
                               );
                             });
@@ -94,13 +110,38 @@ class BuildView extends StatelessWidget {
   }
 
   void _onDismiss(BuildContext context) {
-    componentOperationCubit.runtimeMode = RuntimeMode.edit;
-    Get.back(
-      closeOverlays: false,
-    );
-    ComponentOperationCubit.changeVariables(
-        componentOperationCubit.flutterProject!.currentScreen);
+    _cacheMemory.restore(ComponentOperationCubit.codeProcessor);
+    widget.componentOperationCubit.runtimeMode = RuntimeMode.edit;
+      Get.back(
+        closeOverlays: false,
+      );
 
-    onDismiss.call();
+
+    ComponentOperationCubit.changeVariables(
+        widget.componentOperationCubit.flutterProject!.currentScreen);
+    widget.onDismiss.call();
+  }
+}
+
+class CacheMemory {
+  final Map<String, dynamic> variables={};
+  final Map<String, dynamic> localVariables={};
+
+  CacheMemory(final CodeProcessor processor) {
+    for(final variable in processor.variables.entries){
+      variables[variable.key]=variable.value.value;
+    }
+    for(final variable in processor.localVariables.entries){
+      localVariables[variable.key]=variable.value;
+    }
+  }
+
+  void restore(final CodeProcessor processor) {
+    for(final variable in processor.variables.entries){
+      variable.value.value=variables[variable.key];
+    }
+    for(final variable in processor.localVariables.keys){
+      processor.localVariables[variable]=localVariables[variable];
+    }
   }
 }

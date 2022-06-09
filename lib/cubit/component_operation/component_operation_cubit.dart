@@ -74,6 +74,14 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     changeProjectScreenInDB();
   }
 
+  void updateActionCode(final String value) async {
+    emit(ComponentOperationLoadingState());
+    flutterProject?.actionCode=value;
+    await FireBridge.updateActionCode(
+        flutterProject!.userId, flutterProject!);
+    emit(ComponentOperationInitial());
+
+  }
   Future<void> changeProjectScreenInDB() async {
     emit(ComponentOperationLoadingState());
     await FireBridge.updateCurrentScreen(
@@ -512,7 +520,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   void addToFavourites(final Component component) async {
     emit(ComponentOperationLoadingState());
     final model = FavouriteModel(
-        component.clone(null, cloneParam: true)
+        component.clone(null, deepClone: true)
           ..id = component.id
           ..boundary = component.boundary,
         flutterProject!.name);

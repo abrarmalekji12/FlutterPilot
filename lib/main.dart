@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_strategy/url_strategy.dart';
 import 'common/compiler/code_processor.dart';
+import 'common/converter/code_converter.dart';
 import 'common/shared_preferences.dart';
 import 'cubit/authentication/authentication_cubit.dart';
 import 'ui/authentication/login.dart';
@@ -39,27 +40,32 @@ void main() async {
   await Preferences.load();
   final CodeProcessor processor = CodeProcessor();
   const code = '''
-  class Student {
-  name:String;
-  age:int;
-  Student(this.name,this.age);
-  
-  toJson(){
-  return {
-  'name': name,
-  'age': age
-  };
-  }
-  }
-  list=[3,5,45];  
-  print(list[2]>list[1]);
+  class Data{
+name:String;
+num:int;
+Data(this.name,this.num);
+}
+a=0;
+list=[];
+action(){
+a++;
+list.add(Data("abrar",a));
+list.add(Data("abrar",a+1));
+for(item : list){
+print("hiii {{item.num}}");
+}
+}
+
+action();
+
+
  ''';
 
-  processor.executeCode(code, (message) {
-    print(':: => $message');
-  }, (error) {
-    print('XX => $error ');
-  });
+  // processor.executeCode(code, (message) {
+  //   print(':: => $message');
+  // }, (error) {
+  //   print('XX => $error ');
+  // });
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
   runApp(const MyApp());

@@ -11,6 +11,7 @@ abstract class CodeOperations {
     }
     final List<int> outputString = [];
     bool openString = false;
+    code=code.replaceAll(' in ', ':');
     for (int i = 0; i < code.length; i++) {
       if (code[i] == '\'' ||
           code[i] == '"' ||

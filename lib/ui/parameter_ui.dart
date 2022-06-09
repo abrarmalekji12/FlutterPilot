@@ -230,9 +230,15 @@ class SimpleParameterWidget extends StatelessWidget {
             child: TextFormField(
               maxLines: parameter.inputType == ParamInputType.text ? null : 3,
               validator: (value) {
-                final result = parameter.process(value ?? '');
+
+                dynamic result;
+                try {
+                  result = parameter.process(value ?? '');
+                }
+                catch(error) {
+                  result=null;
+                }
                 debugPrint('RESULT IS $value $result');
-                if (result != null) {
                   parameter.compiler.code = value ?? '';
                   parameter.val = result;
                   if (parameter.inputCalculateAs != null) {
@@ -245,8 +251,6 @@ class SimpleParameterWidget extends StatelessWidget {
                           listen: false)
                       .changedComponent();
                   return null;
-                }
-                return '';
               },
               buildCounter: (
                 BuildContext context, {

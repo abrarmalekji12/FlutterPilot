@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get/get.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
+import '../../common/common_methods.dart';
 import '../../common/converter/code_converter.dart';
-import '../../component_list.dart';
 import '../../constant/font_style.dart';
 import '../../constant/string_constant.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
@@ -24,6 +24,8 @@ abstract class ActionModel {
   String metaCode();
 
   String code();
+
+  ActionModel clone();
 }
 
 class CustomAction extends ActionModel {
@@ -44,80 +46,18 @@ class CustomAction extends ActionModel {
     ComponentOperationCubit.codeProcessor.executeCode(
       arguments[0],
       (message) {
-        if (message.startsWith('api:')) {
-          final value = message.replaceAll('api:', '');
-          final split = value.split('|');
-          final action = split[0];
-          switch (action) {
-            case 'snackbar':
-              (const GlobalObjectKey(deviceScaffoldMessenger).currentState
-                      as ScaffoldState)
-                  .showSnackBar(SnackBar(
-                content: Text(
-                  split[1],
-                  style: AppFontStyle.roboto(14, color: Colors.white),
-                  textAlign: TextAlign.center,
-                ),
-                // backgroundColor: Colors.grey,
-                duration: Duration(
-                    milliseconds: (1000 * double.parse(split[2])).toInt()),
-              ));
-              break;
-            case 'newpage':
-              final UIScreen? screen = ComponentOperationCubit
-                  .currentFlutterProject!.uiScreens
-                  .firstWhereOrNull((screen) => screen.name == split[1]);
-              if (screen != null) {
-                BlocProvider.of<StackActionCubit>(context, listen: false)
-                    .stackOperation(StackOperation.push, uiScreen: screen);
-              }
-              (const GlobalObjectKey(navigationKey).currentState
-                      as NavigatorState)
-                  .push(
-                MaterialPageRoute(
-                  builder: (context) => screen?.build(context) ?? Container(),
-                ),
-              );
-              break;
-            case 'goback':
-              BlocProvider.of<StackActionCubit>(context, listen: false)
-                  .stackOperation(StackOperation.pop);
-              Navigator.pop(context);
-              break;
-            case 'replacepage':
-              final UIScreen? screen = ComponentOperationCubit
-                  .currentFlutterProject!.uiScreens
-                  .firstWhereOrNull((screen) => screen.name == split[1]);
-
-              if (screen != null) {
-                BlocProvider.of<StackActionCubit>(context, listen: false)
-                    .stackOperation(StackOperation.replace, uiScreen: screen);
-              }
-
-              (const GlobalObjectKey(navigationKey).currentState
-                      as NavigatorState)
-                  .pushReplacement(
-                CustomPageRoute(
-                  builder: (context) => screen?.build(context) ?? Container(),
-                ),
-              );
-              break;
-            case 'lookup':
-
-            // return out;
-          }
-        } else {
-          print(':: => $message');
-        }
+        doAPIOperation(context,message);
         return null;
       },
       (error) {
-        print('XX => $error');
+        Fluttertoast.showToast(
+            msg: error, timeInSecForIosWeb: 9, webBgColor: '#ff0000',webPosition: 'center',gravity: ToastGravity.BOTTOM);
       },
     );
-    BlocProvider.of<StackActionCubit>(context, listen: false)
-        .emit(StackUpdatedState());
   }
+
+  @override
+  ActionModel clone() => CustomAction(code: arguments[0].toString());
 }
 
 class NewPageInStackAction extends ActionModel {
@@ -150,6 +90,9 @@ class NewPageInStackAction extends ActionModel {
     }
     return 'Navigator.push(context,MaterialPageRoute(builder: (_)=> const ${(arguments[0] as UIScreen).getClassName}()))';
   }
+
+  @override
+  ActionModel clone() => NewPageInStackAction(arguments[0] as UIScreen?);
 }
 
 class ReplaceCurrentPageInStackAction extends ActionModel {
@@ -183,6 +126,11 @@ class ReplaceCurrentPageInStackAction extends ActionModel {
     }
     return 'Navigator.pushReplacement(context,MaterialPageRoute(builder: (_)=> const ${(arguments[0] as UIScreen).getClassName}()))';
   }
+
+  @override
+  ActionModel clone() {
+    return ReplaceCurrentPageInStackAction(arguments[0] as UIScreen?);
+  }
 }
 
 class GoBackInStackAction extends ActionModel {
@@ -204,10 +152,15 @@ class GoBackInStackAction extends ActionModel {
   String metaCode() {
     return 'NBISA';
   }
+
+  @override
+  ActionModel clone() {
+    return GoBackInStackAction();
+  }
 }
 
 class ShowDialogInStackAction extends ActionModel {
-  ShowDialogInStackAction({List<String>? args})
+  ShowDialogInStackAction({List<String?>? args})
       : super(args ?? ['This is simple dialog', null, 'OK', null]);
 
   @override
@@ -225,6 +178,12 @@ class ShowDialogInStackAction extends ActionModel {
   @override
   String code() {
     return 'showDialog(context: context, builder: (_)=> MaterialSimpleAlertDialog(title:\'${arguments[0]}\'${arguments[1] != null ? ',subtitle: \'${arguments[1]}\'' : ''}, positiveButtonText: ${arguments[2]},${arguments[3] != null ? 'negativeButtonText: \'${arguments[3]}\',' : ''}))';
+  }
+
+  @override
+  ActionModel clone() {
+    return ShowDialogInStackAction(
+        args: arguments.map((e) => e as String?).toList());
   }
 }
 
@@ -253,6 +212,11 @@ class ShowCustomDialogInStackAction extends ActionModel {
       return '';
     }
     return 'showDialog(context: context, builder: (_)=> const ${(arguments[0] as UIScreen).getClassName}())';
+  }
+
+  @override
+  ActionModel clone() {
+    return ShowCustomDialogInStackAction(uiScreen: arguments[0] as UIScreen?);
   }
 }
 
@@ -311,21 +275,27 @@ class ShowBottomSheetInStackAction extends ActionModel {
     }
     return 'showBottomSheet(context: context, builder: (_)=> const ${(arguments[0] as UIScreen).getClassName}())';
   }
+
+  @override
+  ActionModel clone() {
+    return ShowBottomSheetInStackAction(arguments[0] as UIScreen?);
+  }
 }
 
 class ShowSnackBarAction extends ActionModel {
-  ShowSnackBarAction()
-      : super([
-          Parameters.textParameter()
-            ..info = null
-            ..withRequired(true)
-            ..withDefaultValue('This is simple toast'),
-          Parameters.flexParameter()
-            ..info = null
-            ..withRequired(true)
-            ..withDefaultValue(3)
-            ..withDisplayName('Duration (in seconds) ')
-        ]);
+  ShowSnackBarAction({List<dynamic>? arguments})
+      : super(arguments ??
+            [
+              Parameters.textParameter()
+                ..info = null
+                ..withRequired(true)
+                ..withDefaultValue('This is simple toast'),
+              Parameters.flexParameter()
+                ..info = null
+                ..withRequired(true)
+                ..withDefaultValue(3)
+                ..withDisplayName('Duration (in seconds) ')
+            ]);
 
   @override
   void perform(BuildContext context) {
@@ -372,6 +342,14 @@ class ShowSnackBarAction extends ActionModel {
       // backgroundColor: Colors.grey,
       duration: Duration(seconds:  ${(arguments[1] as SimpleParameter).code(true)}),
     ))''';
+  }
+
+  @override
+  ActionModel clone() {
+    return ShowSnackBarAction()
+      ..arguments.asMap().forEach((index, element) {
+        (element as Parameter).cloneOf(arguments[index]);
+      });
   }
 }
 
