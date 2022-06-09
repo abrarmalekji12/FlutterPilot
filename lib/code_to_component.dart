@@ -46,6 +46,8 @@ abstract class CodeOperations {
         return Map;
       case DataType.fvbInstance:
         return FVBInstance;
+      case DataType.fvbFunction:
+       return FVBFunction;
     }
   }
 
