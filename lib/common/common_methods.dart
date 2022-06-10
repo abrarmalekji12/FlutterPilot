@@ -65,8 +65,13 @@ void doAPIOperation(String message,{required StackActionCubit stackActionCubit,r
         as NavigatorState).pop();
         break;
       case 'refresh':
-        stateManagementBloc
-            .add(StateManagementUpdateEvent(split[1]));
+        if(split[1].isNotEmpty) {
+          stateManagementBloc
+              .add(StateManagementUpdateEvent(split[1]));
+        }
+        else{
+          stackActionCubit.emit(StackUpdatedState());
+        }
         break;
       case 'replacepage':
         final UIScreen? screen = ComponentOperationCubit

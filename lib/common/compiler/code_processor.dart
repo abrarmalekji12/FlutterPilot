@@ -385,7 +385,7 @@ class CodeProcessor {
     }, ''' ''');
 
     predefinedFunctions['refresh'] = FunctionModel<String>('refresh', (arguments) {
-      return 'api:refresh|${arguments[0]}';
+      return 'api:refresh|${arguments.isNotEmpty?arguments[0]:''}';
     }, ''' ''');
     predefinedFunctions['get'] = FunctionModel<dynamic>('get', (arguments) {
       final url = arguments[0] as String;

@@ -67,7 +67,7 @@ void main() async {
   fun1=(a,b){
   return a+b;
   };
-  print("abrar "+"malekji {{"abr"+"cd"}}");
+  print("abrar ".replaceAll("a","A"));
  ''';
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
