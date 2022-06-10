@@ -50,7 +50,7 @@ void main() async {
   const code = '''
   get("https://api.goal-geek.com/api/v1/fixtures/18220155").then((data){
   js=JSON.decode(data);
-  print("{{js["id"]}}");
+  print("{{js['data']}}");
   });
   
  ''';
