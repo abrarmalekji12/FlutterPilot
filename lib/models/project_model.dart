@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
 import '../bloc/state_management/state_management_bloc.dart';
 import '../code_to_component.dart';
 import '../common/common_methods.dart';
 import '../common/undo/revert_work.dart';
 import '../constant/string_constant.dart';
 import '../cubit/stack_action/stack_action_cubit.dart';
+import '../injector.dart';
 import '../ui/action_ui.dart';
 import 'local_model.dart';
 import 'variable_model.dart';
@@ -70,47 +72,36 @@ class FlutterProject {
     if (!navigator) {
       return rootComponent?.build(context) ?? Container();
     }
-
-    final _stackCubit = StackActionCubit();
-    final _stateManagementBloc=StateManagementBloc();
+    final _stackCubit = get<StackActionCubit>();
+    final _stateManagementBloc= get<StateManagementBloc>();
     _stackCubit.stackOperation(StackOperation.push, uiScreen: mainScreen);
-    ComponentOperationCubit.codeProcessor.executeCode(actionCode, (message){
-     doAPIOperation(context, message,stackActionCubit: _stackCubit,stateManagementBloc: _stateManagementBloc);
-    }, (error) {
-      showToast(error,error: true);
-    });
-    return BlocProvider(
-      create: (context) => _stateManagementBloc,
-      child: BlocProvider<StackActionCubit>(
-        create: (_) => _stackCubit,
-        child: BlocBuilder<StackActionCubit, StackActionState>(
-          bloc: _stackCubit,
-          builder: (context, state) {
-            return Scaffold(
-              key: const GlobalObjectKey(deviceScaffoldMessenger),
-              body: SafeArea(
-                child: Stack(
-                  children: [
-                    Navigator(
-                      key: const GlobalObjectKey(navigationKey),
-                      onGenerateRoute: (settings) => MaterialPageRoute(
-                        builder: (_) =>
-                            mainScreen.build(context) ?? Container(),
-                      ),
-                    ),
-                    for (final model in _stackCubit.models)
-                      Center(
-                        child: StackActionWidget(
-                          actionModel: model,
-                        ),
-                      )
-                  ],
+    ComponentOperationCubit.codeProcessor.executeCode(actionCode);
+    return BlocBuilder<StackActionCubit, StackActionState>(
+      bloc: _stackCubit,
+      builder: (context, state) {
+        return Scaffold(
+          key: const GlobalObjectKey(deviceScaffoldMessenger),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                Navigator(
+                  key: const GlobalObjectKey(navigationKey),
+                  onGenerateRoute: (settings) => MaterialPageRoute(
+                    builder: (_) =>
+                        mainScreen.build(context) ?? Container(),
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-      ),
+                for (final model in _stackCubit.models)
+                  Center(
+                    child: StackActionWidget(
+                      actionModel: model,
+                    ),
+                  )
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

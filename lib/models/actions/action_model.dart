@@ -45,14 +45,6 @@ class CustomAction extends ActionModel {
   void perform(BuildContext context) {
     ComponentOperationCubit.codeProcessor.executeCode(
       arguments[0],
-      (message) {
-        doAPIOperation(context,message);
-        return null;
-      },
-      (error) {
-        Fluttertoast.showToast(
-            msg: error, timeInSecForIosWeb: 9, webBgColor: '#ff0000',webPosition: 'center',gravity: ToastGravity.BOTTOM);
-      },
     );
   }
 
@@ -140,7 +132,7 @@ class GoBackInStackAction extends ActionModel {
   void perform(BuildContext context) {
     BlocProvider.of<StackActionCubit>(context, listen: false)
         .stackOperation(StackOperation.pop);
-    Navigator.pop(context);
+    (const GlobalObjectKey(navigationKey).currentState as NavigatorState).pop();
   }
 
   @override

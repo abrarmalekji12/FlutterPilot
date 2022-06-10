@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../common/compiler/code_processor.dart';
 import '../../common/undo/revert_work.dart';
+import '../../injector.dart';
 import '../../models/local_model.dart';
 import '../../models/variable_model.dart';
 import '../../models/parameter_model.dart';
@@ -13,7 +14,6 @@ import '../../models/project_model.dart';
 import '../../firestore/firestore_bridge.dart';
 import '../../models/component_model.dart';
 import '../../runtime_provider.dart';
-import '../../ui/visual_model.dart';
 import '../component_creation/component_creation_cubit.dart';
 import '../visual_box_drawer/visual_box_cubit.dart';
 
@@ -21,7 +21,6 @@ part 'component_operation_state.dart';
 
 class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   static FlutterProject? currentFlutterProject;
-  static final CodeProcessor codeProcessor = CodeProcessor();
   final Map<Component, bool> expandedTree = {};
   final Map<String, List<Component>> sameComponentCollection = {};
   RuntimeMode runtimeMode = RuntimeMode.edit;
@@ -35,6 +34,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   RevertWork get revertWork => flutterProject!.currentScreen.revertWork;
 
   get byteCache => bytesCache;
+
+  static CodeProcessor get codeProcessor => get<CodeProcessor>();
 
   FlutterProject? get flutterProject => currentFlutterProject;
 
@@ -76,12 +77,11 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   void updateActionCode(final String value) async {
     emit(ComponentOperationLoadingState());
-    flutterProject?.actionCode=value;
-    await FireBridge.updateActionCode(
-        flutterProject!.userId, flutterProject!);
+    flutterProject?.actionCode = value;
+    await FireBridge.updateActionCode(flutterProject!.userId, flutterProject!);
     emit(ComponentOperationInitial());
-
   }
+
   Future<void> changeProjectScreenInDB() async {
     emit(ComponentOperationLoadingState());
     await FireBridge.updateCurrentScreen(
@@ -149,13 +149,10 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         });
       }
     }
-
-    print('map $map');
     final List<String> changeOrder = [customComponent.name];
     final list = map.entries.toList();
     list.sort((prev, next) => prev.value.length >= next.value.length ? 1 : -1);
 
-    print('map list $list');
     int index = 0;
     while (index < list.length) {
       for (final comp in changeOrder) {

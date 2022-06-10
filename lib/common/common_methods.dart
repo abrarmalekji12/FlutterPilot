@@ -17,8 +17,12 @@ void showToast(final String message,{bool error=false}) {
 }
 
 
-void doAPIOperation(BuildContext context,String message,{StackActionCubit? stackActionCubit,StateManagementBloc? stateManagementBloc}){
-  if (message.startsWith('api:')) {
+void doAPIOperation(String message,{required StackActionCubit stackActionCubit,required StateManagementBloc stateManagementBloc}){
+  if(message.startsWith('print:')){
+    Fluttertoast.showToast(
+        msg: message.substring(6), timeInSecForIosWeb: 9, webBgColor: '#00ff00');
+  }
+  else if (message.startsWith('api:')) {
     final value = message.replaceAll('api:', '');
     final split = value.split('|');
     final action = split[0];
@@ -43,7 +47,7 @@ void doAPIOperation(BuildContext context,String message,{StackActionCubit? stack
             .currentFlutterProject!.uiScreens
             .firstWhereOrNull((screen) => screen.name == split[1]);
         if (screen != null) {
-          (stackActionCubit ?? BlocProvider.of<StackActionCubit>(context, listen: false))
+          stackActionCubit
               .stackOperation(StackOperation.push, uiScreen: screen);
         }
         (const GlobalObjectKey(navigationKey).currentState
@@ -55,13 +59,13 @@ void doAPIOperation(BuildContext context,String message,{StackActionCubit? stack
         );
         break;
       case 'goback':
-        (stackActionCubit ?? BlocProvider.of<StackActionCubit>(context, listen: false))
+        (stackActionCubit)
             .stackOperation(StackOperation.pop);
-        Navigator.pop(context);
+        (const GlobalObjectKey(navigationKey).currentState
+        as NavigatorState).pop();
         break;
       case 'refresh':
-        (stateManagementBloc??context
-            .read<StateManagementBloc>())
+        stateManagementBloc
             .add(StateManagementUpdateEvent(split[1]));
         break;
       case 'replacepage':
@@ -70,7 +74,7 @@ void doAPIOperation(BuildContext context,String message,{StackActionCubit? stack
             .firstWhereOrNull((screen) => screen.name == split[1]);
 
         if (screen != null) {
-          (stackActionCubit ?? BlocProvider.of<StackActionCubit>(context, listen: false))
+          stackActionCubit
               .stackOperation(StackOperation.replace, uiScreen: screen);
         }
 
@@ -86,7 +90,6 @@ void doAPIOperation(BuildContext context,String message,{StackActionCubit? stack
       // return out;
     }
   } else {
-    Fluttertoast.showToast(
-        msg: message, timeInSecForIosWeb: 9, webBgColor: '#00ff00');
+    print('LOG::$message');
   }
 }

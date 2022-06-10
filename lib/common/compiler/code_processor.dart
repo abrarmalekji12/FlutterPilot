@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'dart:core';
-import 'dart:io';
 import 'dart:math' as math;
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import '../../code_to_component.dart';
 import '../../component_list.dart';
@@ -54,7 +52,7 @@ class FVBClass {
     return instance;
   }
 
-  executeFunction(String name, List<dynamic> arguments, CodeProcessor processor, consoleCallback, onError) async {
+  executeFunction(String name, List<dynamic> arguments, CodeProcessor processor, consoleCallback, onError) {
     final Map<String, dynamic> oldVariables = {};
     final Map<String, dynamic> globalVariables = {};
     for (final MapEntry<String, FVBVariable> entry in fvbVariables.entries) {
@@ -70,7 +68,7 @@ class FVBClass {
     final variables = Map<String, VariableModel>.from(processor.variables);
 
     final output = (fvbFunctions[name] ?? (fvbVariables[name]!.value as FVBFunction))
-        .execute(processor, arguments, consoleCallback, onError);
+        .execute(processor, arguments);
 
     for (final MapEntry<String, FVBVariable> entry in fvbVariables.entries) {
       final type = CodeOperations.getDatatypeToDartType(entry.value.dataType);
@@ -122,8 +120,7 @@ class FVBFunction {
 
   FVBFunction(this.name, this.code, this.arguments);
 
-  dynamic execute(final CodeProcessor processor, final List<dynamic> argumentValues,
-      String? Function(String)? consoleCallback, void Function(String)? onError) async {
+  dynamic execute(final CodeProcessor processor, final List<dynamic> argumentValues) {
     if (arguments.length != argumentValues.length) {
       processor.showError('Not enough arguments in function $name ');
     }
@@ -155,7 +152,7 @@ class FVBFunction {
     }
 
     final variables = Map<String, VariableModel>.from(processor.variables);
-    final output = processor.executeCode(code!, consoleCallback, onError);
+    final output = processor.executeCode(code!);
     processor.variables.clear();
     processor.variables.addAll(variables);
     for (int i = 0; i < arguments.length; i++) {
@@ -241,22 +238,28 @@ class CodeProcessor {
       nineCodeUnit = '9'.codeUnits.first,
       dotCodeUnit = '.'.codeUnits.first,
       colonCodeUnit = ':'.codeUnits.first;
+  final String? Function(String)? consoleCallback;
+  final void Function(String)? onError;
 
-  CodeProcessor({this.scope = Scope.main}) {
+  CodeProcessor({this.scope = Scope.main,this.consoleCallback,this.onError}) {
     error = false;
     variables['pi'] =
         VariableModel('pi', pi, false, 'it is mathematical value of pi', DataType.double, '', deletable: false);
-    variables['json'] = VariableModel(
-        'json',
-        FVBInstance(FVBClass('json', {
+    variables['JSON'] = VariableModel(
+        'JSON',
+        FVBInstance(FVBClass('JSON', {
           'decode': FVBFunction('decode', null, ['text'])
             ..dartCall = (data) {
               return json.decode(data[0]);
+            },
+          'encode': FVBFunction('encode', null, ['json'])
+            ..dartCall = (data) {
+              return json.encode(data[0]);
             }
         }, {})),
         false,
         'it is a json parser',
-        DataType.string,
+        DataType.fvbInstance,
         '',
         deletable: false);
     classes.addAll(fvbClasses);
@@ -339,7 +342,7 @@ class CodeProcessor {
     }, ''' ''');
 
     predefinedFunctions['print'] = FunctionModel<String>('print', (arguments) {
-      return arguments[0].toString();
+      return 'print:${arguments[0].toString()}';
     }, ''' ''');
 
     predefinedFunctions['showSnackbar'] = FunctionModel<dynamic>('showSnackbar', (arguments) {
@@ -392,13 +395,9 @@ class CodeProcessor {
     predefinedFunctions['get'] = FunctionModel<dynamic>('get', (arguments) {
       final url = arguments[0] as String;
       http.get(Uri.parse(url)).then((response) {
-        (arguments[1] as FVBFunction).execute(this, [response.body], (msg) {
-          print('HEYY RESPONSE: $msg');
-        }, null);
+        (arguments[1] as FVBFunction).execute(this, [response.body]);
       }).onError((error, stackTrace) {
-        (arguments[2] as FVBFunction).execute(this, [error], (msg) {
-          print('HEYY ERROR: $msg');
-        }, null);
+        (arguments[2] as FVBFunction).execute(this, [error]);
       });
     }, ''' ''');
   }
@@ -487,7 +486,6 @@ class CodeProcessor {
           type: dataType == DataType.fvbInstance ? (value as FVBInstance).fvbClass.name : null);
       return true;
     }
-    return false;
   }
 
   getOrSetListMapBracketValue(String variable,
@@ -693,7 +691,7 @@ class CodeProcessor {
     valueStack.push(FVBValue(value: r));
   }
 
-  String? processString(String code, {String? Function(String)? consoleCallback, void Function(String)? onError}) {
+  String? processString(String code) {
     int si = -1, ei = -1;
 
     List<int> startList = [];
@@ -727,7 +725,7 @@ class CodeProcessor {
         // return CodeOutput.right('No variables');
       }
       final variableName = code.substring(si + 2, ei);
-      final value = process<String>(variableName, resolve: true, consoleCallback: consoleCallback, onError: onError);
+      final value = process<String>(variableName, resolve: true,);
       final k1 = '{{$variableName}}';
       final v1 = value.toString();
       code = code.replaceAll(k1, v1);
@@ -739,7 +737,7 @@ class CodeProcessor {
     return code;
   }
 
-  dynamic executeCode(final String input, String? Function(String)? consoleCallback, void Function(String)? onError) {
+  dynamic executeCode(final String input) {
     final trimCode = CodeOperations.trim(input)!;
     logger('TRIMMED \n $trimCode \n');
     int count = 0;
@@ -753,8 +751,7 @@ class CodeProcessor {
       }
       if (count == 0 && (trimCode[i] == ';' || trimCode.length == i + 1)) {
         logger('EXEC \n ${trimCode.substring(lastPoint, trimCode.length == i + 1 ? i + 1 : i)} \n-------');
-        final output = process(trimCode.substring(lastPoint, trimCode.length == i + 1 ? i + 1 : i),
-            consoleCallback: consoleCallback, onError: onError);
+        final output = process(trimCode.substring(lastPoint, trimCode.length == i + 1 ? i + 1 : i));
         lastPoint = i + 1;
         if (error) {
           onError?.call(errorMessage);
@@ -768,7 +765,7 @@ class CodeProcessor {
   }
 
   dynamic process<T>(final String input,
-      {bool resolve = false, String? Function(String)? consoleCallback, void Function(String)? onError}) {
+      {bool resolve = false, }) {
     final Stack2<FVBValue> valueStack = Stack2<FVBValue>();
     final Stack2<String> operatorStack = Stack2<String>();
     String number = '';
@@ -778,7 +775,7 @@ class CodeProcessor {
     error = false;
     if ((T == String || T == ImageData || isString(input)) && !resolve) {
       if (T != String && T != ImageData) {
-        return processString(input.substring(1, input.length - 1), consoleCallback: consoleCallback, onError: onError);
+        return processString(input.substring(1, input.length - 1));
       }
       return processString(input);
     } else if (T == Color && input.startsWith('#')) {
@@ -801,8 +798,7 @@ class CodeProcessor {
         }
         if (n - variable.length - 1 >= 0 && input[n - variable.length - 1] == '"') {
           valueStack.push(FVBValue(
-              value: processString(variable,
-                  consoleCallback: consoleCallback, onError: onError)));
+              value: processString(variable)));
           variable = '';
           continue;
         } else {
@@ -817,7 +813,7 @@ class CodeProcessor {
             if (!substring.contains(',') && (valueStack.peek?.value is List || valueStack.peek?.value is Map)) {
               valueStack.push(FVBValue(
                   value:
-                      valueStack.pop()!.value[process(substring, consoleCallback: consoleCallback, onError: onError)]));
+                      valueStack.pop()!.value[process(substring)]));
               n = i;
               break;
             } else if (variable.isNotEmpty) {
@@ -827,7 +823,7 @@ class CodeProcessor {
             } else {
               valueStack.push(FVBValue(
                   value: CodeOperations.splitBy(substring)
-                      .map((e) => process(e, consoleCallback: consoleCallback, onError: onError))
+                      .map((e) => process(e))
                       .toList()));
               variable = '';
               n = i;
@@ -871,8 +867,8 @@ class CodeProcessor {
                     value: Map.from(
                   CodeOperations.splitBy(input.substring(n + 1, i)).asMap().map((e, n) {
                     final split = CodeOperations.splitBy(n, splitBy: ':');
-                    return MapEntry(process(split[0], consoleCallback: consoleCallback, onError: onError),
-                        process(split[1], consoleCallback: consoleCallback, onError: onError));
+                    return MapEntry(process(split[0]),
+                        process(split[1]));
                   }),
                 )),
               );
@@ -943,30 +939,28 @@ class CodeProcessor {
                   if (insideFor.contains(':')) {
                     final split =
                         CodeOperations.splitBy(insideFor, splitBy: ':');
-                    final list = process(split[1],
-                        consoleCallback: consoleCallback, onError: onError);
+                    final list = process(split[1]);
                     if (list is! List) {
                       showError('Invalid for each loop');
                     } else {
                       for (final item in list) {
                         localVariables[split[0]] = item;
-                        executeCode(innerCode, consoleCallback, onError);
+                        executeCode(innerCode);
                       }
                     }
                   } else {
                     showError('For loop syntax error');
                   }
                 } else {
-                  process(splits[0], consoleCallback: consoleCallback, onError: onError);
+                  process(splits[0]);
                   int count = 0;
-                  while (process(splits[1],
-                          consoleCallback: consoleCallback, onError: onError) ==
+                  while (process(splits[1]) ==
                       true) {
-                    executeCode(innerCode, consoleCallback!, onError!);
-                    process(splits[2], consoleCallback: consoleCallback, onError: onError);
+                    executeCode(innerCode);
+                    process(splits[2]);
                     count++;
                     if (count > 1000) {
-                      onError.call('For loop goes infinite!!');
+                      onError?.call('For loop goes infinite!!');
                       break;
                     }
                   }
@@ -977,7 +971,7 @@ class CodeProcessor {
               }
               final argumentList = CodeOperations.splitBy(input.substring(n + 1, m));
               final processedArgs =
-                  argumentList.map((e) => process(e, consoleCallback: consoleCallback, onError: onError)).toList();
+                  argumentList.map((e) => process(e)).toList();
               if (scope == Scope.object && (input.length <= m + 1 || input[m + 1] != '{')) {
                 final argumentList = CodeOperations.splitBy(input.substring(n + 1, m));
                 functions[variable] = FVBFunction(variable, '', argumentList);
@@ -1009,6 +1003,12 @@ class CodeProcessor {
                     case 'add':
                       objectInstance.add(processedArgs[0]);
                       break;
+                    case 'clear':
+                      objectInstance.clear();
+                      break;
+                    case 'addAll':
+                      objectInstance.addAll(processedArgs[0]);
+                      break;
                     case 'removeAt':
                       objectInstance.removeAt(processedArgs[0]);
                       break;
@@ -1024,6 +1024,10 @@ class CodeProcessor {
 
                     case 'sort':
                       objectInstance.sort();
+                      break;
+
+                    case 'map':
+                      valueStack.push(FVBValue(value: objectInstance.map((e) =>( processedArgs[0] as FVBFunction).execute(this, [e])).toList()));
                       break;
                   }
                 } else if (objectInstance is Map) {
@@ -1049,11 +1053,11 @@ class CodeProcessor {
                 final innerCode = input.substring(m + 2, endIndex);
                 final conditionalCode = input.substring(n + 1, m);
                 int count = 0;
-                while (process(conditionalCode, consoleCallback: consoleCallback, onError: onError) == true) {
-                  executeCode(innerCode, consoleCallback!, onError!);
+                while (process(conditionalCode) == true) {
+                  executeCode(innerCode);
                   count++;
                   if (count > 1000) {
-                    onError.call('While loop goes infinite!!');
+                    onError?.call('While loop goes infinite!!');
                     break;
                   }
                 }
@@ -1093,10 +1097,10 @@ class CodeProcessor {
 
                 for (final statement in conditionalStatements) {
                   if (statement.condition == null) {
-                    executeCode(statement.body, consoleCallback!, onError!);
-                  } else if (process(statement.condition!, consoleCallback: consoleCallback, onError: onError) ==
+                    executeCode(statement.body);
+                  } else if (process(statement.condition!) ==
                       true) {
-                    executeCode(statement.body, consoleCallback!, onError!);
+                    executeCode(statement.body);
                     break;
                   }
                 }
@@ -1105,9 +1109,9 @@ class CodeProcessor {
               } else if (variable == 'delayed') {
                 int endIndex = CodeOperations.findCloseBracket(input, m + 1, '{'.codeUnits.first, '}'.codeUnits.first);
                 final int durationInMillis =
-                    process(input.substring(n + 1, m), consoleCallback: consoleCallback, onError: onError);
+                    process(input.substring(n + 1, m));
                 Future.delayed(Duration(milliseconds: durationInMillis), () {
-                  executeCode(input.substring(m + 2, endIndex), consoleCallback!, onError!);
+                  executeCode(input.substring(m + 2, endIndex));
                 });
                 n = endIndex;
                 variable = '';
@@ -1129,9 +1133,7 @@ class CodeProcessor {
                 final argumentList = CodeOperations.splitBy(input.substring(n + 1, m));
                 final output = functions[variable]!.execute(
                     this,
-                    argumentList.map((e) => process(e, consoleCallback: consoleCallback, onError: onError)).toList(),
-                    consoleCallback,
-                    onError);
+                    argumentList.map((e) => process(e)).toList());
                 if (output != null) {
                   valueStack.push(FVBValue(value: output));
                 }
@@ -1143,7 +1145,7 @@ class CodeProcessor {
                 final argumentList = CodeOperations.splitBy(input.substring(n + 1, m));
                 final output = function.execute(
                     this,
-                    argumentList.map((e) => process(e, consoleCallback: consoleCallback, onError: onError)).toList(),
+                    argumentList.map((e) => process(e)).toList(),
                     consoleCallback,
                     onError);
                 if (output != null) {
@@ -1157,7 +1159,7 @@ class CodeProcessor {
                 return;
               } else {
                 final output = predefinedFunctions[variable]!.perform.call(
-                    argumentList.map((e) => process(e, consoleCallback: consoleCallback, onError: onError)).toList());
+                    argumentList.map((e) => process(e)).toList());
                 valueStack.push(FVBValue(value: output));
                 variable = '';
                 n = m;
@@ -1207,7 +1209,7 @@ class CodeProcessor {
             return null;
           }
           final innerProcess = process<T>(input.substring(n + 1, index),
-              resolve: true, consoleCallback: consoleCallback, onError: onError);
+              resolve: true);
           if (innerProcess != null) {
             valueStack.push(FVBValue(value: innerProcess));
             n = index;

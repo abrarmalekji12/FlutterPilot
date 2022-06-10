@@ -325,6 +325,7 @@ abstract class Component {
         buildWhen: (previous, current) =>
             current is StateManagementUpdatedState && current.id == id,
         builder: (context, state) {
+
           return ComponentWidget(
             key: key(context),
             child: create(context),

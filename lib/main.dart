@@ -5,9 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_strategy/url_strategy.dart';
+import 'bloc/state_management/state_management_bloc.dart';
 import 'common/compiler/code_processor.dart';
 import 'common/shared_preferences.dart';
 import 'cubit/authentication/authentication_cubit.dart';
+import 'injector.dart';
 import 'ui/authentication/login.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 
@@ -36,8 +38,13 @@ import 'constant/app_colors.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setPathUrlStrategy();
+  initInjector();
   await Preferences.load();
-  final CodeProcessor processor = CodeProcessor();
+  final CodeProcessor processor = CodeProcessor(consoleCallback: (message) {
+    print(':: => $message');
+  }, onError: (error) {
+    print('XX => $error ');
+  });
   const code = '''
   class Student {
   name:String;
@@ -56,8 +63,10 @@ void main() async {
   fun1=(a,b){
   print("hello {{a}} {{b}}");
   };
-  print("abrar".substring(0,2));
-  
+  list2=list.map((a){
+  return a+1;
+  });
+  print(list2);
  ''';
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
@@ -66,14 +75,10 @@ void main() async {
   },(error){
   });
   * */
-  processor.executeCode(code, (message) {
-    print(':: => $message');
-  }, (error) {
-    print('XX => $error ');
-  });
+  processor.executeCode(code);
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  // runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -85,8 +90,7 @@ class MyApp extends StatelessWidget {
     html.document
         .addEventListener('contextmenu', (event) => event.preventDefault());
     if (!kDebugMode) {
-      FlutterError.onError = (
-        FlutterErrorDetails details, {
+      FlutterError.onError = (FlutterErrorDetails details, {
         bool forceReport = false,
       }) async {
         bool ifIsOverflowError = false;
@@ -105,8 +109,15 @@ class MyApp extends StatelessWidget {
         }
       };
     }
-    return BlocProvider(
-      create: (context) => AuthenticationCubit(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AuthenticationCubit(),
+        ),
+        BlocProvider(
+          create: (context) => get<StateManagementBloc>(),
+        ),
+      ],
       child: GetMaterialApp(
         title: 'Flutter Visual Builder',
         scrollBehavior: MyCustomScrollBehavior(),
@@ -122,7 +133,8 @@ class MyApp extends StatelessWidget {
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
   // Override behavior methods and getters like dragDevices
   @override
-  Set<PointerDeviceKind> get dragDevices => {
+  Set<PointerDeviceKind> get dragDevices =>
+      {
         PointerDeviceKind.touch,
         PointerDeviceKind.mouse,
         // etc.
