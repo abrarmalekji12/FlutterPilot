@@ -47,12 +47,12 @@ class FVBClass {
       ),
     );
     if (fvbFunctions.containsKey(name)) {
-      instance.fvbClass.executeFunction(name, arguments, processor, null, null);
+      instance.fvbClass.executeFunction(name, arguments, processor);
     }
     return instance;
   }
 
-  executeFunction(String name, List<dynamic> arguments, CodeProcessor processor, consoleCallback, onError) {
+  executeFunction(String name, List<dynamic> arguments, CodeProcessor processor) {
     final Map<String, dynamic> oldVariables = {};
     final Map<String, dynamic> globalVariables = {};
     for (final MapEntry<String, FVBVariable> entry in fvbVariables.entries) {
@@ -987,7 +987,7 @@ class CodeProcessor {
                 final objectInstance = getValue(object);
                 if (objectInstance is FVBInstance) {
                   final output =
-                      objectInstance.fvbClass.executeFunction(variable, processedArgs, this, consoleCallback, onError);
+                      objectInstance.fvbClass.executeFunction(variable, processedArgs, this);
                   if (output != null) {
                     valueStack.push(FVBValue(value: output));
                   }
@@ -1141,13 +1141,11 @@ class CodeProcessor {
                 n = m;
                 continue;
               } else if (variables.containsKey(variable) || localVariables.containsKey(variable)) {
-                final function = variables[variable]?.value ?? localVariables[variable];
+                final function = (variables[variable]?.value ?? localVariables[variable]) as FVBFunction;
                 final argumentList = CodeOperations.splitBy(input.substring(n + 1, m));
                 final output = function.execute(
                     this,
-                    argumentList.map((e) => process(e)).toList(),
-                    consoleCallback,
-                    onError);
+                    argumentList.map((e) => process(e)).toList());
                 if (output != null) {
                   valueStack.push(FVBValue(value: output));
                 }

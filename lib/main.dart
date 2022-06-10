@@ -61,12 +61,9 @@ void main() async {
   }
   list=[3,5,45];  
   fun1=(a,b){
-  print("hello {{a}} {{b}}");
+  return a+b;
   };
-  list2=list.map((a){
-  return a+1;
-  });
-  print(list2);
+  print(fun1(3,5));
  ''';
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
@@ -78,7 +75,7 @@ void main() async {
   processor.executeCode(code);
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  runApp(const MyApp());
+  // runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
