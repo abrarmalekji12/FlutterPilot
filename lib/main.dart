@@ -44,15 +44,13 @@ void main() async {
     if (message.startsWith('print:')) {
       print(':: => ${message.substring(6)}');
     }
+    return null;
   }, onError: (error) {
     print('XX => $error ');
   });
   const code = '''
-  url="https://api.goal-geek.com/api/v1=fixtures=18220155".replaceAll("=","/");
-  get(url).then((data){
-  js=JSON.decode(data);
-  print("{{js['data']}}");
-  });
+  list=[4,5,6,12];
+  list.forEach((data)=>print(data++)); 
   
  ''';
   /*

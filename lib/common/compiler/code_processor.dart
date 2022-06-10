@@ -611,26 +611,30 @@ class CodeProcessor {
         break;
       case '=':
         setValue(aVar.variableName!, b);
-        r = null;
+        r = b;
         break;
       case '++':
         final name = bVar.variableName!;
         final value = getValue(name);
-        r = null;
+
         if (value != null) {
           setValue(name, value! + 1);
+          r = value!+1;
         } else {
           showError('Variable $name is not defined');
+          r = null;
         }
+
         break;
       case '+=':
         final name = aVar.variableName!;
         final value = getValue(name);
-        r = null;
         if (value != null) {
           setValue(name, value! + b);
+          r = value! + b;
         } else {
           showError('Variable $name is not defined');
+          r = null;
         }
         break;
       case '-=':
@@ -646,21 +650,24 @@ class CodeProcessor {
       case '*=':
         final name = aVar.variableName!;
         final value = getValue(name);
-        r = null;
+
         if (value != null) {
           setValue(name, value! * b);
+          r=value!*b;
         } else {
           showError('Variable $name is not defined');
+          r = null;
         }
         break;
       case '/=':
         final name = aVar.variableName!;
         final value = getValue(name);
-        r = null;
         if (value != null) {
           setValue(name, value! / b);
+          r=value!/b;
         } else {
           showError('Variable $name is not defined');
+          r = null;
         }
         break;
       case '<=':
