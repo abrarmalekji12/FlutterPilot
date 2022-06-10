@@ -48,26 +48,11 @@ void main() async {
     print('XX => $error ');
   });
   const code = '''
-  class Student {
-  name:String;
-  age:int;
-  fun1:Function;
-  Student(this.name,this.age,this.fun1);
+  get("https://api.goal-geek.com/api/v1/fixtures/18220155").then((data){
+  js=JSON.decode(data);
+  print("{{js["id"]}}");
+  });
   
-  toJson(){
-  return {
-  'name': name,
-  'age': age
-  };
-  }
-  }
-  list1=[3,5,45,45];  
-  list2=[8,78];
-  t="abc";
-  fun1=(a,b){
-  return a+b;
-  };
-  print("abrar ".replaceAll("a","A"));
  ''';
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
@@ -76,6 +61,12 @@ void main() async {
   },(error){
   });
   * */
+  //FVB Language
+  // Steps
+  // 1. Implement lambda function
+  // 2. Static variables & methods
+  // 3. Future type variable
+  // 4. Stream type variable
   processor.executeCode(code);
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
@@ -117,7 +108,6 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => get<StateManagementBloc>(),
-          lazy: true,
         ),
       ],
       child: GetMaterialApp(

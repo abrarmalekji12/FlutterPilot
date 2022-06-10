@@ -211,6 +211,14 @@ class CodeProcessor {
     }, {
       'text': FVBVariable('text', DataType.string),
     }),
+    'Future': FVBClass('Future', {
+      'then': FVBFunction('then', 'onValue=value;', ['value']),
+      'onError': FVBFunction('onError', 'onError=error;', ['error']),
+    }, {
+      'value': FVBVariable('value', DataType.dynamic),
+      'onValue': FVBVariable('onValue', DataType.fvbFunction),
+      'onError': FVBVariable('onError', DataType.fvbFunction),
+    }),
     'Api': FVBClass('Api', {
       'get': FVBFunction('get', null, ['url'])
         ..dartCall = (arguments) async {
@@ -385,15 +393,16 @@ class CodeProcessor {
     }, ''' ''');
 
     predefinedFunctions['refresh'] = FunctionModel<String>('refresh', (arguments) {
-      return 'api:refresh|${arguments.isNotEmpty?arguments[0]:''}';
+      return 'api:refresh|${arguments.isNotEmpty ? arguments[0] : ''}';
     }, ''' ''');
     predefinedFunctions['get'] = FunctionModel<dynamic>('get', (arguments) {
       final url = arguments[0] as String;
-      http.get(Uri.parse(url)).then((response) {
-        (arguments[1] as FVBFunction).execute(this, [response.body]);
-      }).onError((error, stackTrace) {
-        (arguments[2] as FVBFunction).execute(this, [error]);
+      final futureOfGet = classes['Future']!.createInstance(this, []);
+      http.get(Uri.parse(url)).then((value) {
+        print('SEEE ${futureOfGet.fvbClass.fvbVariables['onValue']?.value}');
+        (futureOfGet.fvbClass.fvbVariables['onValue']?.value as FVBFunction?)?.execute(this, [value.body]);
       });
+      return futureOfGet;
     }, ''' ''');
   }
 
@@ -734,11 +743,29 @@ class CodeProcessor {
   }
 
   dynamic executeCode(final String input) {
-    final trimCode = CodeOperations.trim(input)!;
-    logger('TRIMMED \n $trimCode \n');
+    String code = '';
+    for (final line in input.split('\n')) {
+      int index = -1;
+      bool openString = false;
+      for (int i = 0; i < line.length; i++) {
+        if (line[i] == '"') {
+          openString = !openString;
+        } else if (!openString && i + 1 < line.length && line[i] == '/' && line[i + 1] == '/') {
+          index = i;
+          break;
+        }
+      }
+      if (index != -1) {
+        code += line.substring(0, index);
+      } else {
+        code += line;
+      }
+    }
+    String trimCode = CodeOperations.trim(code)!;
     int count = 0;
     int lastPoint = 0;
     dynamic globalOutput;
+
     for (int i = 0; i < trimCode.length; i++) {
       if (trimCode[i] == '{' || trimCode[i] == '[' || trimCode[i] == '(') {
         count++;
@@ -746,7 +773,6 @@ class CodeProcessor {
         count--;
       }
       if (count == 0 && (trimCode[i] == ';' || trimCode.length == i + 1)) {
-        logger('EXEC \n ${trimCode.substring(lastPoint, trimCode.length == i + 1 ? i + 1 : i)} \n-------');
         final output = process(trimCode.substring(lastPoint, trimCode.length == i + 1 ? i + 1 : i));
         lastPoint = i + 1;
         if (error) {
@@ -933,7 +959,7 @@ class CodeProcessor {
                   if (insideFor.contains(':')) {
                     final split = CodeOperations.splitBy(insideFor, splitBy: ':');
                     final list = process(split[1]);
-                    if (list is! List) {
+                    if (list is! Iterable) {
                       showError('Invalid for each loop');
                     } else {
                       for (final item in list) {
@@ -1033,6 +1059,11 @@ class CodeProcessor {
                     case 'add':
                       if (objectInstance is List) {
                         objectInstance.add(processedArgs[0]);
+                      }
+                      break;
+                    case 'insert':
+                      if (objectInstance is List) {
+                        objectInstance.insert(processedArgs[0], processedArgs[1]);
                       }
                       break;
                     case 'clear':
@@ -1326,7 +1357,15 @@ class CodeProcessor {
           continue;
         } else if (ch == '('.codeUnits[0]) {
           final closeOpenBracket = CodeOperations.findCloseBracket(input, n, '('.codeUnits.first, ')'.codeUnits.first);
-          if (input.length > closeOpenBracket + 1 && input[closeOpenBracket + 1] == '{') {
+          if (closeOpenBracket + 1 < input.length &&
+              input[closeOpenBracket + 1] == '=' &&
+              input[closeOpenBracket + 2] == '>') {
+            final argumentList = CodeOperations.splitBy(input.substring(n + 1, closeOpenBracket));
+            final function = FVBFunction('', input.substring(closeOpenBracket + 3, input.length), argumentList);
+            n = input.length - 1;
+            valueStack.push(FVBValue(value: function));
+            continue;
+          } else if (input.length > closeOpenBracket + 1 && input[closeOpenBracket + 1] == '{') {
             final int closeCurlyBracketIndex =
                 CodeOperations.findCloseBracket(input, closeOpenBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
             final argumentList = CodeOperations.splitBy(input.substring(n + 1, closeOpenBracket));
