@@ -68,6 +68,8 @@ class LocalModel {
         return DataType.fvbInstance;
       case 'Function':
         return DataType.fvbFunction;
+      case 'Iterable':
+        return DataType.iterable;
       case 'dynamic':
       default:
         return DataType.dynamic;
@@ -94,6 +96,8 @@ class LocalModel {
         return 'Object';
       case DataType.fvbFunction:
         return 'Function';
+      case DataType.iterable:
+        return 'Iterable';
     }
   }
 

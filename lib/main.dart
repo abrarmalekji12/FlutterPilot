@@ -4,16 +4,16 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:url_strategy/url_strategy.dart';
+
 import 'bloc/state_management/state_management_bloc.dart';
 import 'common/compiler/code_processor.dart';
 import 'common/shared_preferences.dart';
+import 'constant/app_colors.dart';
 import 'cubit/authentication/authentication_cubit.dart';
 import 'injector.dart';
 import 'ui/authentication/login.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
-
-import 'constant/app_colors.dart';
 
 /// Bubble sort algo
 // sort(arr){
@@ -41,7 +41,9 @@ void main() async {
   initInjector();
   await Preferences.load();
   final CodeProcessor processor = CodeProcessor(consoleCallback: (message) {
-    print(':: => $message');
+    if (message.startsWith('print:')) {
+      print(':: => ${message.substring(6)}');
+    }
   }, onError: (error) {
     print('XX => $error ');
   });
@@ -59,11 +61,13 @@ void main() async {
   };
   }
   }
-  list=[3,5,45];  
+  list1=[3,5,45,45];  
+  list2=[8,78];
+  t="abc";
   fun1=(a,b){
   return a+b;
   };
-  print(fun1(3,5));
+  print("abrar "+"malekji {{list1}}");
  ''';
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
@@ -84,18 +88,18 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    html.document
-        .addEventListener('contextmenu', (event) => event.preventDefault());
+    html.document.addEventListener('contextmenu', (event) => event.preventDefault());
     if (!kDebugMode) {
-      FlutterError.onError = (FlutterErrorDetails details, {
+      FlutterError.onError = (
+        FlutterErrorDetails details, {
         bool forceReport = false,
       }) async {
         bool ifIsOverflowError = false;
 
         final exception = details.exception;
         if (exception is FlutterError) {
-          ifIsOverflowError = !exception.diagnostics.any((e) =>
-              e.value.toString().startsWith('A RenderFlex overflowed by'));
+          ifIsOverflowError =
+              !exception.diagnostics.any((e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
         }
 
         // Ignore if is overflow error.
@@ -113,15 +117,13 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => get<StateManagementBloc>(),
-          lazy:true,
+          lazy: true,
         ),
       ],
       child: GetMaterialApp(
         title: 'Flutter Visual Builder',
         scrollBehavior: MyCustomScrollBehavior(),
-        theme: ThemeData(
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-            primaryColor: AppColors.theme),
+        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity, primaryColor: AppColors.theme),
         home: const LoginPage(),
       ),
     );
@@ -131,8 +133,7 @@ class MyApp extends StatelessWidget {
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
   // Override behavior methods and getters like dragDevices
   @override
-  Set<PointerDeviceKind> get dragDevices =>
-      {
+  Set<PointerDeviceKind> get dragDevices => {
         PointerDeviceKind.touch,
         PointerDeviceKind.mouse,
         // etc.
