@@ -116,6 +116,7 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => get<StateManagementBloc>(),
+          lazy:true,
         ),
       ],
       child: GetMaterialApp(
