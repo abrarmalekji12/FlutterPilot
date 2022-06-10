@@ -768,6 +768,7 @@ class CodeProcessor {
     final Stack2<String> operatorStack = Stack2<String>();
     String number = '';
     bool stringOpen = false;
+    int stringCount = 0;
     String variable = '';
     String object = '';
     error = false;
@@ -782,21 +783,29 @@ class CodeProcessor {
       }
       final String nextToken = input[n];
       final ch = nextToken.codeUnits.first;
-      if (ch != '"'.codeUnits.first && stringOpen) {
+      if (stringOpen) {
+        if (stringCount == 0 && ch == '"'.codeUnits.first) {
+          stringOpen = !stringOpen;
+          if (variable.isEmpty) {
+            continue;
+          }
+          if (n - variable.length - 1 >= 0 && input[n - variable.length - 1] == '"') {
+            valueStack.push(FVBValue(value: processString(variable)));
+            variable = '';
+            continue;
+          } else {
+            return null;
+          }
+        } else if (ch == '{'.codeUnits.first) {
+          stringCount++;
+        } else if (ch == '}'.codeUnits.first) {
+          stringCount--;
+        }
         variable += nextToken;
+
         continue;
       } else if (ch == '"'.codeUnits.first) {
-        stringOpen = !stringOpen;
-        if (variable.isEmpty) {
-          continue;
-        }
-        if (n - variable.length - 1 >= 0 && input[n - variable.length - 1] == '"') {
-          valueStack.push(FVBValue(value: processString(variable)));
-          variable = '';
-          continue;
-        } else {
-          return null;
-        }
+        stringOpen = true;
       } else if (ch == '['.codeUnits.first) {
         int count = 0;
 
