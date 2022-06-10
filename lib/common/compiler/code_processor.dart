@@ -399,11 +399,13 @@ class CodeProcessor {
       final url = arguments[0] as String;
       final futureOfGet = classes['Future']!.createInstance(this, []);
       http.get(Uri.parse(url)).then((value) {
-        print('SEEE ${futureOfGet.fvbClass.fvbVariables['onValue']?.value}');
         (futureOfGet.fvbClass.fvbVariables['onValue']?.value as FVBFunction?)?.execute(this, [value.body]);
+      }).onError((error, stackTrace) {
+        (futureOfGet.fvbClass.fvbVariables['onError']?.value as FVBFunction?)?.execute(this, [error]);
       });
       return futureOfGet;
     }, ''' ''');
+
   }
 
   void addVariable(String name, VariableModel value) {
