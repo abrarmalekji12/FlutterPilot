@@ -48,7 +48,8 @@ void main() async {
     print('XX => $error ');
   });
   const code = '''
-  get("https://api.goal-geek.com/api/v1/fixtures/18220155").then((data){
+  url="https://api.goal-geek.com/api/v1=fixtures=18220155".replaceAll("=","/");
+  get(url).then((data){
   js=JSON.decode(data);
   print("{{js['data']}}");
   });
