@@ -7,6 +7,8 @@ import '../../common/compiler/code_processor.dart';
 import '../../constant/string_constant.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../cubit/screen_config/screen_config_cubit.dart';
+import '../../cubit/stack_action/stack_action_cubit.dart';
+import '../../injector.dart';
 import '../../models/variable_model.dart';
 import '../../runtime_provider.dart';
 
@@ -33,6 +35,10 @@ class _BuildViewState extends State<BuildView> {
   void initState() {
     super.initState();
     _cacheMemory = CacheMemory(ComponentOperationCubit.codeProcessor);
+    get<StackActionCubit>().stackOperation(StackOperation.push,
+        uiScreen: ComponentOperationCubit.currentFlutterProject!.mainScreen);
+    ComponentOperationCubit.codeProcessor
+        .executeCode(ComponentOperationCubit.currentFlutterProject!.actionCode);
   }
 
   @override
@@ -111,11 +117,11 @@ class _BuildViewState extends State<BuildView> {
 
   void _onDismiss(BuildContext context) {
     _cacheMemory.restore(ComponentOperationCubit.codeProcessor);
+    ComponentOperationCubit.codeProcessor.destroyProcess();
     widget.componentOperationCubit.runtimeMode = RuntimeMode.edit;
-      Get.back(
-        closeOverlays: false,
-      );
-
+    Get.back(
+      closeOverlays: false,
+    );
 
     ComponentOperationCubit.changeVariables(
         widget.componentOperationCubit.flutterProject!.currentScreen);
@@ -124,24 +130,24 @@ class _BuildViewState extends State<BuildView> {
 }
 
 class CacheMemory {
-  final Map<String, dynamic> variables={};
-  final Map<String, dynamic> localVariables={};
+  final Map<String, dynamic> variables = {};
+  final Map<String, dynamic> localVariables = {};
 
   CacheMemory(final CodeProcessor processor) {
-    for(final variable in processor.variables.entries){
-      variables[variable.key]=variable.value.value;
+    for (final variable in processor.variables.entries) {
+      variables[variable.key] = variable.value.value;
     }
-    for(final variable in processor.localVariables.entries){
-      localVariables[variable.key]=variable.value;
+    for (final variable in processor.localVariables.entries) {
+      localVariables[variable.key] = variable.value;
     }
   }
 
   void restore(final CodeProcessor processor) {
-    for(final variable in processor.variables.entries){
-      variable.value.value=variables[variable.key];
+    for (final variable in processor.variables.entries) {
+      variable.value.value = variables[variable.key];
     }
-    for(final variable in processor.localVariables.keys){
-      processor.localVariables[variable]=localVariables[variable];
+    for (final variable in processor.localVariables.keys) {
+      processor.localVariables[variable] = localVariables[variable];
     }
   }
 }

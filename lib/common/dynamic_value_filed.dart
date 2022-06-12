@@ -62,15 +62,6 @@ class _DynamicValueFieldState<T> extends State<DynamicValueField<T>> {
         validator: (data) {
           final result =
               ComponentOperationCubit.codeProcessor.process<T>(data ?? '');
-          if (result == null) {
-            widget.onErrorCode?.call();
-            return '';
-          }
-          if (widget.inputOption == InputOption.doubleZeroToOne &&
-              (result > 1 && result < 0)) {
-            widget.onErrorCode?.call();
-            return '';
-          }
           if (!widget.onProcessedResult(data ?? '', result)) {
             return '';
           }

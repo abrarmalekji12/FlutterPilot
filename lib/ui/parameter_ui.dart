@@ -231,6 +231,7 @@ class SimpleParameterWidget extends StatelessWidget {
               maxLines: parameter.inputType == ParamInputType.text ? null : 3,
               validator: (value) {
 
+                print('here q parta');
                 dynamic result;
                 try {
                   result = parameter.process(value ?? '');
@@ -238,7 +239,7 @@ class SimpleParameterWidget extends StatelessWidget {
                 catch(error) {
                   result=null;
                 }
-                debugPrint('RESULT IS $value $result');
+                print('RESULT IS $value $result');
                   parameter.compiler.code = value ?? '';
                   parameter.val = result;
                   if (parameter.inputCalculateAs != null) {

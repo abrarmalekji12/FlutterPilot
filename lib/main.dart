@@ -9,6 +9,7 @@ import 'package:url_strategy/url_strategy.dart';
 
 import 'bloc/state_management/state_management_bloc.dart';
 import 'common/compiler/code_processor.dart';
+import 'common/converter/code_converter.dart';
 import 'common/shared_preferences.dart';
 import 'constant/app_colors.dart';
 import 'cubit/authentication/authentication_cubit.dart';
@@ -45,14 +46,41 @@ void main() async {
       print(':: => ${message.substring(6)}');
     }
     return null;
-  }, onError: (error) {
-    print('XX => $error ');
+  }, onError: (error,line) {
+    print('XX => $error, LINE :: "$line"');
   });
   const code = '''
-  list=[4,5,6,12];
-  list.forEach((data)=>print(data++)); 
+  // class Student{
+  // var roll;
+  // Student(this.roll);
+  // }
+  // var s1=Student(1);
+  // print(s1.roll);
+  // var d=Duration(1000);
+  // var count=0;
+  // var list=[];
+  // var t=Timer.periodic(d, (timer) {
+  //   print("Hello {{list.length}}");
+  //   count++;
+  //   list.add(count);
+  //   if(count>5){
+  //     t.cancel();
+  //   }
+  // });
   
+  class ABC{
+  var name;
+  setName(nm){
+  name=nm;
+  }
+  }
+  var a=ABC();
+  a.setName("");
+  
+  print(a.name);
+}
  ''';
+  processor.executeCode(code);
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
   js=json.decode(data);
@@ -66,7 +94,6 @@ void main() async {
   // 2. Static variables & methods
   // 3. Future type variable
   // 4. Stream type variable
-  processor.executeCode(code);
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
   // runApp(const MyApp());
@@ -78,7 +105,8 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    html.document.addEventListener('contextmenu', (event) => event.preventDefault());
+    html.document
+        .addEventListener('contextmenu', (event) => event.preventDefault());
     if (!kDebugMode) {
       FlutterError.onError = (
         FlutterErrorDetails details, {
@@ -88,8 +116,8 @@ class MyApp extends StatelessWidget {
 
         final exception = details.exception;
         if (exception is FlutterError) {
-          ifIsOverflowError =
-              !exception.diagnostics.any((e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
+          ifIsOverflowError = !exception.diagnostics.any((e) =>
+              e.value.toString().startsWith('A RenderFlex overflowed by'));
         }
 
         // Ignore if is overflow error.
@@ -112,7 +140,9 @@ class MyApp extends StatelessWidget {
       child: GetMaterialApp(
         title: 'Flutter Visual Builder',
         scrollBehavior: MyCustomScrollBehavior(),
-        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity, primaryColor: AppColors.theme),
+        theme: ThemeData(
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            primaryColor: AppColors.theme),
         home: const LoginPage(),
       ),
     );

@@ -7,7 +7,6 @@ import '../constant/font_style.dart';
 import '../cubit/component_creation/component_creation_cubit.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/component_selection/component_selection_cubit.dart';
-import '../models/local_model.dart';
 import '../models/variable_model.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -226,6 +225,16 @@ class _VariableBoxState extends State<VariableBox> {
                             value = _controller2.text;
                           }
                           break;
+                        case DataType.list:
+                          break;
+                        case DataType.iterable:
+                          break;
+                        case DataType.map:
+                          break;
+                        case DataType.fvbInstance:
+                          break;
+                        case DataType.fvbFunction:
+                          break;
                       }
                       if (value == null) {
                         Fluttertoast.showToast(
@@ -340,7 +349,7 @@ class _EditVariableState extends State<EditVariable> {
             ),
           ),
         ),
-        if (!widget.variable.value.runtimeAssigned)
+        if (!widget.variable.value.runtimeAssigned&&([ DataType.int, DataType.double, DataType.string,DataType.bool].contains(widget.variable.value.dataType)))
           Expanded(
             child: CustomTextField(
               controller: _textEditingController,
@@ -369,6 +378,16 @@ class _EditVariableState extends State<EditVariable> {
                     } else {
                       value = val;
                     }
+                    break;
+                  case DataType.list:
+                    break;
+                  case DataType.iterable:
+                    break;
+                  case DataType.map:
+                    break;
+                  case DataType.fvbInstance:
+                    break;
+                  case DataType.fvbFunction:
                     break;
                 }
                 if (value != null) {

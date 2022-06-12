@@ -4,16 +4,16 @@ class VariableModel {
   String name;
   dynamic value;
   final DataType dataType;
-  final String? type;
   bool runtimeAssigned;
   String? description;
   String? assignmentCode;
   final bool deletable;
+  final bool isFinal;
   final String screen;
 
   VariableModel(this.name, this.value, this.runtimeAssigned, this.description,
       this.dataType, this.screen,
-      {this.assignmentCode, this.deletable = true, this.type});
+      {this.assignmentCode, this.deletable = true,this.isFinal=false});
 
   Map<String, dynamic> toJson() {
     return {

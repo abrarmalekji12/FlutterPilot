@@ -9,6 +9,7 @@ import '../constant/string_constant.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/stack_action/stack_action_cubit.dart';
 import '../models/actions/action_model.dart';
+import '../models/component_model.dart';
 import '../models/project_model.dart';
 
 void showToast(final String message,{bool error=false}) {
@@ -59,7 +60,7 @@ void doAPIOperation(String message,{required StackActionCubit stackActionCubit,r
         );
         break;
       case 'goback':
-        (stackActionCubit)
+        stackActionCubit
             .stackOperation(StackOperation.pop);
         (const GlobalObjectKey(navigationKey).currentState
         as NavigatorState).pop();
@@ -95,6 +96,6 @@ void doAPIOperation(String message,{required StackActionCubit stackActionCubit,r
       // return out;
     }
   } else {
-    print('LOG::$message');
+    // print('LOG::$message');
   }
 }

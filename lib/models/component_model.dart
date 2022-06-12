@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -33,12 +34,20 @@ mixin operations {
   void replaceChildOperation(Component component, {String? attributeName});
 }
 
+final Map<String, Component> componentMap = {};
+
+class ComponentController extends ChangeNotifier {
+  void update() {
+    notifyListeners();
+  }
+}
+
 abstract class Component {
   late List<ParameterRuleModel> paramRules;
   List<Parameter> parameters;
   final List<ComponentParameter> componentParameters = [];
   String name;
-  late String id;
+  String? _id;
   late final String uniqueId;
   bool isConstant;
   Component? parent;
@@ -50,9 +59,24 @@ abstract class Component {
   Component(this.name, this.parameters,
       {this.isConstant = false, List<ParameterRuleModel>? rules}) {
     paramRules = rules ?? [];
-    id =
-        '${DateTime.now().millisecondsSinceEpoch}${Random().nextDouble().toStringAsFixed(3)}';
-    uniqueId = name + id + Random().nextDouble().toStringAsFixed(3);
+    uniqueId = name + Random().nextDouble().toStringAsFixed(3);
+  }
+
+  set setId(final String id) {
+    if (_id != null) {
+      componentMap.remove(_id);
+    }
+    _id = id;
+    componentMap[id] = this;
+  }
+
+  String get id {
+    if (_id != null) {
+      return _id!;
+    }
+
+    setId = '$uniqueId${Random().nextDouble().toStringAsFixed(3)}';
+    return _id!;
   }
 
   void addComponentParameters(
@@ -67,8 +91,7 @@ abstract class Component {
   void initComponentParameters(final BuildContext context) {
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       for (final element in componentParameters) {
-        element.visualBoxCubit =
-            BlocProvider.of<VisualBoxCubit>(context, listen: false);
+        element.visualBoxCubit = context.read<VisualBoxCubit>();
       }
     }
   }
@@ -112,7 +135,7 @@ abstract class Component {
         ];
         switch (fieldList[0]) {
           case 'id':
-            id = fieldList[1];
+            setId = fieldList[1];
             break;
           case 'model':
             (this as BuilderComponent).model = flutterProject
@@ -310,27 +333,20 @@ abstract class Component {
     return componentList[compName]!();
   }
 
-  key(BuildContext context) => RuntimeProvider.of(context) != RuntimeMode.edit
-      ? GlobalObjectKey(uniqueId + id)
-      : GlobalObjectKey(this);
-
   Widget build(BuildContext context) {
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
       });
-    }
-    if (RuntimeProvider.of(context) == RuntimeMode.run) {
+    } else if (RuntimeProvider.of(context) == RuntimeMode.run) {
       return BlocBuilder<StateManagementBloc, StateManagementState>(
-        buildWhen: (previous, current) =>
-            current is StateManagementUpdatedState && current.id == id,
+        key: key(context),
+        buildWhen: (previous, current) => current.id == id,
         builder: (context, state) {
-
           return ComponentWidget(
-            key: key(context),
             child: create(context),
           );
-        },
+      },
       );
     }
     return ComponentWidget(
@@ -352,6 +368,19 @@ abstract class Component {
   void forEach(final void Function(Component) work) async {
     work.call(this);
     forEachInComponentParameter(work);
+  }
+
+  key(BuildContext context) {
+    switch (RuntimeProvider.of(context)) {
+      case RuntimeMode.edit:
+        return GlobalObjectKey(this);
+      case RuntimeMode.viewOnly:
+        return GlobalObjectKey(uniqueId + id);
+      case RuntimeMode.run:
+        return null;
+      case RuntimeMode.preview:
+        return GlobalObjectKey(uniqueId);
+    }
   }
 
   void forEachInComponentParameter(final void Function(Component) work) {
@@ -582,9 +611,9 @@ abstract class Component {
       comp.parameters = parameters;
     }
     if (!deepClone) {
-      comp.id = id;
+      comp._id = id;
     }
-    if(!deepClone) {
+    if (!deepClone) {
       comp.cloneOf = this;
       cloneElements.add(comp);
     }
@@ -697,7 +726,7 @@ abstract class MultiHolder extends Component {
 
   @override
   Component clone(Component? parent, {bool deepClone = false}) {
-    final comp = super.clone(parent,deepClone: deepClone) as MultiHolder;
+    final comp = super.clone(parent, deepClone: deepClone) as MultiHolder;
     comp.children =
         children.map((e) => e.clone(comp, deepClone: deepClone)).toList();
     return comp;
@@ -788,7 +817,7 @@ abstract class Holder extends Component {
 
   @override
   Component clone(Component? parent, {bool deepClone = false}) {
-    final comp = super.clone(parent,deepClone: deepClone) as Holder;
+    final comp = super.clone(parent, deepClone: deepClone) as Holder;
     comp.child = child?.clone(comp, deepClone: deepClone);
     return comp;
   }
@@ -815,10 +844,10 @@ abstract class ClickableHolder extends Holder with Clickable {
   @override
   Component clone(Component? parent, {bool deepClone = false}) {
     final cloneComp = super.clone(parent, deepClone: deepClone);
-    if(deepClone) {
-      (cloneComp as Clickable).actionList = actionList.map((e) => e.clone()).toList();
-    }
-    else{
+    if (deepClone) {
+      (cloneComp as Clickable).actionList =
+          actionList.map((e) => e.clone()).toList();
+    } else {
       (cloneComp as Clickable).actionList = actionList;
     }
     return cloneComp;
@@ -840,10 +869,10 @@ abstract class ClickableComponent extends Component with Clickable {
   @override
   Component clone(Component? parent, {bool deepClone = false}) {
     final cloneComp = super.clone(parent, deepClone: deepClone);
-    if(deepClone) {
-      (cloneComp as Clickable).actionList = actionList.map((e) => e.clone()).toList();
-    }
-    else{
+    if (deepClone) {
+      (cloneComp as Clickable).actionList =
+          actionList.map((e) => e.clone()).toList();
+    } else {
       (cloneComp as Clickable).actionList = actionList;
     }
     return cloneComp;
@@ -1049,7 +1078,7 @@ abstract class CustomNamedHolder extends Component {
 
   @override
   Component clone(Component? parent, {bool deepClone = false}) {
-    final comp = super.clone(parent,deepClone: deepClone) as CustomNamedHolder;
+    final comp = super.clone(parent, deepClone: deepClone) as CustomNamedHolder;
     comp.childMap = childMap.map((key, value) =>
         MapEntry(key, value?.clone(comp, deepClone: deepClone)));
     comp.childrenMap = childrenMap.map((key, value) => MapEntry(
@@ -1204,7 +1233,7 @@ abstract class CustomComponent extends Component {
       comp2.parameters = parameters;
     }
     comp2.root = root?.clone(parent, deepClone: deepClone);
-    if(!deepClone) {
+    if (!deepClone) {
       comp2.cloneOf = this;
       cloneElements.add(comp2);
     }

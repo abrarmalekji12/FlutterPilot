@@ -11,7 +11,7 @@ abstract class CodeOperations {
     }
     final List<int> outputString = [];
     bool openString = false;
-    code=code.replaceAll(' in ', ':');
+    code = code.replaceAll(' in ', ':');
     for (int i = 0; i < code.length; i++) {
       if (code[i] == '\'' ||
           code[i] == '"' ||
@@ -26,6 +26,105 @@ abstract class CodeOperations {
       outputString.add(code.codeUnitAt(i));
     }
     return String.fromCharCodes(outputString);
+  }
+
+  static String? trimAvoidSingleSpace(String? code) {
+    if (code == null) {
+      return null;
+    }
+    final List<int> outputString = [];
+    bool openString = false;
+    int spaceCount = 0;
+    code = code.replaceAll(' in ', ':');
+    for (int i = 0; i < code.length; i++) {
+      if (code[i] != ' ') {
+        if (spaceCount >= 1) {
+          outputString.add(' '.codeUnits.first);
+        }
+        spaceCount = 0;
+      }
+      if (code[i] == '\'' ||
+          code[i] == '"' ||
+          code[i] == '`' ||
+          (code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
+          (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')) {
+        openString = !openString;
+      } else if (!openString) {
+        if (code[i] == ' ') {
+          spaceCount++;
+          continue;
+        } else if (code[i] == '\n') {
+          continue;
+        }
+      }
+      outputString.add(code.codeUnitAt(i));
+    }
+    return String.fromCharCodes(outputString);
+  }
+
+  static String? checkSyntaxInCode(String code) {
+    int roundCount = 0;
+    int squareCount = 0;
+    int curlyCount = 0;
+    bool doubleQuote = false;
+    bool singleQuote = false;
+    for (int i = 0; i < code.length; i++) {
+      final a = code[i];
+      switch (a) {
+        case '"':
+          doubleQuote = !doubleQuote;
+          break;
+        case '\'':
+          singleQuote = !singleQuote;
+          break;
+        case '(':
+          roundCount++;
+          break;
+        case ')':
+          roundCount--;
+          break;
+        case '[':
+          squareCount++;
+          break;
+        case ']':
+          squareCount--;
+          break;
+        case '{':
+          curlyCount++;
+          break;
+        case '}':
+          curlyCount--;
+          break;
+      }
+    }
+    if (roundCount != 0) {
+      if (roundCount > 0) {
+        return 'Missing closing round bracket';
+      } else {
+        return 'Missing opening round bracket';
+      }
+    }
+    if (squareCount != 0) {
+      if (squareCount > 0) {
+        return 'Missing closing square bracket';
+      } else {
+        return 'Missing opening square bracket';
+      }
+    }
+    if (curlyCount != 0) {
+      if (curlyCount > 0) {
+        return 'Missing closing curly bracket';
+      } else {
+        return 'Missing opening curly bracket';
+      }
+    }
+    if (doubleQuote) {
+      return 'Missing closing double quote';
+    }
+    if (singleQuote) {
+      return 'Missing closing single quote';
+    }
+    return null;
   }
 
   static getDatatypeToDartType(DataType dataType) {
@@ -44,33 +143,16 @@ abstract class CodeOperations {
         return List;
       case DataType.map:
         return Map;
+
+      case DataType.iterable:
+        return Iterable;
       case DataType.fvbInstance:
         return FVBInstance;
       case DataType.fvbFunction:
-       return FVBFunction;
+        return FVBFunction;
     }
   }
 
-  static List<String> getFVBInstructionsFromCode(String code) {
-    final trimCode = CodeOperations.trim(code)!;
-    int count = 0, lastPoint = 0;
-    final List<String> instructions = [];
-    for (int i = 0; i < trimCode.length; i++) {
-      if (trimCode[i] == '{' || trimCode[i] == '[' || trimCode[i] == '(') {
-        count++;
-      } else if (trimCode[i] == '}' ||
-          trimCode[i] == ']' ||
-          trimCode[i] == ')') {
-        count--;
-      }
-      if (count == 0 && (trimCode[i] == ';' || trimCode.length == i + 1)) {
-        instructions
-            .add(trimCode.substring(lastPoint, trimCode[i] == ';' ? i : i + 1));
-        lastPoint = i + 1;
-      }
-    }
-    return instructions;
-  }
 
   static int findCloseBracket(
     String input,

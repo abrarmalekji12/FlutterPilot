@@ -1,19 +1,16 @@
-import 'dart:convert';
-import 'dart:html';
 
 import 'package:code_text_field/code_text_field.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'package:highlight/languages/dart.dart';
 import '../common/download_utils.dart';
-import '../common/logger.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../models/project_model.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
+import 'package:highlight/languages/dart.dart';
 
 class CodeViewerWidget extends StatefulWidget {
   final ComponentOperationCubit componentOperationCubit;

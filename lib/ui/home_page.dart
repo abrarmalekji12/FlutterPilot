@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/dynamic_value_editing_controller.dart';
+import '../cubit/stack_action/stack_action_cubit.dart';
+import '../injector.dart';
+import 'action_code_editor.dart';
 import 'preview_ui.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../common/app_loader.dart';
@@ -605,15 +608,12 @@ class ActionCodeShowHideMenu extends StatefulWidget {
 
 class _ActionCodeShowHideMenuState extends State<ActionCodeShowHideMenu> {
   OverlayEntry? _overlayEntry;
-  final DynamicValueEditingController _dynamicValueEditingController =
-      DynamicValueEditingController();
+  late ComponentOperationCubit componentOperationCubit;
 
   @override
   void initState() {
     super.initState();
-
-
-    _dynamicValueEditingController.text=context.read<ComponentOperationCubit>().flutterProject!.actionCode;
+    componentOperationCubit = context.read<ComponentOperationCubit>();
     _overlayEntry = OverlayEntry(
       builder: (_) {
         return Material(
@@ -650,17 +650,11 @@ class _ActionCodeShowHideMenuState extends State<ActionCodeShowHideMenu> {
                     height: 20,
                   ),
                   Expanded(
-                    child: TextField(
-                      style: AppFontStyle.roboto(14),
-                      expands: true,
-                      maxLines: null,
-                      minLines: null,
-                      controller: _dynamicValueEditingController,
-                      onChanged: (value) {
-                        context
-                            .read<ComponentOperationCubit>()
-                            .updateActionCode(value);
+                    child: ActionCodeEditor(
+                      onCodeChange: (String value) {
+                        componentOperationCubit.updateActionCode(value);
                       },
+                      code: componentOperationCubit.flutterProject!.actionCode,
                     ),
                   )
                 ],
@@ -706,8 +700,19 @@ class _ActionCodeShowHideMenuState extends State<ActionCodeShowHideMenu> {
   }
 }
 
-class PrototypeShowcase extends StatelessWidget {
+class PrototypeShowcase extends StatefulWidget {
   const PrototypeShowcase({Key? key}) : super(key: key);
+
+  @override
+  State<PrototypeShowcase> createState() => _PrototypeShowcaseState();
+}
+
+class _PrototypeShowcaseState extends State<PrototypeShowcase> {
+  @override
+  void initState() {
+    super.initState();
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -748,6 +753,10 @@ class PrototypeShowcase extends StatelessWidget {
                 MediaQuery.of(context).size.width;
             ComponentOperationCubit.codeProcessor.variables['dh']!.value =
                 MediaQuery.of(context).size.height;
+            get<StackActionCubit>().stackOperation(StackOperation.push,
+                uiScreen: ComponentOperationCubit.currentFlutterProject!.mainScreen);
+            ComponentOperationCubit.codeProcessor
+                .executeCode(ComponentOperationCubit.currentFlutterProject!.actionCode);
             return state.flutterProject.run(context, navigator: true);
           }
           return Container();

@@ -62,19 +62,6 @@
 
 
     </style>
-    <!--    <title>Page Title</title>-->
-    <!--  </head>-->
-    <!--<body>-->
-    <!--<div class="parent" id="root">-->
-    <!--  <center>-->
-    <!--    <img src="https://allfreemockups.com/wp-content/uploads/2020/06/1200px-BMW.svg_.png" width="20%">-->
-    <!--  </center>-->
-    <!--  &lt;!&ndash; End Animated Text &ndash;&gt;-->
-    <!--</div>-->
-
-    <!--</body>-->
-    <!--</html>-->
-
 
     <base href="/">
 
@@ -97,16 +84,7 @@
 <!-- This script installs service_worker.js to provide PWA functionality to
      application. For more information, see:
      https://developers.google.com/web/fundamentals/primers/service-workers -->
-<script>
-  document.addEventListener('wheel', function(e) {
-    e.ctrlKey && e.preventDefault();
-  }, {
-    passive: false,
-  });
 
-
-
-</script>
 <script>
   window.addEventListener('keydown', function(e) {
     if (event.metaKey || event.ctrlKey) {
@@ -118,6 +96,12 @@
       }
     }
   });
+  document.addEventListener('wheel', function(e) {
+    e.ctrlKey && e.preventDefault();
+  }, {
+    passive: false,
+  });
+
 
 
 

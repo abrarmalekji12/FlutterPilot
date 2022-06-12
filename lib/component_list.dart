@@ -1625,6 +1625,7 @@ class CInputDecorator extends Component {
 class CTextField extends Component {
   CTextField()
       : super('TextField', [
+          Parameters.textInputTypeParameter(),
           Parameters.googleFontTextStyleParameter(),
           BooleanParameter(
               required: true,
@@ -1640,25 +1641,31 @@ class CTextField extends Component {
               val: false,
               info: NamedParameterInfo('obscureText'),
               displayName: 'obscure-text'),
+          Parameters.textInputActionParameter(),
         ]) {
     addComponentParameters([
-      (parameters[2] as ComplexParameter).params[10] as ComponentParameter,
-      (parameters[2] as ComplexParameter).params[11] as ComponentParameter,
-      (parameters[2] as ComplexParameter).params[12] as ComponentParameter,
+      (parameters[3] as ComplexParameter).params[10] as ComponentParameter,
+      (parameters[3] as ComplexParameter).params[11] as ComponentParameter,
+      (parameters[3] as ComplexParameter).params[12] as ComponentParameter,
     ]);
   }
+
   final TextEditingController textEditingController = TextEditingController();
 
   @override
   Widget create(BuildContext context) {
     initComponentParameters(context);
     return TextField(
-      controller: RuntimeProvider.of(context)==RuntimeMode.run?textEditingController:null,
-      style: parameters[0].value,
-      readOnly: parameters[1].value,
-      decoration: parameters[2].value,
-      maxLength: parameters[3].value,
-      obscureText: parameters[4].value,
+      keyboardType: parameters[0].value,
+      controller: RuntimeProvider.of(context) == RuntimeMode.run
+          ? textEditingController
+          : null,
+      style: parameters[1].value,
+      readOnly: parameters[2].value,
+      decoration: parameters[3].value,
+      maxLength: parameters[4].value,
+      obscureText: parameters[5].value,
+      textInputAction: parameters[6].value,
     );
   }
 }

@@ -149,6 +149,19 @@ class Parameters {
         info: NamedParameterInfo('gridDelegate'),
       );
 
+  static textInputActionParameter() => ChoiceValueParameter(
+        name: 'textInputAction',
+        required: false,
+        info: NamedParameterInfo('textInputAction'),
+        options: {
+         'done': TextInputAction.done,
+         'next': TextInputAction.next,
+         'newline': TextInputAction.newline,
+         'send': TextInputAction.send,
+         'search': TextInputAction.search,
+        }, defaultValue: null,
+      );
+
   static ComplexParameter inputDecorationParameter() => ComplexParameter(
           params: [
             Parameters.paddingParameter()
@@ -459,7 +472,7 @@ class Parameters {
       required: true);
 
   static Parameter textAlignParameter() => ChoiceValueParameter(
-      name: 'alignment',
+      name: 'text-align',
       options: {
         'center': TextAlign.center,
         'left': TextAlign.left,
@@ -1099,6 +1112,23 @@ class Parameters {
         },
       );
 
+  static Parameter textInputTypeParameter() => ChoiceValueParameter(
+        options: {
+          'text': TextInputType.text,
+          'number': TextInputType.number,
+          'emailAddress': TextInputType.emailAddress,
+          'phone': TextInputType.phone,
+          'multiline': TextInputType.multiline,
+          'datetime': TextInputType.datetime,
+        },
+    getCode: (value) => 'TextInputType.$value',
+    fromCodeToKey: (code) {
+      return code.substring(code.indexOf('.') + 1);
+    },
+        defaultValue: 'text',
+        name: 'input type',
+        info: NamedParameterInfo('keyboardType'),
+  );
   static Parameter googleFontTextStyleParameter() => ComplexParameter(
       info: InnerObjectParameterInfo(
           innerObjectName: 'GoogleFonts.getFont', namedIfHaveAny: 'style'),

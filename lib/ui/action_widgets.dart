@@ -14,6 +14,7 @@ import '../cubit/component_operation/component_operation_cubit.dart';
 import '../models/actions/action_model.dart';
 import '../models/component_model.dart';
 import '../models/project_model.dart';
+import 'action_code_editor.dart';
 import 'parameter_ui.dart';
 
 class ActionModelWidget extends StatefulWidget {
@@ -369,13 +370,17 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
           const SizedBox(
             height: 20,
           ),
-          TextField(
-            style: AppFontStyle.roboto(14),
-            maxLines: 10,
-            controller: _controller,
-            onChanged: (value) {
-              widget.action.arguments[0] = value;
-            },
+          ActionCodeEditor(
+            code: widget.action.arguments[0], onCodeChange: (String value) {
+            widget.action.arguments[0] = value;
+            BlocProvider.of<ClickActionCubit>(context,
+                listen: false)
+                .changedState();
+
+            BlocProvider.of<ActionEditCubit>(context,
+                listen: false)
+                .change();
+          },
           )
         ],
       ),

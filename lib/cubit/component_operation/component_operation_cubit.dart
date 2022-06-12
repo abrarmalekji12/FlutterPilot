@@ -518,7 +518,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentOperationLoadingState());
     final model = FavouriteModel(
         component.clone(null, deepClone: true)
-          ..id = component.id
+          ..setId = component.id
           ..boundary = component.boundary,
         flutterProject!.name);
     if (favouriteList.isNotEmpty) {

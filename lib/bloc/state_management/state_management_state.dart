@@ -1,13 +1,16 @@
 part of 'state_management_bloc.dart';
 
 @immutable
-abstract class StateManagementState {}
+abstract class StateManagementState {
+  final String id;
+  const StateManagementState(this.id);
+}
 
-class StateManagementInitial extends StateManagementState {}
+class StateManagementInitial extends StateManagementState {
+  const StateManagementInitial(super.id);
+}
 
 
 class StateManagementUpdatedState extends StateManagementState {
-  final String id;
-
-  StateManagementUpdatedState(this.id);
+  const StateManagementUpdatedState(super.id);
 }

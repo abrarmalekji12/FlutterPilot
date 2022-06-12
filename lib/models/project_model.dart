@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
-import '../bloc/state_management/state_management_bloc.dart';
 import '../code_to_component.dart';
-import '../common/common_methods.dart';
+import '../common/converter/code_converter.dart';
 import '../common/undo/revert_work.dart';
 import '../constant/string_constant.dart';
 import '../cubit/stack_action/stack_action_cubit.dart';
 import '../injector.dart';
 import '../ui/action_ui.dart';
+import '../ui/models_view.dart';
 import 'local_model.dart';
 import 'variable_model.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -72,12 +71,9 @@ class FlutterProject {
     if (!navigator) {
       return rootComponent?.build(context) ?? Container();
     }
-    final _stackCubit = get<StackActionCubit>();
-    final _stateManagementBloc= get<StateManagementBloc>();
-    _stackCubit.stackOperation(StackOperation.push, uiScreen: mainScreen);
-    ComponentOperationCubit.codeProcessor.executeCode(actionCode);
+    final _actionCubit=get<StackActionCubit>();
     return BlocBuilder<StackActionCubit, StackActionState>(
-      bloc: _stackCubit,
+      bloc: _actionCubit,
       builder: (context, state) {
         return Scaffold(
           key: const GlobalObjectKey(deviceScaffoldMessenger),
@@ -91,7 +87,7 @@ class FlutterProject {
                         mainScreen.build(context) ?? Container(),
                   ),
                 ),
-                for (final model in _stackCubit.models)
+                for (final model in _actionCubit.models)
                   Center(
                     child: StackActionWidget(
                       actionModel: model,
@@ -202,14 +198,19 @@ class UIScreen {
     String dynamicVariableAssignmentCode = '';
     for (final variable
         in ComponentOperationCubit.codeProcessor.variables.entries) {
-      if (!variable.value.runtimeAssigned) {
-        staticVariablesCode +=
-            'const ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
-      } else {
-        dynamicVariablesDefinitionCode +=
-            'late ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key};';
-        dynamicVariableAssignmentCode +=
-            '${variable.key} = ${variable.value.assignmentCode};';
+      if([DataType.string, DataType.int, DataType.double,DataType.double].contains(variable.value.dataType)) {
+        if (!variable.value.isFinal) {
+          staticVariablesCode +=
+          'final ${LocalModel.dataTypeToCode(
+              variable.value.dataType)} ${variable.key} = ${LocalModel
+              .valueToCode(variable.value.value)};';
+        } else {
+          dynamicVariablesDefinitionCode +=
+          'late ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable
+              .key};';
+          dynamicVariableAssignmentCode +=
+          '${variable.key} = ${variable.value.assignmentCode};';
+        }
       }
     }
 
@@ -241,6 +242,7 @@ class UIScreen {
     $dynamicVariablesDefinitionCode
      
     void main(){
+    ${FVBEngine().fvbToDart(flutterProject.actionCode)}
     ${rootComponent is! MaterialApp ? 'runApp(MaterialApp(home:const $className()));' : 'runApp(const $className());'}
     } 
      $functionImplementationCode 

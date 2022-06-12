@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
+import '../common/compiler/code_processor.dart';
 import '../ui/models_view.dart';
 import 'variable_model.dart';
 

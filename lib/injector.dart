@@ -19,9 +19,9 @@ void initInjector() {
           stateManagementBloc: get<StateManagementBloc>());
       return null;
     },
-    onError: (error) {
+    onError: (error,line) {
       Fluttertoast.showToast(
-          msg: error,
+          msg: '$error, LINE :: "$line"',
           timeInSecForIosWeb: 9,
           webBgColor: '#ff0000',
           webPosition: 'center',
