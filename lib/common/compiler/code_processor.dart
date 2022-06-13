@@ -118,6 +118,7 @@ class FVBClass {
         processor.localVariables.remove(entry.key);
       }
     }
+
     return output;
   }
 }
@@ -139,6 +140,11 @@ class FVBArgument {
   final dynamic optionalValue;
 
   FVBArgument(this.name, {this.type = FVBArgumentType.placed, this.optionalValue});
+
+  @override
+  String toString() {
+    return '$name :: $type';
+  }
 }
 
 class FVBArgumentValue {
@@ -162,7 +168,6 @@ class FVBFunction {
       processor.showError('Not enough arguments in function $name ');
     }
     if (dartCall != null) {
-      print('dart calling $argumentValues');
       return dartCall?.call(argumentValues);
     }
     final Map<String, dynamic> oldVariables = {};
@@ -202,6 +207,9 @@ class FVBFunction {
     }
     for (final entry in globalVariables.entries) {
       processor.variables[entry.key]?.value = entry.value;
+    }
+    if (output != null && output is String && output.startsWith('print:')) {
+      return null;
     }
     return output;
   }
@@ -1097,12 +1105,15 @@ class CodeProcessor {
                 continue;
               } else if (classes.containsKey(variable)) {
                 final fvbClass = classes[variable]!;
-                valueStack.push(FVBValue(
+                valueStack.push(
+                  FVBValue(
                     value: fvbClass.createInstance(
                         this,
                         fvbClass.fvbFunctions.containsKey(variable)
                             ? processArgList(argumentList, fvbClass.fvbFunctions[variable]!.arguments)
-                            : [])));
+                            : []),
+                  ),
+                );
                 variable = '';
                 n = m;
                 continue;
@@ -1418,15 +1429,6 @@ class CodeProcessor {
                 }
                 variable = '';
                 continue;
-              } else if (variable == 'delayed') {
-                int endIndex = CodeOperations.findCloseBracket(input, m + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-                final int durationInMillis = process(input.substring(n + 1, m));
-                Future.delayed(Duration(milliseconds: durationInMillis), () {
-                  executeCode(input.substring(m + 2, endIndex));
-                });
-                n = endIndex;
-                variable = '';
-                continue;
               } else if (input.length > m + 1 && input[m + 1] == '{') {
                 int closeBracketIndex =
                     CodeOperations.findCloseBracket(input, m + 1, '{'.codeUnits.first, '}'.codeUnits.first);
@@ -1436,13 +1438,15 @@ class CodeProcessor {
                   return;
                 }
                 final argumentList = CodeOperations.splitBy(input.substring(n + 1, m));
-                functions[variable] = FVBFunction(variable, input.substring(m + 2, closeBracketIndex),  processArgDefinitionList(argumentList));
+                functions[variable] = FVBFunction(
+                    variable, input.substring(m + 2, closeBracketIndex), processArgDefinitionList(argumentList));
                 variable = '';
                 n = closeBracketIndex;
                 continue;
               } else if (functions.containsKey(variable)) {
                 final argumentList = CodeOperations.splitBy(input.substring(n + 1, m));
-                final output = functions[variable]!.execute(this,processArgList(argumentList, functions[variable]!.arguments));
+                final output =
+                    functions[variable]!.execute(this, processArgList(argumentList, functions[variable]!.arguments));
                 if (output != null) {
                   valueStack.push(FVBValue(value: output));
                 }
@@ -1452,7 +1456,7 @@ class CodeProcessor {
               } else if (variables.containsKey(variable) || localVariables.containsKey(variable)) {
                 final function = (variables[variable]?.value ?? localVariables[variable]) as FVBFunction;
                 final argumentList = CodeOperations.splitBy(input.substring(n + 1, m));
-                final output = function.execute(this, argumentList.map((e) => process(e)).toList());
+                final output = function.execute(this, processArgList(argumentList, function.arguments));
                 if (output != null) {
                   valueStack.push(FVBValue(value: output));
                 }
@@ -1566,9 +1570,8 @@ class CodeProcessor {
         result = value.evaluateValue(this);
         if (result == null && value.variableName != null && value.createVarIfNotExist) {
           final variable = value.variableName!;
-          variables[variable] = VariableModel(variable, value, false, null, DataType.dynamic, '',
-              // type: null,
-              isFinal: value.isVarFinal);
+          variables[variable] =
+              VariableModel(variable, value.value, false, null, DataType.dynamic, '', isFinal: value.isVarFinal);
         }
       }
 

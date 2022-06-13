@@ -9,7 +9,6 @@ import 'package:url_strategy/url_strategy.dart';
 
 import 'bloc/state_management/state_management_bloc.dart';
 import 'common/compiler/code_processor.dart';
-import 'common/converter/code_converter.dart';
 import 'common/shared_preferences.dart';
 import 'constant/app_colors.dart';
 import 'cubit/authentication/authentication_cubit.dart';
@@ -46,7 +45,7 @@ void main() async {
       print(':: => ${message.substring(6)}');
     }
     return null;
-  }, onError: (error,line) {
+  }, onError: (error, line) {
     print('XX => $error, LINE :: "$line"');
   });
   const code = '''
@@ -72,18 +71,17 @@ void main() async {
 
  
   }
+  var c=0;
   var name;
   var roll;
-  setName(roll2,{nm="LMN"}){
-  name=nm;
-  roll=roll2;
+  
+  setName(){
+  for(var i=0;i<10;i++){
+  print("hiii {{i+3}}");
+  }
   }
   
-  
-  
-  setName(100,nm:"CDE");
-  var d=Duration(milliseconds: 1000);
-  print("{{name}} {{roll}}");
+  setName();
 }
  ''';
   processor.executeCode(code);
@@ -111,8 +109,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    html.document
-        .addEventListener('contextmenu', (event) => event.preventDefault());
+    html.document.addEventListener('contextmenu', (event) => event.preventDefault());
     if (!kDebugMode) {
       FlutterError.onError = (
         FlutterErrorDetails details, {
@@ -122,8 +119,8 @@ class MyApp extends StatelessWidget {
 
         final exception = details.exception;
         if (exception is FlutterError) {
-          ifIsOverflowError = !exception.diagnostics.any((e) =>
-              e.value.toString().startsWith('A RenderFlex overflowed by'));
+          ifIsOverflowError =
+              !exception.diagnostics.any((e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
         }
 
         // Ignore if is overflow error.
@@ -146,9 +143,7 @@ class MyApp extends StatelessWidget {
       child: GetMaterialApp(
         title: 'Flutter Visual Builder',
         scrollBehavior: MyCustomScrollBehavior(),
-        theme: ThemeData(
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-            primaryColor: AppColors.theme),
+        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity, primaryColor: AppColors.theme),
         home: const LoginPage(),
       ),
     );

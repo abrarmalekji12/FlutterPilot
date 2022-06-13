@@ -918,7 +918,6 @@ mixin Clickable {
   }
 
   void fromMetaCodeToAction(String code, final FlutterProject? flutterProject) {
-    print('CODE $code');
     if (code.startsWith('CA')) {
       final endIndex = CodeOperations.findCloseBracket(
           code, 2, '<'.codeUnits.first, '>'.codeUnits.first);

@@ -30,11 +30,14 @@ class ArgumentProcessor {
   }
 
   static List<FVBArgument> processArgumentDefinition(final CodeProcessor processor, List<String> argumentList){
+    if(argumentList.isEmpty){
+      return [];
+    }
     final List<FVBArgument> arguments = [];
     int placedLength = argumentList.length;
     if (argumentList.last.startsWith('{')) {
       placedLength--;
-      final lastArgCode = argumentList.last;
+      final lastArgCode = argumentList.removeLast();
       argumentList.addAll(CodeOperations.splitBy(lastArgCode.substring(1, lastArgCode.length - 1))
           .where((element) => element.isNotEmpty));
     }
