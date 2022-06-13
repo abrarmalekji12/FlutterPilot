@@ -69,15 +69,21 @@ void main() async {
   // });
   
   class ABC{
+
+ 
+  }
   var name;
-  setName(nm){
+  var roll;
+  setName(roll2,{nm="LMN"}){
   name=nm;
+  roll=roll2;
   }
-  }
-  var a=ABC();
-  a.setName("");
   
-  print(a.name);
+  
+  
+  setName(100,nm:"CDE");
+  var d=Duration(milliseconds: 1000);
+  print("{{name}} {{roll}}");
 }
  ''';
   processor.executeCode(code);
