@@ -9,10 +9,10 @@ import 'package:url_strategy/url_strategy.dart';
 
 import 'bloc/state_management/state_management_bloc.dart';
 import 'common/compiler/code_processor.dart';
-import 'common/converter/code_converter.dart';
 import 'common/shared_preferences.dart';
 import 'constant/app_colors.dart';
 import 'cubit/authentication/authentication_cubit.dart';
+import 'cubit/stack_action/stack_action_cubit.dart';
 import 'injector.dart';
 import 'ui/authentication/login.dart';
 
@@ -80,7 +80,7 @@ void main() async {
   print(a.name);
 }
  ''';
-  processor.executeCode(code);
+  // processor.executeCode(code);
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
   js=json.decode(data);
@@ -96,7 +96,7 @@ void main() async {
   // 4. Stream type variable
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  // runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -135,6 +135,11 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => get<StateManagementBloc>(),
+
+        ),
+        BlocProvider(
+          create: (context) => get<StackActionCubit>(),
+
         ),
       ],
       child: GetMaterialApp(

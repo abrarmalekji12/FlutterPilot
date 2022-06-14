@@ -156,9 +156,10 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           .extractSameTypeComponents(flutterProject.rootComponent!);
 
       emit(FlutterProjectLoadedState(flutterProject));
-    } on Exception {
+    } on Exception catch(error){
+      print('ERROR $error');
       emit(FlutterProjectErrorState(
-          message: 'Something went wrong, Project data can be corrupt'));
+          message: 'Something went wrong, Project data can be corrupt $error'));
     }
   }
 }
