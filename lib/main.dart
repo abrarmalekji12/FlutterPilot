@@ -67,11 +67,25 @@ void main() async {
   //     t.cancel();
   //   }
   // });
-  var a=10;
-var b=20;
-print(a<b-10);
+  
+  class ABC{
+
+ 
+  }
+  var c=0;
+  var name;
+  var roll;
+  
+  setName(){
+  for(var i=0;i<10;i++){
+  print("hiii {{i+3}}");
+  }
+  }
+  
+  setName();
+}
  ''';
-  processor.executeCode(code);
+  // processor.executeCode(code);
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
   js=json.decode(data);
@@ -87,7 +101,7 @@ print(a<b-10);
   // 4. Stream type variable
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  // runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
