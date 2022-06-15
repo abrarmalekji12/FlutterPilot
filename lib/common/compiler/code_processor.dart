@@ -483,11 +483,14 @@ class CodeProcessor {
   }
 
   int getPrecedence(String ch) {
-    if (ch == '+' || ch == '-') {
+    if( ch == '<' || ch == '>' || ch == '<=' || ch == '>='){
       return 1;
     }
-    if (ch == '*' || ch == '/' || ch == '<' || ch == '>' || ch == '<=' || ch == '>=') {
+    if (ch == '+' || ch == '-') {
       return 2;
+    }
+    if (ch == '*' || ch == '/' ) {
+      return 3;
     }
     return 0;
   }
