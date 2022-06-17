@@ -111,19 +111,16 @@ class _HomePageState extends State<HomePage> {
         componentCreationCubit.changedComponent();
       }
     });
-      FireBridge.init().then((value) {
+    FireBridge.init().then((value) {
+      if (componentOperationCubit.flutterProject?.name != widget.projectName) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
+              componentOperationCubit, widget.projectName,widget.prototype);
+        });
+      } else {
         AppLoader.hide();
-        if (componentOperationCubit.flutterProject?.name != widget.projectName) {
-          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
-                componentOperationCubit, widget.projectName);
-          });
-        } else {
-          AppLoader.hide();
-        }
-
-      });
-
+      }
+    });
   }
 
   void showSelectionDialog(

@@ -66,19 +66,23 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
   void reloadProject(final ComponentSelectionCubit componentSelectionCubit,
       final ComponentOperationCubit componentOperationCubit) {
     loadFlutterProject(componentSelectionCubit, componentOperationCubit,
-        componentOperationCubit.flutterProject!.name);
+        componentOperationCubit.flutterProject!.name, false);
   }
 
   void loadFlutterProject(
       final ComponentSelectionCubit componentSelectionCubit,
       final ComponentOperationCubit componentOperationCubit,
-      final String projectName) async {
+      final String projectName,
+      final bool notLoggedIn) async {
     emit(FlutterProjectLoadingState());
+
     try {
       ComponentOperationCubit.codeProcessor.variables
           .removeWhere((key, value) => value.deletable);
       ComponentOperationCubit.codeProcessor.localVariables.clear();
-
+      if (notLoggedIn) {
+        await FireBridge.login('test1@mailinator.com', 'password');
+      }
       final FlutterProject? flutterProject =
           await FireBridge.loadFlutterProject(userId, projectName);
 
@@ -156,7 +160,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           .extractSameTypeComponents(flutterProject.rootComponent!);
 
       emit(FlutterProjectLoadedState(flutterProject));
-    } on Exception catch(error){
+    } on Exception catch (error) {
       print('ERROR $error');
       emit(FlutterProjectErrorState(
           message: 'Something went wrong, Project data can be corrupt $error'));

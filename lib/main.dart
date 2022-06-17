@@ -151,6 +151,7 @@ class MyApp extends StatelessWidget {
       child: GetMaterialApp(
         title: 'Flutter Visual Builder',
         scrollBehavior: MyCustomScrollBehavior(),
+        initialRoute: '/test-497aa95cb338b4e1fd95a0f9c26a63d1',
         onGenerateRoute: (settings) {
           print('ROUTE :: ${settings.name}');
           if (settings.name!.startsWith('/test')) {
