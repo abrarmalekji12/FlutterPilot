@@ -291,107 +291,114 @@ abstract class FireBridge {
 
   static Future<FlutterProject?> loadFlutterProject(
       int userId, String name) async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject)
-        .collection(name)
-        .get();
-    final documents = snapshot.docs;
-    final projectInfoDoc = documents
-        .firstWhere((element) => element.data().containsKey('project_name'));
-    final projectInfo = projectInfoDoc.data();
-    final FlutterProject flutterProject = FlutterProject(
-        projectInfo['project_name'], userId, projectInfoDoc.id,
-        device: projectInfo['device'],actionCode: projectInfo['action_code']??'');
-    // for (final modelJson in projectInfo['models'] ?? []) {
-    //   final model = LocalModel.fromJson(modelJson);
-    //   flutterProject.models.add(model);
-    // }
-    ComponentOperationCubit.currentFlutterProject = flutterProject;
-    documents
-        .retainWhere((element) => !element.data().containsKey('project_name'));
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(name)
+          .get();
+      final documents = snapshot.docs;
+      final projectInfoDoc = documents
+          .firstWhere((element) => element.data().containsKey('project_name'));
+      final projectInfo = projectInfoDoc.data();
+      final FlutterProject flutterProject = FlutterProject(
+          projectInfo['project_name'], userId, projectInfoDoc.id,
+          device: projectInfo['device'], actionCode: projectInfo['action_code'] ?? '');
+      // for (final modelJson in projectInfo['models'] ?? []) {
+      //   final model = LocalModel.fromJson(modelJson);
+      //   flutterProject.models.add(model);
+      // }
+      ComponentOperationCubit.currentFlutterProject = flutterProject;
+      documents
+          .retainWhere((element) => !element.data().containsKey('project_name'));
 
-    // for (final modelJson in projectInfo['screens'] ?? []) {
-    //   final screen = UIScreen.fromJson(modelJson, flutterProject);
-    //   flutterProject.uiScreens.add(screen);
-    // }
+      // for (final modelJson in projectInfo['screens'] ?? []) {
+      //   final screen = UIScreen.fromJson(modelJson, flutterProject);
+      //   flutterProject.uiScreens.add(screen);
+      // }
 
-    final customDocs = await FirePath.customComponentsReferenceByProjectName(
-            userId, flutterProject.docId!)
-        .get();
-    for (final screenDoc in documents) {
-      final screen = UIScreen.fromJson(screenDoc.data(), flutterProject);
-      flutterProject.uiScreens.add(screen);
-    }
-    for (final doc in customDocs.docs) {
-      final Map<String, dynamic> componentBody =
-          doc.data()! as Map<String, dynamic>;
-      flutterProject.customComponents
-          .add(StatelessComponent(name: componentBody['name']));
-    }
-
-    if (projectInfo['current_screen'] != null) {
-      bool initializedMain = false, initializedCurrent = false;
-      for (final screen in flutterProject.uiScreens) {
-        if (screen.name == projectInfo['main_screen']) {
-          flutterProject.mainScreen = screen;
-          initializedMain = true;
-        }
-        if (screen.name == projectInfo['current_screen']) {
-          flutterProject.currentScreen = screen;
-          initializedCurrent = true;
-        }
+      final customDocs = await FirePath.customComponentsReferenceByProjectName(
+          userId, flutterProject.docId!)
+          .get();
+      for (final screenDoc in documents) {
+        final screen = UIScreen.fromJson(screenDoc.data(), flutterProject);
+        flutterProject.uiScreens.add(screen);
       }
-      if (!initializedMain) {
+      for (final doc in customDocs.docs) {
+        final Map<String, dynamic> componentBody =
+        doc.data()! as Map<String, dynamic>;
+        flutterProject.customComponents
+            .add(StatelessComponent(name: componentBody['name']));
+      }
+
+      if (projectInfo['current_screen'] != null) {
+        bool initializedMain = false,
+            initializedCurrent = false;
+        for (final screen in flutterProject.uiScreens) {
+          if (screen.name == projectInfo['main_screen']) {
+            flutterProject.mainScreen = screen;
+            initializedMain = true;
+          }
+          if (screen.name == projectInfo['current_screen']) {
+            flutterProject.currentScreen = screen;
+            initializedCurrent = true;
+          }
+        }
+        if (!initializedMain) {
+          flutterProject.mainScreen = flutterProject.uiScreens.first;
+        }
+        if (!initializedCurrent) {
+          flutterProject.currentScreen = flutterProject.uiScreens.first;
+        }
+      } else {
+        if (flutterProject.uiScreens.isNotEmpty) {
+          flutterProject.currentScreen = flutterProject.uiScreens.first;
+        } else {
+          final ui = UIScreen.mainUI();
+          flutterProject.uiScreens.add(ui);
+          final custom = StatelessComponent(name: 'MainPage')
+            ..root = CScaffold();
+          flutterProject.customComponents.add(custom);
+          (ui.rootComponent as CMaterialApp).childMap['home'] =
+              custom.createInstance(null);
+          flutterProject.currentScreen = flutterProject.uiScreens.first;
+          addUIScreen(userId, flutterProject, flutterProject.currentScreen);
+        }
+
         flutterProject.mainScreen = flutterProject.uiScreens.first;
       }
-      if (!initializedCurrent) {
-        flutterProject.currentScreen = flutterProject.uiScreens.first;
+
+      for (int i = 0; i < customDocs.docs.length; i++) {
+        final Map<String, dynamic> componentBody =
+        customDocs.docs[i].data()! as Map<String, dynamic>;
+        flutterProject.customComponents[i].root = componentBody['code'] != null
+            ? Component.fromCode(componentBody['code']!, flutterProject)
+            : null;
       }
-    } else {
-      if (flutterProject.uiScreens.isNotEmpty) {
-        flutterProject.currentScreen = flutterProject.uiScreens.first;
-      } else {
-        final ui = UIScreen.mainUI();
-        flutterProject.uiScreens.add(ui);
-        final custom = StatelessComponent(name: 'MainPage')..root = CScaffold();
-        flutterProject.customComponents.add(custom);
-        (ui.rootComponent as CMaterialApp).childMap['home'] =
-            custom.createInstance(null);
-        flutterProject.currentScreen = flutterProject.uiScreens.first;
-        addUIScreen(userId, flutterProject, flutterProject.currentScreen);
+      for (int i = 0; i < customDocs.docs.length; i++) {
+        flutterProject.customComponents[i].root?.forEach((p0) {
+          if (p0 is CustomComponent) {
+            p0.root = flutterProject.customComponents
+                .firstWhere((element) => element.name == p0.name)
+                .root
+                ?.clone(null);
+          }
+        });
       }
 
-      flutterProject.mainScreen = flutterProject.uiScreens.first;
-    }
+      final currentScreen = flutterProject.currentScreen;
+      for (int i = 0; i < flutterProject.uiScreens.length; i++) {
+        flutterProject.currentScreen = flutterProject.uiScreens[i];
+        flutterProject.uiScreens[i].rootComponent =
+            Component.fromCode(documents[i].data()['root'], flutterProject);
+      }
+      flutterProject.currentScreen = currentScreen;
 
-    for (int i = 0; i < customDocs.docs.length; i++) {
-      final Map<String, dynamic> componentBody =
-          customDocs.docs[i].data()! as Map<String, dynamic>;
-      flutterProject.customComponents[i].root = componentBody['code'] != null
-          ? Component.fromCode(componentBody['code']!, flutterProject)
-          : null;
+      return flutterProject;
+    } catch (e) {
+      print(e);
+      return null;
     }
-    for (int i = 0; i < customDocs.docs.length; i++) {
-      flutterProject.customComponents[i].root?.forEach((p0) {
-        if (p0 is CustomComponent) {
-          p0.root = flutterProject.customComponents
-              .firstWhere((element) => element.name == p0.name)
-              .root
-              ?.clone(null);
-        }
-      });
-    }
-
-    final currentScreen = flutterProject.currentScreen;
-    for (int i = 0; i < flutterProject.uiScreens.length; i++) {
-      flutterProject.currentScreen = flutterProject.uiScreens[i];
-      flutterProject.uiScreens[i].rootComponent =
-          Component.fromCode(documents[i].data()['root'], flutterProject);
-    }
-    flutterProject.currentScreen = currentScreen;
-
-    return flutterProject;
   }
 
   static Future<Uint8List?> loadImage(int userId, String imgName) async {

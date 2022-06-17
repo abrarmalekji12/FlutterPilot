@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get_navigation/get_navigation.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:url_strategy/url_strategy.dart';
 
@@ -153,7 +154,7 @@ class MyApp extends StatelessWidget {
         scrollBehavior: MyCustomScrollBehavior(),
         initialRoute: '/test-497aa95cb338b4e1fd95a0f9c26a63d1',
         onGenerateRoute: (settings) {
-          print('ROUTE :: ${settings.name}');
+          final link=settings.name;
           if (settings.name!.startsWith('/test')) {
             final data = settings.name!.substring(6);
             final key = encrypt.Key.fromUtf8('fvb_project_link');
@@ -167,14 +168,11 @@ class MyApp extends StatelessWidget {
               if(int.tryParse(split[0])==null){
                 return null;
               }
-              print('TEST URL DATA ${split[0]} ${split[1]}');
-              return MaterialPageRoute(
-                builder: (_) => HomePage(
-                  projectName: split[1],
-                  userId: int.parse(split[0]),
-                  prototype: true,
-                ),
-              );
+              return GetPageRoute(page: () => HomePage(
+                projectName: split[1],
+                userId: int.parse(split[0]),
+                prototype: true,
+              ), settings:RouteSettings(name: link));
             }
           }
         },

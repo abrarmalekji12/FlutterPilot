@@ -73,20 +73,22 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
       final ComponentSelectionCubit componentSelectionCubit,
       final ComponentOperationCubit componentOperationCubit,
       final String projectName,
-      final bool notLoggedIn) async {
+      final bool notLoggedIn,{int? user}) async {
     emit(FlutterProjectLoadingState());
-
     try {
+      if (notLoggedIn) {
+        final authResponse= await FireBridge.login('test_fvb@mailinator.com', 'test123');
+        print('Auth response: ${authResponse.userId}');
+      }
       ComponentOperationCubit.codeProcessor.variables
           .removeWhere((key, value) => value.deletable);
       ComponentOperationCubit.codeProcessor.localVariables.clear();
-      if (notLoggedIn) {
-        await FireBridge.login('test1@mailinator.com', 'password');
-      }
+
       final FlutterProject? flutterProject =
           await FireBridge.loadFlutterProject(userId, projectName);
 
       if (flutterProject == null) {
+        print('Project not found $projectName $userId');
         emit(FlutterProjectErrorState());
         return;
       }

@@ -65,9 +65,9 @@ class FVBEngine {
       }
       dartCode += code[i];
     }
-    final DartFormatter formatter = DartFormatter();
-
-    return '/** \n${formatter.format(dartCode)} \n**/';
+    // final DartFormatter formatter = DartFormatter();
+    // formatter.format(
+    return '/** \n${dartCode} \n**/';
   }
 
   String fvbLineToDart(String trimCode) {
