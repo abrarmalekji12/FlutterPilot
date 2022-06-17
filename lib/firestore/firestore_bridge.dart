@@ -21,6 +21,7 @@ import '../network/auth_response/auth_response_model.dart';
 import 'firebase_connection.dart';
 
 abstract class FireBridge {
+  static bool initialized=false;
   static Future<void> init() async {
     // await Firebase.initializeApp(
     //     options: FirebaseOptions.fromMap(const {
@@ -31,6 +32,9 @@ abstract class FireBridge {
     //   'messagingSenderId': '357010413683',
     //   'appId': '1:357010413683:web:851137f5a4916cc6587206'
     // }));
+    if(initialized){
+      return;
+    }
     await Firebase.initializeApp(
         options: FirebaseOptions.fromMap(const {
       'apiKey': 'AIzaSyDOJQUOBFfomuLrYK6oCXr8-uJMXo-AByg',
@@ -40,6 +44,7 @@ abstract class FireBridge {
       'messagingSenderId': '1087783488343',
       'appId': '1:1087783488343:web:efb618e6387c69e3a88c12'
     }));
+    initialized=true;
   }
 
   static Future<void> saveComponent(

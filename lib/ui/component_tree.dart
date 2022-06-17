@@ -19,6 +19,7 @@ import '../cubit/component_selection/component_selection_cubit.dart';
 import '../models/component_selection.dart';
 import '../models/parameter_model.dart';
 import '../models/project_model.dart';
+import '../widgets/project_setting_page.dart';
 import 'component_selection_dialog.dart';
 import 'package:get/get.dart';
 
@@ -88,57 +89,78 @@ class _ComponentTreeState extends State<ComponentTree> {
                     ],
                   ),
                 ),
-                BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
-                  bloc: _componentOperationCubit,
-                  builder: (context, state) {
-                    if (state is ComponentOperationLoadingState) {
-                      return const Icon(
-                        Icons.cloud_upload,
-                        color: Colors.blueAccent,
-                        size: 20,
-                      );
-                    } else if (state is ComponentOperationErrorState) {
-                      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                        Fluttertoast.showToast(
-                            msg: state.msg, timeInSecForIosWeb: 10);
-                      });
-                      return InkWell(
-                        onTap: () {},
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                        onTap: () {
+                          showDialog(
+                              context: context,
+                              builder: (_) => ProjectSettingsPage(
+                                    componentOperationCubit:
+                                        _componentOperationCubit,
+                                  ));
+                        },
                         borderRadius: BorderRadius.circular(10),
-                        child: const Icon(
-                          Icons.cloud_off_rounded,
-                          color: Colors.blueAccent,
-                          size: 20,
-                        ),
-                      );
-                    }
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_componentOperationCubit
-                                .revertWork.totalOperations >
-                            0)
-                          InkWell(
-                            onTap: () {
-                              _componentOperationCubit.revertWork.undo();
-                            },
+                        child: const Icon(Icons.settings, size: 20)),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    BlocBuilder<ComponentOperationCubit,
+                        ComponentOperationState>(
+                      bloc: _componentOperationCubit,
+                      builder: (context, state) {
+                        if (state is ComponentOperationLoadingState) {
+                          return const Icon(
+                            Icons.cloud_upload,
+                            color: Colors.blueAccent,
+                            size: 20,
+                          );
+                        } else if (state is ComponentOperationErrorState) {
+                          WidgetsBinding.instance
+                              .addPostFrameCallback((timeStamp) {
+                            Fluttertoast.showToast(
+                                msg: state.msg, timeInSecForIosWeb: 10);
+                          });
+                          return InkWell(
+                            onTap: () {},
                             borderRadius: BorderRadius.circular(10),
                             child: const Icon(
-                              Icons.undo,
-                              color: Colors.black,
+                              Icons.cloud_off_rounded,
+                              color: Colors.blueAccent,
+                              size: 20,
                             ),
-                          ),
-                        const SizedBox(
-                          width: 30,
-                        ),
-                        const Icon(
-                          Icons.cloud_done,
-                          color: Colors.blueAccent,
-                          size: 20,
-                        ),
-                      ],
-                    );
-                  },
+                          );
+                        }
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_componentOperationCubit
+                                    .revertWork.totalOperations >
+                                0)
+                              InkWell(
+                                onTap: () {
+                                  _componentOperationCubit.revertWork.undo();
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: const Icon(
+                                  Icons.undo,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            const SizedBox(
+                              width: 30,
+                            ),
+                            const Icon(
+                              Icons.cloud_done,
+                              color: Colors.blueAccent,
+                              size: 20,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
                 )
               ],
             ),

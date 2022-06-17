@@ -8,6 +8,7 @@ import '../cubit/stack_action/stack_action_cubit.dart';
 import '../injector.dart';
 import '../ui/action_ui.dart';
 import '../ui/models_view.dart';
+import '../widgets/project_setting_page.dart';
 import 'local_model.dart';
 import 'variable_model.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -18,6 +19,7 @@ import '../component_list.dart';
 import 'component_model.dart';
 
 class FlutterProject {
+  late final ProjectSettingsModel projectSettingsModel;
   String name;
   final int userId;
   String? docId;
@@ -31,7 +33,9 @@ class FlutterProject {
   final List<CustomComponent> customComponents = [];
   final List<FavouriteModel> favouriteList = [];
 
-  FlutterProject(this.name, this.userId, this.docId, {this.device,this.actionCode=''});
+  FlutterProject(this.name, this.userId, this.docId, {this.device,this.actionCode=''}){
+    projectSettingsModel=ProjectSettingsModel(isPublic: false, linkIfPublic: null);
+  }
 
   factory FlutterProject.createNewProject(String name, int userId) {
     final FlutterProject flutterProject = FlutterProject(name, userId, null);

@@ -15,6 +15,9 @@ import 'cubit/authentication/authentication_cubit.dart';
 import 'cubit/stack_action/stack_action_cubit.dart';
 import 'injector.dart';
 import 'ui/authentication/login.dart';
+import 'ui/build_view/build_view.dart';
+import 'package:encrypt/encrypt.dart' as encrypt;
+import 'ui/home_page.dart';
 
 /// Bubble sort algo
 // sort(arr){
@@ -69,9 +72,9 @@ void main() async {
   // });
   
   class ABC{
-
- 
+  
   }
+  
   var c=0;
   var name;
   var roll;
@@ -110,7 +113,8 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    html.document.addEventListener('contextmenu', (event) => event.preventDefault());
+    html.document
+        .addEventListener('contextmenu', (event) => event.preventDefault());
     if (!kDebugMode) {
       FlutterError.onError = (
         FlutterErrorDetails details, {
@@ -120,8 +124,8 @@ class MyApp extends StatelessWidget {
 
         final exception = details.exception;
         if (exception is FlutterError) {
-          ifIsOverflowError =
-              !exception.diagnostics.any((e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
+          ifIsOverflowError = !exception.diagnostics.any((e) =>
+              e.value.toString().startsWith('A RenderFlex overflowed by'));
         }
 
         // Ignore if is overflow error.
@@ -139,17 +143,43 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => get<StateManagementBloc>(),
-
         ),
         BlocProvider(
           create: (context) => get<StackActionCubit>(),
-
         ),
       ],
       child: GetMaterialApp(
         title: 'Flutter Visual Builder',
         scrollBehavior: MyCustomScrollBehavior(),
-        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity, primaryColor: AppColors.theme),
+        onGenerateRoute: (settings) {
+          print('ROUTE :: ${settings.name}');
+          if (settings.name!.startsWith('/test')) {
+            final data = settings.name!.substring(6);
+            final key = encrypt.Key.fromUtf8('fvb_project_link');
+            final iv = encrypt.IV.fromLength(10);
+            final encrypt.Encrypter encryptor =
+                encrypt.Encrypter(encrypt.AES(key));
+            final string =
+                encryptor.decrypt(encrypt.Encrypted.fromBase16(data), iv: iv);
+            if (string.contains('_')) {
+              final split = string.split('_');
+              if(int.tryParse(split[0])==null){
+                return null;
+              }
+              print('TEST URL DATA ${split[0]} ${split[1]}');
+              return MaterialPageRoute(
+                builder: (_) => HomePage(
+                  projectName: split[1],
+                  userId: int.parse(split[0]),
+                  prototype: true,
+                ),
+              );
+            }
+          }
+        },
+        theme: ThemeData(
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            primaryColor: AppColors.theme),
         home: const LoginPage(),
       ),
     );

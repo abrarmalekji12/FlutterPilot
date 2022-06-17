@@ -4,8 +4,8 @@ import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../common/dynamic_value_editing_controller.dart';
 import '../cubit/stack_action/stack_action_cubit.dart';
+import '../firestore/firestore_bridge.dart';
 import '../injector.dart';
 import 'action_code_editor.dart';
 import 'preview_ui.dart';
@@ -48,8 +48,13 @@ import 'component_tree.dart';
 class HomePage extends StatefulWidget {
   final String projectName;
   final int userId;
+  final bool prototype;
 
-  const HomePage({Key? key, required this.projectName, required this.userId})
+  const HomePage(
+      {Key? key,
+      required this.projectName,
+      required this.userId,
+      this.prototype = false})
       : super(key: key);
 
   @override
@@ -72,14 +77,6 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     flutterProjectCubit = FlutterProjectCubit(widget.userId);
-    if (componentOperationCubit.flutterProject?.name != widget.projectName) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
-            componentOperationCubit, widget.projectName);
-      });
-    } else {
-      AppLoader.hide();
-    }
     if (_streamSubscription != null) {
       _streamSubscription?.cancel();
     }
@@ -114,6 +111,19 @@ class _HomePageState extends State<HomePage> {
         componentCreationCubit.changedComponent();
       }
     });
+      FireBridge.init().then((value) {
+        AppLoader.hide();
+        if (componentOperationCubit.flutterProject?.name != widget.projectName) {
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+            flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
+                componentOperationCubit, widget.projectName);
+          });
+        } else {
+          AppLoader.hide();
+        }
+
+      });
+
   }
 
   void showSelectionDialog(
@@ -196,6 +206,9 @@ class _HomePageState extends State<HomePage> {
                     ComponentSelectionModel.unique(
                         state.flutterProject.rootComponent!),
                     state.flutterProject.rootComponent!);
+              }
+              if (widget.prototype) {
+                return const PrototypeShowcase();
               }
               return const ResponsiveWidget(
                 largeScreen: DesktopVisualEditor(),
@@ -711,7 +724,6 @@ class _PrototypeShowcaseState extends State<PrototypeShowcase> {
   @override
   void initState() {
     super.initState();
-
   }
 
   @override
@@ -754,9 +766,10 @@ class _PrototypeShowcaseState extends State<PrototypeShowcase> {
             ComponentOperationCubit.codeProcessor.variables['dh']!.value =
                 MediaQuery.of(context).size.height;
             get<StackActionCubit>().stackOperation(StackOperation.push,
-                uiScreen: ComponentOperationCubit.currentFlutterProject!.mainScreen);
-            ComponentOperationCubit.codeProcessor
-                .executeCode(ComponentOperationCubit.currentFlutterProject!.actionCode);
+                uiScreen:
+                    ComponentOperationCubit.currentFlutterProject!.mainScreen);
+            ComponentOperationCubit.codeProcessor.executeCode(
+                ComponentOperationCubit.currentFlutterProject!.actionCode);
             return state.flutterProject.run(context, navigator: true);
           }
           return Container();
