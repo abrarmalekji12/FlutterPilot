@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../code_to_component.dart';
+import '../common/common_methods.dart';
 import '../common/material_alert.dart';
 import '../models/operation_model.dart';
 import '../models/other_model.dart';
@@ -67,7 +68,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                           onPressed: () {
                             ComponentOperationCubit.currentFlutterProject =
                                 null;
-                            Get.back();
+
+                            Navigator.pop(context);
                           },
                           icon: const Icon(
                             Icons.arrow_back_ios,
@@ -244,7 +246,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                                         ComponentSelectionModel.unique(
                                             screen.rootComponent!),
                                         root: screen.rootComponent!);
-                                Get.back();
+
+                                Navigator.pop(context);
                               });
                             },
                             child: const Padding(
@@ -437,7 +440,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                                           showScreenNameDialog(
                                               context, 'Enter widget name',
                                               (name, _) {
-                                            Get.back();
+
+                                                Navigator.pop(context);
                                             BlocProvider.of<
                                                         ComponentOperationCubit>(
                                                     context,
@@ -1472,7 +1476,8 @@ class ComponentModificationMenu extends StatelessWidget {
                 //rename
                 showCustomWidgetRename(context, 'Rename ${component.name}',
                     (value) {
-                  Get.back();
+
+                      Navigator.pop(context);
                   componentOperationCubit.updateGlobalCustomComponent(
                       component as CustomComponent,
                       newName: AppTextField.changedValue);
@@ -1670,7 +1675,8 @@ class ComponentModificationMenu extends StatelessWidget {
                       (value) {
                     componentOperationCubit.addCustomComponent(value,
                         root: component);
-                    Get.back();
+
+                    Navigator.pop(context);
                   });
                 } else if (e == 'delete') {
                   componentOperationCubit.deleteCustomComponent(
@@ -1801,7 +1807,7 @@ class ComponentModificationMenu extends StatelessWidget {
     }
     if (customName != null) {
       (wrapperComp as CustomNamedHolder)
-          .addOrUpdateChildWithKey(customName!, component);
+          .addOrUpdateChildWithKey(customName, component);
     } else {
       switch (wrapperComp.type) {
         case 2:
@@ -1974,10 +1980,10 @@ class ComponentModificationMenu extends StatelessWidget {
   void showSelectionDialog(
       BuildContext context, void Function(Component) onSelection,
       {List<String>? possibleItems, bool favouritesEnable = true}) {
-    Get.dialog(
+    showModelDialog(context,
       GestureDetector(
         onTap: () {
-          Get.back();
+          Navigator.pop(context);
         },
         child: ComponentSelectionDialog(
           possibleItems: possibleItems,

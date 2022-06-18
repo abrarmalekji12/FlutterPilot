@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:html';
+import 'package:flutter_builder/common/html_lib.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -121,7 +121,7 @@ class _PreviewPageState extends State<PreviewPage> {
                         ._componentOperationCubit
                         .flutterProject!
                         .currentScreen);
-                    Get.back();
+                   Navigator.pop(context);
                   },
                   child: const Icon(Icons.arrow_back),
                 ),
@@ -282,7 +282,7 @@ class _PreviewPageState extends State<PreviewPage> {
     final ByteData? byteData =
         await image.toByteData(format: ui.ImageByteFormat.png);
     final Uint8List? pngBytes = byteData?.buffer.asUint8List();
-    AnchorElement(href: 'data:image/png;base64,${base64Encode(pngBytes!)}')
+    getAnchorElement(href: 'data:image/png;base64,${base64Encode(pngBytes!)}')
       ..setAttribute('download',
           '${widget._componentOperationCubit.flutterProject!.name.toUpperCase()}-FVB-${DateTime.now().toLocal().toIso8601String()}.png')
       ..click();

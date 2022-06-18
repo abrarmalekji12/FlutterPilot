@@ -240,13 +240,19 @@ class FVBValue {
     return '(variableName: $variableName, value: $value)';
   }
 }
-
+class FVBUndefined{
+  @override
+  toString(){
+    return 'undefined';
+  }
+}
 class FVBVariable {
   final String name;
   dynamic value;
   final DataType dataType;
+  final bool isFinal;
 
-  FVBVariable(this.name, this.dataType);
+  FVBVariable(this.name, this.dataType,{this.value,this.isFinal = false});
 
   clone() {
     return FVBVariable(
@@ -525,7 +531,7 @@ class CodeProcessor {
     } else if (classes.containsKey(variable)) {
       return classes[variable];
     }
-    return null;
+    return FVBUndefined();
   }
 
   bool setValue(final String variable, dynamic value, {bool isFinal = false, bool createNew = false}) {
@@ -600,8 +606,8 @@ class CodeProcessor {
             (mapValue is List && key is int && key < mapValue.length)) {
           mapValue = mapValue[key];
         } else {
-          showError('can not use [ ] with $mapValue');
-          return null;
+          // showError('can not use [ ] with $mapValue');
+          return FVBUndefined();
         }
       }
       while (openBracket != -1) {
@@ -616,8 +622,8 @@ class CodeProcessor {
               (mapValue is List && key is int && key < mapValue.length)) {
             mapValue = mapValue[key];
           } else {
-            showError('can not use [ ] with $mapValue');
-            return null;
+            // showError('can not use [ ] with $mapValue');
+            return FVBUndefined();
           }
         }
       }
@@ -982,7 +988,7 @@ class CodeProcessor {
             className,
             processor.functions,
             processor.variables.map(
-              (key, value) => MapEntry(key, FVBVariable(value.name, value.dataType)..value = value.value),
+              (key, value) => MapEntry(key, FVBVariable(value.name, value.dataType,value: value.value)),
             ),
           );
 
@@ -1571,7 +1577,7 @@ class CodeProcessor {
       while (valueStack.isNotEmpty) {
         final value = valueStack.pop()!;
         result = value.evaluateValue(this);
-        if (result == null && value.variableName != null && value.createVarIfNotExist) {
+        if (result is FVBUndefined && value.variableName != null && value.createVarIfNotExist) {
           final variable = value.variableName!;
           variables[variable] =
               VariableModel(variable, value.value, false, null, DataType.dynamic, '', isFinal: value.isVarFinal);

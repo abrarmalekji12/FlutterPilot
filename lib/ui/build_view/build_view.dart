@@ -119,9 +119,8 @@ class _BuildViewState extends State<BuildView> {
     _cacheMemory.restore(ComponentOperationCubit.codeProcessor);
     ComponentOperationCubit.codeProcessor.destroyProcess();
     widget.componentOperationCubit.runtimeMode = RuntimeMode.edit;
-    Get.back(
-      closeOverlays: false,
-    );
+
+    Navigator.pop(context);
 
     ComponentOperationCubit.changeVariables(
         widget.componentOperationCubit.flutterProject!.currentScreen);

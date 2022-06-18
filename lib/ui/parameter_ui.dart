@@ -343,12 +343,10 @@ class SimpleParameterWidget extends StatelessWidget {
           return StatefulBuilder(builder: (context, setStateForImage) {
             return InkWell(
               onTap: () {
-                Get.dialog(
-                  ImageSelectionWidget(
-                      componentOperationCubit:
-                          BlocProvider.of<ComponentOperationCubit>(context,
-                              listen: false)),
-                ).then((value) {
+                showDialog(context: context, builder: (_,)=>ImageSelectionWidget(
+                    componentOperationCubit:
+                    BlocProvider.of<ComponentOperationCubit>(context,
+                        listen: false))).then((value) {
                   if (value != null && value is ImageData) {
                     parameter.val = value;
                     parameter.compiler.code = value.imageName!;

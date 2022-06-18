@@ -91,15 +91,15 @@ class Parameters {
                 Parameters.widthParameter()
                   ..withNamedParamInfoAndSameDisplayName('mainAxisSpacing')
                   ..withRequired(true)
-                  ..withDefaultValue(0),
+                  ..withDefaultValue(0.0),
                 Parameters.widthParameter()
                   ..withNamedParamInfoAndSameDisplayName('crossAxisSpacing')
                   ..withRequired(true)
-                  ..withDefaultValue(0),
+                  ..withDefaultValue(0.0),
                 Parameters.widthParameter()
                   ..withNamedParamInfoAndSameDisplayName('childAspectRatio')
                   ..withRequired(true)
-                  ..withDefaultValue(1),
+                  ..withDefaultValue(1.0),
               ],
               evaluate: (params) {
                 return SliverGridDelegateWithFixedCrossAxisCount(
@@ -118,19 +118,19 @@ class Parameters {
                 Parameters.widthParameter()
                   ..withNamedParamInfoAndSameDisplayName('maxCrossAxisExtent')
                   ..withRequired(true)
-                  ..withDefaultValue(200),
+                  ..withDefaultValue(200.0),
                 Parameters.widthParameter()
                   ..withNamedParamInfoAndSameDisplayName('mainAxisSpacing')
                   ..withRequired(true)
-                  ..withDefaultValue(0),
+                  ..withDefaultValue(0.0),
                 Parameters.widthParameter()
                   ..withNamedParamInfoAndSameDisplayName('crossAxisSpacing')
                   ..withRequired(true)
-                  ..withDefaultValue(0),
+                  ..withDefaultValue(0.0),
                 Parameters.widthParameter()
                   ..withNamedParamInfoAndSameDisplayName('childAspectRatio')
                   ..withRequired(true)
-                  ..withDefaultValue(1),
+                  ..withDefaultValue(1.0),
               ],
               evaluate: (params) {
                 return SliverGridDelegateWithMaxCrossAxisExtent(
@@ -282,7 +282,7 @@ class Parameters {
             Parameters.borderSideParameter(),
             Parameters.widthParameter()
               ..withNamedParamInfoAndSameDisplayName('gapPadding')
-              ..withDefaultValue(0)
+              ..withDefaultValue(0.0)
               ..withRequired(true)
           ],
           evaluate: (params) {
@@ -347,7 +347,7 @@ class Parameters {
               colorParameter()..withDefaultValue(const Color(0xffffffff)),
               widthParameter()
                 ..withDisplayName('stroke-width')
-                ..withDefaultValue(2)
+                ..withDefaultValue(2.0)
                 ..withRequired(true),
             ],
             name: 'all',
@@ -814,13 +814,13 @@ class Parameters {
       info: NamedParameterInfo('direction'),
       name: 'direction',
       required: false,
-      defaultValue: 0);
+      defaultValue: 0.0);
 
   static SimpleParameter widthParameter() => SimpleParameter<double>(
       info: NamedParameterInfo('width'),
       name: 'width',
       required: false,
-      defaultValue: 100);
+      defaultValue: 100.0);
 
   static ComplexParameter offsetParameter() => ComplexParameter(
           info: InnerObjectParameterInfo(
@@ -862,7 +862,7 @@ class Parameters {
       info: NamedParameterInfo('height'),
       name: 'height',
       required: false,
-      defaultValue: 100);
+      defaultValue: 100.0);
 
   static Parameter boxFitParameter() => ChoiceValueParameter(
           options: {
@@ -882,15 +882,15 @@ class Parameters {
       info: NamedParameterInfo('thickness'),
       name: 'thickness',
       required: false,
-      defaultValue: 1);
+      defaultValue: 1.0);
 
   static SimpleParameter radiusParameter() => SimpleParameter<double>(
       info: NamedParameterInfo('radius'),
       name: 'radius',
       required: false,
-      defaultValue: 30);
+      defaultValue: 30.0);
 
-  static SimpleParameter flexParameter() => SimpleParameter<int>(
+  static SimpleParameter<int> flexParameter() => SimpleParameter<int>(
       info: NamedParameterInfo('flex'),
       name: 'flex',
       required: true,
@@ -916,7 +916,7 @@ class Parameters {
                 widthParameter()
                   ..withDisplayName('stroke-width')
                   ..withRequired(true)
-                  ..withDefaultValue(2)
+                  ..withDefaultValue(2.0)
               ],
               evaluate: (params) {
                 return BorderSide(
@@ -949,7 +949,7 @@ class Parameters {
       info: NamedParameterInfo('shape'));
 
   static SimpleParameter angleParameter() => SimpleParameter<double>(
-      defaultValue: 0,
+      defaultValue: 0.0,
       inputType: ParamInputType.text,
       name: 'angle',
       required: true,
@@ -976,7 +976,7 @@ class Parameters {
       info: NamedParameterInfo('heightFactor'));
 
   static SimpleParameter elevationParameter() => SimpleParameter<double>(
-      defaultValue: 1,
+      defaultValue: 1.0,
       required: false,
       info: NamedParameterInfo('elevation'),
       name: 'elevation');
@@ -984,7 +984,7 @@ class Parameters {
     ..withRequired(true)
     ..withDisplayName('toolbar-height')
     ..withInfo(NamedParameterInfo('toolbarHeight'))
-    ..withDefaultValue(55);
+    ..withDefaultValue(55.0);
 
   static Parameter textSpanParameter() => ChoiceParameter(
           options: [
@@ -1043,7 +1043,7 @@ class Parameters {
             value,
             style: GoogleFonts.getFont(
               value,
-              textStyle: const TextStyle(color: Colors.black, fontSize: 16),
+              textStyle: const TextStyle(color: Colors.black, fontSize: 16.0),
             ),
           );
         });
@@ -1071,7 +1071,7 @@ class Parameters {
           SimpleParameter<double>(
               name: 'font-size',
               info: NamedParameterInfo('fontSize'),
-              defaultValue: 13),
+              defaultValue: 14.0),
           Parameters.colorParameter()..withDefaultValue(AppColors.black),
           ChoiceValueParameter(
             options: {

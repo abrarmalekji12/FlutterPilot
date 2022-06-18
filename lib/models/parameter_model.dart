@@ -285,7 +285,11 @@ class SimpleParameter<T> extends Parameter {
         val =
             ImageData(ComponentOperationCubit.bytesCache[result], result) as T;
       } else {
-        val = result as T;
+        if(T == double && result is int){
+          val= result.toDouble() as T;
+        }else {
+          val = result as T;
+        }
       }
     }
     if (val != null) {
@@ -347,17 +351,17 @@ class SimpleParameter<T> extends Parameter {
     return rawValue;
   }
 
-
   void withDefaultValue(T? value) {
     defaultValue = value;
     if (isRequired) {
-      val = value;
+      val = defaultValue;
     }
   }
 
   get type {
     return T;
   }
+
   @override
   String code(bool clean) {
     if (!isRequired && val == null && (compiler.code.isEmpty)) {
@@ -955,7 +959,8 @@ class ComponentParameter extends Parameter {
   bool fromCode(String code) {
     final paramCode = info?.fromCode(code) ?? code;
     if (multiple) {
-      final componentCodes = CodeOperations.splitBy(paramCode.substring(1,paramCode.length-1));
+      final componentCodes =
+          CodeOperations.splitBy(paramCode.substring(1, paramCode.length - 1));
       for (final compCode in componentCodes) {
         components.add(Component.fromCode(
             compCode, ComponentOperationCubit.currentFlutterProject!)!);

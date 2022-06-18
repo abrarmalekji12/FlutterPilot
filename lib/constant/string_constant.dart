@@ -8,6 +8,8 @@ abstract class Strings {
   static const kImages = 'images';
 }
 
+const String appLink = 'https://flutter-visual-builder.web.app/';
+
 const deviceScaffoldMessenger = 'DEVICE SCAFFOLD MESSENGER';
 const wEmailRegex =
     "^[a-zA-Z0-9.a-zA-Z0-9.!#\$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+.[a-zA-Z]+";

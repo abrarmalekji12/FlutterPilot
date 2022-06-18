@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import '../bloc/state_management/state_management_bloc.dart';
+import '../common/common_methods.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../runtime_provider.dart';
 import 'actions/action_model.dart';
@@ -323,10 +324,7 @@ abstract class Component {
       if (custom != null) {
         return custom.createInstance(null);
       } else {
-        Fluttertoast.showToast(
-            msg:
-                'No widget with name $compName found in code $code, please clear cookies and reload App.',
-            timeInSecForIosWeb: 5);
+        showToast('No widget with name $compName found in code $code, please clear cookies and reload App.',error: true);
         return CNotRecognizedWidget()..name = compName;
       }
     }

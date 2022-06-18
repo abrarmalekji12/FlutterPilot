@@ -6,12 +6,14 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../common/common_methods.dart';
 import '../../common/extension_util.dart';
 import '../../common/app_loader.dart';
 import '../../common/password_box.dart';
 import '../../common/responsive/responsive_widget.dart';
 import '../../constant/app_colors.dart';
 import '../../cubit/authentication/authentication_cubit.dart';
+import '../../cubit/flutter_project/flutter_project_cubit.dart';
 import '../../firestore/firestore_bridge.dart';
 import '../../models/actions/action_model.dart';
 import '../project_selection_page.dart';
@@ -64,18 +66,14 @@ class _LoginPageState extends State<LoginPage> {
           AppLoader.show(context);
         } else if (state is AuthSuccessState) {
           AppLoader.hide();
-          Get.off(
-            () => ProjectSelectionPage(
-              userId: state.userId,
-            ),
-            routeName: '/projects',
-          );
+          context.read<FlutterProjectCubit>().setUserId=state.userId;
+          Navigator.pushReplacementNamed(context, '/projects',arguments: state.userId);
         } else if (state is AuthFailedState) {
           AppLoader.hide();
-          Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
+          showToast(state.message,error: true);
         } else if (state is AuthErrorState) {
           AppLoader.hide();
-          Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
+          showToast(state.message,error: true);
         }
       },
       child: AuthenticationPage(

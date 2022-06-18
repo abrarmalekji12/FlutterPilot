@@ -7,8 +7,10 @@ import '../constant/app_colors.dart';
 enum LoadingMode { defaultMode, projectLoadingMode }
 
 abstract class AppLoader {
+  static bool isShowing=false;
   static void show(BuildContext context,
       {LoadingMode loadingMode = LoadingMode.defaultMode}) {
+    isShowing=true;
     Loader.show(context,
         progressIndicator: loadingMode != LoadingMode.defaultMode
             ? getProgressIndicator(loadingMode)
@@ -42,6 +44,9 @@ abstract class AppLoader {
   }
 
   static void hide() {
-    Loader.hide();
+    if(isShowing) {
+      Loader.hide();
+      isShowing=false;
+    }
   }
 }

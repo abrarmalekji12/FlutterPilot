@@ -79,7 +79,8 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
               logger('pressed ${key.physicalKey} ${key.logicalKey}');
               if (key.physicalKey == PhysicalKeyboardKey.enter) {
                 widget.onSelection(componentList[filtered[selectedIndex]]!());
-                Get.back();
+
+                Navigator.pop(context);
               } else if (key.physicalKey == PhysicalKeyboardKey.arrowDown) {
                 if (selectedIndex + 4 < filtered.length) {
                   selectedIndex = (selectedIndex + 4);
@@ -211,7 +212,8 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                                 print(
                                     'objects length ${filteredCustomComponents[i].objects.length}');
                                 widget.onSelection(customComponentClone);
-                                Get.back();
+
+                                Navigator.pop(context);
                               },
                               child: Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
@@ -356,7 +358,8 @@ class FavouriteWidget extends StatelessWidget {
               componentOperationCubit
                   .extractSameTypeComponents(model.component);
               widget.onSelection(component);
-              Get.back();
+
+              Navigator.pop(context);
             },
             child: Align(
               alignment: Alignment.center,
@@ -448,7 +451,8 @@ class BasicComponentTile extends StatelessWidget {
             final component = componentList[entry.value]!();
             componentOperationCubit.addInSameComponentList(component);
             widget.onSelection(component);
-            Get.back();
+
+            Navigator.pop(context);
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -549,7 +553,8 @@ class BasicComponentTile extends StatelessWidget {
                     },
                     onSelected: (final Component value) {
                       widget.onSelection(value.clone(null, deepClone: true));
-                      Get.back();
+
+                      Navigator.pop(context);
                     },
                     itemCount: componentOperationCubit
                         .sameComponentCollection[entry.value]!.length,

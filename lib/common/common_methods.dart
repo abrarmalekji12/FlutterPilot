@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -12,26 +14,34 @@ import '../models/actions/action_model.dart';
 import '../models/component_model.dart';
 import '../models/project_model.dart';
 
-void showToast(final String message,{bool error=false}) {
-  Fluttertoast.showToast(
-      msg: message, timeInSecForIosWeb: 9, webBgColor:error? '#ff0000':'#00ff00');
+void showToast(final String message, {bool error = false}) {
+  if (Platform.isWindows) {
+    print('WINDOWS TOAST $message :: isError => $error');
+  } else {
+    Fluttertoast.showToast(
+        msg: message,
+        timeInSecForIosWeb: 9,
+        webBgColor: error ? '#ff0000' : '#00ff00');
+  }
 }
 
+Future<dynamic> showModelDialog(BuildContext context, Widget builder) async {
+  return await showDialog(context: context, builder: (_) => builder);
+}
 
-void doAPIOperation(String message,{required StackActionCubit stackActionCubit,required StateManagementBloc stateManagementBloc}){
-  if(message.startsWith('print:')){
-    Fluttertoast.showToast(
-        msg: message.substring(6), timeInSecForIosWeb: 9, webBgColor: '#00ff00');
-  }
-  else if (message.startsWith('api:')) {
+void doAPIOperation(String message,
+    {required StackActionCubit stackActionCubit,
+    required StateManagementBloc stateManagementBloc}) {
+  if (message.startsWith('print:')) {
+    showToast(message.substring(6));
+  } else if (message.startsWith('api:')) {
     final value = message.replaceAll('api:', '');
     final split = value.split('|');
     final action = split[0];
     switch (action) {
       case 'snackbar':
-
         (const GlobalObjectKey(deviceScaffoldMessenger).currentState
-        as ScaffoldState)
+                as ScaffoldState)
             .showSnackBar(SnackBar(
           content: Text(
             split[1],
@@ -39,8 +49,8 @@ void doAPIOperation(String message,{required StackActionCubit stackActionCubit,r
             textAlign: TextAlign.center,
           ),
           // backgroundColor: Colors.grey,
-          duration: Duration(
-              milliseconds: (1000 * double.parse(split[2])).toInt()),
+          duration:
+              Duration(milliseconds: (1000 * double.parse(split[2])).toInt()),
         ));
         break;
       case 'newpage':
@@ -48,11 +58,10 @@ void doAPIOperation(String message,{required StackActionCubit stackActionCubit,r
             .currentFlutterProject!.uiScreens
             .firstWhereOrNull((screen) => screen.name == split[1]);
         if (screen != null) {
-          stackActionCubit
-              .stackOperation(StackOperation.push, uiScreen: screen);
+          stackActionCubit.stackOperation(StackOperation.push,
+              uiScreen: screen);
         }
-        (const GlobalObjectKey(navigationKey).currentState
-        as NavigatorState)
+        (const GlobalObjectKey(navigationKey).currentState as NavigatorState)
             .push(
           MaterialPageRoute(
             builder: (context) => screen?.build(context) ?? Container(),
@@ -60,17 +69,14 @@ void doAPIOperation(String message,{required StackActionCubit stackActionCubit,r
         );
         break;
       case 'goback':
-        stackActionCubit
-            .stackOperation(StackOperation.pop);
-        (const GlobalObjectKey(navigationKey).currentState
-        as NavigatorState).pop();
+        stackActionCubit.stackOperation(StackOperation.pop);
+        (const GlobalObjectKey(navigationKey).currentState as NavigatorState)
+            .pop();
         break;
       case 'refresh':
-        if(split[1].isNotEmpty) {
-          stateManagementBloc
-              .add(StateManagementUpdateEvent(split[1]));
-        }
-        else{
+        if (split[1].isNotEmpty) {
+          stateManagementBloc.add(StateManagementUpdateEvent(split[1]));
+        } else {
           stackActionCubit.emit(StackUpdatedState());
         }
         break;
@@ -80,12 +86,11 @@ void doAPIOperation(String message,{required StackActionCubit stackActionCubit,r
             .firstWhereOrNull((screen) => screen.name == split[1]);
 
         if (screen != null) {
-          stackActionCubit
-              .stackOperation(StackOperation.replace, uiScreen: screen);
+          stackActionCubit.stackOperation(StackOperation.replace,
+              uiScreen: screen);
         }
 
-        (const GlobalObjectKey(navigationKey).currentState
-        as NavigatorState)
+        (const GlobalObjectKey(navigationKey).currentState as NavigatorState)
             .pushReplacement(
           CustomPageRoute(
             builder: (context) => screen?.build(context) ?? Container(),

@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'dart:html' as html;
+import 'package:flutter_builder/common/html_lib.dart' as html;
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +7,9 @@ import 'package:get/get.dart';
 
 import '../common/common_methods.dart';
 import '../constant/font_style.dart';
+import '../constant/string_constant.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
+import '../main.dart';
 
 class ProjectSettingsPage extends StatefulWidget {
   final ComponentOperationCubit componentOperationCubit;
@@ -70,19 +72,9 @@ class _ProjectSettingsPageState extends State<ProjectSettingsPage> {
                             groupValue: projectSettingsModel.isPublic,
                             onChanged: (value) {
                               projectSettingsModel.isPublic = true;
-                              if (projectSettingsModel.linkIfPublic == null) {
-                                final project = widget
-                                    .componentOperationCubit.flutterProject!;
-                                final key =
-                                    encrypt.Key.fromUtf8('fvb_project_link');
-                                final iv = encrypt.IV.fromLength(10);
-                                final encrypt.Encrypter encryptor =
-                                    encrypt.Encrypter(encrypt.AES(key, ),);
-                                projectSettingsModel.linkIfPublic = encryptor
-                                    .encrypt(
-                                        '${project.userId}_${project.name}',iv:iv)
-                                    .base16;
-                              }
+                              final project = widget
+                                  .componentOperationCubit.flutterProject!;
+                                projectSettingsModel.linkIfPublic = TestKey.encrypt(project.userId, project.name);
                               setState(() {});
                             }),
                         Text(
@@ -122,7 +114,7 @@ class _ProjectSettingsPageState extends State<ProjectSettingsPage> {
                   onTap: () {
                     Clipboard.setData(ClipboardData(
                         text:
-                            '${html.window.location.href}test-${projectSettingsModel.linkIfPublic!}'));
+                            '${html.window.location.href}run-${projectSettingsModel.linkIfPublic!}'));
                     showToast('Copied to clipboard');
                   },
                   child: Padding(
@@ -133,10 +125,13 @@ class _ProjectSettingsPageState extends State<ProjectSettingsPage> {
                         const SizedBox(
                           width: 20,
                         ),
-                        Text(
-                          '${html.window.location.href}test-${projectSettingsModel.linkIfPublic!}',
-                          style: AppFontStyle.roboto(15,
-                              fontWeight: FontWeight.bold),
+                        Expanded(
+                          child: Text(
+                            //html.window.location.href
+                            '${appLink}run-${projectSettingsModel.linkIfPublic!}',
+                            style: AppFontStyle.roboto(15,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                     ),

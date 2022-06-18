@@ -1,11 +1,10 @@
-import 'dart:html' as html;
+import 'package:flutter_builder/common/html_lib.dart' as html;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get/get_navigation/get_navigation.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'ui/project_selection_page.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 import 'bloc/state_management/state_management_bloc.dart';
@@ -13,10 +12,10 @@ import 'common/compiler/code_processor.dart';
 import 'common/shared_preferences.dart';
 import 'constant/app_colors.dart';
 import 'cubit/authentication/authentication_cubit.dart';
+import 'cubit/flutter_project/flutter_project_cubit.dart';
 import 'cubit/stack_action/stack_action_cubit.dart';
 import 'injector.dart';
 import 'ui/authentication/login.dart';
-import 'ui/build_view/build_view.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'ui/home_page.dart';
 
@@ -72,22 +71,32 @@ void main() async {
   //   }
   // });
   
-  class ABC{
-  
-  }
-  
-  var c=0;
+  var count=0;
+class Student {
   var name;
   var roll;
-  
-  setName(){
-  for(var i=0;i<10;i++){
-  print("hiii {{i+3}}");
-  }
+  var percent;
+  var guideName;
+  Student(this.name,this.roll,this.percent,this.guideName);
   }
   
-  setName();
+  var studentList=[
+  Student("Abrar",12,90,"guide 1")
+  ];
+ 
+ addStudent(){
+ var name=lookUp("TextField0.2990.454").text;
+ var roll=lookUp("TextField0.8520.487").text;
+var percent=lookUp("TextField0.3150.119").text;
+ var guide=lookUp("TextField0.1950.615").text;
+   studentList.add(Student(name,toInt(roll),toInt(percent),guide));
+  
+refresh("ListView.builder0.9410.063");
+print("hello {{}}");
+ }
 }
+
+addStudent();
  ''';
   // processor.executeCode(code);
   /*
@@ -114,8 +123,10 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    html.document
+    if(kIsWeb) {
+      html.document
         .addEventListener('contextmenu', (event) => event.preventDefault());
+    }
     if (!kDebugMode) {
       FlutterError.onError = (
         FlutterErrorDetails details, {
@@ -148,41 +159,62 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (context) => get<StackActionCubit>(),
         ),
+        BlocProvider(
+          create: (context) => get<FlutterProjectCubit>(),
+        )
       ],
-      child: GetMaterialApp(
+      child: MaterialApp(
         title: 'Flutter Visual Builder',
         scrollBehavior: MyCustomScrollBehavior(),
-        // initialRoute: '/test-497aa95cb338b4e1fd95a0f9c26a63d1',
+        initialRoute: '/login',
+        routes: {
+          '/login': (context) => const LoginPage(),
+        },
+        // initialRoute: '/run-497aa95cb338b4e1fd95a0f9c26a63d1',
         onGenerateRoute: (settings) {
-          final link=settings.name;
-          if (settings.name!.startsWith('/test')) {
-            final data = settings.name!.substring(6);
-            final key = encrypt.Key.fromUtf8('fvb_project_link');
-            final iv = encrypt.IV.fromLength(10);
-            final encrypt.Encrypter encryptor =
-                encrypt.Encrypter(encrypt.AES(key));
-            final string =
-                encryptor.decrypt(encrypt.Encrypted.fromBase16(data), iv: iv);
-            if (string.contains('_')) {
-              final split = string.split('_');
-              if(int.tryParse(split[0])==null){
-                return null;
-              }
-              return GetPageRoute(page: () => HomePage(
-                projectName: split[1],
-                userId: int.parse(split[0]),
-                prototype: true,
-              ), settings:RouteSettings(name: link));
+          final link = settings.name ?? '';
+          if (link.startsWith('/projects')) {
+            if (settings.arguments is List) {
+              return getRoute(
+                  (p0) => HomePage(
+                        userId: ((settings.arguments! as List)[0] as int),
+                        projectName: (settings.arguments! as List)[1] as String,
+                      ),
+                  '/projects/${(settings.arguments! as List)[1]}');
+            } else if (get<FlutterProjectCubit>().userId != -1) {
+              return getRoute(
+                  (p0) => ProjectSelectionPage(
+                        userId: get<FlutterProjectCubit>().userId,
+                      ),
+                  '/projects');
+            } else {
+              return getRoute((p0) => const LoginPage(), '/login');
+            }
+          } else if (link.startsWith('/run')) {
+            final list = TestKey.decrypt(link.substring(5));
+            if (list != null) {
+              return getRoute(
+                  (p0) => HomePage(
+                        projectName: list[1],
+                        userId: list[0],
+                        prototype: true,
+                      ),
+                  link);
             }
           }
         },
         theme: ThemeData(
             visualDensity: VisualDensity.adaptivePlatformDensity,
             primaryColor: AppColors.theme),
-        home: const LoginPage(),
       ),
     );
   }
+}
+
+getRoute(Function(BuildContext) builder, String name) {
+  return MaterialPageRoute(
+      builder: (context) => builder(context),
+      settings: RouteSettings(name: name));
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
@@ -193,4 +225,22 @@ class MyCustomScrollBehavior extends MaterialScrollBehavior {
         PointerDeviceKind.mouse,
         // etc.
       };
+}
+
+class TestKey {
+  static String encrypt(int userId, String project) {
+    return '${userId}_$project';
+  }
+
+  static List<dynamic>? decrypt(String input) {
+    if (input.contains('_')) {
+      final split = input.split('_');
+      final id = int.tryParse(split[0]);
+      if (id == null) {
+        return null;
+      }
+      return [id, split[1]];
+    }
+    return null;
+  }
 }

@@ -13,7 +13,7 @@ final fvbDart = Mode(refs: {
       keywords: 'true false null this is new super',
       contains: [C_NUMBER_MODE, Mode(ref: '~contains~0')]),
   '~contains~0~variants~4~contains~1':
-  Mode(className: 'subst', variants: [Mode(begin: '\\\$[A-Za-z0-9_]+')]),
+      Mode(className: 'subst', variants: [Mode(begin: '\\\$[A-Za-z0-9_]+')]),
   '~contains~0': Mode(className: 'string', variants: [
     Mode(begin: "r'''", end: "'''"),
     Mode(begin: 'r\"\"\"', end: '\"\"\"'),
@@ -42,9 +42,9 @@ final fvbDart = Mode(refs: {
   ]),
 }, keywords: {
   'keyword':
-  'abstract as assert async await break case catch class const continue covariant default deferred do dynamic else enum export extends extension external factory false final finally for Function get hide if implements import in inferface is library mixin new null on operator part rethrow return set show static super switch sync this throw true try typedef var void while with yield',
+      'abstract as assert async await break case catch class const continue covariant default deferred do dynamic else enum export extends extension external factory false final finally for Function get hide if implements import in inferface is library mixin new null on operator part rethrow return set show static super switch sync this throw true try typedef var void while with yield',
   'built_in':
-  'Comparable DateTime Duration Function Iterable Iterator List Map Match Null Object Pattern RegExp Set Stopwatch String StringBuffer StringSink Symbol Type Uri bool double dynamic int num print Element ElementList document querySelector querySelectorAll window refresh'
+      'Comparable DateTime Duration Function Iterable Iterator List Map Match Null Object Pattern RegExp Set Stopwatch String StringBuffer StringSink Symbol Type Uri bool double dynamic int num print Element ElementList document querySelector querySelectorAll window refresh'
 }, contains: [
   Mode(ref: '~contains~0'),
   Mode(className: 'comment', begin: '/\\*\\*', end: '\\*/', contains: [
@@ -94,13 +94,21 @@ class ActionCodeEditor extends StatefulWidget {
 
 class _ActionCodeEditorState extends State<ActionCodeEditor> {
   late final CodeController _codeController;
+  String? code;
 
   @override
   initState() {
     super.initState();
-    _codeController = CodeController(language: fvbDart,
+    _codeController = CodeController(
+        language: fvbDart,
         theme: monokaiSublimeTheme,
-        onChange: widget.onCodeChange);
+        onChange: (value) {
+          if (code != value) {
+            code = value;
+            widget.onCodeChange(value);
+          }
+        });
+    code = widget.code;
     _codeController.text = widget.code;
   }
 
@@ -111,10 +119,8 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
       enabled: true,
       lineNumberStyle: const LineNumberStyle(
         margin: 5,
-        textStyle: TextStyle(
-            fontSize: 13,
-            color: Colors.white,
-            fontFamily: 'arial'),
+        textStyle:
+            TextStyle(fontSize: 13, color: Colors.white, fontFamily: 'arial'),
       ),
 
       controller: _codeController,

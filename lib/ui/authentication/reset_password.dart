@@ -52,12 +52,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           AppLoader.show(context);
         } else if (state is AuthSuccessState) {
           AppLoader.hide();
-          Get.off(
-            () => ProjectSelectionPage(
-              userId: state.userId,
-            ),
-            routeName: '/projects',
-          );
+          Navigator.pushReplacementNamed(context, '/projects',arguments: state.userId);
+
         } else if (state is AuthFailedState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);

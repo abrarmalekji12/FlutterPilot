@@ -1,4 +1,5 @@
-import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
+import 'package:flutter_builder/common/html_lib.dart' as html;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -114,12 +115,13 @@ class _CustomPopupMenuBuilderButtonState
         ),
       );
     });
-
-    html.window.onResize.listen((event) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        overlayEntry?.markNeedsBuild();
+    if(kIsWeb) {
+      html.window.onResize.listen((event) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          overlayEntry?.markNeedsBuild();
+        });
       });
-    });
+    }
   }
 
   @override

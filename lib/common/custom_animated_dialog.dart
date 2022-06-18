@@ -10,41 +10,42 @@ class CustomDialog {
     //     initialPosition.dx - (Get.width / 2),
     //     initialPosition.dy - (Get.height / 2));
     // const lastPosition = Offset(0, 0);
-
-    await Get.dialog(GestureDetector(
-      onTap: () {
-        if (closeOnOutsideClick) {
-          onDismiss?.call();
-          Get.back();
-        }
-      },
-      child: Material(
-        color: Colors.transparent,
-        child: Stack(
-          children: [
-            Center(
-              child: widget,
-              // child: TweenAnimationBuilder(
-              //   tween: Tween<double>(begin: 0, end: 1),
-              //   curve: Curves.decelerate,
-              //   duration: const Duration(milliseconds: 400),
-              //   builder: (context, double value, child) {
-              //     return Transform.translate(
-              //       offset: interpolate(
-              //           initialPositionDifference, lastPosition, value * value),
-              //       // offset: Offset(0,0),
-              //       child: Transform.scale(
-              //         scale: (value * 0.8 / 1) + 0.2,
-              //         child: widget,
-              //       ),
-              //     );
-              //   },
-              // ),
-            ),
-          ],
-        ),
-      ),
-    ));
+    await showDialog(
+        context: context,
+        builder: (_) => GestureDetector(
+              onTap: () {
+                if (closeOnOutsideClick) {
+                  onDismiss?.call();
+                  Navigator.pop(context);
+                }
+              },
+              child: Material(
+                color: Colors.transparent,
+                child: Stack(
+                  children: [
+                    Center(
+                      child: widget,
+                      // child: TweenAnimationBuilder(
+                      //   tween: Tween<double>(begin: 0, end: 1),
+                      //   curve: Curves.decelerate,
+                      //   duration: const Duration(milliseconds: 400),
+                      //   builder: (context, double value, child) {
+                      //     return Transform.translate(
+                      //       offset: interpolate(
+                      //           initialPositionDifference, lastPosition, value * value),
+                      //       // offset: Offset(0,0),
+                      //       child: Transform.scale(
+                      //         scale: (value * 0.8 / 1) + 0.2,
+                      //         child: widget,
+                      //       ),
+                      //     );
+                      //   },
+                      // ),
+                    ),
+                  ],
+                ),
+              ),
+            ));
   }
 
   static Offset interpolate(Offset offset1, Offset offset2, double progress) {
@@ -62,7 +63,8 @@ class CustomDialog {
         position.dy + renderBox.size.height / 2);
   }
 
-  static void hide() {
-    Get.back();
+  static void hide(BuildContext context) {
+
+    Navigator.pop(context);
   }
 }

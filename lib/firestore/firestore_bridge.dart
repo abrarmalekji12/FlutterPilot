@@ -1,9 +1,17 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_core/firebase_core.dart';
+
+import 'package:get/get.dart';
+
+import 'firebase_connection.dart';
+
+
+
 import 'package:flutter/cupertino.dart';
 import '../common/shared_preferences.dart';
 import '../component_list.dart';
@@ -18,7 +26,6 @@ import '../common/logger.dart';
 import '../constant/string_constant.dart';
 import '../models/component_model.dart';
 import '../network/auth_response/auth_response_model.dart';
-import 'firebase_connection.dart';
 
 abstract class FireBridge {
   static bool initialized=false;
@@ -142,7 +149,7 @@ abstract class FireBridge {
       favouriteModels.add(FavouriteModel(
           Component.fromCode(
               json['code'], ComponentOperationCubit.currentFlutterProject!)!
-            ..boundary = Rect.fromLTWH(0, 0, json['width'], json['height']),
+            ..boundary = Rect.fromLTWH(0.0, 0.0, double.parse(json['width'].toString()), double.parse(json['height'].toString())),
           json['project_name']));
     }
     return favouriteModels;
@@ -395,8 +402,9 @@ abstract class FireBridge {
       flutterProject.currentScreen = currentScreen;
 
       return flutterProject;
-    } catch (e) {
+    } on Exception catch (e) {
       print(e);
+      e.printError();
       return null;
     }
   }

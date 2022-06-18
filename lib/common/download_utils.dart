@@ -1,7 +1,5 @@
 import 'dart:convert';
-import 'dart:html';
-import 'dart:io';
-import 'dart:math';
+import 'package:flutter_builder/common/html_lib.dart' as html;
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
@@ -32,12 +30,12 @@ class DownloadUtils {
     final _base64 = base64Encode(bytes!);
     // Create the link with the file
     final anchor =
-        AnchorElement(href: 'data:application/octet-stream;base64,$_base64')
+    html.getAnchorElement(href: 'data:application/octet-stream;base64,$_base64')
           ..target = 'blank';
     // add the name
     anchor.download = fileName + '.zip';
     // trigger download
-    document.body?.append(anchor);
+    html.document.body?.append(anchor);
     anchor.click();
     anchor.remove();
     return;

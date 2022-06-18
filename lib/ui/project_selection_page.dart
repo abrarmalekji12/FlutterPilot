@@ -29,7 +29,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
   @override
   void initState() {
     super.initState();
-    _flutterProjectCubit = FlutterProjectCubit(widget.userId);
+    _flutterProjectCubit = context.read<FlutterProjectCubit>();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _flutterProjectCubit.loadFlutterProjectList();
     });
@@ -50,7 +50,8 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                   break;
                 case AuthSuccessState:
                   AppLoader.hide();
-                  Get.offAll(() => const LoginPage());
+
+                  Navigator.pushReplacementNamed(context, '/login');
                   break;
               }
             },
@@ -214,12 +215,8 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                         .then((value) {
                                       _textEditingController.text = '';
                                       setState(() {});
-                                      Get.to(
-                                          () => HomePage(
-                                                projectName: name,
-                                                userId: widget.userId,
-                                              ),
-                                          routeName: 'projects/$name');
+                                      Navigator.pushNamed(context, '/projects',
+                                          arguments: [widget.userId, name]);
                                     });
                                   }
                                 },
@@ -289,15 +286,12 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                             children: [
                                               ElevatedButton(
                                                 onPressed: () {
-                                                  Get.to(
-                                                      () => HomePage(
-                                                            projectName:
-                                                                project.name,
-                                                            userId:
-                                                                widget.userId,
-                                                          ),
-                                                      routeName:
-                                                          '/projects/${project.name}');
+                                                  Navigator.pushNamed(
+                                                      context, '/projects',
+                                                      arguments: [
+                                                        widget.userId,
+                                                        project.name
+                                                      ]);
                                                 },
                                                 child: Text(
                                                   project.name,

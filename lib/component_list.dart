@@ -432,7 +432,7 @@ class CAspectRatio extends Holder {
       : super('AspectRatio', [
           Parameters.widthFactorParameter()
             ..withRequired(true)
-            ..withDefaultValue(1)
+            ..withDefaultValue(1.0)
             ..withNamedParamInfoAndSameDisplayName('aspectRatio'),
         ]);
 
@@ -448,8 +448,8 @@ class CAspectRatio extends Holder {
 class CFractionallySizedBox extends Holder {
   CFractionallySizedBox()
       : super('FractionallySizedBox', [
-          Parameters.widthFactorParameter()..withDefaultValue(1),
-          Parameters.heightFactorParameter()..withDefaultValue(1),
+          Parameters.widthFactorParameter()..withDefaultValue(1.0),
+          Parameters.heightFactorParameter()..withDefaultValue(1.0),
           Parameters.alignmentParameter()
         ]);
 
@@ -497,7 +497,7 @@ class COpacity extends Holder {
       : super('Opacity', [
           Parameters.widthFactorParameter()
             ..withInfo(NamedParameterInfo('opacity'))
-            ..withDefaultValue(1)
+            ..withDefaultValue(1.0)
             ..withDisplayName('opacity')
             ..withRequired(true),
         ]);
@@ -530,7 +530,7 @@ class CTransformScale extends Holder {
   CTransformScale()
       : super('Transform.scale', [
           Parameters.widthFactorParameter()
-            ..withDefaultValue(1)
+            ..withDefaultValue(1.0)
             ..withNamedParamInfoAndSameDisplayName('scale')
             ..withRequired(true),
         ]);
@@ -584,15 +584,15 @@ class CDivider extends Component {
           'Divider',
           [
             Parameters.colorParameter()..withDefaultValue(AppColors.grey),
-            Parameters.heightParameter()..withDefaultValue(20),
+            Parameters.heightParameter()..withDefaultValue(20.0),
             Parameters.thicknessParameter(),
             Parameters.heightParameter()
-              ..withDefaultValue(0)
+              ..withDefaultValue(0.0)
               ..withDisplayName('indent')
               ..withInfo(NamedParameterInfo('indent'))
               ..withRequired(false),
             Parameters.heightParameter()
-              ..withDefaultValue(0)
+              ..withDefaultValue(0.0)
               ..withDisplayName('end-indent')
               ..withInfo(NamedParameterInfo('endIndent'))
               ..withRequired(false)
@@ -617,15 +617,15 @@ class CVerticalDivider extends Component {
           'VerticalDivider',
           [
             Parameters.colorParameter()..withDefaultValue(AppColors.grey),
-            Parameters.widthParameter()..withDefaultValue(20),
+            Parameters.widthParameter()..withDefaultValue(20.0),
             Parameters.thicknessParameter(),
             Parameters.heightParameter()
-              ..withDefaultValue(0)
+              ..withDefaultValue(0.0)
               ..withDisplayName('indent')
               ..withInfo(NamedParameterInfo('indent'))
               ..withRequired(false),
             Parameters.heightParameter()
-              ..withDefaultValue(0)
+              ..withDefaultValue(0.0)
               ..withDisplayName('end-indent')
               ..withInfo(NamedParameterInfo('endIndent'))
               ..withRequired(false)
@@ -1176,7 +1176,7 @@ class CLinearProgressIndicator extends Component {
   CLinearProgressIndicator()
       : super('LinearProgressIndicator', [
           Parameters.widthParameter()
-            ..withDefaultValue(5)
+            ..withDefaultValue(5.0)
             ..withRequired(true)
             ..withNamedParamInfoAndSameDisplayName('minHeight'),
           Parameters.widthParameter()
@@ -1217,7 +1217,7 @@ class CCircularProgressIndicator extends Component {
   CCircularProgressIndicator()
       : super('CircularProgressIndicator', [
           Parameters.widthParameter()
-            ..withDefaultValue(4)
+            ..withDefaultValue(4.0)
             ..withRequired(true)
             ..withNamedParamInfoAndSameDisplayName('strokeWidth'),
           Parameters.widthParameter()
@@ -1317,8 +1317,8 @@ class CColoredBox extends Holder {
 class CSizedBox extends Holder {
   CSizedBox()
       : super('SizedBox', [
-          Parameters.widthParameter()..withDefaultValue(50),
-          Parameters.heightParameter()..withDefaultValue(50),
+          Parameters.widthParameter()..withDefaultValue(50.0),
+          Parameters.heightParameter()..withDefaultValue(50.0),
         ]);
 
   @override
@@ -1535,7 +1535,7 @@ class CIconButton extends ClickableComponent {
             info: NamedParameterInfo('icon'),
           ),
           Parameters.widthParameter()
-            ..withDefaultValue(24)
+            ..withDefaultValue(24.0)
             ..withRequired(true)
             ..withNamedParamInfoAndSameDisplayName('iconSize'),
           Parameters.colorParameter()..withDefaultValue(AppColors.black),

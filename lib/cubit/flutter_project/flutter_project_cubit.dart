@@ -15,10 +15,17 @@ part 'flutter_project_state.dart';
 
 class FlutterProjectCubit extends Cubit<FlutterProjectState> {
   List<FlutterProject> projects = [];
-  final int userId;
+  int? _userId;
 
-  FlutterProjectCubit(this.userId) : super(FlutterProjectInitial());
+  FlutterProjectCubit() : super(FlutterProjectInitial());
 
+
+  // set userId
+  set setUserId(int userId) {
+    _userId = userId;
+  }
+
+  int get userId => _userId??-1;
   Future<void> loadFlutterProjectList() async {
     emit(FlutterProjectLoadingState());
     try {
@@ -78,6 +85,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
     try {
       if (notLoggedIn) {
         final authResponse= await FireBridge.login('test_fvb@mailinator.com', 'test123');
+        setUserId=authResponse.userId!;
         print('Auth response: ${authResponse.userId}');
       }
       ComponentOperationCubit.codeProcessor.variables
