@@ -237,7 +237,7 @@ class BooleanParameter extends Parameter {
     final result = compiler.code.isNotEmpty
         ? ComponentOperationCubit.codeProcessor.process<bool>(compiler.code)
         : null;
-    if (result != null) {
+    if (result != null&&result is! FVBUndefined) {
       val = result as bool;
     }
     return val;
@@ -278,7 +278,7 @@ class SimpleParameter<T> extends Parameter {
     final result = compiler.code.isNotEmpty
         ? ComponentOperationCubit.codeProcessor.process<T>(compiler.code)
         : null;
-    if (result != null) {
+    if (result != null&&result is! FVBUndefined) {
       if (T == Color) {
         val = colorToHex(result.toString()) as T?;
       } else if (T == ImageData) {
@@ -298,8 +298,11 @@ class SimpleParameter<T> extends Parameter {
       return null;
     } else if (defaultValue != null) {
       return evaluate(defaultValue!);
-    } else if (T == double || T == int) {
+    } else if (T == int) {
       return evaluate(0 as T);
+    }
+    else if(T == double){
+      return evaluate(0.0 as T);
     }
     return '';
   }

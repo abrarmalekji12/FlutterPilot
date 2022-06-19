@@ -86,13 +86,17 @@ class QueryDocumentSnapshot<T> {
 }
 
 class FieldValue {
-  static arrayRemove(List list) {}
-
-  static arrayUnion(List list) {
-
+  static arrayRemove(List list) {
+    throw UnimplementedError();
   }
 
-  static increment(int value) {}
+  static arrayUnion(List list) {
+    throw UnimplementedError();
+  }
+
+  static increment(int value) {
+    throw UnimplementedError();
+  }
 }
 
 class UserCredential {

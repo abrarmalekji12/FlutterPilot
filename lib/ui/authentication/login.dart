@@ -1,24 +1,15 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../common/common_methods.dart';
 import '../../common/extension_util.dart';
 import '../../common/app_loader.dart';
 import '../../common/password_box.dart';
-import '../../common/responsive/responsive_widget.dart';
-import '../../constant/app_colors.dart';
 import '../../cubit/authentication/authentication_cubit.dart';
 import '../../cubit/flutter_project/flutter_project_cubit.dart';
 import '../../firestore/firestore_bridge.dart';
-import '../../models/actions/action_model.dart';
-import '../project_selection_page.dart';
-import 'register_page.dart';
-import 'reset_password.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -54,31 +45,34 @@ class _LoginPageState extends State<LoginPage> {
       });
     });
   }
+@override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-  @override
-  Widget build(BuildContext context) {
     dw = MediaQuery.of(context).size.width;
     dh = MediaQuery.of(context).size.height;
 
+}
+  @override
+  Widget build(BuildContext context) {
     return BlocListener<AuthenticationCubit, AuthenticationState>(
       listener: (context, state) {
         if (state is AuthLoadingState) {
           AppLoader.show(context);
         } else if (state is AuthSuccessState) {
           AppLoader.hide();
-          context.read<FlutterProjectCubit>().setUserId=state.userId;
-          Navigator.pushReplacementNamed(context, '/projects',arguments: state.userId);
+          context.read<FlutterProjectCubit>().setUserId = state.userId;
         } else if (state is AuthFailedState) {
           AppLoader.hide();
-          showToast(state.message,error: true);
+          showToast(state.message, error: true);
         } else if (state is AuthErrorState) {
           AppLoader.hide();
-          showToast(state.message,error: true);
+          showToast(state.message, error: true);
         }
       },
       child: AuthenticationPage(
           formKey: _formKey,
-          widget: SingleChildScrollView(
+          widget: ()=>SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,10 +125,7 @@ class _LoginPageState extends State<LoginPage> {
                           TextSpan(
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.pushReplacement(
-                                    context,
-                                    CustomPageRoute(
-                                        builder: (_) => const RegisterPage()));
+                                Navigator.pushReplacementNamed(context,'/register');
                               },
                             text: ' Create New',
                             style: GoogleFonts.getFont(
@@ -322,10 +313,8 @@ class _LoginPageState extends State<LoginPage> {
                         text: ' Reset Now',
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            Navigator.pushReplacement(
-                                context,
-                                CustomPageRoute(
-                                    builder: (_) => const ResetPasswordPage()));
+
+                            Navigator.pushReplacementNamed(context,'/reset-password');
                           },
                         style: GoogleFonts.getFont(
                           'Lato',
@@ -395,7 +384,7 @@ double res(double large, double medium, [double? small]) {
 }
 
 class AuthenticationPage extends StatefulWidget {
-  final Widget widget;
+  final Widget Function() widget;
   final GlobalKey<FormState> formKey;
 
   const AuthenticationPage(
@@ -410,68 +399,18 @@ class _AuthenticationPageState extends State<AuthenticationPage>
     with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xffffffff),
-      resizeToAvoidBottomInset: false,
-      body: Container(
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(shape: BoxShape.rectangle),
-          child: Stack(
-            // mainAxisAlignment: MainAxisAlignment.start,
-            // crossAxisAlignment: CrossAxisAlignment.start,
-            // mainAxisSize: MainAxisSize.max,
-            children: [
-              SvgPicture.asset(
-                'assets/icons/back2.svg',
-                fit: BoxFit.cover,
-              ),
-              Align(
-                alignment: Alignment.topLeft,
-                child: Container(
-                  margin: const EdgeInsets.all(10),
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Image.asset(
-                      'assets/icons/fvb_logo.png',
-                      fit: BoxFit.fitWidth,
-                      width: 30,
-                    ),
-                  ),
-                  width: 60,
-                  height: 60,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: kElevationToShadow[2],
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.center,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 40),
-                  child: FittedBox(
-                    child: Container(
-                      width: res(400, 400, dw),
-                      height:
-                          ResponsiveWidget.isSmallScreen(context) ? dh : null,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          boxShadow: kElevationToShadow[2],
-                          borderRadius: BorderRadius.circular(20)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 50, horizontal: 20),
-                        child: Form(key: widget.formKey, child: widget.widget),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          )),
+    return Container(
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.all(30),
+
+      child: Form(
+        key: widget.formKey,
+        child: widget.widget.call(),
+      ),
     );
   }
 }

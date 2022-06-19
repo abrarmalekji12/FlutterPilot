@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class ResponsiveWidget extends StatelessWidget {
+class Responsive extends StatelessWidget {
   final Widget largeScreen;
   final Widget? mediumScreen;
   final Widget? smallScreen;
 
-  const ResponsiveWidget(
+  const Responsive(
       {required this.largeScreen,
       this.mediumScreen,
       this.smallScreen,

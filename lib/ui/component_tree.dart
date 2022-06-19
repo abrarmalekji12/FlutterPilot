@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../code_to_component.dart';
 import '../common/common_methods.dart';
 import '../common/material_alert.dart';
+import '../injector.dart';
 import '../models/operation_model.dart';
 import '../models/other_model.dart';
 import '../common/custom_drop_down.dart';
@@ -20,7 +21,7 @@ import '../cubit/component_selection/component_selection_cubit.dart';
 import '../models/component_selection.dart';
 import '../models/parameter_model.dart';
 import '../models/project_model.dart';
-import '../widgets/project_setting_page.dart';
+import 'project_setting_page.dart';
 import 'component_selection_dialog.dart';
 import 'package:get/get.dart';
 
@@ -97,6 +98,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                     InkWell(
                         onTap: () {
                           showDialog(
+                            barrierDismissible: false,
                               context: context,
                               builder: (_) => ProjectSettingsPage(
                                     componentOperationCubit:
@@ -401,101 +403,23 @@ class _ComponentTreeState extends State<ComponentTree> {
                           debugPrint(
                               '=== ComponentOperationCubit == state ${state.runtimeType}');
                           return SingleChildScrollView(
-                            controller: _scrollController,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Container(
-                                  alignment: Alignment.topLeft,
-                                  padding: const EdgeInsets.all(6),
-                                  child: SublistWidget(
-                                      component: _componentOperationCubit
-                                          .flutterProject!.rootComponent!,
-                                      ancestor: _componentOperationCubit
-                                          .flutterProject!.rootComponent!,
-                                      componentSelectionCubit:
-                                          _componentSelectionCubit,
-                                      componentOperationCubit:
-                                          _componentOperationCubit,
-                                      componentCreationCubit:
-                                          _componentCreationCubit),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Custom Widgets',
-                                        style: AppFontStyle.roboto(14,
-                                            color: const Color(0xff494949),
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      InkWell(
-                                        borderRadius: BorderRadius.circular(10),
-                                        onTap: () {
-                                          //ADD Custom Widgets
-                                          showScreenNameDialog(
-                                              context, 'Enter widget name',
-                                              (name, _) {
-
-                                                Navigator.pop(context);
-                                            BlocProvider.of<
-                                                        ComponentOperationCubit>(
-                                                    context,
-                                                    listen: false)
-                                                .addCustomComponent(name);
-                                          }, type: false);
-                                        },
-                                        child: const CircleAvatar(
-                                          radius: 10,
-                                          backgroundColor: AppColors.theme,
-                                          child: Icon(
-                                            Icons.add,
-                                            size: 15,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                for (final CustomComponent comp
-                                    in _componentOperationCubit
-                                        .flutterProject!.customComponents) ...[
-                                  OnHoverMenuChangeWidget(
-                                    buildWidget: (showMenu) => Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        ComponentTile(
-                                            component: comp,
-                                            ancestor: comp,
-                                            componentSelectionCubit:
-                                                _componentSelectionCubit),
-                                        if (showMenu)
-                                          ComponentModificationMenu(
-                                            component: comp,
-                                            ancestor: comp,
-                                            componentOperationCubit:
-                                                _componentOperationCubit,
-                                            componentCreationCubit:
-                                                _componentCreationCubit,
-                                            componentSelectionCubit:
-                                                _componentSelectionCubit,
-                                          )
-                                      ],
-                                    ),
-                                  ),
-                                  if (comp.root != null)
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: 500,
+                              child: SingleChildScrollView(
+                                controller: _scrollController,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
                                     Container(
                                       alignment: Alignment.topLeft,
                                       padding: const EdgeInsets.all(6),
                                       child: SublistWidget(
-                                          component: comp.root!,
-                                          ancestor: comp,
+                                          component: _componentOperationCubit
+                                              .flutterProject!.rootComponent!,
+                                          ancestor: _componentOperationCubit
+                                              .flutterProject!.rootComponent!,
                                           componentSelectionCubit:
                                               _componentSelectionCubit,
                                           componentOperationCubit:
@@ -503,11 +427,96 @@ class _ComponentTreeState extends State<ComponentTree> {
                                           componentCreationCubit:
                                               _componentCreationCubit),
                                     ),
-                                ],
-                                const SizedBox(
-                                  height: 100,
+                                    Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Custom Widgets',
+                                            style: AppFontStyle.roboto(14,
+                                                color: const Color(0xff494949),
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          InkWell(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            onTap: () {
+                                              //ADD Custom Widgets
+                                              showScreenNameDialog(
+                                                  context, 'Enter widget name',
+                                                  (name, _) {
+                                                Navigator.pop(context);
+                                                BlocProvider.of<
+                                                            ComponentOperationCubit>(
+                                                        context,
+                                                        listen: false)
+                                                    .addCustomComponent(name);
+                                              }, type: false);
+                                            },
+                                            child: const CircleAvatar(
+                                              radius: 10,
+                                              backgroundColor: AppColors.theme,
+                                              child: Icon(
+                                                Icons.add,
+                                                size: 15,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    for (final CustomComponent comp
+                                        in _componentOperationCubit
+                                            .flutterProject!
+                                            .customComponents) ...[
+                                      OnHoverMenuChangeWidget(
+                                        buildWidget: (showMenu) => Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            ComponentTile(
+                                                component: comp,
+                                                ancestor: comp,
+                                                componentSelectionCubit:
+                                                    _componentSelectionCubit),
+                                            if (showMenu)
+                                              ComponentModificationMenu(
+                                                component: comp,
+                                                ancestor: comp,
+                                                componentOperationCubit:
+                                                    _componentOperationCubit,
+                                                componentCreationCubit:
+                                                    _componentCreationCubit,
+                                                componentSelectionCubit:
+                                                    _componentSelectionCubit,
+                                              )
+                                          ],
+                                        ),
+                                      ),
+                                      if (comp.root != null)
+                                        Container(
+                                          alignment: Alignment.topLeft,
+                                          padding: const EdgeInsets.all(6),
+                                          child: SublistWidget(
+                                              component: comp.root!,
+                                              ancestor: comp,
+                                              componentSelectionCubit:
+                                                  _componentSelectionCubit,
+                                              componentOperationCubit:
+                                                  _componentOperationCubit,
+                                              componentCreationCubit:
+                                                  _componentCreationCubit),
+                                        ),
+                                    ],
+                                    const SizedBox(
+                                      height: 100,
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           );
                         },
@@ -1073,7 +1082,9 @@ class _SublistWidgetState extends State<SublistWidget> {
                   },
                 ),
                 if (showMenu) ...[
-                  const Spacer(),
+                  const SizedBox(
+                    width: 10,
+                  ),
                   ComponentModificationMenu(
                     component: widget.component,
                     ancestor: widget.ancestor,
@@ -1146,7 +1157,9 @@ class _SublistWidgetState extends State<SublistWidget> {
                         );
                       }),
                       if (showMenu) ...[
-                        const Spacer(),
+                        const SizedBox(
+                          width: 10,
+                        ),
                         ComponentModificationMenu(
                           component: widget.component,
                           ancestor: widget.ancestor,
@@ -1190,7 +1203,9 @@ class _SublistWidgetState extends State<SublistWidget> {
                         componentSelectionCubit: widget.componentSelectionCubit,
                       ),
                       if (showMenu) ...[
-                        const Spacer(),
+                        const SizedBox(
+                          width: 10,
+                        ),
                         ComponentModificationMenu(
                           component: widget.component,
                           customNamed: null,
@@ -1222,7 +1237,9 @@ class _SublistWidgetState extends State<SublistWidget> {
                                       fontWeight: FontWeight.w500),
                                 ),
                                 if (showMenu) ...[
-                                  const Spacer(),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
                                   ComponentModificationMenu(
                                       component: widget.component,
                                       customNamed: child,
@@ -1462,7 +1479,6 @@ class ComponentModificationMenu extends StatelessWidget {
     final favourite = customNamed == null &&
         !componentParameterOperation &&
         componentOperationCubit.isFavourite(component);
-
     final components =
         componentList.map((key, value) => MapEntry(key, value()));
     return Container(
@@ -1476,8 +1492,7 @@ class ComponentModificationMenu extends StatelessWidget {
                 //rename
                 showCustomWidgetRename(context, 'Rename ${component.name}',
                     (value) {
-
-                      Navigator.pop(context);
+                  Navigator.pop(context);
                   componentOperationCubit.updateGlobalCustomComponent(
                       component as CustomComponent,
                       newName: AppTextField.changedValue);
@@ -1580,12 +1595,6 @@ class ComponentModificationMenu extends StatelessWidget {
               width: 3,
             ),
           ],
-          if (favourite)
-            Icon(
-              Icons.star,
-              size: 20,
-              color: Colors.yellow.shade600,
-            ),
           if (!disableOperations &&
               menuEnable &&
               customNamed == null &&
@@ -1980,7 +1989,8 @@ class ComponentModificationMenu extends StatelessWidget {
   void showSelectionDialog(
       BuildContext context, void Function(Component) onSelection,
       {List<String>? possibleItems, bool favouritesEnable = true}) {
-    showModelDialog(context,
+    showModelDialog(
+      context,
       GestureDetector(
         onTap: () {
           Navigator.pop(context);
@@ -2172,10 +2182,30 @@ class ComponentTile extends StatelessWidget {
                     ? Border.all(color: Colors.blueAccent, width: 2)
                     : Border.all(color: const Color(0xffd3d3d3), width: 2),
               ),
-              child: Text(
-                component.name,
-                style: AppFontStyle.roboto(13,
-                    color: Colors.black, fontWeight: FontWeight.w500),
+              child: Row(
+                children: [
+                  BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
+                    builder: (context, state) {
+                      return Visibility(
+                        visible:
+                        get<ComponentOperationCubit>().isFavourite(component),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 5),
+                          child: Icon(
+                            Icons.star,
+                            size: 15,
+                            color: Colors.yellow.shade600,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Text(
+                    component.name,
+                    style: AppFontStyle.roboto(13,
+                        color: Colors.black, fontWeight: FontWeight.w500),
+                  ),
+                ],
               ),
             ),
           );

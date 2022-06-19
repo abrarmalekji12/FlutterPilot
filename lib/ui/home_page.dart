@@ -16,7 +16,9 @@ import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../common/dialog_selection.dart';
 import '../common/logger.dart';
+import '../common/material_alert.dart';
 import '../common/responsive/responsive_widget.dart';
+import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/action_edit/action_edit_cubit.dart';
 import '../cubit/component_creation/component_creation_cubit.dart';
@@ -46,18 +48,19 @@ import 'emulation_view.dart';
 import 'models_view.dart';
 import 'parameter_ui.dart';
 import 'preview_ui.dart';
+import 'project_selection_page.dart';
 import 'variable_ui.dart';
 
 class HomePage extends StatefulWidget {
   final String projectName;
   final int userId;
-  final bool prototype;
+  final bool runMode;
 
   const HomePage(
       {Key? key,
       required this.projectName,
       required this.userId,
-      this.prototype = false})
+      this.runMode = false})
       : super(key: key);
 
   @override
@@ -68,7 +71,7 @@ class _HomePageState extends State<HomePage> {
   static StreamSubscription? _streamSubscription;
   final ScrollController propertyScrollController = ScrollController();
   final componentCreationCubit = ComponentCreationCubit();
-  final componentOperationCubit = ComponentOperationCubit();
+  late ComponentOperationCubit componentOperationCubit;
   late final FlutterProjectCubit flutterProjectCubit;
   final ParameterBuildCubit _parameterBuildCubit = ParameterBuildCubit();
   final visualBoxCubit = VisualBoxCubit();
@@ -79,11 +82,12 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    componentOperationCubit = get<ComponentOperationCubit>();
     flutterProjectCubit = context.read<FlutterProjectCubit>();
     if (_streamSubscription != null) {
       _streamSubscription?.cancel();
     }
-    if(kIsWeb) {
+    if (kIsWeb) {
       _streamSubscription = html.window.onKeyDown.listen((event) {
         if (event.altKey &&
             componentOperationCubit.flutterProject?.rootComponent != null) {
@@ -112,20 +116,20 @@ class _HomePageState extends State<HomePage> {
           }
         }
       });
-      if(kIsWeb) {
+      if (kIsWeb) {
         html.window.onResize.listen((event) {
           if (mounted) {
             componentCreationCubit.changedComponent();
           }
         });
       }
-
     }
     FireBridge.init().then((value) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         AppLoader.show(context);
         flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
-            componentOperationCubit, widget.projectName, widget.prototype);
+            componentOperationCubit, widget.projectName, widget.runMode,
+            userId: widget.userId);
       });
     });
   }
@@ -156,8 +160,6 @@ class _HomePageState extends State<HomePage> {
           providers: [
             BlocProvider<ComponentCreationCubit>(
                 create: (context) => componentCreationCubit),
-            BlocProvider<ComponentOperationCubit>(
-                create: (context) => componentOperationCubit),
             BlocProvider<ComponentSelectionCubit>(
                 create: (context) => componentSelectionCubit),
             BlocProvider<ScreenConfigCubit>(
@@ -178,6 +180,10 @@ class _HomePageState extends State<HomePage> {
                 case FlutterProjectLoadingState:
                   AppLoader.show(context,
                       loadingMode: LoadingMode.projectLoadingMode);
+                  break;
+                case FlutterProjectLoadingErrorState:
+                  AppLoader.hide();
+                  showFlutterErrorDialog((state as FlutterProjectLoadingErrorState).model);
                   break;
                 case FlutterProjectErrorState:
                   AppLoader.hide();
@@ -210,10 +216,10 @@ class _HomePageState extends State<HomePage> {
               if (componentOperationCubit.flutterProject == null) {
                 return Container();
               }
-              if (widget.prototype) {
+              if (widget.runMode) {
                 return const PrototypeShowcase();
               }
-              return const ResponsiveWidget(
+              return const Responsive(
                 largeScreen: DesktopVisualEditor(),
                 mediumScreen: DesktopVisualEditor(),
                 smallScreen: PrototypeShowcase(),
@@ -221,6 +227,41 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  void showFlutterErrorDialog(ProjectLoadErrorModel error) {
+    final String title;
+    final String message;
+    switch (error.projectLoadError) {
+      case ProjectLoadError.notPermission:
+        title = 'Not enough permissions';
+        message = 'you do not have permission to access this project';
+        break;
+      case ProjectLoadError.networkError:
+        title = 'Network error';
+        message = 'there was a network error while loading the project';
+        break;
+      case ProjectLoadError.otherError:
+        title = 'Error';
+        message = 'there was an error while loading the project';
+        break;
+      case ProjectLoadError.notFound:
+        title = 'Not Found';
+        message = error.error!;
+        break;
+    }
+    showModelDialog(
+      context,
+      MaterialAlertDialog(
+        title: title,
+        subtitle: message,
+
+        positiveButtonText: 'OK',
+        onPositiveTap: () {
+          Navigator.pop(context);
+        },
       ),
     );
   }
@@ -320,152 +361,141 @@ class ToolbarButtons extends StatefulWidget {
 class _ToolbarButtonsState extends State<ToolbarButtons> {
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.topRight,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            InkWell(
-              highlightColor: Colors.blueAccent.shade200,
-              borderRadius: BorderRadius.circular(8),
-              onTap: () {
-                CustomDialog.show(
-                  context,
-                  CodeViewerWidget(
-                    componentOperationCubit:
-                        BlocProvider.of<ComponentOperationCubit>(context,
-                            listen: false),
-                  ),
-                );
-              },
-              child: Container(
-                width: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: kElevationToShadow[1],
-                  color: Colors.blueAccent,
-                ),
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.code,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    const Spacer(),
-                    Text(
-                      'Code',
-                      style: AppFontStyle.roboto(13, color: Colors.white),
-                    ),
-                    const Spacer(),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(
-              width: 5,
-            ),
-            InkWell(
-              highlightColor: Colors.blueAccent.shade200,
-              borderRadius: BorderRadius.circular(8),
-              onTap: () {
-                showModelDialog(
-                  context,
-                  BuildView(
-                    onDismiss: () {
-                      BlocProvider.of<ComponentCreationCubit>(context,
-                              listen: false)
-                          .changedComponent();
-                    },
-                    componentOperationCubit:
-                        BlocProvider.of<ComponentOperationCubit>(context,
-                            listen: false),
-                    screenConfigCubit: BlocProvider.of<ScreenConfigCubit>(
-                        context,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        InkWell(
+          highlightColor: Colors.blueAccent.shade200,
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            CustomDialog.show(
+              context,
+              CodeViewerWidget(
+                componentOperationCubit:
+                    BlocProvider.of<ComponentOperationCubit>(context,
                         listen: false),
-                  ),
-                ).then((value) {
-                  BlocProvider.of<ScreenConfigCubit>(context, listen: false)
-                      .applyCurrentSizeToVariables();
-                });
-              },
-              child: Container(
-                width: 80,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade500,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: kElevationToShadow[1],
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    const Spacer(),
-                    Text(
-                      'Run',
-                      style: AppFontStyle.roboto(13, color: Colors.white),
-                    ),
-                    const Spacer(),
-                  ],
-                ),
               ),
+            );
+          },
+          child: Container(
+            width: 80,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: kElevationToShadow[1],
+              color: Colors.blueAccent,
             ),
-            const SizedBox(
-              width: 5,
-            ),
-            InkWell(
-              highlightColor: Colors.blue.shade200,
-              borderRadius: BorderRadius.circular(8),
-              onTap: () {
-                Navigator.of(context).push(getRoute(
-                    (p0) => PreviewPage(
-                        BlocProvider.of<ComponentOperationCubit>(context,
-                            listen: false),
-                        BlocProvider.of<ScreenConfigCubit>(context,
-                            listen: false)),
-                    '/projects/${ComponentOperationCubit.currentFlutterProject!.name}/preview'));
-              },
-              child: Container(
-                width: 80,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: kElevationToShadow[1],
-                    color: Colors.deepPurpleAccent.shade400),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.preview,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    const Spacer(),
-                    Text(
-                      'Preview',
-                      style: AppFontStyle.roboto(13, color: Colors.white),
-                    ),
-                    const Spacer(),
-                  ],
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.code,
+                  color: Colors.white,
+                  size: 16,
                 ),
-              ),
+                const Spacer(),
+                Text(
+                  'Code',
+                  style: AppFontStyle.roboto(13, color: Colors.white),
+                ),
+                const Spacer(),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        InkWell(
+          highlightColor: Colors.blueAccent.shade200,
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            showModelDialog(
+              context,
+              BuildView(
+                onDismiss: () {
+                  BlocProvider.of<ComponentCreationCubit>(context,
+                          listen: false)
+                      .changedComponent();
+                },
+                componentOperationCubit:
+                    BlocProvider.of<ComponentOperationCubit>(context,
+                        listen: false),
+                screenConfigCubit:
+                    BlocProvider.of<ScreenConfigCubit>(context, listen: false),
+              ),
+            ).then((value) {
+              BlocProvider.of<ScreenConfigCubit>(context, listen: false)
+                  .applyCurrentSizeToVariables();
+            });
+          },
+          child: Container(
+            width: 80,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.green.shade500,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: kElevationToShadow[1],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 16,
+                ),
+                const Spacer(),
+                Text(
+                  'Run',
+                  style: AppFontStyle.roboto(13, color: Colors.white),
+                ),
+                const Spacer(),
+              ],
+            ),
+          ),
+        ),
+        InkWell(
+          highlightColor: Colors.blue.shade200,
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            Navigator.of(context).push(getRoute(
+                (p0) => PreviewPage(
+                    BlocProvider.of<ComponentOperationCubit>(context,
+                        listen: false),
+                    BlocProvider.of<ScreenConfigCubit>(context, listen: false)),
+                '/projects/${ComponentOperationCubit.currentFlutterProject!.name}/preview'));
+          },
+          child: Container(
+            width: 80,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: kElevationToShadow[1],
+                color: Colors.deepPurpleAccent.shade400),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.preview,
+                  color: Colors.white,
+                  size: 16,
+                ),
+                const Spacer(),
+                Text(
+                  'Preview',
+                  style: AppFontStyle.roboto(13, color: Colors.white),
+                ),
+                const Spacer(),
+              ],
+            ),
+          ),
+        ),
+        VariableShowHideMenu(),
+        ModelShowHideMenu(),
+        ActionCodeShowHideMenu()
+      ],
     );
   }
 }
@@ -750,33 +780,78 @@ class _PrototypeShowcaseState extends State<PrototypeShowcase> {
     // thickness: 0.4,
     // ),
 
-    return RuntimeProvider(
-      runtimeMode: RuntimeMode.run,
-      child: BlocBuilder<FlutterProjectCubit, FlutterProjectState>(
-        buildWhen: (state1, state2) {
-          if (state2 is FlutterProjectLoadingState) {
-            return false;
-          }
-          return true;
-        },
-        builder: (context, state) {
-          print('STATE IS ${state.runtimeType}');
-          if (ComponentOperationCubit.currentFlutterProject != null) {
-            ComponentOperationCubit.codeProcessor.variables['dw']!.value =
-                MediaQuery.of(context).size.width;
-            ComponentOperationCubit.codeProcessor.variables['dh']!.value =
-                MediaQuery.of(context).size.height;
-            get<StackActionCubit>().stackOperation(StackOperation.push,
-                uiScreen:
-                    ComponentOperationCubit.currentFlutterProject!.mainScreen);
-            ComponentOperationCubit.codeProcessor.executeCode(
-                ComponentOperationCubit.currentFlutterProject!.actionCode);
-            return ComponentOperationCubit.currentFlutterProject!
-                .run(context, navigator: true);
-          }
-          return Container();
-        },
+    return Stack(
+      children: [
+        RuntimeProvider(
+          runtimeMode: RuntimeMode.run,
+          child: BlocBuilder<FlutterProjectCubit, FlutterProjectState>(
+            buildWhen: (state1, state2) {
+              if (state2 is FlutterProjectLoadingState) {
+                return false;
+              }
+              return true;
+            },
+            builder: (context, state) {
+              print('STATE IS ${state.runtimeType}');
+              if (ComponentOperationCubit.currentFlutterProject != null) {
+                ComponentOperationCubit.codeProcessor.variables['dw']!.value =
+                    MediaQuery.of(context).size.width;
+                ComponentOperationCubit.codeProcessor.variables['dh']!.value =
+                    MediaQuery.of(context).size.height;
+                get<StackActionCubit>().stackOperation(StackOperation.push,
+                    uiScreen: ComponentOperationCubit
+                        .currentFlutterProject!.mainScreen);
+                ComponentOperationCubit.codeProcessor.executeCode(
+                    ComponentOperationCubit.currentFlutterProject!.actionCode);
+                return ComponentOperationCubit.currentFlutterProject!
+                    .run(context, navigator: true);
+              }
+              return Container();
+            },
+          ),
+        ),
+        Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+            padding: const EdgeInsets.all(5),
+            child: PrototypeBackButton(
+              iconSize: Responsive.isLargeScreen(context) ? 24 : 14,
+              buttonSize: Responsive.isLargeScreen(context) ? 40 : 24,
+            ),
+          ),
+        )
+      ],
+    );
+  }
+}
+
+class PrototypeBackButton extends StatelessWidget {
+  final double iconSize;
+  final double buttonSize;
+
+  const PrototypeBackButton(
+      {Key? key, required this.iconSize, required this.buttonSize})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      child: Container(
+        width: buttonSize,
+        height: buttonSize,
+        decoration: BoxDecoration(
+          color: AppColors.lightGrey.withOpacity(0.4),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.arrow_back_ios_rounded,
+          color: Colors.grey.shade400.withOpacity(0.4),
+          size: iconSize,
+        ),
       ),
+      onTap: () {
+        Navigator.pop(context);
+      },
     );
   }
 }
@@ -827,7 +902,7 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
               _screenConfigCubit),
         ),
         SizedBox(
-          width: dw(context, 25),
+          width: dw(context, 30),
           child: Padding(
             padding: const EdgeInsets.all(15),
             child:
@@ -1057,27 +1132,18 @@ class CenterMainSide extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Row(
-                    children: const [
-                      ToolbarButtons(),
-                      Expanded(
-                        child: Center(
-                          child: ScreenConfigSelection(),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      VariableShowHideMenu(),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      ModelShowHideMenu(),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      ActionCodeShowHideMenu()
-                    ],
+                  const ToolbarButtons(),
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  const SizedBox(
+                    width: 200,
+                    child: Center(
+                      child: ScreenConfigSelection(),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 5,
                   ),
                   Expanded(
                     child: BlocBuilder<ComponentCreationCubit,

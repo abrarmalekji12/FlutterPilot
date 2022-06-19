@@ -1,10 +1,12 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/foundation.dart';
+import '../../injector.dart';
 import '../../models/component_selection.dart';
 import '../../models/variable_model.dart';
 import '../../models/other_model.dart';
 import '../../ui/models_view.dart';
+import '../authentication/authentication_cubit.dart';
 import '../component_operation/component_operation_cubit.dart';
 import '../component_selection/component_selection_cubit.dart';
 import '../../firestore/firestore_bridge.dart';
@@ -19,13 +21,13 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
 
   FlutterProjectCubit() : super(FlutterProjectInitial());
 
-
   // set userId
   set setUserId(int userId) {
     _userId = userId;
   }
 
-  int get userId => _userId??-1;
+  int get userId => _userId ?? -1;
+
   Future<void> loadFlutterProjectList() async {
     emit(FlutterProjectLoadingState());
     try {
@@ -71,36 +73,54 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
   }
 
   void reloadProject(final ComponentSelectionCubit componentSelectionCubit,
-      final ComponentOperationCubit componentOperationCubit) {
+      final ComponentOperationCubit componentOperationCubit,
+      {required int userId}) {
     loadFlutterProject(componentSelectionCubit, componentOperationCubit,
-        componentOperationCubit.flutterProject!.name, false);
+        componentOperationCubit.flutterProject!.name, false,
+        userId: userId);
   }
 
   void loadFlutterProject(
       final ComponentSelectionCubit componentSelectionCubit,
       final ComponentOperationCubit componentOperationCubit,
       final String projectName,
-      final bool notLoggedIn,{int? user}) async {
+      final bool notLoggedIn,
+      {required int userId}) async {
     emit(FlutterProjectLoadingState());
     try {
       if (notLoggedIn) {
-        final authResponse= await FireBridge.login('test_fvb@mailinator.com', 'test123');
-        setUserId=authResponse.userId!;
+        final authResponse =
+            await FireBridge.login('test_fvb@mailinator.com', 'test123');
+        get<AuthenticationCubit>().authViewModel.userId = authResponse.userId;
         print('Auth response: ${authResponse.userId}');
       }
+      setUserId = userId;
       ComponentOperationCubit.codeProcessor.variables
           .removeWhere((key, value) => value.deletable);
       ComponentOperationCubit.codeProcessor.localVariables.clear();
+      print('CHECKING $userId & ${get<AuthenticationCubit>().authViewModel.userId}');
+      final response = await FireBridge.loadFlutterProject(userId, projectName,
+          ifPublic: userId != get<AuthenticationCubit>().authViewModel.userId);
+      if (response.isRight) {
+        switch (response.right.projectLoadError) {
+          case ProjectLoadError.notPermission:
+            print('Not permission');
+            break;
+          case ProjectLoadError.networkError:
+            print('Network error');
+            break;
 
-      final FlutterProject? flutterProject =
-          await FireBridge.loadFlutterProject(userId, projectName);
-
-      if (flutterProject == null) {
-        print('Project not found $projectName $userId');
-        emit(FlutterProjectErrorState());
+          case ProjectLoadError.otherError:
+            print('Project not found $projectName $userId');
+            break;
+          case ProjectLoadError.notFound:
+            print('Project not found $projectName $userId');
+            break;
+        }
+        emit(FlutterProjectLoadingErrorState(model: response.right));
         return;
       }
-
+      final flutterProject = response.left;
       if (flutterProject.rootComponent != null) {
         final List<ImageData> imageDataList = [];
         componentOperationCubit.setFlutterProject = flutterProject;

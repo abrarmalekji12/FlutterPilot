@@ -61,15 +61,15 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           AppLoader.hide();
           Fluttertoast.showToast(
               msg: 'Please check your email box.', timeInSecForIosWeb: 3);
-          Navigator.pushReplacement(
-              context, CustomPageRoute(builder: (_) => const LoginPage()));
+
+          Navigator.pushReplacementNamed(context,'/login');
         } else if (state is AuthErrorState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
         }
       },
       child: AuthenticationPage(
-        widget: SingleChildScrollView(
+        widget: ()=>SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -123,10 +123,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           TextSpan(
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.pushReplacement(
-                                    context,
-                                    CustomPageRoute(
-                                        builder: (_) => const RegisterPage()));
+
+                                Navigator.pushReplacementNamed(context,'/register');
                               },
                             text: ' Create New',
                             style: GoogleFonts.getFont(

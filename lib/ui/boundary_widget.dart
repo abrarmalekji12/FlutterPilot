@@ -24,6 +24,7 @@ class BoundaryWidget extends StatelessWidget {
             builder: (context, state) {
               final List<Boundary> boundaries = getAllBoundaries(context);
               return CustomPaint(
+                size: const Size(double.infinity, double.infinity),
                 painter: BoundaryPainter(
                     boundaries: boundaries,
                     errorBoundary:

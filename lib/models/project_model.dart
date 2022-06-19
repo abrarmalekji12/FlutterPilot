@@ -6,9 +6,10 @@ import '../common/undo/revert_work.dart';
 import '../constant/string_constant.dart';
 import '../cubit/stack_action/stack_action_cubit.dart';
 import '../injector.dart';
+import '../main.dart';
 import '../ui/action_ui.dart';
 import '../ui/models_view.dart';
-import '../widgets/project_setting_page.dart';
+import '../ui/project_setting_page.dart';
 import 'local_model.dart';
 import 'variable_model.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -19,7 +20,7 @@ import '../component_list.dart';
 import 'component_model.dart';
 
 class FlutterProject {
-  late final ProjectSettingsModel projectSettingsModel;
+  late ProjectSettingsModel settings;
   String name;
   final int userId;
   String? docId;
@@ -33,10 +34,17 @@ class FlutterProject {
   final List<CustomComponent> customComponents = [];
   final List<FavouriteModel> favouriteList = [];
 
-  FlutterProject(this.name, this.userId, this.docId, {this.device,this.actionCode=''}){
-    projectSettingsModel=ProjectSettingsModel(isPublic: false, linkIfPublic: null);
+  FlutterProject(this.name, this.userId, this.docId, {this.device,this.actionCode='',ProjectSettingsModel? settings}){
+    if(settings!=null){
+      this.settings=settings;
+    }
+    else{
+      this.settings= ProjectSettingsModel(isPublic: false,collaborators: []);
+    }
   }
-
+  String get getPath {
+    return RunKey.encrypt(userId, name);
+  }
   factory FlutterProject.createNewProject(String name, int userId) {
     final FlutterProject flutterProject = FlutterProject(name, userId, null);
     final ui = UIScreen.mainUI();

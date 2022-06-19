@@ -9,6 +9,7 @@ import '../../common/extension_util.dart';
 import '../../common/app_loader.dart';
 import '../../common/password_box.dart';
 import '../../cubit/authentication/authentication_cubit.dart';
+import '../../cubit/flutter_project/flutter_project_cubit.dart';
 import '../../models/actions/action_model.dart';
 import '../project_selection_page.dart';
 import 'login.dart';
@@ -55,7 +56,7 @@ class _RegisterPageState extends State<RegisterPage> {
           AppLoader.show(context);
         } else if (state is AuthSuccessState) {
           AppLoader.hide();
-          Navigator.pushReplacementNamed(context, '/projects',arguments: state.userId);
+          context.read<FlutterProjectCubit>().setUserId = state.userId;
 
         } else if (state is AuthFailedState) {
           AppLoader.hide();
@@ -63,7 +64,7 @@ class _RegisterPageState extends State<RegisterPage> {
         }
       },
       child: AuthenticationPage(
-        widget: SingleChildScrollView(
+        widget: ()=>SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -118,10 +119,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             text: ' Login',
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.pushReplacement(
-                                    context,
-                                    CustomPageRoute(
-                                        builder: (_) => const LoginPage()));
+
+                                Navigator.pushReplacementNamed(context,'/login');
                               },
                             style: GoogleFonts.getFont(
                               'Lato',

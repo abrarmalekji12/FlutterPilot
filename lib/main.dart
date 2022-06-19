@@ -4,6 +4,9 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_builder/ui/home/landing_page.dart';
+import 'cubit/component_operation/component_operation_cubit.dart';
+import 'models/actions/action_model.dart';
 import 'ui/project_selection_page.dart';
 import 'package:url_strategy/url_strategy.dart';
 
@@ -123,9 +126,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    if(kIsWeb) {
+    if (kIsWeb) {
       html.document
-        .addEventListener('contextmenu', (event) => event.preventDefault());
+          .addEventListener('contextmenu', (event) => event.preventDefault());
     }
     if (!kDebugMode) {
       FlutterError.onError = (
@@ -151,7 +154,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => AuthenticationCubit(),
+          create: (context) => get<AuthenticationCubit>(),
         ),
         BlocProvider(
           create: (context) => get<StateManagementBloc>(),
@@ -161,13 +164,17 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => get<FlutterProjectCubit>(),
-        )
+        ),
+        BlocProvider(
+          create: (context) => get<ComponentOperationCubit>(),
+        ),
       ],
       child: MaterialApp(
         title: 'Flutter Visual Builder',
         scrollBehavior: MyCustomScrollBehavior(),
-        initialRoute: '/login',
+        initialRoute: '',
         routes: {
+          '': (context) => const LandingPage(),
           '/login': (context) => const LoginPage(),
         },
         // initialRoute: '/run-497aa95cb338b4e1fd95a0f9c26a63d1',
@@ -190,14 +197,23 @@ class MyApp extends StatelessWidget {
             } else {
               return getRoute((p0) => const LoginPage(), '/login');
             }
+          } else if (link == '/run' && settings.arguments is List) {
+            final args = settings.arguments as List;
+            return getRoute(
+                (p0) => HomePage(
+                      userId: args[0] as int,
+                      projectName: args[1] as String,
+                      runMode: true,
+                    ),
+                '/run');
           } else if (link.startsWith('/run')) {
-            final list = TestKey.decrypt(link.substring(5));
+            final list = RunKey.decrypt(link.substring(5));
             if (list != null) {
               return getRoute(
                   (p0) => HomePage(
                         projectName: list[1],
                         userId: list[0],
-                        prototype: true,
+                        runMode: true,
                       ),
                   link);
             }
@@ -211,10 +227,14 @@ class MyApp extends StatelessWidget {
   }
 }
 
-getRoute(Function(BuildContext) builder, String name) {
+getRoute(Widget Function(BuildContext) builder, String name,
+    {bool anim = true}) {
+  if (!anim) {
+    return CustomPageRoute(
+        builder: builder, settings: RouteSettings(name: name));
+  }
   return MaterialPageRoute(
-      builder: (context) => builder(context),
-      settings: RouteSettings(name: name));
+      builder: builder, settings: RouteSettings(name: name));
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
@@ -227,7 +247,7 @@ class MyCustomScrollBehavior extends MaterialScrollBehavior {
       };
 }
 
-class TestKey {
+class RunKey {
   static String encrypt(int userId, String project) {
     return '${userId}_$project';
   }

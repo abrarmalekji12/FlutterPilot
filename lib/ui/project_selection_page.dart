@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/app_loader.dart';
 import '../common/material_alert.dart';
+import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/authentication/authentication_cubit.dart';
 import '../models/project_model.dart';
-import 'authentication/login.dart';
-import 'home_page.dart';
-import 'package:get/get.dart';
 import '../cubit/flutter_project/flutter_project_cubit.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import 'home/landing_page.dart';
 
 class ProjectSelectionPage extends StatefulWidget {
   final int userId;
@@ -50,8 +50,11 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                   break;
                 case AuthSuccessState:
                   AppLoader.hide();
-
-                  Navigator.pushReplacementNamed(context, '/login');
+                  if((state as AuthSuccessState).userId==-1) {
+                    Navigator.pop(context);
+                    openAuthDialog(context,(userId){
+                  });
+                  }
                   break;
               }
             },
@@ -78,116 +81,43 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.max,
                 children: [
-                  Container(
-                    height: 56,
-                    child: Row(
-                      children: const [Spacer(), LogoutButton()],
-                    ),
-                    decoration: const BoxDecoration(
-                        border: Border(
-                            bottom: BorderSide(
-                                color: Color(0xfff2f2f2), width: 1))),
+                  Row(
+                    children:  [
+                      BackButton(onPressed: (){
+                        Navigator.pop(context);
+                      },),
+                      const Spacer(),
+                      const LogoutButton(),
+                    ],
                   ),
+                  const Divider(
+                    color: AppColors.lightGrey,
+                    thickness: 1,
+                  ),
+                  const SizedBox(height: 20),
                   Text(
-                    'Projects',
+                    'Start with Project',
                     style: GoogleFonts.getFont(
                       'Roboto',
                       textStyle: const TextStyle(
-                        fontSize: 21,
+                        fontSize: 20,
                         color: Color(0xff000000),
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.bold,
                         fontStyle: FontStyle.normal,
                       ),
                     ),
                     textAlign: TextAlign.left,
                   ),
                   const SizedBox(
-                    height: 15,
+                    height: 30,
                   ),
                   Form(
                     key: _formKey,
-                    child: TextFormField(
-                      controller: _textEditingController,
-                      style: GoogleFonts.getFont(
-                        'Roboto',
-                        textStyle: const TextStyle(
-                          fontSize: 18,
-                          color: Color(0xff000000),
-                          fontWeight: FontWeight.w400,
-                          fontStyle: FontStyle.normal,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.length < 3) {
-                          return 'Project name should be greater than 3 characters';
-                        }
-                        return null;
-                      },
-                      readOnly: false,
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.all(15),
-                        labelText: 'Please enter project name',
-                        labelStyle: GoogleFonts.getFont(
-                          'Roboto',
-                          textStyle: const TextStyle(
-                            fontSize: 15,
-                            color: Color(0xff000000),
-                            fontWeight: FontWeight.w400,
-                            fontStyle: FontStyle.normal,
-                          ),
-                        ),
-                        helperStyle: GoogleFonts.getFont(
-                          'ABeeZee',
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xff000000),
-                            fontWeight: FontWeight.w400,
-                            fontStyle: FontStyle.normal,
-                          ),
-                        ),
-                        hintStyle: GoogleFonts.getFont(
-                          'ABeeZee',
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xff000000),
-                            fontWeight: FontWeight.w400,
-                            fontStyle: FontStyle.normal,
-                          ),
-                        ),
-                        errorStyle: GoogleFonts.getFont(
-                          'ABeeZee',
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.red,
-                            fontWeight: FontWeight.w400,
-                            fontStyle: FontStyle.normal,
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.create,
-                        ),
-                        iconColor: const Color(0xffffffff),
-                        prefixText: '',
-                        prefixStyle: GoogleFonts.getFont(
-                          'ABeeZee',
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xff000000),
-                            fontWeight: FontWeight.w400,
-                            fontStyle: FontStyle.normal,
-                          ),
-                        ),
-                        suffixText: '',
-                        suffixStyle: GoogleFonts.getFont(
-                          'ABeeZee',
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xff000000),
-                            fontWeight: FontWeight.w400,
-                            fontStyle: FontStyle.normal,
-                          ),
-                        ),
-                        enabled: true,
+                    child: SizedBox(
+                      width: 400,
+                      child: RoundBorderedTextField(
+                        controller: _textEditingController,
+                        hint: 'Enter Project Name',
                       ),
                     ),
                   ),
@@ -206,8 +136,8 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.max,
                             children: [
-                              ElevatedButton(
-                                onPressed: () {
+                              InkWell(
+                                onTap: () {
                                   if (_formKey.currentState!.validate()) {
                                     final name = _textEditingController.text;
                                     _flutterProjectCubit
@@ -220,34 +150,35 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                     });
                                   }
                                 },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppColors.theme,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 10),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.max,
                                     children: [
-                                      const Icon(
-                                        Icons.add,
-                                        size: 35,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(
-                                        width: 10,
-                                      ),
                                       Text(
                                         'Create new project',
                                         style: GoogleFonts.getFont(
                                           'Roboto',
-                                          textStyle: const TextStyle(
-                                            fontSize: 21,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontStyle: FontStyle.normal,
-                                          ),
+                                          textStyle: AppFontStyle.roboto(15,
+                                              color: Colors.white),
                                         ),
                                         textAlign: TextAlign.left,
+                                      ),
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
+                                      const Icon(
+                                        Icons.done,
+                                        size: 20,
+                                        color: Colors.white,
                                       ),
                                     ],
                                   ),
@@ -259,15 +190,12 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                             height: 40,
                           ),
                           Text(
-                            'Or choose an existing project',
+                            'Or choose an existing one',
                             style: GoogleFonts.getFont(
                               'Roboto',
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black,
-                                fontWeight: FontWeight.w500,
-                                fontStyle: FontStyle.normal,
-                              ),
+                              textStyle: AppFontStyle.roboto(15,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold),
                             ),
                             textAlign: TextAlign.left,
                           ),
@@ -278,65 +206,12 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                             child: SingleChildScrollView(
                               child: Wrap(
                                 children: _flutterProjectCubit.projects
-                                    .map((project) => Padding(
-                                          padding: const EdgeInsets.only(
-                                              right: 10, bottom: 10),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              ElevatedButton(
-                                                onPressed: () {
-                                                  Navigator.pushNamed(
-                                                      context, '/projects',
-                                                      arguments: [
-                                                        widget.userId,
-                                                        project.name
-                                                      ]);
-                                                },
-                                                child: Text(
-                                                  project.name,
-                                                  style: GoogleFonts.getFont(
-                                                    'Roboto',
-                                                    textStyle: const TextStyle(
-                                                      fontSize: 18,
-                                                      color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontStyle:
-                                                          FontStyle.normal,
-                                                    ),
-                                                  ),
-                                                  textAlign: TextAlign.left,
-                                                ),
-                                              ),
-                                              InkWell(
-                                                child: const Icon(
-                                                  Icons.delete,
-                                                  color: Colors.red,
-                                                ),
-                                                onTap: () {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (_) =>
-                                                        MaterialAlertDialog(
-                                                      title:
-                                                          'Do you really want to delete this project?, you will not be able to get back',
-                                                      positiveButtonText:
-                                                          'delete',
-                                                      negativeButtonText:
-                                                          'cancel',
-                                                      onPositiveTap: () {
-                                                        _flutterProjectCubit
-                                                            .deleteProject(
-                                                                project);
-                                                      },
-                                                    ),
-                                                  );
-                                                },
-                                              )
-                                            ],
-                                          ),
-                                        ))
+                                    .map(
+                                      (project) => ProjectTile(
+                                          name: project.name,
+                                          id: widget.userId,
+                                          project: project),
+                                    )
                                     .toList(growable: false),
                               ),
                             ),
@@ -351,6 +226,178 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
   }
 }
 
+class ProjectTile extends StatelessWidget {
+  final String name;
+  final FlutterProject project;
+  final int id;
+
+  const ProjectTile(
+      {Key? key, required this.name, required this.id, required this.project})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10, bottom: 10),
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          color: AppColors.lightGrey,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, '/projects',
+                      arguments: [id, name]);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.theme,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Text(
+                    name,
+                    style: AppFontStyle.roboto(14, color: Colors.white),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(
+              width: 5,
+            ),
+            AppIconButton(
+              icon: Icons.play_arrow_rounded,
+              onPressed: () {
+                Navigator.pushNamed(context, '/run', arguments: [id, name]);
+              },
+              color: AppColors.green,
+            ),
+            const SizedBox(
+              width: 5,
+            ),
+            AppIconButton(
+              icon: Icons.delete,
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => MaterialAlertDialog(
+                    title:
+                        'Do you really want to delete this project?, you will not be able to get back',
+                    positiveButtonText: 'delete',
+                    negativeButtonText: 'cancel',
+                    onPositiveTap: () {
+                      context
+                          .read<FlutterProjectCubit>()
+                          .deleteProject(project);
+                    },
+                  ),
+                );
+              },
+              color: AppColors.red,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AppIconButton extends StatelessWidget {
+  final IconData icon;
+  final double iconSize;
+  final double buttonSize;
+  final VoidCallback onPressed;
+  final Color color;
+
+  const AppIconButton(
+      {Key? key,
+      required this.icon,
+      required this.onPressed,
+      required this.color,
+      this.iconSize = 14,
+      this.buttonSize = 24})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      child: Container(
+        width: buttonSize,
+        height: buttonSize,
+        decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            boxShadow: kElevationToShadow[2]),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: iconSize,
+        ),
+      ),
+      onTap: onPressed,
+    );
+  }
+}
+
+class RoundBorderedTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+
+  const RoundBorderedTextField(
+      {Key? key, required this.controller, required this.hint})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      style: GoogleFonts.getFont(
+        'Roboto',
+        textStyle: const TextStyle(
+          fontSize: 16,
+          color: Color(0xff000000),
+          fontWeight: FontWeight.w400,
+          fontStyle: FontStyle.normal,
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.length < 3) {
+          return 'Project name should be greater than 3 characters';
+        }
+        return null;
+      },
+      readOnly: false,
+      decoration: InputDecoration(
+        contentPadding: const EdgeInsets.all(10),
+        labelText: hint,
+        labelStyle: GoogleFonts.getFont(
+          'Roboto',
+          textStyle: AppFontStyle.roboto(14, color: Colors.grey.shade700),
+        ),
+        hintStyle: AppFontStyle.roboto(14, color: Colors.black),
+        prefixText: '',
+        suffixText: '',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xfff7f7f7),
+            width: 2,
+          ),
+        ),
+        enabled: true,
+      ),
+    );
+  }
+}
+
 class LogoutButton extends StatelessWidget {
   const LogoutButton({Key? key}) : super(key: key);
 
@@ -359,24 +406,32 @@ class LogoutButton extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () {
-        BlocProvider.of<AuthenticationCubit>(context, listen: false).logout();
+        showDialog(context: context, builder: (_){
+          return MaterialAlertDialog(subtitle: 'Are you sure, you want to logout?', positiveButtonText: 'Yes', negativeButtonText:'No',onPositiveTap: (){
+            BlocProvider.of<AuthenticationCubit>(context, listen: false).logout();
+          },);
+        });
       },
       child: Container(
         padding: const EdgeInsets.all(10),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.logout,
-              size: 20,
+            const CircleAvatar(
+              backgroundColor: AppColors.theme,
+              child: Icon(
+                Icons.logout_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(
               width: 10,
             ),
             Text(
               'Logout',
-              style: AppFontStyle.roboto(14,
-                  color: Colors.black, fontWeight: FontWeight.w600),
+              style: AppFontStyle.roboto(15,
+                  color: AppColors.darkGrey, fontWeight: FontWeight.w600),
             )
           ],
         ),

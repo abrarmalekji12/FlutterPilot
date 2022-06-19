@@ -1,6 +1,7 @@
 import 'package:cyclop/cyclop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../common/compiler/code_processor.dart';
 import '../common/custom_text_field.dart';
 import '../common/dynamic_value_editing_controller.dart';
 import '../common/dynamic_value_filed.dart';
@@ -230,8 +231,6 @@ class SimpleParameterWidget extends StatelessWidget {
             child: TextFormField(
               maxLines: parameter.inputType == ParamInputType.text ? null : 3,
               validator: (value) {
-
-                print('here q parta');
                 dynamic result;
                 try {
                   result = parameter.process(value ?? '');
@@ -241,10 +240,13 @@ class SimpleParameterWidget extends StatelessWidget {
                 }
                 print('RESULT IS $value $result');
                   parameter.compiler.code = value ?? '';
-                  parameter.val = result;
-                  if (parameter.inputCalculateAs != null) {
-                    parameter.val =
-                        parameter.inputCalculateAs!.call(parameter.val!, true);
+                  if(result is! FVBUndefined) {
+                    parameter.val = result;
+                    if (parameter.inputCalculateAs != null) {
+                      parameter.val =
+                          parameter.inputCalculateAs!.call(
+                              parameter.val!, true);
+                    }
                   }
                   BlocProvider.of<ParameterBuildCubit>(context, listen: false)
                       .parameterChanged(context, parameter);
@@ -869,12 +871,14 @@ class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
             child: DynamicValueField<bool>(
                 onProcessedResult: (code, value) {
                   widget.parameter.compiler.code = code;
-                  widget.parameter.val = value;
-                  BlocProvider.of<ParameterBuildCubit>(context, listen: false)
-                      .parameterChanged(context, widget.parameter);
-                  BlocProvider.of<ComponentCreationCubit>(context,
-                          listen: false)
-                      .changedComponent();
+                  if(value!=null&&value is! FVBUndefined) {
+                    widget.parameter.val = value;
+                    BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                        .parameterChanged(context, widget.parameter);
+                    BlocProvider.of<ComponentCreationCubit>(context,
+                        listen: false)
+                        .changedComponent();
+                  }
                   return true;
                 },
                 textEditingController: _textEditingController),

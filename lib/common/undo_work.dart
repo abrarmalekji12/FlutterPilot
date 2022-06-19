@@ -1,8 +1,6 @@
 class RevertWork {
   final List<Work> _stack = [];
-
   RevertWork();
-
   factory RevertWork.init() {
     return RevertWork();
   }
@@ -11,17 +9,14 @@ class RevertWork {
     return _stack.length;
   }
 
-  bool get isEmpty{
-    return _stack.isEmpty;
-  }
   void clear() {
     _stack.clear();
   }
 
   void add(
       dynamic oldValue, void Function() work, void Function(dynamic) workUndo) {
-    _stack.add(Work(oldValue, work, workUndo));
     work.call();
+    _stack.add(Work(oldValue, work, workUndo));
   }
 
   void revert() {
@@ -30,20 +25,11 @@ class RevertWork {
       work.undoWork.call(work.oldValue);
     }
   }
-
-  void undo() {
-    if (totalOperations > 0) {
-      final work = _stack.removeAt(_stack.length - 1);
-      work.undoWork.call(work.oldValue);
-    }
-  }
 }
 
 class ApplyWork {
   final List<Work> _stack = [];
-
   ApplyWork();
-
   factory ApplyWork.init() {
     return ApplyWork();
   }

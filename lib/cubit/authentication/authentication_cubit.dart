@@ -1,4 +1,6 @@
 import 'package:bloc/bloc.dart';
+import '../../common/shared_preferences.dart';
+import '../../constant/preference_key.dart';
 import '../../firestore/firestore_bridge.dart';
 import 'package:meta/meta.dart';
 
@@ -15,12 +17,14 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     try {
       final response = await FireBridge.tryLoginWithPreference();
       if (response != null) {
+        authViewModel.userId= response;
         emit(AuthSuccessState(response));
       } else {
         emit(AuthenticationInitial());
       }
     } on Exception catch (error) {
       final errorMsg = error.toString();
+      Preferences.remove(PrefKey.UID);
       emit(AuthErrorState(errorMsg.substring(errorMsg.indexOf(']') + 1)));
     }
   }
@@ -30,6 +34,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     try {
       final response = await FireBridge.login(userName, password);
       if (response.userId != null) {
+        authViewModel.userId=response.userId;
         emit(AuthSuccessState(response.userId!));
       } else {
         emit(AuthFailedState(response.error ?? ''));
@@ -72,6 +77,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     try {
       final response = await FireBridge.registerUser(userName, password);
       if (response.userId != null) {
+        authViewModel.userId=response.userId;
         emit(AuthSuccessState(response.userId!));
       } else {
         emit(AuthFailedState(response.error ?? ''));

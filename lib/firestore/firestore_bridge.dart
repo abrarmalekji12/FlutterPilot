@@ -6,11 +6,10 @@ import 'dart:typed_data';
 // import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:firebase_core/firebase_core.dart';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import 'firebase_connection.dart';
-
-
 
 import 'package:flutter/cupertino.dart';
 import '../common/shared_preferences.dart';
@@ -26,9 +25,11 @@ import '../common/logger.dart';
 import '../constant/string_constant.dart';
 import '../models/component_model.dart';
 import '../network/auth_response/auth_response_model.dart';
+import '../ui/project_setting_page.dart';
 
 abstract class FireBridge {
-  static bool initialized=false;
+  static bool initialized = false;
+
   static Future<void> init() async {
     // await Firebase.initializeApp(
     //     options: FirebaseOptions.fromMap(const {
@@ -39,7 +40,7 @@ abstract class FireBridge {
     //   'messagingSenderId': '357010413683',
     //   'appId': '1:357010413683:web:851137f5a4916cc6587206'
     // }));
-    if(initialized){
+    if (initialized) {
       return;
     }
     await Firebase.initializeApp(
@@ -51,7 +52,7 @@ abstract class FireBridge {
       'messagingSenderId': '1087783488343',
       'appId': '1:1087783488343:web:efb618e6387c69e3a88c12'
     }));
-    initialized=true;
+    initialized = true;
   }
 
   static Future<void> saveComponent(
@@ -149,7 +150,11 @@ abstract class FireBridge {
       favouriteModels.add(FavouriteModel(
           Component.fromCode(
               json['code'], ComponentOperationCubit.currentFlutterProject!)!
-            ..boundary = Rect.fromLTWH(0.0, 0.0, double.parse(json['width'].toString()), double.parse(json['height'].toString())),
+            ..boundary = Rect.fromLTWH(
+                0.0,
+                0.0,
+                double.parse(json['width'].toString()),
+                double.parse(json['height'].toString())),
           json['project_name']));
     }
     return favouriteModels;
@@ -247,9 +252,10 @@ abstract class FireBridge {
       //     project.variables.map((e) => e.toJson()).toList(growable: false),
       // 'models': project.models.map((e) => e.toJson()).toList(growable: false),
       'device': 'iPhone X',
+      'settings': project.settings.toJson(),
       'current_screen': 'HomePage',
       'main_screen': 'HomePage',
-      'action_code':'',
+      'action_code': '',
     };
     final response = await FirebaseFirestore.instance
         .collection('us$userId')
@@ -288,16 +294,30 @@ abstract class FireBridge {
             : null
       });
     }
-    await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProjectInfo)
-        .update({
-      'projects': FieldValue.arrayUnion([project.name])
-    });
+    if (Platform.isWindows) {
+      final oldResponse = await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProjectInfo)
+          .get();
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProjectInfo)
+          .update({
+        'projects': List.from(oldResponse.data()['projects'])..add(project.name)
+      });
+    } else {
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProjectInfo)
+          .update({
+        'projects': FieldValue.arrayUnion([project.name])
+      });
+    }
   }
 
-  static Future<FlutterProject?> loadFlutterProject(
-      int userId, String name) async {
+  static Future<Optional<FlutterProject, ProjectLoadErrorModel>>
+      loadFlutterProject(int userId, String name,
+          {bool ifPublic = false}) async {
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('us$userId')
@@ -305,19 +325,32 @@ abstract class FireBridge {
           .collection(name)
           .get();
       final documents = snapshot.docs;
+      if (documents.isEmpty) {
+        return Optional.right(
+            ProjectLoadErrorModel(ProjectLoadError.notFound, 'Project "$name" not found'));
+      }
       final projectInfoDoc = documents
           .firstWhere((element) => element.data().containsKey('project_name'));
       final projectInfo = projectInfoDoc.data();
+      final settings = projectInfo['settings'] != null
+          ? ProjectSettingsModel.fromJson(projectInfo['settings'])
+          : null;
+      if (ifPublic && (!(settings?.isPublic ?? false))) {
+        return Optional.right(
+            ProjectLoadErrorModel(ProjectLoadError.notPermission, null));
+      }
       final FlutterProject flutterProject = FlutterProject(
           projectInfo['project_name'], userId, projectInfoDoc.id,
-          device: projectInfo['device'], actionCode: projectInfo['action_code'] ?? '');
+          device: projectInfo['device'],
+          actionCode: projectInfo['action_code'] ?? '',
+          settings: settings);
       // for (final modelJson in projectInfo['models'] ?? []) {
       //   final model = LocalModel.fromJson(modelJson);
       //   flutterProject.models.add(model);
       // }
       ComponentOperationCubit.currentFlutterProject = flutterProject;
-      documents
-          .retainWhere((element) => !element.data().containsKey('project_name'));
+      documents.retainWhere(
+          (element) => !element.data().containsKey('project_name'));
 
       // for (final modelJson in projectInfo['screens'] ?? []) {
       //   final screen = UIScreen.fromJson(modelJson, flutterProject);
@@ -325,7 +358,7 @@ abstract class FireBridge {
       // }
 
       final customDocs = await FirePath.customComponentsReferenceByProjectName(
-          userId, flutterProject.docId!)
+              userId, flutterProject.docId!)
           .get();
       for (final screenDoc in documents) {
         final screen = UIScreen.fromJson(screenDoc.data(), flutterProject);
@@ -333,14 +366,13 @@ abstract class FireBridge {
       }
       for (final doc in customDocs.docs) {
         final Map<String, dynamic> componentBody =
-        doc.data()! as Map<String, dynamic>;
+            doc.data()! as Map<String, dynamic>;
         flutterProject.customComponents
             .add(StatelessComponent(name: componentBody['name']));
       }
 
       if (projectInfo['current_screen'] != null) {
-        bool initializedMain = false,
-            initializedCurrent = false;
+        bool initializedMain = false, initializedCurrent = false;
         for (final screen in flutterProject.uiScreens) {
           if (screen.name == projectInfo['main_screen']) {
             flutterProject.mainScreen = screen;
@@ -377,7 +409,7 @@ abstract class FireBridge {
 
       for (int i = 0; i < customDocs.docs.length; i++) {
         final Map<String, dynamic> componentBody =
-        customDocs.docs[i].data()! as Map<String, dynamic>;
+            customDocs.docs[i].data()! as Map<String, dynamic>;
         flutterProject.customComponents[i].root = componentBody['code'] != null
             ? Component.fromCode(componentBody['code']!, flutterProject)
             : null;
@@ -401,11 +433,12 @@ abstract class FireBridge {
       }
       flutterProject.currentScreen = currentScreen;
 
-      return flutterProject;
+      return Optional.left(flutterProject);
     } on Exception catch (e) {
       print(e);
       e.printError();
-      return null;
+      return Optional.right(
+          ProjectLoadErrorModel(ProjectLoadError.otherError, e.toString()));
     }
   }
 
@@ -527,14 +560,29 @@ abstract class FireBridge {
 
   static Future<void> addVariable(final int userId,
       final FlutterProject project, final VariableModel variableModel) async {
-    await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject)
-        .collection(project.name)
-        .doc(project.currentScreen.name)
-        .update({
-      'variables': FieldValue.arrayUnion([variableModel.toJson()])
-    });
+    if (Platform.isWindows) {
+      final variablesRef = FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(project.name)
+          .doc(project.currentScreen.name);
+      final oldResponse = await variablesRef.get();
+      if (oldResponse.data()['variables'] != null) {
+        await variablesRef.update({
+          'variables': List.from(oldResponse.data()['variables'])
+            ..add(variableModel.toJson())
+        });
+      }
+    } else {
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProject)
+          .collection(project.name)
+          .doc(project.currentScreen.name)
+          .update({
+        'variables': FieldValue.arrayUnion([variableModel.toJson()])
+      });
+    }
     logger('=== FIRE-BRIDGE == addVariable ==');
   }
 
@@ -563,6 +611,16 @@ abstract class FireBridge {
         .update({'device': device});
   }
 
+  static Future<void> updateSettings(
+      final int userId, final FlutterProject project) async {
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject)
+        .collection(project.name)
+        .doc(project.docId)
+        .update({'settings': project.settings?.toJson()});
+  }
+
   static Future<void> updateCurrentScreen(
       int userId, final FlutterProject project) async {
     await FirebaseFirestore.instance
@@ -582,6 +640,7 @@ abstract class FireBridge {
         .doc(project.docId)
         .update({'action_code': project.actionCode});
   }
+
   // static Future<void> updateRootComponent(
   //     int userId, String projectName, Component component) async {
   //   final document = await FirebaseFirestore.instance
@@ -666,5 +725,50 @@ class FirePath {
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
         .collection('Custom|$projectId');
+  }
+}
+
+enum ProjectLoadError {
+  notPermission,
+  networkError,
+  notFound,
+  otherError,
+}
+
+class ProjectLoadErrorModel {
+  final ProjectLoadError projectLoadError;
+  final String? error;
+
+  ProjectLoadErrorModel(this.projectLoadError, this.error);
+}
+
+class Optional<A, B> {
+  final A? a;
+  final B? b;
+
+  Optional._(this.a, this.b);
+
+  factory Optional.right(B b) {
+    return Optional._(null, b);
+  }
+
+  factory Optional.left(A a) {
+    return Optional._(a, null);
+  }
+
+  bool get isRight {
+    return b != null;
+  }
+
+  bool get isLeft {
+    return a != null;
+  }
+
+  A get left {
+    return a!;
+  }
+
+  B get right {
+    return b!;
   }
 }

@@ -4,6 +4,7 @@ class AuthViewModel {
   String userName = '';
   String password = '';
   String confirmPassword = '';
+  int? userId;
 
   AuthViewModel() {
     if (kDebugMode) {

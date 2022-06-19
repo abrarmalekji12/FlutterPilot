@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../common/compiler/code_processor.dart';
 import '../../common/undo/revert_work.dart';
 import '../../injector.dart';
+import '../../main.dart';
 import '../../models/local_model.dart';
 import '../../models/variable_model.dart';
 import '../../models/parameter_model.dart';
@@ -38,6 +39,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   static CodeProcessor get codeProcessor => get<CodeProcessor>();
 
   FlutterProject? get flutterProject => currentFlutterProject;
+
 
   set setFlutterProject(FlutterProject project) =>
       currentFlutterProject = project;
@@ -642,6 +644,13 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     flutterProject!.currentScreen.variables.add(variableModel);
     await FireBridge.addVariable(
         flutterProject!.userId, flutterProject!, variableModel);
+    emit(ComponentOperationInitial());
+  }
+
+  Future<void> updateProjectSettings() async {
+    emit(ComponentOperationLoadingState());
+    await FireBridge.updateSettings(
+        flutterProject!.userId, flutterProject!);
     emit(ComponentOperationInitial());
   }
 

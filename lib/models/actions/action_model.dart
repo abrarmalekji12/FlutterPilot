@@ -346,7 +346,7 @@ class ShowSnackBarAction extends ActionModel {
 }
 
 class CustomPageRoute extends MaterialPageRoute {
-  CustomPageRoute({required WidgetBuilder builder}) : super(builder: builder);
+  CustomPageRoute({required super.builder,super.settings});
 
   @override
   Duration get transitionDuration => const Duration(seconds: 0);
