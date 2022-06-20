@@ -403,23 +403,102 @@ class _ComponentTreeState extends State<ComponentTree> {
                           debugPrint(
                               '=== ComponentOperationCubit == state ${state.runtimeType}');
                           return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SizedBox(
-                              width: 500,
-                              child: SingleChildScrollView(
-                                controller: _scrollController,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
+                            controller: _scrollController,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Container(
+                                  alignment: Alignment.topLeft,
+                                  padding: const EdgeInsets.all(6),
+                                  child: SublistWidget(
+                                      component: _componentOperationCubit
+                                          .flutterProject!.rootComponent!,
+                                      ancestor: _componentOperationCubit
+                                          .flutterProject!.rootComponent!,
+                                      componentSelectionCubit:
+                                          _componentSelectionCubit,
+                                      componentOperationCubit:
+                                          _componentOperationCubit,
+                                      componentCreationCubit:
+                                          _componentCreationCubit),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Custom Widgets',
+                                        style: AppFontStyle.roboto(14,
+                                            color: const Color(0xff494949),
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      InkWell(
+                                        borderRadius:
+                                            BorderRadius.circular(10),
+                                        onTap: () {
+                                          //ADD Custom Widgets
+                                          showScreenNameDialog(
+                                              context, 'Enter widget name',
+                                              (name, _) {
+                                            Navigator.pop(context);
+                                            BlocProvider.of<
+                                                        ComponentOperationCubit>(
+                                                    context,
+                                                    listen: false)
+                                                .addCustomComponent(name);
+                                          }, type: false);
+                                        },
+                                        child: const CircleAvatar(
+                                          radius: 10,
+                                          backgroundColor: AppColors.theme,
+                                          child: Icon(
+                                            Icons.add,
+                                            size: 15,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                for (final CustomComponent comp
+                                    in _componentOperationCubit
+                                        .flutterProject!
+                                        .customComponents) ...[
+                                  OnHoverMenuChangeWidget(
+                                    buildWidget: (showMenu) => Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        ComponentTile(
+                                            component: comp,
+                                            ancestor: comp,
+                                            componentSelectionCubit:
+                                                _componentSelectionCubit),
+                                        if (showMenu)
+                                          ComponentModificationMenu(
+                                            component: comp,
+                                            ancestor: comp,
+                                            componentOperationCubit:
+                                                _componentOperationCubit,
+                                            componentCreationCubit:
+                                                _componentCreationCubit,
+                                            componentSelectionCubit:
+                                                _componentSelectionCubit,
+                                          )
+                                      ],
+                                    ),
+                                  ),
+                                  if (comp.root != null)
                                     Container(
                                       alignment: Alignment.topLeft,
                                       padding: const EdgeInsets.all(6),
                                       child: SublistWidget(
-                                          component: _componentOperationCubit
-                                              .flutterProject!.rootComponent!,
-                                          ancestor: _componentOperationCubit
-                                              .flutterProject!.rootComponent!,
+                                          component: comp.root!,
+                                          ancestor: comp,
                                           componentSelectionCubit:
                                               _componentSelectionCubit,
                                           componentOperationCubit:
@@ -427,96 +506,11 @@ class _ComponentTreeState extends State<ComponentTree> {
                                           componentCreationCubit:
                                               _componentCreationCubit),
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'Custom Widgets',
-                                            style: AppFontStyle.roboto(14,
-                                                color: const Color(0xff494949),
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          InkWell(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            onTap: () {
-                                              //ADD Custom Widgets
-                                              showScreenNameDialog(
-                                                  context, 'Enter widget name',
-                                                  (name, _) {
-                                                Navigator.pop(context);
-                                                BlocProvider.of<
-                                                            ComponentOperationCubit>(
-                                                        context,
-                                                        listen: false)
-                                                    .addCustomComponent(name);
-                                              }, type: false);
-                                            },
-                                            child: const CircleAvatar(
-                                              radius: 10,
-                                              backgroundColor: AppColors.theme,
-                                              child: Icon(
-                                                Icons.add,
-                                                size: 15,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    for (final CustomComponent comp
-                                        in _componentOperationCubit
-                                            .flutterProject!
-                                            .customComponents) ...[
-                                      OnHoverMenuChangeWidget(
-                                        buildWidget: (showMenu) => Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            ComponentTile(
-                                                component: comp,
-                                                ancestor: comp,
-                                                componentSelectionCubit:
-                                                    _componentSelectionCubit),
-                                            if (showMenu)
-                                              ComponentModificationMenu(
-                                                component: comp,
-                                                ancestor: comp,
-                                                componentOperationCubit:
-                                                    _componentOperationCubit,
-                                                componentCreationCubit:
-                                                    _componentCreationCubit,
-                                                componentSelectionCubit:
-                                                    _componentSelectionCubit,
-                                              )
-                                          ],
-                                        ),
-                                      ),
-                                      if (comp.root != null)
-                                        Container(
-                                          alignment: Alignment.topLeft,
-                                          padding: const EdgeInsets.all(6),
-                                          child: SublistWidget(
-                                              component: comp.root!,
-                                              ancestor: comp,
-                                              componentSelectionCubit:
-                                                  _componentSelectionCubit,
-                                              componentOperationCubit:
-                                                  _componentOperationCubit,
-                                              componentCreationCubit:
-                                                  _componentCreationCubit),
-                                        ),
-                                    ],
-                                    const SizedBox(
-                                      height: 100,
-                                    ),
-                                  ],
+                                ],
+                                const SizedBox(
+                                  height: 100,
                                 ),
-                              ),
+                              ],
                             ),
                           );
                         },
@@ -1459,7 +1453,8 @@ class ComponentModificationMenu extends StatelessWidget {
   final bool menuEnable;
   final bool disableOperations;
   final bool componentParameterOperation;
-
+  static final components =
+  componentList.map((key, value) => MapEntry(key, value()));
   const ComponentModificationMenu(
       {Key? key,
       this.customNamed,
@@ -1479,8 +1474,7 @@ class ComponentModificationMenu extends StatelessWidget {
     final favourite = customNamed == null &&
         !componentParameterOperation &&
         componentOperationCubit.isFavourite(component);
-    final components =
-        componentList.map((key, value) => MapEntry(key, value()));
+
     return Container(
       color: const Color(0xfff2f2f2),
       child: Row(
@@ -2117,7 +2111,6 @@ class ComponentTile extends StatelessWidget {
       feedback: Material(
         color: Colors.transparent,
         child: Container(
-          // key: GlobalObjectKey(component.uniqueId),
           height: 30,
           width: 200,
           alignment: Alignment.center,

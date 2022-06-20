@@ -1,15 +1,17 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:firebase_core/firebase_core.dart';
+/// For non-windows, Uncomment the following 3 imports:
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter_builder/common/io_lib.dart';
+
 import 'package:get/get.dart';
 
-import 'firebase_connection.dart';
+/// For Windows uncomment the following import:
+// import 'firebase_connection.dart';
 
 import 'package:flutter/cupertino.dart';
 import '../common/shared_preferences.dart';
@@ -303,7 +305,7 @@ abstract class FireBridge {
           .collection('us$userId')
           .doc(Strings.kFlutterProjectInfo)
           .update({
-        'projects': List.from(oldResponse.data()['projects'])..add(project.name)
+        'projects': List.from(oldResponse.data()!['projects'])..add(project.name)
       });
     } else {
       await FirebaseFirestore.instance
@@ -567,9 +569,9 @@ abstract class FireBridge {
           .collection(project.name)
           .doc(project.currentScreen.name);
       final oldResponse = await variablesRef.get();
-      if (oldResponse.data()['variables'] != null) {
+      if (oldResponse.data()!['variables'] != null) {
         await variablesRef.update({
-          'variables': List.from(oldResponse.data()['variables'])
+          'variables': List.from(oldResponse.data()!['variables'])
             ..add(variableModel.toJson())
         });
       }
@@ -618,7 +620,7 @@ abstract class FireBridge {
         .doc(Strings.kFlutterProject)
         .collection(project.name)
         .doc(project.docId)
-        .update({'settings': project.settings?.toJson()});
+        .update({'settings': project.settings.toJson()});
   }
 
   static Future<void> updateCurrentScreen(

@@ -60,7 +60,8 @@ abstract class Component {
   Component(this.name, this.parameters,
       {this.isConstant = false, List<ParameterRuleModel>? rules}) {
     paramRules = rules ?? [];
-    uniqueId = name + Random().nextDouble().toStringAsFixed(3);
+    final time=DateTime.now().millisecondsSinceEpoch.toString();
+    uniqueId = name + time.substring(time.length-10,time.length);
   }
 
   set setId(final String id) {
@@ -171,13 +172,11 @@ abstract class Component {
   ScrollController initScrollController(BuildContext context) {
     final ScrollController scrollController = ScrollController();
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
-      if (!scrollController.hasListeners) {
         scrollController.addListener(() {
           forEach((final Component component) {
             component.lookForUIChanges(context, checkSameCount: false);
           });
         });
-      }
     }
 
     return scrollController;

@@ -932,7 +932,7 @@ class CTooltip extends Holder {
           Parameters.textParameter()
             ..withNamedParamInfoAndSameDisplayName('message'),
           Parameters.googleFontTextStyleParameter()
-            ..withNamedParamInfoAndSameDisplayName('textStyle'),
+            ..withChangeNamed('textStyle')..withDisplayName('textStyle'),
           Parameters.paddingParameter(),
           Parameters.marginParameter(),
           Parameters.enableParameter()

@@ -599,6 +599,10 @@ class ChoiceValueListParameter<T> extends Parameter {
   @override
   get value {
     if (val != null) {
+      if(val!<0||val!>=options.length){
+        print('ChoiceValueListParameter $val is not in range of $options');
+      return options[0];
+      }
       return options[val!];
     } else if (defaultValue != null) {
       return options[defaultValue!];
