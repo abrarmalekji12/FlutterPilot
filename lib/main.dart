@@ -56,24 +56,37 @@ void main() async {
     print('XX => $error, LINE :: "$line"');
   });
   const code = '''
-  // class Student{
-  // var roll;
-  // Student(this.roll);
-  // }
-  // var s1=Student(1);
-  // print(s1.roll);
-  // var d=Duration(1000);
-  // var count=0;
-  // var list=[];
-  // var t=Timer.periodic(d, (timer) {
-  //   print("Hello {{list.length}}");
-  //   count++;
-  //   list.add(count);
-  //   if(count>5){
-  //     t.cancel();
-  //   }
-  // });
-  
+ class Student{
+  int roll;
+  Student(this.roll);
+  }
+  play(int a){
+  print(a);
+  }
+  Student s1=Student(10);
+  print(s1.roll);
+  play(a);
+ ''';
+
+  /*
+  class Student{
+  var roll;
+  Student(this.roll);
+  }
+  var s1=Student(1);
+  print(s1.roll);
+  var d=Duration(1000);
+  var count=0;
+  var list=[];
+  var t=Timer.periodic(d, (timer) {
+    print("Hello {{list.length}}");
+    count++;
+    list.add(count);
+    if(count>5){
+      t.cancel();
+    }
+  });
+
   var count=0;
 class Student {
   var name;
@@ -82,26 +95,27 @@ class Student {
   var guideName;
   Student(this.name,this.roll,this.percent,this.guideName);
   }
-  
+
   var studentList=[
   Student("Abrar",12,90,"guide 1")
   ];
- 
+
  addStudent(){
  var name=lookUp("TextField0.2990.454").text;
  var roll=lookUp("TextField0.8520.487").text;
 var percent=lookUp("TextField0.3150.119").text;
  var guide=lookUp("TextField0.1950.615").text;
    studentList.add(Student(name,toInt(roll),toInt(percent),guide));
-  
+
 refresh("ListView.builder0.9410.063");
 print("hello {{}}");
  }
 }
 
 addStudent();
- ''';
-  // processor.executeCode(code);
+
+  */
+  processor.executeCode(code);
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
   js=json.decode(data);
@@ -117,7 +131,7 @@ addStudent();
   // 4. Stream type variable
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  runApp(const MyApp());
+  // runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

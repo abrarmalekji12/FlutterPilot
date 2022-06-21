@@ -135,15 +135,15 @@ enum FVBArgumentType {
 }
 
 class FVBArgument {
-  final String name;
+  final FVBVariable variable;
   final FVBArgumentType type;
   final dynamic optionalValue;
 
-  FVBArgument(this.name, {this.type = FVBArgumentType.placed, this.optionalValue});
+  FVBArgument(this.variable, {this.type = FVBArgumentType.placed, this.optionalValue});
 
   @override
   String toString() {
-    return '$name :: $type';
+    return '${variable.name} :: $type';
   }
 }
 
@@ -183,14 +183,14 @@ class FVBFunction {
           processor.errorMessage = 'No variable named "$name" found';
         }
       } else {
-        if (processor.localVariables.containsKey(arguments[i].name)) {
-          oldVariables[arguments[i].name] = processor.localVariables[arguments[i]];
+        if (processor.localVariables.containsKey(arguments[i].variable.name)) {
+          oldVariables[arguments[i].variable.name] = processor.localVariables[arguments[i]];
         }
-        if (processor.variables.containsKey(arguments[i].name)) {
-          globalVariables[arguments[i].name] = processor.variables[arguments[i].name]?.value;
-          processor.variables[arguments[i].name]?.value = argumentValues[i];
+        if (processor.variables.containsKey(arguments[i].variable.name)) {
+          globalVariables[arguments[i].variable.name] = processor.variables[arguments[i].variable.name]?.value;
+          processor.variables[arguments[i].variable.name]?.value = argumentValues[i];
         }
-        processor.localVariables[arguments[i].name] = argumentValues[i];
+        processor.localVariables[arguments[i].variable.name] = argumentValues[i];
       }
     }
 
@@ -219,12 +219,14 @@ class FVBValue {
   dynamic value;
   final bool isVarFinal, createVarIfNotExist;
   final String? variableName;
+  final DataType? dataType;
 
   FVBValue({
     this.value,
     this.variableName,
     this.isVarFinal = false,
     this.createVarIfNotExist = false,
+    this.dataType,
   });
 
   evaluateValue(CodeProcessor processor) {
@@ -240,19 +242,21 @@ class FVBValue {
     return '(variableName: $variableName, value: $value)';
   }
 }
-class FVBUndefined{
+
+class FVBUndefined {
   @override
-  toString(){
+  toString() {
     return 'undefined';
   }
 }
+
 class FVBVariable {
   final String name;
   dynamic value;
   final DataType dataType;
   final bool isFinal;
 
-  FVBVariable(this.name, this.dataType,{this.value,this.isFinal = false});
+  FVBVariable(this.name, this.dataType, {this.value, this.isFinal = false});
 
   clone() {
     return FVBVariable(
@@ -274,10 +278,10 @@ class CodeProcessor {
   late bool error;
   bool finished = false;
   String errorMessage = '';
-  final capitalACodeUnit = 'A'.codeUnits.first,
+  static final capitalACodeUnit = 'A'.codeUnits.first,
       smallZCodeUnit = 'z'.codeUnits.first,
       underScoreCodeUnit = '_'.codeUnits.first;
-  final zeroCodeUnit = '0'.codeUnits.first,
+  static final zeroCodeUnit = '0'.codeUnits.first,
       nineCodeUnit = '9'.codeUnits.first,
       dotCodeUnit = '.'.codeUnits.first,
       colonCodeUnit = ':'.codeUnits.first;
@@ -489,13 +493,13 @@ class CodeProcessor {
   }
 
   int getPrecedence(String ch) {
-    if( ch == '<' || ch == '>' || ch == '<=' || ch == '>='){
+    if (ch == '<' || ch == '>' || ch == '<=' || ch == '>=') {
       return 1;
     }
     if (ch == '+' || ch == '-') {
       return 2;
     }
-    if (ch == '*' || ch == '/' ) {
+    if (ch == '*' || ch == '/') {
       return 3;
     }
     return 0;
@@ -534,7 +538,7 @@ class CodeProcessor {
     return FVBUndefined();
   }
 
-  bool setValue(final String variable, dynamic value, {bool isFinal = false, bool createNew = false}) {
+  bool setValue(final String variable, dynamic value, {bool isFinal = false, bool createNew = false,DataType? dataType}) {
     if (variable.contains('[')) {
       getOrSetListMapBracketValue(variable, value: value);
       return true;
@@ -551,8 +555,19 @@ class CodeProcessor {
       return true;
     } else {
       if (createNew) {
-        final dataType = getDartTypeToDatatype(value);
-        variables[variable] = VariableModel(variable, value, false, null, dataType, '',
+        DataType type;
+        final valueDataType=getDartTypeToDatatype(value);
+        if(dataType==null) {
+          type= valueDataType;
+        }
+        else if(dataType==valueDataType||dataType==DataType.dynamic) {
+          type=dataType;
+        }
+        else{
+          showError('Cannot assign ${LocalModel.dataTypeToCode(valueDataType)} to ${LocalModel.dataTypeToCode(dataType)}');
+          return false;
+        }
+        variables[variable] = VariableModel(variable, value, false, null, type, '',
             // type: dataType == DataType.fvbInstance
             //     ? (value as FVBInstance).fvbClass.name
             //     : null,
@@ -706,7 +721,7 @@ class CodeProcessor {
         r = !b;
         break;
       case '=':
-        setValue(aVar.variableName!, b, isFinal: aVar.isVarFinal, createNew: aVar.createVarIfNotExist);
+        setValue(aVar.variableName!, b, isFinal: aVar.isVarFinal, createNew: aVar.createVarIfNotExist, dataType: aVar.dataType);
         r = b;
         break;
       case '++':
@@ -867,10 +882,7 @@ class CodeProcessor {
         code += line;
       }
     }
-    final singleSpaceCode = CodeOperations.trimAvoidSingleSpace(code)!
-        .replaceAll('return ', 'return~')
-        .replaceAll('var ', 'var~')
-        .replaceAll('final ', 'final~');
+    final singleSpaceCode = CodeOperations.trimAvoidSingleSpace(code)!;
     String trimCode = CodeOperations.trim(singleSpaceCode)!;
     int count = 0;
     int lastPoint = 0;
@@ -978,8 +990,8 @@ class CodeProcessor {
         }
         continue;
       } else if (ch == '{'.codeUnits.first) {
-        if (variable.isNotEmpty && variable.startsWith('class')) {
-          final className = variable.substring(5);
+        if (variable.isNotEmpty && variable.startsWith('class~')) {
+          final className = variable.substring(6);
           final closeCurlyBracket = CodeOperations.findCloseBracket(input, n, '{'.codeUnits.first, '}'.codeUnits.first);
           final CodeProcessor processor =
               CodeProcessor(scope: Scope.object, consoleCallback: consoleCallback, onError: onError);
@@ -988,7 +1000,7 @@ class CodeProcessor {
             className,
             processor.functions,
             processor.variables.map(
-              (key, value) => MapEntry(key, FVBVariable(value.name, value.dataType,value: value.value)),
+              (key, value) => MapEntry(key, FVBVariable(value.name, value.dataType, value: value.value)),
             ),
           );
 
@@ -1031,11 +1043,6 @@ class CodeProcessor {
           ch == ']'.codeUnits.first ||
           ch == '~'.codeUnits.first) {
         variable += nextToken;
-      } else if (ch == colonCodeUnit) {
-        variables[variable] =
-            VariableModel(variable, null, false, null, LocalModel.codeToDatatype(input.substring(n + 1)), '');
-        variable = '';
-        return null;
       } else if (ch == dotCodeUnit) {
         if (object.isNotEmpty && variable.isNotEmpty) {
           final obj = getValue(object);
@@ -1580,7 +1587,7 @@ class CodeProcessor {
         if (result is FVBUndefined && value.variableName != null && value.createVarIfNotExist) {
           final variable = value.variableName!;
           variables[variable] =
-              VariableModel(variable, value.value, false, null, DataType.dynamic, '', isFinal: value.isVarFinal);
+              VariableModel(variable, value.value, false, null, value.dataType??DataType.dynamic, '', isFinal: value.isVarFinal);
         }
       }
 
@@ -1635,14 +1642,23 @@ class CodeProcessor {
         variable.substring(7),
       )));
       return true;
-    } else if (variable.startsWith('var~')) {
-      valueStack.push(FVBValue(variableName: variable.substring(4), createVarIfNotExist: true)..evaluateValue(this));
-      return true;
-    } else if (variable.startsWith('final~')) {
-      valueStack.push(FVBValue(variableName: variable.substring(6), isVarFinal: true, createVarIfNotExist: true)
-        ..evaluateValue(this));
+    }else if (variable.startsWith('var~')) {
+      valueStack.push(FVBValue(variableName: variable.substring(4), createVarIfNotExist: true));
       return true;
     }
+    else if(variable.contains('~')){
+      final split=variable.split('~');
+      DataType? dataType;
+      if(split.length==2&&split[0]!='final'){
+        dataType=LocalModel.codeToDatatype(split.first);
+      }
+      else if(split.length==3){
+        dataType=LocalModel.codeToDatatype(split[1]);
+      }
+      valueStack.push(FVBValue(variableName: split.last, createVarIfNotExist: true,isVarFinal: split.first=='final',dataType:dataType ));
+      return true;
+    }
+
     if (object.isNotEmpty) {
       final value = getValue(object);
       if (value is String) {

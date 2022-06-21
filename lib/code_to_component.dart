@@ -1,7 +1,4 @@
-import 'package:get/get.dart';
-
 import 'common/compiler/code_processor.dart';
-import 'common/logger.dart';
 import 'ui/models_view.dart';
 
 abstract class CodeOperations {
@@ -19,8 +16,7 @@ abstract class CodeOperations {
           (code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
           (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')) {
         openString = !openString;
-      } else if (!openString &&
-          (code[i] == ' ' || (removeBackSlash && code[i] == '\n'))) {
+      } else if (!openString && (code[i] == ' ' || (removeBackSlash && code[i] == '\n'))) {
         continue;
       }
       outputString.add(code.codeUnitAt(i));
@@ -39,7 +35,13 @@ abstract class CodeOperations {
     for (int i = 0; i < code.length; i++) {
       if (code[i] != ' ') {
         if (spaceCount >= 1) {
-          outputString.add(' '.codeUnits.first);
+          if (i - spaceCount - 1 >= 0 &&
+              isVariableChar(code[i].codeUnits.first) &&
+              isVariableChar(code[i - spaceCount - 1].codeUnits.first)) {
+            outputString.add('~'.codeUnits.first);
+          } else {
+            outputString.add(' '.codeUnits.first);
+          }
         }
         spaceCount = 0;
       }
@@ -60,6 +62,11 @@ abstract class CodeOperations {
       outputString.add(code.codeUnitAt(i));
     }
     return String.fromCharCodes(outputString);
+  }
+
+  static bool isVariableChar(final int codeUnit) {
+    return (codeUnit >= CodeProcessor.capitalACodeUnit && codeUnit <= CodeProcessor.smallZCodeUnit) ||
+        codeUnit == CodeProcessor.underScoreCodeUnit;
   }
 
   static String? checkSyntaxInCode(String code) {
@@ -153,7 +160,6 @@ abstract class CodeOperations {
     }
   }
 
-
   static int findCloseBracket(
     String input,
     int openIndex,
@@ -172,8 +178,7 @@ abstract class CodeOperations {
         count++;
       }
     }
-    throw Exception(
-        'No close bracket found ${String.fromCharCode(closeBracket)}');
+    throw Exception('No close bracket found ${String.fromCharCode(closeBracket)}');
   }
 
   static List<String> splitBy(String paramCode, {String splitBy = ','}) {
@@ -192,21 +197,16 @@ abstract class CodeOperations {
       }
       if (paramCode[i] == splitBy && parenthesisCount == 0) {
         dividers.add(i);
-      } else if (paramCode[i] == '(' ||
-          paramCode[i] == '[' ||
-          paramCode[i] == '{') {
+      } else if (paramCode[i] == '(' || paramCode[i] == '[' || paramCode[i] == '{') {
         parenthesisCount++;
-      } else if (paramCode[i] == ')' ||
-          paramCode[i] == ']' ||
-          paramCode[i] == '}') {
+      } else if (paramCode[i] == ')' || paramCode[i] == ']' || paramCode[i] == '}') {
         parenthesisCount--;
       }
     }
     final List<String> parameterCodes = [];
     for (int divideIndex = 0; divideIndex < dividers.length; divideIndex++) {
       if (divideIndex + 1 < dividers.length) {
-        final subCode = paramCode.substring(
-            dividers[divideIndex] + 1, dividers[divideIndex + 1]);
+        final subCode = paramCode.substring(dividers[divideIndex] + 1, dividers[divideIndex + 1]);
         if (subCode.isNotEmpty) {
           parameterCodes.add(subCode);
         }
