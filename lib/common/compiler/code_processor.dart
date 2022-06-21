@@ -135,15 +135,15 @@ enum FVBArgumentType {
 }
 
 class FVBArgument {
-  final FVBVariable variable;
+  final String name;
   final FVBArgumentType type;
   final dynamic optionalValue;
 
-  FVBArgument(this.variable, {this.type = FVBArgumentType.placed, this.optionalValue});
+  FVBArgument(this.name, {this.type = FVBArgumentType.placed, this.optionalValue});
 
   @override
   String toString() {
-    return '${variable.name} :: $type';
+    return '$name :: $type';
   }
 }
 
@@ -183,14 +183,14 @@ class FVBFunction {
           processor.errorMessage = 'No variable named "$name" found';
         }
       } else {
-        if (processor.localVariables.containsKey(arguments[i].variable.name)) {
-          oldVariables[arguments[i].variable.name] = processor.localVariables[arguments[i]];
+        if (processor.localVariables.containsKey(arguments[i].name)) {
+          oldVariables[arguments[i].name] = processor.localVariables[arguments[i]];
         }
-        if (processor.variables.containsKey(arguments[i].variable.name)) {
-          globalVariables[arguments[i].variable.name] = processor.variables[arguments[i].variable.name]?.value;
-          processor.variables[arguments[i].variable.name]?.value = argumentValues[i];
+        if (processor.variables.containsKey(arguments[i].name)) {
+          globalVariables[arguments[i].name] = processor.variables[arguments[i].name]?.value;
+          processor.variables[arguments[i].name]?.value = argumentValues[i];
         }
-        processor.localVariables[arguments[i].variable.name] = argumentValues[i];
+        processor.localVariables[arguments[i].name] = argumentValues[i];
       }
     }
 
@@ -538,7 +538,8 @@ class CodeProcessor {
     return FVBUndefined();
   }
 
-  bool setValue(final String variable, dynamic value, {bool isFinal = false, bool createNew = false,DataType? dataType}) {
+  bool setValue(final String variable, dynamic value,
+      {bool isFinal = false, bool createNew = false, DataType? dataType}) {
     if (variable.contains('[')) {
       getOrSetListMapBracketValue(variable, value: value);
       return true;
@@ -556,15 +557,14 @@ class CodeProcessor {
     } else {
       if (createNew) {
         DataType type;
-        final valueDataType=getDartTypeToDatatype(value);
-        if(dataType==null) {
-          type= valueDataType;
-        }
-        else if(dataType==valueDataType||dataType==DataType.dynamic) {
-          type=dataType;
-        }
-        else{
-          showError('Cannot assign ${LocalModel.dataTypeToCode(valueDataType)} to ${LocalModel.dataTypeToCode(dataType)}');
+        final valueDataType = getDartTypeToDatatype(value);
+        if (dataType == null) {
+          type = valueDataType;
+        } else if (dataType == valueDataType || dataType == DataType.dynamic) {
+          type = dataType;
+        } else {
+          showError(
+              'Cannot assign ${LocalModel.dataTypeToCode(valueDataType)} to ${LocalModel.dataTypeToCode(dataType)}');
           return false;
         }
         variables[variable] = VariableModel(variable, value, false, null, type, '',
@@ -582,11 +582,11 @@ class CodeProcessor {
 
   DataType getDartTypeToDatatype(dynamic value) {
     final DataType dataType;
-    if (value is double) {
-      dataType = DataType.double;
-    } else if (value is int) {
+    if (value is int) {
       dataType = DataType.int;
-    } else if (value is String) {
+    } else  if (value is double) {
+      dataType = DataType.double;
+    }  else if (value is String) {
       dataType = DataType.string;
     } else if (value is bool) {
       dataType = DataType.bool;
@@ -721,7 +721,8 @@ class CodeProcessor {
         r = !b;
         break;
       case '=':
-        setValue(aVar.variableName!, b, isFinal: aVar.isVarFinal, createNew: aVar.createVarIfNotExist, dataType: aVar.dataType);
+        setValue(aVar.variableName!, b,
+            isFinal: aVar.isVarFinal, createNew: aVar.createVarIfNotExist, dataType: aVar.dataType);
         r = b;
         break;
       case '++':
@@ -1586,8 +1587,9 @@ class CodeProcessor {
         result = value.evaluateValue(this);
         if (result is FVBUndefined && value.variableName != null && value.createVarIfNotExist) {
           final variable = value.variableName!;
-          variables[variable] =
-              VariableModel(variable, value.value, false, null, value.dataType??DataType.dynamic, '', isFinal: value.isVarFinal);
+          variables[variable] = VariableModel(
+              variable, value.value, false, null, value.dataType ?? DataType.dynamic, '',
+              isFinal: value.isVarFinal);
         }
       }
 
@@ -1609,13 +1611,13 @@ class CodeProcessor {
   }
 
   void parseNumber(String number, valueStack) {
-    final parse = double.tryParse(number);
-    if (parse != null) {
-      valueStack.push(FVBValue(value: parse));
+    final intParsed = int.tryParse(number);
+    if (intParsed != null) {
+      valueStack.push(FVBValue(value: intParsed));
     } else {
-      final intParsed = int.tryParse(number);
-      if (intParsed != null) {
-        valueStack.push(FVBValue(value: intParsed));
+      final parse = double.tryParse(number);
+      if (parse != null) {
+        valueStack.push(FVBValue(value: parse));
       } else {
         showError('Invalid number $number');
         return;
@@ -1642,20 +1644,19 @@ class CodeProcessor {
         variable.substring(7),
       )));
       return true;
-    }else if (variable.startsWith('var~')) {
+    } else if (variable.startsWith('var~')) {
       valueStack.push(FVBValue(variableName: variable.substring(4), createVarIfNotExist: true));
       return true;
-    }
-    else if(variable.contains('~')){
-      final split=variable.split('~');
+    } else if (variable.contains('~')) {
+      final split = variable.split('~');
       DataType? dataType;
-      if(split.length==2&&split[0]!='final'){
-        dataType=LocalModel.codeToDatatype(split.first);
+      if (split.length == 2 && split[0] != 'final') {
+        dataType = LocalModel.codeToDatatype(split.first);
+      } else if (split.length == 3) {
+        dataType = LocalModel.codeToDatatype(split[1]);
       }
-      else if(split.length==3){
-        dataType=LocalModel.codeToDatatype(split[1]);
-      }
-      valueStack.push(FVBValue(variableName: split.last, createVarIfNotExist: true,isVarFinal: split.first=='final',dataType:dataType ));
+      valueStack.push(FVBValue(
+          variableName: split.last, createVarIfNotExist: true, isVarFinal: split.first == 'final', dataType: dataType));
       return true;
     }
 

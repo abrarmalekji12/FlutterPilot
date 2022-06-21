@@ -56,16 +56,8 @@ void main() async {
     print('XX => $error, LINE :: "$line"');
   });
   const code = '''
- class Student{
-  int roll;
-  Student(this.roll);
-  }
-  play(int a){
-  print(a);
-  }
-  Student s1=Student(10);
-  print(s1.roll);
-  play(a);
+ int a=0;
+ print(a++);
  ''';
 
   /*
