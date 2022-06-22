@@ -133,7 +133,12 @@ enum FVBArgumentType {
   placed,
   optional,
 }
+class FVBBreak{
 
+}
+class FVBContinue{
+
+}
 class FVBArgument {
   final String name;
   final FVBArgumentType type;
@@ -584,9 +589,9 @@ class CodeProcessor {
     final DataType dataType;
     if (value is int) {
       dataType = DataType.int;
-    } else  if (value is double) {
+    } else if (value is double) {
       dataType = DataType.double;
-    }  else if (value is String) {
+    } else if (value is String) {
       dataType = DataType.string;
     } else if (value is bool) {
       dataType = DataType.bool;
@@ -670,8 +675,7 @@ class CodeProcessor {
       case '--':
       case '+':
         if (operator == '--' && a == null) {
-          final value = getValue(bVar.variableName!);
-          setValue(bVar.variableName!, value - 1);
+          setValue(bVar.variableName!, getValue(bVar.variableName!) - 1);
           r = null;
           break;
         }
@@ -907,6 +911,9 @@ class CodeProcessor {
           globalOutput = output;
           consoleCallback.call(output.toString());
         }
+        if(output is FVBContinue){
+          return globalOutput;
+        }
         if (finished) {
           return;
         }
@@ -944,9 +951,9 @@ class CodeProcessor {
       final String nextToken = input[n];
       final ch = nextToken.codeUnits.first;
       if (stringOpen) {
-        if (stringCount == 0 && ch == '"'.codeUnits.first) {
+        if (stringCount == 0 && (ch == '"'.codeUnits.first||ch == '\''.codeUnits.first)) {
           stringOpen = !stringOpen;
-          if (n - variable.length - 1 >= 0 && input[n - variable.length - 1] == '"') {
+          if (n - variable.length - 1 >= 0 && (input[n - variable.length - 1] == '"'||input[n - variable.length - 1] == '\'')) {
             valueStack.push(FVBValue(value: processString(variable)));
             variable = '';
             continue;
@@ -961,7 +968,7 @@ class CodeProcessor {
         variable += nextToken;
 
         continue;
-      } else if (ch == '"'.codeUnits.first) {
+      } else if (ch == '"'.codeUnits.first||ch == '\''.codeUnits.first) {
         stringOpen = true;
       } else if (ch == '['.codeUnits.first) {
         int count = 0;
@@ -1089,7 +1096,10 @@ class CodeProcessor {
                     } else {
                       for (final item in list) {
                         localVariables[split[0]] = item;
-                        executeCode(innerCode);
+                        final output=executeCode(innerCode);
+                        if(output is FVBBreak){
+                          break;
+                        }
                       }
                     }
                   } else {
@@ -1099,7 +1109,10 @@ class CodeProcessor {
                   process(splits[0]);
                   int count = 0;
                   while (process(splits[1]) == true) {
-                    executeCode(innerCode);
+                    final output=executeCode(innerCode);
+                    if(output is FVBBreak){
+                      break;
+                    }
                     process(splits[2]);
                     count++;
                     if (count > 1000) {
@@ -1395,7 +1408,10 @@ class CodeProcessor {
                 final conditionalCode = input.substring(n + 1, m);
                 int count = 0;
                 while (process(conditionalCode) == true) {
-                  executeCode(innerCode);
+                  final output=executeCode(innerCode);
+                  if(output is FVBBreak){
+                    break;
+                  }
                   count++;
                   if (count > 1000) {
                     showError('While loop goes infinite!!');
@@ -1412,8 +1428,8 @@ class CodeProcessor {
                 conditionalStatements.add(ConditionalStatement(argumentList[0], input.substring(m + 2, endBracket)));
                 n = endBracket;
                 while (input.length > endBracket + 7 && input.substring(endBracket + 1, endBracket + 5) == 'else') {
-                  int startBracket = endBracket + 5;
-                  if (input.substring(startBracket, endBracket + 7) == 'if') {
+                  int startBracket = endBracket + 6;
+                  if (input.substring(startBracket, endBracket + 8) == 'if') {
                     startBracket += 2;
                     int endRoundBracket =
                         CodeOperations.findCloseBracket(input, startBracket, '('.codeUnits.first, ')'.codeUnits.first);
@@ -1424,6 +1440,7 @@ class CodeProcessor {
                       input.substring(endRoundBracket + 2, endBracket),
                     ));
                   } else {
+                    startBracket = endBracket + 5;
                     endBracket =
                         CodeOperations.findCloseBracket(input, startBracket, '{'.codeUnits.first, '}'.codeUnits.first);
                     conditionalStatements.add(
@@ -1437,14 +1454,67 @@ class CodeProcessor {
                 }
 
                 for (final statement in conditionalStatements) {
+                  dynamic output;
                   if (statement.condition == null) {
-                    executeCode(statement.body);
+                    output=executeCode(statement.body);
                   } else if (process(statement.condition!) == true) {
-                    executeCode(statement.body);
+                    output=executeCode(statement.body);
+                  }else{
+                    output=null;
+                  }
+                  if(output!=null){
+                    valueStack.push(FVBValue(value: output));
                     break;
                   }
                 }
                 variable = '';
+                continue;
+              } else if (variable == 'switch') {
+                final value = process(argumentList[0]);
+                int endBracket =
+                    CodeOperations.findCloseBracket(input, m + 1, '{'.codeUnits.first, '}'.codeUnits.first);
+                int index =0 ;
+                final List<CaseStatement> list = [];
+                final String innerCode = input.substring(m + 2, endBracket);
+                int caseIndex = -1;
+                while (index < endBracket) {
+                  index = innerCode.indexOf('case', index);
+                  if (index != -1) {
+                    if (caseIndex != -1) {
+                      print('Case index: $caseIndex $index');
+                      final split = CodeOperations.splitBy(innerCode.substring(caseIndex, index), splitBy: ':');
+                      list.add(CaseStatement(split[0], split[1]));
+                    }
+                    caseIndex = index + 5;
+                    index += 5;
+                  }
+                  else{
+                    break;
+                  }
+                }
+                final defaultIndex = innerCode.indexOf('default', caseIndex);
+                if (caseIndex != -1) {
+                  final split = CodeOperations.splitBy(innerCode.substring(caseIndex,defaultIndex!=-1?defaultIndex:innerCode.length), splitBy: ':');
+                  list.add(CaseStatement(split[0], split[1]));
+                }
+                if (defaultIndex != -1) {
+                  list.add(CaseStatement(null, innerCode.substring(defaultIndex + 8)));
+                }
+
+                bool isTrue=false;
+                for (final statement in list) {
+                  if (statement.condition == null) {
+                    executeCode(statement.body);
+                    break;
+                  } else if (process(statement.condition!) == value||isTrue) {
+                    final value=executeCode(statement.body);
+                    isTrue=true;
+                    if(value is FVBBreak){
+                      break;
+                    }
+                  }
+                }
+                n = endBracket;
                 continue;
               } else if (input.length > m + 1 && input[m + 1] == '{') {
                 int closeBracketIndex =
@@ -1564,6 +1634,7 @@ class CodeProcessor {
         }
       }
     }
+
     if (number.isNotEmpty) {
       parseNumber(number, valueStack);
       number = '';
@@ -1638,7 +1709,15 @@ class CodeProcessor {
   }
 
   bool resolveVariable(String variable, String object, valueStack) {
-    if (variable.startsWith('return~')) {
+    if(variable=='break'){
+      valueStack.push(FVBValue(value: FVBBreak()));
+      return true;
+    }
+    else if(variable=='continue'){
+      valueStack.push(FVBValue(value: FVBContinue()));
+      return true;
+    }
+    else if (variable.startsWith('return~')) {
       valueStack.push(FVBValue(
           value: process(
         variable.substring(7),
@@ -1733,4 +1812,11 @@ class ConditionalStatement {
   final String body;
 
   ConditionalStatement(this.condition, this.body);
+}
+
+class CaseStatement {
+  final String? condition;
+  final String body;
+
+  CaseStatement(this.condition, this.body);
 }

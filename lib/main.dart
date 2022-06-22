@@ -1,13 +1,10 @@
-import 'package:flutter_builder/common/html_lib.dart' as html;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_builder/common/html_lib.dart' as html;
 import 'package:flutter_builder/ui/home/landing_page.dart';
-import 'cubit/component_operation/component_operation_cubit.dart';
-import 'models/actions/action_model.dart';
-import 'ui/project_selection_page.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 import 'bloc/state_management/state_management_bloc.dart';
@@ -15,12 +12,14 @@ import 'common/compiler/code_processor.dart';
 import 'common/shared_preferences.dart';
 import 'constant/app_colors.dart';
 import 'cubit/authentication/authentication_cubit.dart';
+import 'cubit/component_operation/component_operation_cubit.dart';
 import 'cubit/flutter_project/flutter_project_cubit.dart';
 import 'cubit/stack_action/stack_action_cubit.dart';
 import 'injector.dart';
+import 'models/actions/action_model.dart';
 import 'ui/authentication/login.dart';
-import 'package:encrypt/encrypt.dart' as encrypt;
 import 'ui/home_page.dart';
+import 'ui/project_selection_page.dart';
 
 /// Bubble sort algo
 // sort(arr){
@@ -56,8 +55,9 @@ void main() async {
     print('XX => $error, LINE :: "$line"');
   });
   const code = '''
- int a=0;
- print(a++);
+[0,1,2,3,4].forEach((i){
+  print(i);
+  });
  ''';
 
   /*
@@ -133,8 +133,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      html.document
-          .addEventListener('contextmenu', (event) => event.preventDefault());
+      html.document.addEventListener('contextmenu', (event) => event.preventDefault());
     }
     if (!kDebugMode) {
       FlutterError.onError = (
@@ -145,8 +144,8 @@ class MyApp extends StatelessWidget {
 
         final exception = details.exception;
         if (exception is FlutterError) {
-          ifIsOverflowError = !exception.diagnostics.any((e) =>
-              e.value.toString().startsWith('A RenderFlex overflowed by'));
+          ifIsOverflowError =
+              !exception.diagnostics.any((e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
         }
 
         // Ignore if is overflow error.
@@ -225,22 +224,17 @@ class MyApp extends StatelessWidget {
             }
           }
         },
-        theme: ThemeData(
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-            primaryColor: AppColors.theme),
+        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity, primaryColor: AppColors.theme),
       ),
     );
   }
 }
 
-getRoute(Widget Function(BuildContext) builder, String name,
-    {bool anim = true}) {
+getRoute(Widget Function(BuildContext) builder, String name, {bool anim = true}) {
   if (!anim) {
-    return CustomPageRoute(
-        builder: builder, settings: RouteSettings(name: name));
+    return CustomPageRoute(builder: builder, settings: RouteSettings(name: name));
   }
-  return MaterialPageRoute(
-      builder: builder, settings: RouteSettings(name: name));
+  return MaterialPageRoute(builder: builder, settings: RouteSettings(name: name));
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
