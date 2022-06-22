@@ -801,7 +801,7 @@ class _PrototypeShowcaseState extends State<PrototypeShowcase> {
                 get<StackActionCubit>().stackOperation(StackOperation.push,
                     uiScreen: ComponentOperationCubit
                         .currentFlutterProject!.mainScreen);
-                ComponentOperationCubit.codeProcessor.executeCode(
+                ComponentOperationCubit.codeProcessor.execute(
                     ComponentOperationCubit.currentFlutterProject!.actionCode);
                 return ComponentOperationCubit.currentFlutterProject!
                     .run(context, navigator: true);

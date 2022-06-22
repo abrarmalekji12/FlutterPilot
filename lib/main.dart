@@ -55,9 +55,8 @@ void main() async {
     print('XX => $error, LINE :: "$line"');
   });
   const code = '''
-[0,1,2,3,4].forEach((i){
-  print(i);
-  });
+print("Hello World"); int i=0;print("Hello World");
+  
  ''';
 
   /*
