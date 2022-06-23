@@ -605,11 +605,11 @@ class CodeProcessor {
         final valueDataType = getDartTypeToDatatype(value);
         if (dataType == null) {
           type = valueDataType;
-        } else if (dataType == valueDataType || dataType == DataType.dynamic) {
+        } else if (dataType == valueDataType|| (dataType==DataType.double&&valueDataType==DataType.int)|| dataType == DataType.dynamic) {
           type = dataType;
         } else {
           showError(
-              'Cannot assign ${LocalModel.dataTypeToCode(valueDataType)} to ${LocalModel.dataTypeToCode(dataType)}');
+              'Cannot assign ${LocalModel.dataTypeToCode(valueDataType)} to ${LocalModel.dataTypeToCode(dataType)} : $variable=$value');
           return false;
         }
         variables[variable] =
@@ -1879,13 +1879,19 @@ class CodeProcessor {
   }
 
   void parseNumber(String number, valueStack) {
-    final intParsed = int.tryParse(number);
-    if (intParsed != null) {
-      valueStack.push(FVBValue(value: intParsed));
-    } else {
+    if(number.contains('.')){
       final parse = double.tryParse(number);
       if (parse != null) {
         valueStack.push(FVBValue(value: parse));
+      } else {
+        showError('Invalid number $number');
+        return;
+      }
+    }
+    else {
+      final intParsed = int.tryParse(number);
+      if (intParsed != null) {
+        valueStack.push(FVBValue(value: intParsed));
       } else {
         showError('Invalid number $number');
         return;
