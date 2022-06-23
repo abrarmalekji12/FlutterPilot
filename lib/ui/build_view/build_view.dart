@@ -38,7 +38,7 @@ class _BuildViewState extends State<BuildView> {
     get<StackActionCubit>().stackOperation(StackOperation.push,
         uiScreen: ComponentOperationCubit.currentFlutterProject!.mainScreen);
     ComponentOperationCubit.codeProcessor
-        .execute(ComponentOperationCubit.currentFlutterProject!.actionCode);
+        .executeCode(ComponentOperationCubit.currentFlutterProject!.actionCode);
   }
 
   @override

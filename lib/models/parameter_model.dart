@@ -237,7 +237,7 @@ class BooleanParameter extends Parameter {
     final result = compiler.code.isNotEmpty
         ? ComponentOperationCubit.codeProcessor.process<bool>(compiler.code)
         : null;
-    if (result != null&&result is! FVBUndefined) {
+    if (result != null && result is! FVBUndefined) {
       val = result as bool;
     }
     return val;
@@ -278,16 +278,16 @@ class SimpleParameter<T> extends Parameter {
     final result = compiler.code.isNotEmpty
         ? ComponentOperationCubit.codeProcessor.process<T>(compiler.code)
         : null;
-    if (result != null&&result is! FVBUndefined) {
+    if (result != null && result is! FVBUndefined) {
       if (T == Color) {
         val = colorToHex(result.toString()) as T?;
       } else if (T == ImageData) {
         val =
             ImageData(ComponentOperationCubit.bytesCache[result], result) as T;
       } else {
-        if(T == double && result is int){
-          val= result.toDouble() as T;
-        }else {
+        if (T == double && result is int) {
+          val = result.toDouble() as T;
+        } else {
           val = result as T;
         }
       }
@@ -300,8 +300,7 @@ class SimpleParameter<T> extends Parameter {
       return evaluate(defaultValue!);
     } else if (T == int) {
       return evaluate(0 as T);
-    }
-    else if(T == double){
+    } else if (T == double) {
       return evaluate(0.0 as T);
     }
     return '';
@@ -351,7 +350,11 @@ class SimpleParameter<T> extends Parameter {
     if (inputCalculateAs != null) {
       return inputCalculateAs!.call(rawValue as T, false);
     }
-    return rawValue;
+    final rowValue = rawValue;
+    if (T == double && rawValue.runtimeType == int) {
+      return (rowValue as int).toDouble() as T;
+    }
+    return rowValue;
   }
 
   void withDefaultValue(T? value) {
@@ -599,9 +602,9 @@ class ChoiceValueListParameter<T> extends Parameter {
   @override
   get value {
     if (val != null) {
-      if(val!<0||val!>=options.length){
+      if (val! < 0 || val! >= options.length) {
         print('ChoiceValueListParameter $val is not in range of $options');
-      return options[0];
+        return options[0];
       }
       return options[val!];
     } else if (defaultValue != null) {

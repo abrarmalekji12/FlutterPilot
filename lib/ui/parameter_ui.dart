@@ -241,7 +241,12 @@ class SimpleParameterWidget extends StatelessWidget {
                 print('RESULT IS $value $result');
                   parameter.compiler.code = value ?? '';
                   if(result is! FVBUndefined) {
-                    parameter.val = result;
+                    if(parameter.type == double && result.runtimeType == int){
+                      parameter.val=(result as int).toDouble();
+                    }
+                    else {
+                      parameter.val = result;
+                    }
                     if (parameter.inputCalculateAs != null) {
                       parameter.val =
                           parameter.inputCalculateAs!.call(

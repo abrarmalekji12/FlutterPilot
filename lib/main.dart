@@ -1,10 +1,13 @@
+import 'package:flutter_builder/common/html_lib.dart' as html;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/common/html_lib.dart' as html;
 import 'package:flutter_builder/ui/home/landing_page.dart';
+import 'cubit/component_operation/component_operation_cubit.dart';
+import 'models/actions/action_model.dart';
+import 'ui/project_selection_page.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 import 'bloc/state_management/state_management_bloc.dart';
@@ -55,8 +58,50 @@ void main() async {
     print('XX => $error, LINE :: "$line"');
   });
   const code = '''
-print("Hello World"); int i=0;print("Hello World");
-  
+int radius=0;
+bool rtoc=true;
+    if(rtoc){
+       radius+=1;
+       if(radius>50){
+         rtoc=false;
+         }
+       }  
+      else{
+        radius-=1;
+       if(radius<1){
+        rtoc=true;
+        }  
+        }  
+  print("{{radius}}");
+// Timer.periodic(Duration(milliseconds:300),(timer){
+// if(dir==3){
+//    left-=5;
+//    } 
+//    else if(dir==1){
+//      top+=5;
+//      }
+//      else if(dir==2){
+//        top-=5;
+//        }
+//        else{
+//          left+=5;
+//          } 
+//        
+// print("{{dir}} {{left}} {{top}}");
+//  if(dir==0&&left>100){
+//    dir=1;
+//    }
+//    else if(dir==3&&left<50){
+//      dir=2;
+//      }
+//      else if(dir==1&&top>100){
+//        dir=3
+//        }
+//        else if(dir==2&&top<50){
+//          dir=0;
+//          }
+//  });
+
  ''';
 
   /*
@@ -122,7 +167,7 @@ addStudent();
   // 4. Stream type variable
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  // runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -132,7 +177,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      html.document.addEventListener('contextmenu', (event) => event.preventDefault());
+      html.document
+          .addEventListener('contextmenu', (event) => event.preventDefault());
     }
     if (!kDebugMode) {
       FlutterError.onError = (
@@ -143,8 +189,8 @@ class MyApp extends StatelessWidget {
 
         final exception = details.exception;
         if (exception is FlutterError) {
-          ifIsOverflowError =
-              !exception.diagnostics.any((e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
+          ifIsOverflowError = !exception.diagnostics.any((e) =>
+              e.value.toString().startsWith('A RenderFlex overflowed by'));
         }
 
         // Ignore if is overflow error.
@@ -223,17 +269,22 @@ class MyApp extends StatelessWidget {
             }
           }
         },
-        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity, primaryColor: AppColors.theme),
+        theme: ThemeData(
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            primaryColor: AppColors.theme),
       ),
     );
   }
 }
 
-getRoute(Widget Function(BuildContext) builder, String name, {bool anim = true}) {
+getRoute(Widget Function(BuildContext) builder, String name,
+    {bool anim = true}) {
   if (!anim) {
-    return CustomPageRoute(builder: builder, settings: RouteSettings(name: name));
+    return CustomPageRoute(
+        builder: builder, settings: RouteSettings(name: name));
   }
-  return MaterialPageRoute(builder: builder, settings: RouteSettings(name: name));
+  return MaterialPageRoute(
+      builder: builder, settings: RouteSettings(name: name));
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {

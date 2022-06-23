@@ -114,16 +114,18 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return CodeField(
-      // expands: true,
-      enabled: true,
-      lineNumberStyle: const LineNumberStyle(
-        margin: 5,
-        textStyle:
-            TextStyle(fontSize: 13, color: Colors.white, fontFamily: 'arial'),
-      ),
+    return SingleChildScrollView(
+      child: CodeField(
+        // expands: true,
+        enabled: true,
+        lineNumberStyle: const LineNumberStyle(
+          margin: 5,
+          textStyle:
+              TextStyle(fontSize: 13, color: Colors.white, fontFamily: 'arial'),
+        ),
 
-      controller: _codeController,
+        controller: _codeController,
+      ),
     );
   }
 }

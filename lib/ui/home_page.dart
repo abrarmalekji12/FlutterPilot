@@ -124,9 +124,13 @@ class _HomePageState extends State<HomePage> {
         });
       }
     }
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+
+      AppLoader.show(context);
+    });
     FireBridge.init().then((value) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        AppLoader.show(context);
+
         flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
             componentOperationCubit, widget.projectName, widget.runMode,
             userId: widget.userId);

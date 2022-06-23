@@ -2,17 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../common/app_text_field.dart';
-import '../common/border_text_field.dart';
 import '../common/common_methods.dart';
 import '../common/undo/revert_work.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../constant/string_constant.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
-import '../main.dart';
 import '../models/project_model.dart';
-import 'home/landing_page.dart';
 import 'project_selection_page.dart';
 
 class ProjectSettingsPage extends StatefulWidget {
@@ -323,8 +319,7 @@ class _ProjectSettingsPageState extends State<ProjectSettingsPage> {
                                     });
                                   }),
                               itemCount:
-                                  projectSettingsModel.collaborators.length ??
-                                      0),
+                                  projectSettingsModel.collaborators.length ),
                         ],
                       ),
                     ],
