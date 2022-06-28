@@ -617,6 +617,9 @@ class _ColorInputWidgetState extends State<ColorInputWidget> {
   @override
   Widget build(BuildContext context) {
     final value = widget.parameter.value;
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _textEditingController.text=widget.parameter.compiler.code;
+    });
     return Form(
       key: _formKey,
       child: Row(
@@ -632,13 +635,13 @@ class _ColorInputWidgetState extends State<ColorInputWidget> {
                       width: 30,
                       height: 30,
                       child: Checkbox(
-                          value: value != null,
+                          value: widget.parameter.compiler.code.isNotEmpty,
                           onChanged: (b) {
                             if (b != null) {
                               if (!b) {
-                                widget.parameter.val = null;
+                                widget.parameter.compiler.code = '';
                               } else {
-                                widget.parameter.val = Colors.transparent;
+                                widget.parameter.compiler.code = '#ffffff';
                               }
                               setState(() {});
                               BlocProvider.of<ParameterBuildCubit>(context,

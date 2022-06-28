@@ -522,32 +522,33 @@ class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
         final componentCreationCubit = context.read<ComponentCreationCubit>();
         final componentSelectionCubit = context.read<ComponentSelectionCubit>();
         _variableDialog = VariableDialog(
-            variables: ComponentOperationCubit.codeProcessor.variables,
+            variables:  ComponentOperationCubit
+                .currentFlutterProject!.variables,
             componentOperationCubit: componentOperationCubit,
             componentCreationCubit: componentCreationCubit,
             title: ComponentOperationCubit
                 .currentFlutterProject!.currentScreen.name,
             onAdded: (model) {
-              ComponentOperationCubit.codeProcessor.variables[model.name] =
+              ComponentOperationCubit.currentFlutterProject!.variables[model.name] =
                   model;
               componentOperationCubit.addVariable(
-                  ComponentOperationCubit.codeProcessor.variables[model.name]!);
+                  ComponentOperationCubit.currentFlutterProject!.variables[model.name]!);
               componentCreationCubit.changedComponent();
               componentSelectionCubit.emit(ComponentSelectionChange());
             },
             onEdited: (model) {
               ComponentOperationCubit
-                  .codeProcessor.variables[model.name]!.value = model.value;
+                  .currentFlutterProject!.variables[model.name]!.value = model.value;
               Future.delayed(const Duration(milliseconds: 500), () {
-                componentOperationCubit.updateVariable(ComponentOperationCubit
-                    .codeProcessor.variables[model.name]!);
+                componentOperationCubit.updateVariable( ComponentOperationCubit
+                    .currentFlutterProject!.variables[model.name]!);
                 componentCreationCubit.changedComponent();
                 componentSelectionCubit.emit(ComponentSelectionChange());
               });
             },
             componentSelectionCubit: componentSelectionCubit,
             onDeleted: (VariableModel model) {
-              ComponentOperationCubit.codeProcessor.variables.remove(model);
+              ComponentOperationCubit.currentFlutterProject!.variables.remove(model);
               componentCreationCubit.changedComponent();
               componentSelectionCubit.emit(ComponentSelectionChange());
             });

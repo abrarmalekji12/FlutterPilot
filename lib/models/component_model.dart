@@ -340,7 +340,6 @@ abstract class Component {
   }
 
   Widget build(BuildContext context) {
-    print('HERE $name ${ProcessorProvider.maybeOf(context)?.scopeName}');
     ComponentOperationCubit.codeProcessor = ProcessorProvider.maybeOf(context)!;
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {

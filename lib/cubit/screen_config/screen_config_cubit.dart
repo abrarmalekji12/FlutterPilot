@@ -69,9 +69,9 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
 
   void changeScreenConfig(ScreenConfig config) {
     screenConfig = config;
-    ComponentOperationCubit.codeProcessor.variables['dw']!.value =
+    ComponentOperationCubit.currentFlutterProject!.variables['dw']!.value =
         screenConfig.width;
-    ComponentOperationCubit.codeProcessor.variables['dh']!.value =
+    ComponentOperationCubit.currentFlutterProject!.variables['dh']!.value =
         screenConfig.height;
     emit(ScreenConfigChangeState());
   }

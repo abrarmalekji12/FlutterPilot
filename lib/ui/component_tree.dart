@@ -174,7 +174,6 @@ class _ComponentTreeState extends State<ComponentTree> {
               ],
             ),
           ),
-
           if (_componentOperationCubit
               .flutterProject!.uiScreens.isNotEmpty) ...[
             BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
@@ -315,16 +314,18 @@ class _ComponentTreeState extends State<ComponentTree> {
                               icon: Icons.code,
                               background: Colors.green,
                               onPress: () {
-                                final screen= ComponentOperationCubit
+                                final screen = ComponentOperationCubit
                                     .currentFlutterProject!.currentScreen;
-                                final ActionCodeDialog dialog = ActionCodeDialog(
-                                    code:screen.actionCode,
-                                    title: screen.name,
-                                    onChanged: (code) {
-                                      _componentOperationCubit
-                                          .updateScreenActionCode(screen, code);
-                                    },
-                                    prerequisites: [
+                                final ActionCodeDialog dialog =
+                                    ActionCodeDialog(
+                                        code: screen.actionCode,
+                                        title: screen.name,
+                                        onChanged: (code) {
+                                          _componentOperationCubit
+                                              .updateScreenActionCode(
+                                                  screen, code);
+                                        },
+                                        prerequisites: [
                                       ComponentOperationCubit
                                           .currentFlutterProject!.actionCode
                                     ]);
@@ -340,37 +341,51 @@ class _ComponentTreeState extends State<ComponentTree> {
                               icon: Icons.data_array,
                               background: Colors.blue,
                               onPress: () {
-                                final screen= ComponentOperationCubit
+                                final screen = ComponentOperationCubit
                                     .currentFlutterProject!.currentScreen;
-                                final componentOperationCubit = context.read<ComponentOperationCubit>();
-                                final componentCreationCubit = context.read<ComponentCreationCubit>();
-                                final componentSelectionCubit = context.read<ComponentSelectionCubit>();
+                                final componentOperationCubit =
+                                    context.read<ComponentOperationCubit>();
+                                final componentCreationCubit =
+                                    context.read<ComponentCreationCubit>();
+                                final componentSelectionCubit =
+                                    context.read<ComponentSelectionCubit>();
                                 final _variableDialog = VariableDialog(
                                     variables: screen.variables,
-                                    componentOperationCubit: componentOperationCubit,
-                                    componentCreationCubit: componentCreationCubit,
+                                    componentOperationCubit:
+                                        componentOperationCubit,
+                                    componentCreationCubit:
+                                        componentCreationCubit,
                                     title: screen.name,
                                     onAdded: (model) {
-                                      screen.processor.variables[model.name] =
-                                          model;
-                                      componentOperationCubit.addVariableForScreen(
-                                          ComponentOperationCubit.codeProcessor.variables[model.name]!);
+                                      componentOperationCubit
+                                          .addVariableForScreen(
+                                              screen.variables[model.name]!);
                                       componentCreationCubit.changedComponent();
-                                      componentSelectionCubit.emit(ComponentSelectionChange());
+                                      componentSelectionCubit
+                                          .emit(ComponentSelectionChange());
                                     },
                                     onEdited: (model) {
-                                      screen.processor.variables[model.name]!.value = model.value;
-                                      Future.delayed(const Duration(milliseconds: 500), () {
-                                        componentOperationCubit.updateScreenVariable(screen.variables[model.name]!);
-                                        componentCreationCubit.changedComponent();
-                                        componentSelectionCubit.emit(ComponentSelectionChange());
+                                      screen.processor.variables[model.name]!
+                                          .value = model.value;
+                                      Future.delayed(
+                                          const Duration(milliseconds: 500),
+                                          () {
+                                        componentOperationCubit
+                                            .updateScreenVariable(
+                                                screen.variables[model.name]!);
+                                        componentCreationCubit
+                                            .changedComponent();
+                                        componentSelectionCubit
+                                            .emit(ComponentSelectionChange());
                                       });
                                     },
-                                    componentSelectionCubit: componentSelectionCubit,
+                                    componentSelectionCubit:
+                                        componentSelectionCubit,
                                     onDeleted: (VariableModel model) {
                                       screen.variables.remove(model);
                                       componentCreationCubit.changedComponent();
-                                      componentSelectionCubit.emit(ComponentSelectionChange());
+                                      componentSelectionCubit
+                                          .emit(ComponentSelectionChange());
                                     });
                                 _variableDialog.show(context);
                               },
@@ -679,17 +694,24 @@ class CustomComponentWidget extends StatelessWidget {
                 icon: Icons.data_array,
                 background: Colors.blue,
                 onPress: () {
-                  final VariableDialog dialog=VariableDialog(componentOperationCubit: context.read<ComponentOperationCubit>(),
-                      componentCreationCubit: context.read<ComponentCreationCubit>(),
-                      componentSelectionCubit: context.read<ComponentSelectionCubit>(),
-                      title: comp.name, onAdded: (model){
-                    comp.variables[model.name]=model;
-                      }, onEdited: (model){
-                        comp.variables[model.name]=model;
-
-                      }, onDeleted:(model){
+                  final VariableDialog dialog = VariableDialog(
+                      componentOperationCubit:
+                          context.read<ComponentOperationCubit>(),
+                      componentCreationCubit:
+                          context.read<ComponentCreationCubit>(),
+                      componentSelectionCubit:
+                          context.read<ComponentSelectionCubit>(),
+                      title: comp.name,
+                      onAdded: (model) {
+                        comp.variables[model.name] = model;
+                      },
+                      onEdited: (model) {
+                        comp.variables[model.name] = model;
+                      },
+                      onDeleted: (model) {
                         comp.variables.remove(model.name);
-                      },variables: comp.variables);
+                      },
+                      variables: comp.variables);
                   dialog.show(context);
                 },
                 margin: 5,

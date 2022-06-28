@@ -24,6 +24,7 @@ import 'variable_model.dart';
 
 class FlutterProject {
   late ProjectSettingsModel settings;
+  late CodeProcessor processor;
   String name;
   final int userId;
   String? docId;
@@ -45,13 +46,14 @@ class FlutterProject {
     } else {
       this.settings = ProjectSettingsModel(isPublic: false, collaborators: []);
     }
+    processor = get<CodeProcessor>();
   }
 
-  Map<String, VariableModel> get variables => ComponentOperationCubit.codeProcessor.variables;
+  Map<String, VariableModel> get variables => processor.variables;
 
   set variables(Map<String, VariableModel> value) {
-    ComponentOperationCubit.codeProcessor.variables.clear();
-    ComponentOperationCubit.codeProcessor.variables.addAll(value);
+    processor.variables.clear();
+    processor.variables.addAll(value);
   }
 
   String get getPath {
@@ -64,7 +66,8 @@ class FlutterProject {
     flutterProject.uiScreens.add(ui);
     final custom = StatelessComponent(name: 'MainPage')..root = CScaffold();
     flutterProject.customComponents.add(custom);
-    (ui.rootComponent as CMaterialApp).addOrUpdateChildWithKey('home', custom.createInstance(null));
+    (ui.rootComponent as CMaterialApp)
+        .addOrUpdateChildWithKey('home', custom.createInstance(null));
 
     flutterProject.currentScreen = flutterProject.uiScreens.first;
     flutterProject.mainScreen = flutterProject.uiScreens.first;
@@ -95,11 +98,9 @@ class FlutterProject {
     if (!navigator) {
       return ProcessorProvider(
         get<CodeProcessor>(),
-        Builder(
-          builder: (context) {
-            return rootComponent?.build(context) ?? Container();
-          }
-        ),
+        Builder(builder: (context) {
+          return rootComponent?.build(context) ?? Container();
+        }),
       );
     }
     final _actionCubit = get<StackActionCubit>();
@@ -155,8 +156,9 @@ class UIScreen {
   final List<LocalModel> models = [];
   final RevertWork revertWork = RevertWork.init();
 
-  UIScreen(this.name){
-    processor = CodeProcessor.build(processor: ComponentOperationCubit.codeProcessor,name: name);
+  UIScreen(this.name) {
+    processor = CodeProcessor.build(
+        processor: ComponentOperationCubit.codeProcessor, name: name);
   }
 
   toJson() => {
@@ -164,8 +166,10 @@ class UIScreen {
         'actionCode': actionCode,
         'root': CodeOperations.trim(rootComponent?.code(clean: false)),
         'models': models.map((e) => e.toJson()).toList(growable: false),
-        'variables':
-            variables.values.where((element) => element.uiAttached).map((e) => e.toJson()).toList(growable: false)
+        'variables': variables.values
+            .where((element) => element.uiAttached)
+            .map((e) => e.toJson())
+            .toList(growable: false)
       };
 
   Map<String, VariableModel> get variables => processor.variables;
@@ -181,19 +185,23 @@ class UIScreen {
     return uiScreen;
   }
 
-  factory UIScreen.fromJson(Map<String, dynamic> json, final FlutterProject flutterProject) {
+  factory UIScreen.fromJson(
+      Map<String, dynamic> json, final FlutterProject flutterProject) {
     final screen = UIScreen(json['name']);
     screen.actionCode = json['actionCode'] ?? '';
-    screen.models.addAll(List.from(json['models'] ?? []).map((e) => LocalModel.fromJson(e)));
-    screen.variables.addAll(List.from(json['variables'] ?? [])
-        .asMap()
-        .map((key, value) => MapEntry(value['name'], VariableModel.fromJson(value, screen.name))));
+    screen.models.addAll(
+        List.from(json['models'] ?? []).map((e) => LocalModel.fromJson(e)));
+    screen.variables.addAll(List.from(json['variables'] ?? []).asMap().map((key,
+            value) =>
+        MapEntry(value['name'], VariableModel.fromJson(value, screen.name))));
     return screen;
   }
 
   factory UIScreen.otherScreen(final String name, {String type = 'screen'}) {
     final UIScreen uiScreen = UIScreen(name);
-    uiScreen.rootComponent = type == 'screen' ? componentList['Scaffold']!() : componentList['Container']!();
+    uiScreen.rootComponent = type == 'screen'
+        ? componentList['Scaffold']!()
+        : componentList['Container']!();
     return uiScreen;
   }
 
@@ -219,7 +227,9 @@ class UIScreen {
       }
     }
     for (int i in underScores) {
-      name2 = name2.substring(0, i + 1) + name2[i + 1].toUpperCase() + name2.substring(i + 2);
+      name2 = name2.substring(0, i + 1) +
+          name2[i + 1].toUpperCase() +
+          name2.substring(i + 2);
     }
     return firstLetter + name2.replaceAll('_', '');
   }
@@ -235,7 +245,9 @@ class UIScreen {
     rootComponent?.forEach((component) {
       if (component is Clickable) {
         for (final e in (component as Clickable).actionList) {
-          if (e.arguments.isNotEmpty && (e.arguments[0] is UIScreen?) && e.arguments[0] != null) {
+          if (e.arguments.isNotEmpty &&
+              (e.arguments[0] is UIScreen?) &&
+              e.arguments[0] != null) {
             importList.add((e.arguments[0] as UIScreen).name);
           }
         }
@@ -248,21 +260,25 @@ class UIScreen {
     String staticVariablesCode = '';
     String dynamicVariablesDefinitionCode = '';
     String dynamicVariableAssignmentCode = '';
-    for (final variable in ComponentOperationCubit.codeProcessor.variables.entries) {
-      if ([DataType.string, DataType.int, DataType.double, DataType.double].contains(variable.value.dataType)) {
+    for (final variable
+        in ComponentOperationCubit.codeProcessor.variables.entries) {
+      if ([DataType.string, DataType.int, DataType.double, DataType.double]
+          .contains(variable.value.dataType)) {
         if (!variable.value.isFinal) {
           staticVariablesCode +=
               'final ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
         } else {
           dynamicVariablesDefinitionCode +=
               'late ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key};';
-          dynamicVariableAssignmentCode += '${variable.key} = ${variable.value.assignmentCode};';
+          dynamicVariableAssignmentCode +=
+              '${variable.key} = ${variable.value.assignmentCode};';
         }
       }
     }
 
     String functionImplementationCode = '';
-    for (final function in ComponentOperationCubit.codeProcessor.predefinedFunctions.values) {
+    for (final function
+        in ComponentOperationCubit.codeProcessor.predefinedFunctions.values) {
       functionImplementationCode += function.functionCode;
     }
 
