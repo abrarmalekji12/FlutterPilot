@@ -1212,7 +1212,12 @@ abstract class CustomComponent extends Component {
       });
     }
     return ProcessorProvider(
-        processor, ComponentWidget(key: key(context), child: create(context)));
+      processor,
+      ComponentWidget(
+        key: key(context),
+        child: create(context),
+      ),
+    );
   }
 
   @override

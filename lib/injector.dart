@@ -18,6 +18,8 @@ void initInjector() {
     WinToast.instance().initialize(appName: 'Flutter Visual Builder',
         productName: 'Flutter Visual Builder', companyName: 'AMSoftwares');
   }
+
+  get.registerSingleton<CodeProcessor>(CodeProcessor.build());
   get.registerSingleton<StateManagementBloc>(StateManagementBloc());
   get.registerSingleton<StackActionCubit>(StackActionCubit());
   get.registerSingleton<AuthenticationCubit>(AuthenticationCubit());
@@ -26,6 +28,5 @@ void initInjector() {
   get.registerSingleton<ComponentCreationCubit>(ComponentCreationCubit());
 
 
-  get.registerSingleton<CodeProcessor>(CodeProcessor.build());
 }
 
