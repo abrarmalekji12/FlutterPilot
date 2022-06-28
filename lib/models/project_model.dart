@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../code_to_component.dart';
+import '../common/compiler/code_processor.dart';
+import '../common/compiler/processor_component.dart';
 import '../common/converter/code_converter.dart';
 import '../common/undo/revert_work.dart';
 import '../constant/string_constant.dart';
 import '../cubit/stack_action/stack_action_cubit.dart';
 import '../injector.dart';
 import '../main.dart';
+import '../runtime_provider.dart';
 import '../ui/action_ui.dart';
 import '../ui/models_view.dart';
 import '../ui/project_setting_page.dart';
@@ -25,7 +28,8 @@ class FlutterProject {
   final int userId;
   String? docId;
   final String? device;
-  String actionCode='';
+  String actionCode = '';
+
   // final List<VariableModel> variables = [];
   // final List<LocalModel> models = [];
   late UIScreen currentScreen;
@@ -34,17 +38,27 @@ class FlutterProject {
   final List<CustomComponent> customComponents = [];
   final List<FavouriteModel> favouriteList = [];
 
-  FlutterProject(this.name, this.userId, this.docId, {this.device,this.actionCode='',ProjectSettingsModel? settings}){
-    if(settings!=null){
-      this.settings=settings;
-    }
-    else{
-      this.settings= ProjectSettingsModel(isPublic: false,collaborators: []);
+  FlutterProject(this.name, this.userId, this.docId,
+      {this.device, this.actionCode = '', ProjectSettingsModel? settings}) {
+    if (settings != null) {
+      this.settings = settings;
+    } else {
+      this.settings = ProjectSettingsModel(isPublic: false, collaborators: []);
     }
   }
+
+  Map<String, VariableModel> get variables =>
+      ComponentOperationCubit.codeProcessor.variables;
+
+  set variables(Map<String, VariableModel> value) {
+    ComponentOperationCubit.codeProcessor.variables.clear();
+    ComponentOperationCubit.codeProcessor.variables.addAll(value);
+  }
+
   String get getPath {
     return RunKey.encrypt(userId, name);
   }
+
   factory FlutterProject.createNewProject(String name, int userId) {
     final FlutterProject flutterProject = FlutterProject(name, userId, null);
     final ui = UIScreen.mainUI();
@@ -83,34 +97,39 @@ class FlutterProject {
     if (!navigator) {
       return rootComponent?.build(context) ?? Container();
     }
-    final _actionCubit=get<StackActionCubit>();
-    return BlocBuilder<StackActionCubit, StackActionState>(
-      bloc: _actionCubit,
-      builder: (context, state) {
-        return Scaffold(
-          key: const GlobalObjectKey(deviceScaffoldMessenger),
-          body: SafeArea(
-            child: Stack(
-              children: [
-                Navigator(
-                  key: const GlobalObjectKey(navigationKey),
-                  onGenerateRoute: (settings) => MaterialPageRoute(
-                    builder: (_) =>
-                        mainScreen.build(context) ?? Container(),
-                  ),
+    final _actionCubit = get<StackActionCubit>();
+    return Builder(builder: (context) {
+      return Scaffold(
+        key: const GlobalObjectKey(deviceScaffoldMessenger),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Navigator(
+                key: const GlobalObjectKey(navigationKey),
+                onGenerateRoute: (settings) => MaterialPageRoute(
+                  builder: (_) => mainScreen.build(context) ?? Container(),
                 ),
-                for (final model in _actionCubit.models)
-                  Center(
-                    child: StackActionWidget(
-                      actionModel: model,
-                    ),
-                  )
-              ],
-            ),
+              ),
+              BlocBuilder<StackActionCubit, StackActionState>(
+                bloc: _actionCubit,
+                builder: (context, state) {
+                  return Stack(
+                    children: [
+                      for (final model in _actionCubit.models)
+                        Center(
+                          child: StackActionWidget(
+                            actionModel: model,
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 
   void setRoot(Component component) {
@@ -120,21 +139,34 @@ class FlutterProject {
 }
 
 class UIScreen {
+  final CodeProcessor processor =
+      CodeProcessor.build(processor: ComponentOperationCubit.codeProcessor);
   String name;
+  String actionCode = '';
   Component? rootComponent;
   final List<String> importList = [];
   final List<LocalModel> models = [];
-  final List<VariableModel> variables = [];
   final RevertWork revertWork = RevertWork.init();
 
   UIScreen(this.name);
 
   toJson() => {
         'name': name,
+        'actionCode': actionCode,
         'root': CodeOperations.trim(rootComponent?.code(clean: false)),
         'models': models.map((e) => e.toJson()).toList(growable: false),
-        'variables': variables.map((e) => e.toJson()).toList(growable: false)
+        'variables': variables.values
+            .where((element) => element.uiAttached)
+            .map((e) => e.toJson())
+            .toList(growable: false)
       };
+
+  Map<String, VariableModel> get variables => processor.variables;
+
+  set variables(Map<String, VariableModel> value) {
+    processor.variables.clear();
+    processor.variables.addAll(value);
+  }
 
   factory UIScreen.mainUI() {
     final UIScreen uiScreen = UIScreen('HomePage');
@@ -145,11 +177,12 @@ class UIScreen {
   factory UIScreen.fromJson(
       Map<String, dynamic> json, final FlutterProject flutterProject) {
     final screen = UIScreen(json['name']);
-
+    screen.actionCode = json['actionCode'] ?? '';
     screen.models.addAll(
         List.from(json['models'] ?? []).map((e) => LocalModel.fromJson(e)));
-    screen.variables.addAll(List.from(json['variables'] ?? [])
-        .map((e) => VariableModel.fromJson(e, screen.name)));
+    screen.variables.addAll(List.from(json['variables'] ?? []).asMap().map((key,
+            value) =>
+        MapEntry(value['name'], VariableModel.fromJson(value, screen.name))));
     return screen;
   }
 
@@ -162,7 +195,15 @@ class UIScreen {
   }
 
   Widget? build(BuildContext context) {
-    return rootComponent?.build(context);
+    if (RuntimeProvider.of(context) == RuntimeMode.run) {
+      processor.executeCode(actionCode);
+      processor.functions['build']?.execute(processor, []);
+      print('CALLED BUILD');
+    }
+    return ProcessorProvider(
+      processor,
+      rootComponent?.build(context) ?? Container(),
+    );
   }
 
   String get getClassName {
@@ -210,18 +251,16 @@ class UIScreen {
     String dynamicVariableAssignmentCode = '';
     for (final variable
         in ComponentOperationCubit.codeProcessor.variables.entries) {
-      if([DataType.string, DataType.int, DataType.double,DataType.double].contains(variable.value.dataType)) {
+      if ([DataType.string, DataType.int, DataType.double, DataType.double]
+          .contains(variable.value.dataType)) {
         if (!variable.value.isFinal) {
           staticVariablesCode +=
-          'final ${LocalModel.dataTypeToCode(
-              variable.value.dataType)} ${variable.key} = ${LocalModel
-              .valueToCode(variable.value.value)};';
+              'final ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
         } else {
           dynamicVariablesDefinitionCode +=
-          'late ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable
-              .key};';
+              'late ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key};';
           dynamicVariableAssignmentCode +=
-          '${variable.key} = ${variable.value.assignmentCode};';
+              '${variable.key} = ${variable.value.assignmentCode};';
         }
       }
     }

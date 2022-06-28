@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../code_to_component.dart';
 import '../common/common_methods.dart';
+import '../common/io_lib.dart';
 import '../common/material_alert.dart';
 import '../injector.dart';
 import '../models/operation_model.dart';
@@ -21,6 +22,9 @@ import '../cubit/component_selection/component_selection_cubit.dart';
 import '../models/component_selection.dart';
 import '../models/parameter_model.dart';
 import '../models/project_model.dart';
+import '../models/variable_model.dart';
+import 'common/action_code_dialog.dart';
+import 'common/variable_dialog.dart';
 import 'project_setting_page.dart';
 import 'component_selection_dialog.dart';
 import 'package:get/get.dart';
@@ -98,7 +102,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                     InkWell(
                         onTap: () {
                           showDialog(
-                            barrierDismissible: false,
+                              barrierDismissible: false,
                               context: context,
                               builder: (_) => ProjectSettingsPage(
                                     componentOperationCubit:
@@ -141,7 +145,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                           children: [
                             if (_componentOperationCubit
                                     .revertWork.totalOperations >
-                                0)
+                                0) ...[
                               InkWell(
                                 onTap: () {
                                   _componentOperationCubit.revertWork.undo();
@@ -152,9 +156,10 @@ class _ComponentTreeState extends State<ComponentTree> {
                                   color: Colors.black,
                                 ),
                               ),
-                            const SizedBox(
-                              width: 30,
-                            ),
+                              const SizedBox(
+                                width: 30,
+                              ),
+                            ],
                             const Icon(
                               Icons.cloud_done,
                               color: Colors.blueAccent,
@@ -169,6 +174,7 @@ class _ComponentTreeState extends State<ComponentTree> {
               ],
             ),
           ),
+
           if (_componentOperationCubit
               .flutterProject!.uiScreens.isNotEmpty) ...[
             BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
@@ -263,34 +269,116 @@ class _ComponentTreeState extends State<ComponentTree> {
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          Transform.scale(
-                            scale: 0.9,
-                            child: Checkbox(
-                              onChanged: (value) {
-                                _componentOperationCubit
-                                        .flutterProject!.mainScreen =
-                                    _componentOperationCubit
-                                        .flutterProject!.currentScreen;
-                                _componentOperationCubit
-                                    .emit(ComponentUpdatedState());
-                              },
-                              value: _componentOperationCubit
-                                      .flutterProject!.mainScreen ==
+                      Padding(
+                        padding: const EdgeInsets.all(5),
+                        child: Row(
+                          children: [
+                            Transform.scale(
+                              scale: 0.8,
+                              child: Checkbox(
+                                onChanged: (value) {
                                   _componentOperationCubit
-                                      .flutterProject!.currentScreen,
-                              visualDensity: const VisualDensity(
-                                  horizontal: 4, vertical: 4),
+                                          .flutterProject!.mainScreen =
+                                      _componentOperationCubit
+                                          .flutterProject!.currentScreen;
+                                  _componentOperationCubit
+                                      .emit(ComponentUpdatedState());
+                                  _componentOperationCubit.updateMainScreen();
+                                },
+                                value: _componentOperationCubit
+                                        .flutterProject!.mainScreen ==
+                                    _componentOperationCubit
+                                        .flutterProject!.currentScreen,
+                                visualDensity: const VisualDensity(
+                                    horizontal: -4, vertical: -4),
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
                             ),
-                          ),
-                          Text(
-                            'Main Screen',
-                            style: AppFontStyle.roboto(14,
-                                color: Colors.black,
-                                fontWeight: FontWeight.w500),
-                          )
-                        ],
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            Text(
+                              'Main Screen',
+                              style: AppFontStyle.roboto(14,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500),
+                            )
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            AppIconButton(
+                              icon: Icons.code,
+                              background: Colors.green,
+                              onPress: () {
+                                final screen= ComponentOperationCubit
+                                    .currentFlutterProject!.currentScreen;
+                                final ActionCodeDialog dialog = ActionCodeDialog(
+                                    code:screen.actionCode,
+                                    title: screen.name,
+                                    onChanged: (code) {
+                                      _componentOperationCubit
+                                          .updateScreenActionCode(screen, code);
+                                    },
+                                    prerequisites: [
+                                      ComponentOperationCubit
+                                          .currentFlutterProject!.actionCode
+                                    ]);
+                                dialog.show(context);
+                              },
+                              margin: 5,
+                              size: 15,
+                            ),
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            AppIconButton(
+                              icon: Icons.data_array,
+                              background: Colors.blue,
+                              onPress: () {
+                                final screen= ComponentOperationCubit
+                                    .currentFlutterProject!.currentScreen;
+                                final componentOperationCubit = context.read<ComponentOperationCubit>();
+                                final componentCreationCubit = context.read<ComponentCreationCubit>();
+                                final componentSelectionCubit = context.read<ComponentSelectionCubit>();
+                                final _variableDialog = VariableDialog(
+                                    variables: screen.variables,
+                                    componentOperationCubit: componentOperationCubit,
+                                    componentCreationCubit: componentCreationCubit,
+                                    title: screen.name,
+                                    onAdded: (model) {
+                                      screen.processor.variables[model.name] =
+                                          model;
+                                      componentOperationCubit.addVariableForScreen(
+                                          ComponentOperationCubit.codeProcessor.variables[model.name]!);
+                                      componentCreationCubit.changedComponent();
+                                      componentSelectionCubit.emit(ComponentSelectionChange());
+                                    },
+                                    onEdited: (model) {
+                                      screen.processor.variables[model.name]!.value = model.value;
+                                      Future.delayed(const Duration(milliseconds: 500), () {
+                                        componentOperationCubit.updateScreenVariable(screen.variables[model.name]!);
+                                        componentCreationCubit.changedComponent();
+                                        componentSelectionCubit.emit(ComponentSelectionChange());
+                                      });
+                                    },
+                                    componentSelectionCubit: componentSelectionCubit,
+                                    onDeleted: (VariableModel model) {
+                                      screen.variables.remove(model);
+                                      componentCreationCubit.changedComponent();
+                                      componentSelectionCubit.emit(ComponentSelectionChange());
+                                    });
+                                _variableDialog.show(context);
+                              },
+                              margin: 5,
+                              size: 15,
+                            ),
+                          ],
+                        ),
                       ),
                       if (_componentOperationCubit
                               .flutterProject?.currentScreen !=
@@ -339,7 +427,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                             style: AppFontStyle.roboto(14,
                                 color: Colors.red, fontWeight: FontWeight.w600),
                           ),
-                        )
+                        ),
                     ],
                   ),
                 );
@@ -436,8 +524,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                                             fontWeight: FontWeight.bold),
                                       ),
                                       InkWell(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(10),
                                         onTap: () {
                                           //ADD Custom Widgets
                                           showScreenNameDialog(
@@ -466,46 +553,13 @@ class _ComponentTreeState extends State<ComponentTree> {
                                 ),
                                 for (final CustomComponent comp
                                     in _componentOperationCubit
-                                        .flutterProject!
-                                        .customComponents) ...[
-                                  OnHoverMenuChangeWidget(
-                                    buildWidget: (showMenu) => Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        ComponentTile(
-                                            component: comp,
-                                            ancestor: comp,
-                                            componentSelectionCubit:
-                                                _componentSelectionCubit),
-                                        if (showMenu)
-                                          ComponentModificationMenu(
-                                            component: comp,
-                                            ancestor: comp,
-                                            componentOperationCubit:
-                                                _componentOperationCubit,
-                                            componentCreationCubit:
-                                                _componentCreationCubit,
-                                            componentSelectionCubit:
-                                                _componentSelectionCubit,
-                                          )
-                                      ],
-                                    ),
+                                        .flutterProject!.customComponents) ...[
+                                  CustomComponentWidget(
+                                    comp: comp,
+                                    _componentSelectionCubit,
+                                    _componentOperationCubit,
+                                    _componentCreationCubit,
                                   ),
-                                  if (comp.root != null)
-                                    Container(
-                                      alignment: Alignment.topLeft,
-                                      padding: const EdgeInsets.all(6),
-                                      child: SublistWidget(
-                                          component: comp.root!,
-                                          ancestor: comp,
-                                          componentSelectionCubit:
-                                              _componentSelectionCubit,
-                                          componentOperationCubit:
-                                              _componentOperationCubit,
-                                          componentCreationCubit:
-                                              _componentCreationCubit),
-                                    ),
                                 ],
                                 const SizedBox(
                                   height: 100,
@@ -572,6 +626,109 @@ class _ComponentTreeState extends State<ComponentTree> {
           type: type,
         ),
       ),
+    );
+  }
+}
+
+class CustomComponentWidget extends StatelessWidget {
+  final CustomComponent comp;
+  final ComponentSelectionCubit _componentSelectionCubit;
+  final ComponentOperationCubit _componentOperationCubit;
+  final ComponentCreationCubit _componentCreationCubit;
+
+  const CustomComponentWidget(
+    this._componentSelectionCubit,
+    this._componentOperationCubit,
+    this._componentCreationCubit, {
+    Key? key,
+    required this.comp,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              AppIconButton(
+                icon: Icons.code,
+                background: Colors.green,
+                onPress: () {
+                  final ActionCodeDialog dialog = ActionCodeDialog(
+                      code: comp.actionCode,
+                      title: comp.name,
+                      onChanged: (code) {
+                        _componentOperationCubit
+                            .updateCustomComponentActionCode(comp, code);
+                      },
+                      prerequisites: [
+                        ComponentOperationCubit
+                            .currentFlutterProject!.actionCode
+                      ]);
+                  dialog.show(context);
+                },
+                margin: 5,
+                size: 15,
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              AppIconButton(
+                icon: Icons.data_array,
+                background: Colors.blue,
+                onPress: () {
+                  final VariableDialog dialog=VariableDialog(componentOperationCubit: context.read<ComponentOperationCubit>(),
+                      componentCreationCubit: context.read<ComponentCreationCubit>(),
+                      componentSelectionCubit: context.read<ComponentSelectionCubit>(),
+                      title: comp.name, onAdded: (model){
+                    comp.variables[model.name]=model;
+                      }, onEdited: (model){
+                        comp.variables[model.name]=model;
+
+                      }, onDeleted:(model){
+                        comp.variables.remove(model.name);
+                      },variables: comp.variables);
+                  dialog.show(context);
+                },
+                margin: 5,
+                size: 15,
+              ),
+            ],
+          ),
+        ),
+        OnHoverMenuChangeWidget(
+          buildWidget: (showMenu) => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ComponentTile(
+                  component: comp,
+                  ancestor: comp,
+                  componentSelectionCubit: _componentSelectionCubit),
+              if (showMenu)
+                ComponentModificationMenu(
+                  component: comp,
+                  ancestor: comp,
+                  componentOperationCubit: _componentOperationCubit,
+                  componentCreationCubit: _componentCreationCubit,
+                  componentSelectionCubit: _componentSelectionCubit,
+                )
+            ],
+          ),
+        ),
+        if (comp.root != null)
+          Container(
+            alignment: Alignment.topLeft,
+            padding: const EdgeInsets.all(6),
+            child: SublistWidget(
+                component: comp.root!,
+                ancestor: comp,
+                componentSelectionCubit: _componentSelectionCubit,
+                componentOperationCubit: _componentOperationCubit,
+                componentCreationCubit: _componentCreationCubit),
+          ),
+      ],
     );
   }
 }
@@ -1012,6 +1169,23 @@ class SublistWidget extends StatefulWidget {
 }
 
 class _SublistWidgetState extends State<SublistWidget> {
+  void _onClick() {
+    final List<Component> clones = widget.component.getAllClones();
+    print('CLONES >>> ${clones.length} ');
+    widget.componentSelectionCubit.changeComponentSelection(
+        ComponentSelectionModel([widget.component],
+            [widget.component, ...clones], widget.component),
+        root: widget.ancestor,
+        scroll: false);
+    if (GlobalObjectKey(widget.component).currentContext != null) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        Scrollable.ensureVisible(
+            GlobalObjectKey(widget.component).currentContext!,
+            alignment: 0.5);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final open =
@@ -1021,74 +1195,79 @@ class _SublistWidgetState extends State<SublistWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           OnHoverMenuChangeWidget(
-            buildWidget: (showMenu) => Row(
-              children: [
-                InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () {
-                    widget.componentOperationCubit
-                        .expandedTree[widget.component] = (!(widget
-                            .componentOperationCubit
-                            .expandedTree[widget.component] ??
-                        true));
-                    setState(() {});
-                  },
-                  child: Icon(
-                    open ? Icons.arrow_drop_down : Icons.arrow_drop_up,
-                    color: open ? Colors.grey.shade400 : Colors.grey.shade700,
-                    size: 20,
+            buildWidget: (showMenu) => InkWell(
+              onTap: () {
+                _onClick();
+              },
+              child: Row(
+                children: [
+                  InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () {
+                      widget.componentOperationCubit
+                          .expandedTree[widget.component] = (!(widget
+                              .componentOperationCubit
+                              .expandedTree[widget.component] ??
+                          true));
+                      setState(() {});
+                    },
+                    child: Icon(
+                      open ? Icons.arrow_drop_down : Icons.arrow_drop_up,
+                      color: open ? Colors.grey.shade400 : Colors.grey.shade700,
+                      size: 20,
+                    ),
                   ),
-                ),
-                DragTarget(
-                  onWillAccept: (object) {
-                    return true;
-                  },
-                  onAccept: (object) {
-                    debugPrint('ACCEPTED $object');
-                    performReversibleOperation(() {
-                      BlocProvider.of<ComponentOperationCubit>(context,
-                              listen: false)
-                          .removeComponentAndRefresh(
-                              context, object as Component, widget.ancestor);
-                      BlocProvider.of<ComponentOperationCubit>(context,
-                              listen: false)
-                          .addOperation(
-                        widget.component,
-                        object,
-                        widget.ancestor,
+                  DragTarget(
+                    onWillAccept: (object) {
+                      return true;
+                    },
+                    onAccept: (object) {
+                      debugPrint('ACCEPTED $object');
+                      performReversibleOperation(() {
+                        BlocProvider.of<ComponentOperationCubit>(context,
+                                listen: false)
+                            .removeComponentAndRefresh(
+                                context, object as Component, widget.ancestor);
+                        BlocProvider.of<ComponentOperationCubit>(context,
+                                listen: false)
+                            .addOperation(
+                          widget.component,
+                          object,
+                          widget.ancestor,
+                        );
+                        BlocProvider.of<ComponentCreationCubit>(context,
+                                listen: false)
+                            .changedComponent();
+                        BlocProvider.of<ComponentSelectionCubit>(context,
+                                listen: false)
+                            .changeComponentSelection(
+                                ComponentSelectionModel.unique(object),
+                                root: widget.ancestor);
+                      });
+                    },
+                    builder: (context, list1, list2) {
+                      return ComponentTile(
+                        component: widget.component,
+                        ancestor: widget.ancestor,
+                        componentSelectionCubit: widget.componentSelectionCubit,
                       );
-                      BlocProvider.of<ComponentCreationCubit>(context,
-                              listen: false)
-                          .changedComponent();
-                      BlocProvider.of<ComponentSelectionCubit>(context,
-                              listen: false)
-                          .changeComponentSelection(
-                              ComponentSelectionModel.unique(object),
-                              root: widget.ancestor);
-                    });
-                  },
-                  builder: (context, list1, list2) {
-                    return ComponentTile(
+                    },
+                  ),
+                  if (showMenu) ...[
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    ComponentModificationMenu(
                       component: widget.component,
                       ancestor: widget.ancestor,
+                      componentParameter: widget.componentParameter,
+                      componentOperationCubit: widget.componentOperationCubit,
+                      componentCreationCubit: widget.componentCreationCubit,
                       componentSelectionCubit: widget.componentSelectionCubit,
-                    );
-                  },
-                ),
-                if (showMenu) ...[
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  ComponentModificationMenu(
-                    component: widget.component,
-                    ancestor: widget.ancestor,
-                    componentParameter: widget.componentParameter,
-                    componentOperationCubit: widget.componentOperationCubit,
-                    componentCreationCubit: widget.componentCreationCubit,
-                    componentSelectionCubit: widget.componentSelectionCubit,
-                  )
-                ]
-              ],
+                    )
+                  ]
+                ],
+              ),
             ),
           ),
           if ((widget.component as MultiHolder).children.isNotEmpty)
@@ -1118,54 +1297,60 @@ class _SublistWidgetState extends State<SublistWidget> {
       return Column(
         children: [
           OnHoverMenuChangeWidget(
-              buildWidget: (showMenu) => Row(
-                    children: [
-                      DragTarget(onWillAccept: (object) {
-                        return true;
-                      }, onAccept: (object) {
-                        debugPrint('ACCEPTED $object');
-                        performReversibleOperation(() {
-                          BlocProvider.of<ComponentOperationCubit>(context,
-                                  listen: false)
-                              .removeComponent(
-                                  object as Component, widget.ancestor);
-                          BlocProvider.of<ComponentOperationCubit>(context,
-                                  listen: false)
-                              .addOperation(
-                                  widget.component, object, widget.ancestor);
-                          BlocProvider.of<ComponentCreationCubit>(context,
-                                  listen: false)
-                              .changedComponent();
-                          BlocProvider.of<ComponentSelectionCubit>(context,
-                                  listen: false)
-                              .changeComponentSelection(
-                                  ComponentSelectionModel.unique(object),
-                                  root: widget.ancestor);
-                        });
-                      }, builder: (context, list1, list2) {
-                        return ComponentTile(
-                          component: widget.component,
-                          ancestor: widget.ancestor,
-                          componentSelectionCubit:
-                              widget.componentSelectionCubit,
-                        );
-                      }),
-                      if (showMenu) ...[
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        ComponentModificationMenu(
-                          component: widget.component,
-                          ancestor: widget.ancestor,
-                          componentParameter: widget.componentParameter,
-                          componentOperationCubit:
-                              widget.componentOperationCubit,
-                          componentCreationCubit: widget.componentCreationCubit,
-                          componentSelectionCubit:
-                              widget.componentSelectionCubit,
-                        )
-                      ]
-                    ],
+              buildWidget: (showMenu) => InkWell(
+                    onTap: () {
+                      _onClick();
+                    },
+                    child: Row(
+                      children: [
+                        DragTarget(onWillAccept: (object) {
+                          return true;
+                        }, onAccept: (object) {
+                          debugPrint('ACCEPTED $object');
+                          performReversibleOperation(() {
+                            BlocProvider.of<ComponentOperationCubit>(context,
+                                    listen: false)
+                                .removeComponent(
+                                    object as Component, widget.ancestor);
+                            BlocProvider.of<ComponentOperationCubit>(context,
+                                    listen: false)
+                                .addOperation(
+                                    widget.component, object, widget.ancestor);
+                            BlocProvider.of<ComponentCreationCubit>(context,
+                                    listen: false)
+                                .changedComponent();
+                            BlocProvider.of<ComponentSelectionCubit>(context,
+                                    listen: false)
+                                .changeComponentSelection(
+                                    ComponentSelectionModel.unique(object),
+                                    root: widget.ancestor);
+                          });
+                        }, builder: (context, list1, list2) {
+                          return ComponentTile(
+                            component: widget.component,
+                            ancestor: widget.ancestor,
+                            componentSelectionCubit:
+                                widget.componentSelectionCubit,
+                          );
+                        }),
+                        if (showMenu) ...[
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          ComponentModificationMenu(
+                            component: widget.component,
+                            ancestor: widget.ancestor,
+                            componentParameter: widget.componentParameter,
+                            componentOperationCubit:
+                                widget.componentOperationCubit,
+                            componentCreationCubit:
+                                widget.componentCreationCubit,
+                            componentSelectionCubit:
+                                widget.componentSelectionCubit,
+                          )
+                        ]
+                      ],
+                    ),
                   )),
           if ((widget.component as Holder).child != null)
             SingleChildWidget(
@@ -1189,30 +1374,37 @@ class _SublistWidgetState extends State<SublistWidget> {
       return Column(
         children: [
           OnHoverMenuChangeWidget(
-              buildWidget: (showMenu) => Row(
-                    children: [
-                      ComponentTile(
-                        component: widget.component,
-                        ancestor: widget.ancestor,
-                        componentSelectionCubit: widget.componentSelectionCubit,
-                      ),
-                      if (showMenu) ...[
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        ComponentModificationMenu(
+              buildWidget: (showMenu) => InkWell(
+                    onTap: () {
+                      _onClick();
+                    },
+                    child: Row(
+                      children: [
+                        ComponentTile(
                           component: widget.component,
-                          customNamed: null,
-                          componentParameter: widget.componentParameter,
                           ancestor: widget.ancestor,
-                          componentOperationCubit:
-                              widget.componentOperationCubit,
-                          componentCreationCubit: widget.componentCreationCubit,
                           componentSelectionCubit:
                               widget.componentSelectionCubit,
                         ),
-                      ]
-                    ],
+                        if (showMenu) ...[
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          ComponentModificationMenu(
+                            component: widget.component,
+                            customNamed: null,
+                            componentParameter: widget.componentParameter,
+                            ancestor: widget.ancestor,
+                            componentOperationCubit:
+                                widget.componentOperationCubit,
+                            componentCreationCubit:
+                                widget.componentCreationCubit,
+                            componentSelectionCubit:
+                                widget.componentSelectionCubit,
+                          ),
+                        ]
+                      ],
+                    ),
                   )),
           Padding(
             padding: const EdgeInsets.only(left: 5, top: 10),
@@ -1222,30 +1414,35 @@ class _SublistWidgetState extends State<SublistWidget> {
                 Column(
                   children: [
                     OnHoverMenuChangeWidget(
-                        buildWidget: (showMenu) => Row(
-                              children: [
-                                Text(
-                                  child,
-                                  style: AppFontStyle.roboto(12,
-                                      color: const Color(0xff494949),
-                                      fontWeight: FontWeight.w500),
-                                ),
-                                if (showMenu) ...[
-                                  const SizedBox(
-                                    width: 10,
+                        buildWidget: (showMenu) => InkWell(
+                              onTap: () {
+                                _onClick();
+                              },
+                              child: Row(
+                                children: [
+                                  Text(
+                                    child,
+                                    style: AppFontStyle.roboto(12,
+                                        color: const Color(0xff494949),
+                                        fontWeight: FontWeight.w500),
                                   ),
-                                  ComponentModificationMenu(
-                                      component: widget.component,
-                                      customNamed: child,
-                                      ancestor: widget.ancestor,
-                                      componentSelectionCubit:
-                                          widget.componentSelectionCubit,
-                                      componentOperationCubit:
-                                          widget.componentOperationCubit,
-                                      componentCreationCubit:
-                                          widget.componentCreationCubit),
-                                ]
-                              ],
+                                  if (showMenu) ...[
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    ComponentModificationMenu(
+                                        component: widget.component,
+                                        customNamed: child,
+                                        ancestor: widget.ancestor,
+                                        componentSelectionCubit:
+                                            widget.componentSelectionCubit,
+                                        componentOperationCubit:
+                                            widget.componentOperationCubit,
+                                        componentCreationCubit:
+                                            widget.componentCreationCubit),
+                                  ]
+                                ],
+                              ),
                             )),
                     if ((widget.component as CustomNamedHolder)
                             .childMap[child] !=
@@ -1271,27 +1468,33 @@ class _SublistWidgetState extends State<SublistWidget> {
                 Column(
                   children: [
                     OnHoverMenuChangeWidget(
-                        buildWidget: (showMenu) => Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  child,
-                                  style: AppFontStyle.roboto(12,
-                                      color: const Color(0xff494949),
-                                      fontWeight: FontWeight.w500),
-                                ),
-                                if (showMenu)
-                                  ComponentModificationMenu(
-                                      component: widget.component,
-                                      customNamed: child,
-                                      ancestor: widget.ancestor,
-                                      componentSelectionCubit:
-                                          widget.componentSelectionCubit,
-                                      componentOperationCubit:
-                                          widget.componentOperationCubit,
-                                      componentCreationCubit:
-                                          widget.componentCreationCubit),
-                              ],
+                        buildWidget: (showMenu) => InkWell(
+                              onTap: () {
+                                _onClick();
+                              },
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    child,
+                                    style: AppFontStyle.roboto(12,
+                                        color: const Color(0xff494949),
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  if (showMenu)
+                                    ComponentModificationMenu(
+                                        component: widget.component,
+                                        customNamed: child,
+                                        ancestor: widget.ancestor,
+                                        componentSelectionCubit:
+                                            widget.componentSelectionCubit,
+                                        componentOperationCubit:
+                                            widget.componentOperationCubit,
+                                        componentCreationCubit:
+                                            widget.componentCreationCubit),
+                                ],
+                              ),
                             )),
                     if ((widget.component as CustomNamedHolder)
                             .childrenMap[child] !=
@@ -1317,49 +1520,63 @@ class _SublistWidgetState extends State<SublistWidget> {
       );
     } else if (widget.component is CustomComponent) {
       return OnHoverMenuChangeWidget(
-          buildWidget: (showMenu) => Row(
-                children: [
-                  ComponentTile(
-                    component: widget.component,
-                    ancestor: widget.ancestor,
-                    componentSelectionCubit: widget.componentSelectionCubit,
-                  ),
-                  if (showMenu) ...[
-                    const Spacer(),
-                    ComponentModificationMenu(
+          buildWidget: (showMenu) => InkWell(
+                onTap: () {
+                  _onClick();
+                },
+                child: Row(
+                  children: [
+                    ComponentTile(
                       component: widget.component,
                       ancestor: widget.ancestor,
-                      componentParameter: widget.componentParameter,
-                      componentOperationCubit: widget.componentOperationCubit,
-                      componentCreationCubit: widget.componentCreationCubit,
                       componentSelectionCubit: widget.componentSelectionCubit,
-                    )
-                  ]
-                ],
+                    ),
+                    if (showMenu) ...[
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      ComponentModificationMenu(
+                        component: widget.component,
+                        ancestor: widget.ancestor,
+                        componentParameter: widget.componentParameter,
+                        componentOperationCubit: widget.componentOperationCubit,
+                        componentCreationCubit: widget.componentCreationCubit,
+                        componentSelectionCubit: widget.componentSelectionCubit,
+                      )
+                    ]
+                  ],
+                ),
               ));
     }
     return Column(
       children: [
         OnHoverMenuChangeWidget(
-          buildWidget: (showMenu) => Row(
-            children: [
-              ComponentTile(
-                component: widget.component,
-                ancestor: widget.ancestor,
-                componentSelectionCubit: widget.componentSelectionCubit,
-              ),
-              if (showMenu) ...[
-                const Spacer(),
-                ComponentModificationMenu(
+          buildWidget: (showMenu) => InkWell(
+            onTap: () {
+              _onClick();
+            },
+            child: Row(
+              children: [
+                ComponentTile(
                   component: widget.component,
                   ancestor: widget.ancestor,
-                  componentParameter: widget.componentParameter,
-                  componentOperationCubit: widget.componentOperationCubit,
-                  componentCreationCubit: widget.componentCreationCubit,
                   componentSelectionCubit: widget.componentSelectionCubit,
-                )
-              ]
-            ],
+                ),
+                if (showMenu) ...[
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  ComponentModificationMenu(
+                    component: widget.component,
+                    ancestor: widget.ancestor,
+                    componentParameter: widget.componentParameter,
+                    componentOperationCubit: widget.componentOperationCubit,
+                    componentCreationCubit: widget.componentCreationCubit,
+                    componentSelectionCubit: widget.componentSelectionCubit,
+                  )
+                ]
+              ],
+            ),
           ),
         ),
         if (widget.component.componentParameters.isNotEmpty)
@@ -1422,6 +1639,9 @@ class _OnHoverMenuChangeWidgetState extends State<OnHoverMenuChangeWidget> {
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isAndroid || Platform.isIOS) {
+      return widget.buildWidget(showMenu);
+    }
     return MouseRegion(
       onEnter: (_) {
         setState(() {
@@ -1454,7 +1674,8 @@ class ComponentModificationMenu extends StatelessWidget {
   final bool disableOperations;
   final bool componentParameterOperation;
   static final components =
-  componentList.map((key, value) => MapEntry(key, value()));
+      componentList.map((key, value) => MapEntry(key, value()));
+
   const ComponentModificationMenu(
       {Key? key,
       this.customNamed,
@@ -1985,16 +2206,11 @@ class ComponentModificationMenu extends StatelessWidget {
       {List<String>? possibleItems, bool favouritesEnable = true}) {
     showModelDialog(
       context,
-      GestureDetector(
-        onTap: () {
-          Navigator.pop(context);
-        },
-        child: ComponentSelectionDialog(
-          possibleItems: possibleItems,
-          onSelection: onSelection,
-          shouldShowFavourites: favouritesEnable,
-          componentOperationCubit: componentOperationCubit,
-        ),
+      ComponentSelectionDialog(
+        possibleItems: possibleItems,
+        onSelection: onSelection,
+        shouldShowFavourites: favouritesEnable,
+        componentOperationCubit: componentOperationCubit,
       ),
     );
   }
@@ -2142,64 +2358,43 @@ class ComponentTile extends StatelessWidget {
           selected = (selectedComponent.treeSelection.contains(component));
           // }
 
-          return InkWell(
-            borderRadius: BorderRadius.circular(10),
-            hoverColor: const Color(0xffADD8FF),
-            onTap: () {
-              final List<Component> clones = component.getAllClones();
-              print('CLONES >>> ${clones.length} ');
-              componentSelectionCubit.changeComponentSelection(
-                  ComponentSelectionModel(
-                      [component], [component, ...clones], component),
-                  root: ancestor,
-                  scroll: false);
-              if (GlobalObjectKey(component).currentContext != null) {
-                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                  Scrollable.ensureVisible(
-                      GlobalObjectKey(component).currentContext!,
-                      alignment: 0.5);
-                });
-              }
-            },
-            child: Container(
-              key: GlobalObjectKey(component.uniqueId),
-              height: 30,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 7),
-              margin:
-                  const EdgeInsets.symmetric(horizontal: 2.5, vertical: 2.5),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: selected
-                    ? Border.all(color: Colors.blueAccent, width: 2)
-                    : Border.all(color: const Color(0xffd3d3d3), width: 2),
-              ),
-              child: Row(
-                children: [
-                  BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
-                    builder: (context, state) {
-                      return Visibility(
-                        visible:
-                        get<ComponentOperationCubit>().isFavourite(component),
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 5),
-                          child: Icon(
-                            Icons.star,
-                            size: 15,
-                            color: Colors.yellow.shade600,
-                          ),
+          return Container(
+            key: GlobalObjectKey(component.uniqueId),
+            height: 30,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 7),
+            margin: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 2.5),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: selected
+                  ? Border.all(color: Colors.blueAccent, width: 2)
+                  : Border.all(color: const Color(0xffd3d3d3), width: 2),
+            ),
+            child: Row(
+              children: [
+                BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
+                  builder: (context, state) {
+                    return Visibility(
+                      visible:
+                          get<ComponentOperationCubit>().isFavourite(component),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 5),
+                        child: Icon(
+                          Icons.star,
+                          size: 15,
+                          color: Colors.yellow.shade600,
                         ),
-                      );
-                    },
-                  ),
-                  Text(
-                    component.name,
-                    style: AppFontStyle.roboto(13,
-                        color: Colors.black, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
+                      ),
+                    );
+                  },
+                ),
+                Text(
+                  component.name,
+                  style: AppFontStyle.roboto(13,
+                      color: Colors.black, fontWeight: FontWeight.w500),
+                ),
+              ],
             ),
           );
         },

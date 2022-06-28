@@ -275,6 +275,7 @@ class SimpleParameter<T> extends Parameter {
 
   @override
   dynamic get value {
+    val=null;
     final result = compiler.code.isNotEmpty
         ? ComponentOperationCubit.codeProcessor.process<T>(compiler.code)
         : null;
@@ -426,7 +427,7 @@ class SimpleParameter<T> extends Parameter {
   }
 
   process(String value) {
-    return ComponentOperationCubit.codeProcessor.process<T>(value);
+    return ComponentOperationCubit.codeProcessor.process<T>(CodeOperations.trim(value)!);
   }
 }
 

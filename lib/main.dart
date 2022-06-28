@@ -1,10 +1,13 @@
-import 'package:flutter_builder/common/html_lib.dart' as html;
+import 'package:flutter_builder/ui/route_not_found.dart';
+
+import 'common/html_lib.dart' as html;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/ui/home/landing_page.dart';
+import 'cubit/component_creation/component_creation_cubit.dart';
+import 'ui/home/landing_page.dart';
 import 'cubit/component_operation/component_operation_cubit.dart';
 import 'models/actions/action_model.dart';
 import 'ui/project_selection_page.dart';
@@ -15,14 +18,11 @@ import 'common/compiler/code_processor.dart';
 import 'common/shared_preferences.dart';
 import 'constant/app_colors.dart';
 import 'cubit/authentication/authentication_cubit.dart';
-import 'cubit/component_operation/component_operation_cubit.dart';
 import 'cubit/flutter_project/flutter_project_cubit.dart';
 import 'cubit/stack_action/stack_action_cubit.dart';
 import 'injector.dart';
-import 'models/actions/action_model.dart';
 import 'ui/authentication/login.dart';
 import 'ui/home_page.dart';
-import 'ui/project_selection_page.dart';
 
 /// Bubble sort algo
 // sort(arr){
@@ -151,7 +151,7 @@ print("hello {{}}");
 addStudent();
 
   */
-  processor.executeCode(code);
+  // processor.executeCode(code);
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
   js=json.decode(data);
@@ -218,6 +218,9 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (context) => get<ComponentOperationCubit>(),
         ),
+        BlocProvider(
+          create: (context) => get<ComponentCreationCubit>(),
+        ),
       ],
       child: MaterialApp(
         title: 'Flutter Visual Builder',
@@ -225,7 +228,6 @@ class MyApp extends StatelessWidget {
         initialRoute: '',
         routes: {
           '': (context) => const LandingPage(),
-          '/login': (context) => const LoginPage(),
         },
         // initialRoute: '/run-497aa95cb338b4e1fd95a0f9c26a63d1',
         onGenerateRoute: (settings) {
@@ -268,6 +270,9 @@ class MyApp extends StatelessWidget {
                   link);
             }
           }
+          return getRoute(
+                  (p0) => const RouteNotFound(),
+              link);
         },
         theme: ThemeData(
             visualDensity: VisualDensity.adaptivePlatformDensity,

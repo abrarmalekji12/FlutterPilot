@@ -5,6 +5,13 @@ import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:highlight/languages/dart.dart';
 import 'package:highlight/highlight.dart';
 import 'package:highlight/src/common_modes.dart';
+import 'package:resizable_widget/resizable_widget.dart';
+
+import '../common/compiler/code_processor.dart';
+import '../constant/app_colors.dart';
+import '../constant/font_style.dart';
+import '../cubit/component_operation/component_operation_cubit.dart';
+import 'build_view/build_view.dart';
 
 final fvbDart = Mode(refs: {
   '~contains~0~variants~4~contains~2': Mode(
@@ -83,9 +90,10 @@ final fvbDart = Mode(refs: {
 class ActionCodeEditor extends StatefulWidget {
   final String code;
   final void Function(String) onCodeChange;
+  final List<String> prerequisites;
 
   const ActionCodeEditor(
-      {Key? key, required this.code, required this.onCodeChange})
+      {Key? key, required this.code, required this.onCodeChange, required this.prerequisites})
       : super(key: key);
 
   @override
@@ -94,38 +102,139 @@ class ActionCodeEditor extends StatefulWidget {
 
 class _ActionCodeEditorState extends State<ActionCodeEditor> {
   late final CodeController _codeController;
+  late final CodeProcessor processor;
+  final List<ConsoleMessage> consoleMessages = [];
+  final ValueNotifier<int> _consoleChangeNotifier = ValueNotifier<int>(0);
   String? code;
+  late CacheMemory memory;
 
   @override
   initState() {
     super.initState();
+    processor = CodeProcessor(
+      consoleCallback: (message) {
+        print('CONSOLE: $message');
+      },
+      onError: (error, line) {
+        consoleMessages.add(
+            ConsoleMessage('$error at Line $line', ConsoleMessageType.error));
+        _consoleChangeNotifier.value++;
+      },
+    );
+    for(final prerequisite in widget.prerequisites) {
+      processor.executeCode(prerequisite, operationType: OperationType.checkOnly,);
+    }
+    memory=CacheMemory(processor);
     _codeController = CodeController(
         language: fvbDart,
-        theme: monokaiSublimeTheme,
+        theme: monokaiSublimeTheme
+            .map((key, value) => MapEntry(key, value.copyWith(fontSize: 14))),
         onChange: (value) {
           if (code != value) {
             code = value;
             widget.onCodeChange(value);
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+              executeAndCheck(code!);
+            });
           }
         });
     code = widget.code;
     _codeController.text = widget.code;
+    executeAndCheck(code!);
   }
 
+  void executeAndCheck(String code){
+    consoleMessages.clear();
+    _consoleChangeNotifier.value = 0;
+    final output=processor.executeCode(code, operationType: OperationType.checkOnly,);
+    processor.destroyProcess(memory: memory);
+    if(output is FVBUndefined){
+      consoleMessages.add(ConsoleMessage(output.toString(), ConsoleMessageType.error));
+      _consoleChangeNotifier.value++;
+    }
+    else if(_consoleChangeNotifier.value==0){
+      consoleMessages.add(ConsoleMessage('Compiled without errors :)', ConsoleMessageType.success));
+      _consoleChangeNotifier.value++;
+    }
+  }
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: CodeField(
-        // expands: true,
-        enabled: true,
-        lineNumberStyle: const LineNumberStyle(
-          margin: 5,
-          textStyle:
-              TextStyle(fontSize: 13, color: Colors.white, fontFamily: 'arial'),
-        ),
+    return ResizableWidget(
+      isHorizontalSeparator: true,
+      percentages: const [
+        0.9,0.1
+      ],
+      separatorColor: Colors.black,separatorSize: 2,
+      children: [
+        Container(
+          child: SingleChildScrollView(
+            child: CodeField(
+              // expands: true,
+              minLines: 50,
+              enabled: true,
+              wrap: true,
+              lineNumberStyle: LineNumberStyle(
+                margin: 5,
+                textStyle: AppFontStyle.roboto(14, color: Colors.white)
+                    .copyWith(height: 1.31),
+              ),
 
-        controller: _codeController,
-      ),
+              controller: _codeController,
+            ),
+          ),
+        ),
+        Container(
+        color: const Color(0xff494949),
+          padding: const EdgeInsets.all(8),
+          alignment: Alignment.topLeft,
+          child: ValueListenableBuilder(
+              valueListenable: _consoleChangeNotifier,
+              builder: (context, value, child) {
+                return printConsoleMessage();
+              }),
+        )
+      ],
     );
   }
+
+  Widget printConsoleMessage() {
+    final List<TextSpan> list = [];
+    for (final consoleMessage in consoleMessages) {
+      list.add(TextSpan(
+        text: '-> '+consoleMessage.message + '\n',
+        style: AppFontStyle.roboto(14,
+          color: getColor(consoleMessage.type),
+          fontWeight: FontWeight.w800
+        ),
+      ));
+    }
+    return RichText(
+      text: TextSpan(children: list),
+    );
+  }
+}
+Color getColor(ConsoleMessageType type) {
+  switch (type) {
+    case ConsoleMessageType.error:
+      return AppColors.red;
+    case ConsoleMessageType.success:
+      return AppColors.green;
+    case ConsoleMessageType.info:
+      return Colors.white;
+    default:
+      return Colors.white;
+  }
+}
+
+enum ConsoleMessageType {
+  error,
+  info,
+  success
+}
+
+class ConsoleMessage {
+  final String message;
+  final ConsoleMessageType type;
+
+  ConsoleMessage(this.message, this.type);
 }

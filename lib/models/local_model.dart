@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:get/get.dart';
 
 import '../common/compiler/code_processor.dart';
 import '../ui/models_view.dart';
@@ -51,7 +52,7 @@ class LocalModel {
     return '$value';
   }
 
-  static DataType codeToDatatype(final String dataType) {
+  static DataType codeToDatatype(final String dataType,Map<String,FVBClass> classes) {
     switch (dataType) {
       case 'int':
         return DataType.int;
@@ -72,8 +73,12 @@ class LocalModel {
       case 'Iterable':
         return DataType.iterable;
       case 'dynamic':
-      default:
         return DataType.dynamic;
+      default:
+        if(classes.containsKey(dataType)){
+          return DataType.fvbInstance;
+        }
+        return DataType.unknown;
     }
   }
 
@@ -99,6 +104,8 @@ class LocalModel {
         return 'Function';
       case DataType.iterable:
         return 'Iterable';
+      case DataType.unknown:
+        return 'UNKNOWN';
     }
   }
 

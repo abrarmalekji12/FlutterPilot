@@ -104,7 +104,8 @@ class AppIconButton extends StatelessWidget {
     return InkWell(
       onTap: onPress,
       child: Container(
-        padding: const EdgeInsets.all(1),
+        alignment: Alignment.center,
+        padding:  EdgeInsets.all(margin),
         decoration: BoxDecoration(shape: BoxShape.circle, color: background),
         child: Icon(
           icon,

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../common/compiler/code_processor.dart';
 import '../../constant/string_constant.dart';
+import '../../cubit/component_creation/component_creation_cubit.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../cubit/screen_config/screen_config_cubit.dart';
 import '../../cubit/stack_action/stack_action_cubit.dart';
@@ -35,21 +36,25 @@ class _BuildViewState extends State<BuildView> {
   void initState() {
     super.initState();
     _cacheMemory = CacheMemory(ComponentOperationCubit.codeProcessor);
+
     get<StackActionCubit>().stackOperation(StackOperation.push,
         uiScreen: ComponentOperationCubit.currentFlutterProject!.mainScreen);
     ComponentOperationCubit.codeProcessor
         .executeCode(ComponentOperationCubit.currentFlutterProject!.actionCode);
+
   }
 
   @override
   Widget build(BuildContext context) {
     widget.componentOperationCubit.runtimeMode = RuntimeMode.run;
-    return GestureDetector(
-      onTap: () {
-        _onDismiss(context);
-      },
-      child: Material(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      child: BlocListener<StackActionCubit, StackActionState>(
+        listener: (_, state) {
+          if (state is StackClearState) {
+            _onDismiss(context);
+          }
+        },
         child: Stack(
           children: [
             Center(
@@ -57,7 +62,6 @@ class _BuildViewState extends State<BuildView> {
                 runtimeMode: RuntimeMode.run,
                 child: BlocBuilder<ComponentOperationCubit,
                     ComponentOperationState>(
-                  bloc: widget.componentOperationCubit,
                   builder: (_, state) {
                     return Container(
                       decoration: BoxDecoration(
@@ -124,6 +128,7 @@ class _BuildViewState extends State<BuildView> {
 
     ComponentOperationCubit.changeVariables(
         widget.componentOperationCubit.flutterProject!.currentScreen);
+
     widget.onDismiss.call();
   }
 }
@@ -142,11 +147,26 @@ class CacheMemory {
   }
 
   void restore(final CodeProcessor processor) {
+    final List<String> removeList = [];
     for (final variable in processor.variables.entries) {
-      variable.value.value = variables[variable.key];
+      if (variables.containsKey(variable.key)) {
+        variable.value.value = variables[variable.key];
+      } else {
+        removeList.add(variable.key);
+      }
+    }
+    for (final key in removeList) {
+      processor.variables.remove(key);
     }
     for (final variable in processor.localVariables.keys) {
-      processor.localVariables[variable] = localVariables[variable];
+      if (localVariables.containsKey(variable)) {
+        processor.localVariables[variable] = localVariables[variable];
+      }else{
+        removeList.add(variable);
+      }
+    }
+    for (final key in removeList) {
+      processor.localVariables.remove(key);
     }
   }
 }

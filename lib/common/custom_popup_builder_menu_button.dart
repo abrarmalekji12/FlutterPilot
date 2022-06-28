@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../constant/font_style.dart';
 import '../models/component_model.dart';
 import 'custom_popup_menu_button.dart';
 
@@ -15,11 +16,12 @@ class CustomPopupMenuBuilderButton extends StatefulWidget {
   final Widget? suffixIcon;
   final Color? backgroundColor;
   final int itemCount;
-
+  final String title;
   const CustomPopupMenuBuilderButton({
     required this.itemBuilder,
     required this.onSelected,
     required this.child,
+    required this.title,
     required this.itemCount,
     Key? key,
     this.backgroundColor,
@@ -36,11 +38,13 @@ class _CustomPopupMenuBuilderButtonState
     extends State<CustomPopupMenuBuilderButton> {
   final GlobalKey globalKey = GlobalKey();
   OverlayEntry? overlayEntry;
+  late double maxHeight;
   bool expanded = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    maxHeight= MediaQuery.of(context).size.height;
   }
 
   @override
@@ -59,9 +63,7 @@ class _CustomPopupMenuBuilderButtonState
           color: Colors.transparent,
           child: Stack(
             children: [
-              Positioned(
-                left: getLeftPosition(),
-                top: getTopPosition(),
+              Center(
                 child: TweenAnimationBuilder(
                     tween: Tween<double>(begin: 0.5, end: 1),
                     curve: Curves.bounceOut,
@@ -71,38 +73,53 @@ class _CustomPopupMenuBuilderButtonState
                         scale: value,
                         child: Transform.translate(
                           offset: Offset(0, -100 * (1 - value)),
-                          child: SizedBox(
-                            width: 300,
-                            height: getCalculatedHeight(),
-                            child: Card(
-                              elevation: 5,
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
+                          child: SingleChildScrollView(
+                            child: Container(
+                              width: 300,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                boxShadow: kElevationToShadow[2],
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: ListView.builder(
-                                itemBuilder: (context, i) {
-                                  final CustomPopupMenuItem child =
-                                      widget.itemBuilder.call(context, i);
-                                  return InkWell(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: child,
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(widget.title,style: AppFontStyle.roboto(16,fontWeight: FontWeight.bold),),
+                                  ),
+                                  Container(
+                                    constraints: BoxConstraints(
+                                      maxHeight:maxHeight,
                                     ),
-                                    onTap: () {
-                                      debugPrint(
-                                          'TYPE ${child.value.runtimeType} ');
-                                      widget.onSelected(child.value);
-                                      overlayEntry?.remove();
-                                      setState(() {
-                                        expanded = false;
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(10),
-                                    splashColor: Colors.grey,
-                                  );
-                                },
-                                itemCount: widget.itemCount,
+
+                                    child: ListView.separated(
+                                      shrinkWrap: true,
+                                      separatorBuilder: (_,__)=>const Divider(thickness: 1,),
+                                      itemBuilder: (context, i) {
+                                        final CustomPopupMenuItem child =
+                                            widget.itemBuilder.call(context, i);
+                                        return InkWell(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: IgnorePointer(child: child),
+                                          ),
+                                          onTap: () {
+                                            debugPrint(
+                                                'TYPE ${child.value.runtimeType} ');
+                                            widget.onSelected(child.value);
+                                            overlayEntry?.remove();
+                                            setState(() {
+                                              expanded = false;
+                                            });
+                                          },
+                                          borderRadius: BorderRadius.circular(10),
+                                          splashColor: Colors.grey,
+                                        );
+                                      },
+                                      itemCount: widget.itemCount,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -199,18 +216,6 @@ class _CustomPopupMenuBuilderButtonState
   }
 
   double getTopPosition() {
-    final RenderBox renderBox =
-        globalKey.currentContext!.findRenderObject()! as RenderBox;
-    // buttonSize = renderBox.size;
-    final size = MediaQuery.of(context).size;
-
-    final Offset position = renderBox.localToGlobal(Offset.zero);
-    if (position.dy + renderBox.size.height + (170 * widget.itemCount) >
-        size.height) {
-      return size.height - (170 * widget.itemCount) > 0
-          ? size.height - (170 * widget.itemCount)
-          : position.dy;
-    }
-    return position.dy + renderBox.size.height;
+    return 0;
   }
 }

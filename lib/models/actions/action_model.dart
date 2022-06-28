@@ -43,7 +43,7 @@ class CustomAction extends ActionModel {
 
   @override
   void perform(BuildContext context) {
-    ComponentOperationCubit.codeProcessor.execute(
+    ComponentOperationCubit.codeProcessor.executeCode(
       arguments[0],
     );
   }

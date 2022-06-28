@@ -234,31 +234,28 @@ class SimpleParameterWidget extends StatelessWidget {
                 dynamic result;
                 try {
                   result = parameter.process(value ?? '');
-                }
-                catch(error) {
-                  result=null;
+                } on Exception catch (error) {
+                  print('ERROR $error');
+                  result = null;
                 }
                 print('RESULT IS $value $result');
-                  parameter.compiler.code = value ?? '';
-                  if(result is! FVBUndefined) {
-                    if(parameter.type == double && result.runtimeType == int){
-                      parameter.val=(result as int).toDouble();
-                    }
-                    else {
-                      parameter.val = result;
-                    }
-                    if (parameter.inputCalculateAs != null) {
-                      parameter.val =
-                          parameter.inputCalculateAs!.call(
-                              parameter.val!, true);
-                    }
+                parameter.compiler.code = value ?? '';
+                if (result is! FVBUndefined) {
+                  if (parameter.type == double && result.runtimeType == int) {
+                    parameter.val = (result as int).toDouble();
+                  } else {
+                    parameter.val = result;
                   }
-                  BlocProvider.of<ParameterBuildCubit>(context, listen: false)
-                      .parameterChanged(context, parameter);
-                  BlocProvider.of<ComponentCreationCubit>(context,
-                          listen: false)
-                      .changedComponent();
-                  return null;
+                  if (parameter.inputCalculateAs != null) {
+                    parameter.val =
+                        parameter.inputCalculateAs!.call(parameter.val!, true);
+                  }
+                }
+                BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                    .parameterChanged(context, parameter);
+                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                    .changedComponent();
+                return null;
               },
               buildCounter: (
                 BuildContext context, {
@@ -350,10 +347,16 @@ class SimpleParameterWidget extends StatelessWidget {
           return StatefulBuilder(builder: (context, setStateForImage) {
             return InkWell(
               onTap: () {
-                showDialog(context: context, builder: (_,)=>ImageSelectionWidget(
-                    componentOperationCubit:
-                    BlocProvider.of<ComponentOperationCubit>(context,
-                        listen: false))).then((value) {
+                showDialog(
+                    context: context,
+                    builder: (
+                      _,
+                    ) =>
+                        ImageSelectionWidget(
+                            componentOperationCubit:
+                                BlocProvider.of<ComponentOperationCubit>(
+                                    context,
+                                    listen: false))).then((value) {
                   if (value != null && value is ImageData) {
                     parameter.val = value;
                     parameter.compiler.code = value.imageName!;
@@ -876,12 +879,12 @@ class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
             child: DynamicValueField<bool>(
                 onProcessedResult: (code, value) {
                   widget.parameter.compiler.code = code;
-                  if(value!=null&&value is! FVBUndefined) {
+                  if (value != null && value is! FVBUndefined) {
                     widget.parameter.val = value;
                     BlocProvider.of<ParameterBuildCubit>(context, listen: false)
                         .parameterChanged(context, widget.parameter);
                     BlocProvider.of<ComponentCreationCubit>(context,
-                        listen: false)
+                            listen: false)
                         .changedComponent();
                   }
                   return true;

@@ -78,6 +78,11 @@ abstract class CodeOperations {
     bool singleQuote = false;
     for (int i = 0; i < code.length; i++) {
       final a = code[i];
+      if(i>0&&CodeOperations.isVariableChar(a.codeUnits.first)){
+        if(code[i-1]=='}'||code[i-1]==')'||code[i-1]==']'){
+          return 'Syntax error at $i';
+        }
+      }
       switch (a) {
         case '"':
           doubleQuote = !doubleQuote;
@@ -158,6 +163,8 @@ abstract class CodeOperations {
         return FVBInstance;
       case DataType.fvbFunction:
         return FVBFunction;
+      case DataType.unknown:
+        return null;
     }
   }
 

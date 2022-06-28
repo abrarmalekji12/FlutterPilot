@@ -25,7 +25,7 @@ class CodeViewerWidget extends StatefulWidget {
 class _CodeViewerWidgetState extends State<CodeViewerWidget> {
   late UIScreen screen;
   final CodeController _codeController =
-      CodeController(language: dart, theme: monokaiSublimeTheme);
+      CodeController(language: dart, theme: monokaiSublimeTheme.map((key, value) => MapEntry(key, value.copyWith(fontSize: 14))));
   final ScrollController _controller = ScrollController();
   late String code;
   final DartFormatter _dartFormatter = DartFormatter(fixes: []);
@@ -165,7 +165,8 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
                                     lineNumberStyle: const LineNumberStyle(
                                       margin: 5,
                                       textStyle: TextStyle(
-                                          fontSize: 13,
+                                          fontSize: 14,
+                                          height: 1.31,
                                           color: Colors.white,
                                           fontFamily: 'arial'),
                                     ),

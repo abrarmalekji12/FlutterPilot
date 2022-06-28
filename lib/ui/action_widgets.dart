@@ -370,17 +370,21 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
           const SizedBox(
             height: 20,
           ),
-          ActionCodeEditor(
-            code: widget.action.arguments[0], onCodeChange: (String value) {
-            widget.action.arguments[0] = value;
-            BlocProvider.of<ClickActionCubit>(context,
-                listen: false)
-                .changedState();
+          SizedBox(
+            height: 400,
+            child: ActionCodeEditor(
+              prerequisites: [ComponentOperationCubit.currentFlutterProject!.actionCode],
+              code: widget.action.arguments[0], onCodeChange: (String value) {
+              widget.action.arguments[0] = value;
+              BlocProvider.of<ClickActionCubit>(context,
+                  listen: false)
+                  .changedState();
 
-            BlocProvider.of<ActionEditCubit>(context,
-                listen: false)
-                .change();
-          },
+              BlocProvider.of<ActionEditCubit>(context,
+                  listen: false)
+                  .change();
+            },
+            ),
           )
         ],
       ),

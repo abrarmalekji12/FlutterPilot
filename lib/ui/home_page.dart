@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import 'package:resizable_widget/resizable_widget.dart';
 
 import '../common/app_loader.dart';
 import '../common/common_methods.dart';
@@ -35,6 +36,7 @@ import '../main.dart';
 import '../models/builder_component.dart';
 import '../models/component_model.dart';
 import '../models/component_selection.dart';
+import '../models/variable_model.dart';
 import '../runtime_provider.dart';
 import '../screen_model.dart';
 import 'action_code_editor.dart';
@@ -42,13 +44,14 @@ import 'action_widgets.dart';
 import 'boundary_widget.dart';
 import 'build_view/build_view.dart';
 import 'code_view_widget.dart';
+import 'common/action_code_dialog.dart';
+import 'common/variable_dialog.dart';
 import 'component_selection_dialog.dart';
 import 'component_tree.dart';
 import 'emulation_view.dart';
 import 'models_view.dart';
 import 'parameter_ui.dart';
 import 'preview_ui.dart';
-import 'project_selection_page.dart';
 import 'variable_ui.dart';
 
 class HomePage extends StatefulWidget {
@@ -70,7 +73,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   static StreamSubscription? _streamSubscription;
   final ScrollController propertyScrollController = ScrollController();
-  final componentCreationCubit = ComponentCreationCubit();
+  late ComponentCreationCubit componentCreationCubit;
   late ComponentOperationCubit componentOperationCubit;
   late final FlutterProjectCubit flutterProjectCubit;
   final ParameterBuildCubit _parameterBuildCubit = ParameterBuildCubit();
@@ -83,6 +86,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     componentOperationCubit = get<ComponentOperationCubit>();
+    componentCreationCubit = get<ComponentCreationCubit>();
     flutterProjectCubit = context.read<FlutterProjectCubit>();
     if (_streamSubscription != null) {
       _streamSubscription?.cancel();
@@ -97,21 +101,21 @@ class _HomePageState extends State<HomePage> {
                 componentSelectionCubit.currentSelected.propertySelection);
           } else if (event.key == 'v') {
             if (componentOperationCubit.runtimeMode == RuntimeMode.edit) {
-              showModelDialog(
-                  context,
-                  BuildView(
-                    onDismiss: () {
-                      componentCreationCubit.changedComponent();
-                    },
-                    componentOperationCubit: componentOperationCubit,
-                    screenConfigCubit: screenConfigCubit,
-                  )).then((value) {
-                screenConfigCubit.applyCurrentSizeToVariables();
-              });
+              // showModelDialog(
+              //     context,
+              //     BuildView(
+              //       onDismiss: () {
+              //         componentCreationCubit.changedComponent();
+              //       },
+              //       componentOperationCubit: componentOperationCubit,
+              //       screenConfigCubit: screenConfigCubit,
+              //     )).then((value) {
+              //   screenConfigCubit.applyCurrentSizeToVariables();
+              // });
             } else if (componentOperationCubit.runtimeMode == RuntimeMode.run) {
-              Navigator.pop(context);
-              componentOperationCubit.runtimeMode = RuntimeMode.edit;
-              componentCreationCubit.changedComponent();
+              // Navigator.pop(context);
+              // componentOperationCubit.runtimeMode = RuntimeMode.edit;
+              // componentCreationCubit.changedComponent();
             }
           }
         }
@@ -125,12 +129,10 @@ class _HomePageState extends State<HomePage> {
       }
     }
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-
       AppLoader.show(context);
     });
     FireBridge.init().then((value) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-
         flutterProjectCubit.loadFlutterProject(componentSelectionCubit,
             componentOperationCubit, widget.projectName, widget.runMode,
             userId: widget.userId);
@@ -143,15 +145,10 @@ class _HomePageState extends State<HomePage> {
       {List<String>? possibleItems}) {
     showModelDialog(
       context,
-      GestureDetector(
-        onTap: () {
-          Navigator.pop(context);
-        },
-        child: ComponentSelectionDialog(
-          possibleItems: possibleItems,
-          onSelection: onSelection,
-          componentOperationCubit: componentOperationCubit,
-        ),
+      ComponentSelectionDialog(
+        possibleItems: possibleItems,
+        onSelection: onSelection,
+        componentOperationCubit: componentOperationCubit,
       ),
     );
   }
@@ -162,8 +159,6 @@ class _HomePageState extends State<HomePage> {
       body: Material(
         child: MultiBlocProvider(
           providers: [
-            BlocProvider<ComponentCreationCubit>(
-                create: (context) => componentCreationCubit),
             BlocProvider<ComponentSelectionCubit>(
                 create: (context) => componentSelectionCubit),
             BlocProvider<ScreenConfigCubit>(
@@ -187,7 +182,8 @@ class _HomePageState extends State<HomePage> {
                   break;
                 case FlutterProjectLoadingErrorState:
                   AppLoader.hide();
-                  showFlutterErrorDialog((state as FlutterProjectLoadingErrorState).model);
+                  showFlutterErrorDialog(
+                      (state as FlutterProjectLoadingErrorState).model);
                   break;
                 case FlutterProjectErrorState:
                   AppLoader.hide();
@@ -261,7 +257,6 @@ class _HomePageState extends State<HomePage> {
       MaterialAlertDialog(
         title: title,
         subtitle: message,
-
         positiveButtonText: 'OK',
         onPositiveTap: () {
           Navigator.pop(context);
@@ -496,9 +491,9 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
             ),
           ),
         ),
-        VariableShowHideMenu(),
-        ModelShowHideMenu(),
-        ActionCodeShowHideMenu()
+        const VariableShowHideMenu(),
+        const ModelShowHideMenu(),
+        const ActionCodeShowHideMenu()
       ],
     );
   }
@@ -512,40 +507,51 @@ class VariableShowHideMenu extends StatefulWidget {
 }
 
 class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
-  OverlayEntry? _overlayEntry;
+  late VariableDialog _variableDialog;
 
   @override
   void initState() {
     super.initState();
-    _overlayEntry = OverlayEntry(
-      builder: (_) => Material(
-        color: Colors.transparent,
-        child: Center(
-          child: SizedBox(
-            width: 500,
-            child: VariableBox(
-              overlayEntry: _overlayEntry!,
-              componentOperationCubit: BlocProvider.of<ComponentOperationCubit>(
-                  context,
-                  listen: false),
-              componentSelectionCubit: BlocProvider.of<ComponentSelectionCubit>(
-                  context,
-                  listen: false),
-              componentCreationCubit: BlocProvider.of<ComponentCreationCubit>(
-                  context,
-                  listen: false),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        Overlay.of(context)!.insert(_overlayEntry!);
+        final componentOperationCubit = context.read<ComponentOperationCubit>();
+        final componentCreationCubit = context.read<ComponentCreationCubit>();
+        final componentSelectionCubit = context.read<ComponentSelectionCubit>();
+        _variableDialog = VariableDialog(
+            variables: ComponentOperationCubit.codeProcessor.variables,
+            componentOperationCubit: componentOperationCubit,
+            componentCreationCubit: componentCreationCubit,
+            title: ComponentOperationCubit
+                .currentFlutterProject!.currentScreen.name,
+            onAdded: (model) {
+              ComponentOperationCubit.codeProcessor.variables[model.name] =
+                  model;
+              componentOperationCubit.addVariable(
+                  ComponentOperationCubit.codeProcessor.variables[model.name]!);
+              componentCreationCubit.changedComponent();
+              componentSelectionCubit.emit(ComponentSelectionChange());
+            },
+            onEdited: (model) {
+              ComponentOperationCubit
+                  .codeProcessor.variables[model.name]!.value = model.value;
+              Future.delayed(const Duration(milliseconds: 500), () {
+                componentOperationCubit.updateVariable(ComponentOperationCubit
+                    .codeProcessor.variables[model.name]!);
+                componentCreationCubit.changedComponent();
+                componentSelectionCubit.emit(ComponentSelectionChange());
+              });
+            },
+            componentSelectionCubit: componentSelectionCubit,
+            onDeleted: (VariableModel model) {
+              ComponentOperationCubit.codeProcessor.variables.remove(model);
+              componentCreationCubit.changedComponent();
+              componentSelectionCubit.emit(ComponentSelectionChange());
+            });
+        _variableDialog.show(context);
       },
       child: Container(
         width: 100,
@@ -557,7 +563,7 @@ class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
         child: Row(
           children: [
             const Icon(
-              Icons.build,
+              Icons.data_array,
               color: Colors.black,
               size: 18,
             ),
@@ -654,70 +660,26 @@ class ActionCodeShowHideMenu extends StatefulWidget {
 }
 
 class _ActionCodeShowHideMenuState extends State<ActionCodeShowHideMenu> {
-  OverlayEntry? _overlayEntry;
+  late ActionCodeDialog dialog;
   late ComponentOperationCubit componentOperationCubit;
 
   @override
   void initState() {
     super.initState();
     componentOperationCubit = context.read<ComponentOperationCubit>();
-    _overlayEntry = OverlayEntry(
-      builder: (_) {
-        return Material(
-          color: Colors.transparent,
-          child: Center(
-            child: Container(
-              decoration: BoxDecoration(
-                  color: Colors.white, boxShadow: kElevationToShadow[10]),
-              width: 500,
-              height: 600,
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Custom Action',
-                        style: AppFontStyle.roboto(14,
-                            fontWeight: FontWeight.w500),
-                      ),
-                      InkWell(
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: () {
-                          _overlayEntry?.remove();
-                        },
-                        child: const Icon(
-                          Icons.close,
-                        ),
-                      )
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  Expanded(
-                    child: ActionCodeEditor(
-                      onCodeChange: (String value) {
-                        componentOperationCubit.updateActionCode(value);
-                      },
-                      code: componentOperationCubit.flutterProject!.actionCode,
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        Overlay.of(context)!.insert(_overlayEntry!);
+        dialog = ActionCodeDialog(
+            code: componentOperationCubit.flutterProject!.actionCode,
+            title: componentOperationCubit.flutterProject!.name,
+            onChanged: (String value) {
+              componentOperationCubit.updateActionCode(value);
+            });
+        dialog.show(context);
       },
       child: Container(
         width: 100,
@@ -892,21 +854,20 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return ResizableWidget(
+      percentages: const [0.2, 0.5, 0.3],
       children: [
-        SizedBox(
-          width: dw(context, 23),
+        Container(
           child: const ComponentTree(),
         ),
-        Expanded(
+        Container(
           child: CenterMainSide(
               _componentSelectionCubit,
               _componentCreationCubit,
               _componentOperationCubit,
               _screenConfigCubit),
         ),
-        SizedBox(
-          width: dw(context, 30),
+        Container(
           child: Padding(
             padding: const EdgeInsets.all(15),
             child:
@@ -992,8 +953,18 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                                     ActionEditState>(
                                   listener: (context, state) {
                                     if (state is ActionChangeState) {
-                                      _componentOperationCubit
-                                          .updateRootComponent();
+                                      if (_componentSelectionCubit
+                                              .currentSelectedRoot
+                                          is CustomComponent) {
+                                        _componentOperationCubit
+                                            .updateGlobalCustomComponent(
+                                                _componentSelectionCubit
+                                                        .currentSelectedRoot
+                                                    as CustomComponent);
+                                      } else {
+                                        _componentOperationCubit
+                                            .updateRootComponent();
+                                      }
                                     }
                                   },
                                   child: ActionModelWidget(

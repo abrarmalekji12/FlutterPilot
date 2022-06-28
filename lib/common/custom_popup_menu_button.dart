@@ -61,17 +61,15 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
       return GestureDetector(
         onTap: () {
           overlayEntry?.remove();
-          setState(() {
             expanded = false;
-          });
         },
         child: Material(
           color: Colors.transparent,
           child: Stack(
+            alignment: Alignment.centerLeft,
             children: [
               Positioned(
                 left: left,
-                top: top,
                 child: TweenAnimationBuilder(
                     tween: Tween<double>(begin: 0.5, end: 1),
                     curve: Curves.bounceOut,
@@ -124,7 +122,6 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                           itemBuilder: (_, i) {
                                             return InkWell(
                                               child: Container(
-                                                height: widget.itemHeight,
                                                 padding:
                                                     const EdgeInsets.all(8.0),
                                                 child: filteredItems[i]
@@ -135,10 +132,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                                     filteredItems[i].value
                                                         as T);
                                                 overlayEntry?.remove();
-
-                                                setState(() {
                                                   expanded = false;
-                                                });
                                               },
                                               borderRadius:
                                                   BorderRadius.circular(10),

@@ -8,3 +8,7 @@ class StackActionInitial extends StackActionState {}
 class StackUpdatedState extends StackActionState {
   StackUpdatedState();
 }
+
+class StackClearState extends StackActionState {
+  StackClearState();
+}

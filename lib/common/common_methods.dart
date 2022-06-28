@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import 'package:win_toast/win_toast.dart';
 
 import '../bloc/state_management/state_management_bloc.dart';
 import '../constant/font_style.dart';
@@ -14,11 +15,12 @@ import '../models/actions/action_model.dart';
 import '../models/component_model.dart';
 import '../models/project_model.dart';
 
-void showToast(final String message, {bool error = false}) {
+void showToast(final String message, {bool error = false}) async {
   if (Platform.isWindows) {
+    // await WinToast.instance().showToast(type: ToastType.text03, title: message,);
     print('WINDOWS TOAST $message :: isError => $error');
   } else {
-    Fluttertoast.showToast(
+    await Fluttertoast.showToast(
         msg: message,
         timeInSecForIosWeb: 9,
         webBgColor: error ? '#ff0000' : '#00ff00');

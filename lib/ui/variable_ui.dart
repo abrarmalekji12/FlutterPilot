@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../common/custom_text_field.dart';
@@ -13,17 +14,25 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'models_view.dart';
 
 class VariableBox extends StatefulWidget {
+  final void Function(VariableModel) onAdded;
+  final void Function(VariableModel) onChanged;
+  final void Function(VariableModel) onDeleted;
   final ComponentOperationCubit componentOperationCubit;
   final ComponentCreationCubit componentCreationCubit;
   final ComponentSelectionCubit componentSelectionCubit;
   final OverlayEntry overlayEntry;
+  final String title;
+  final Map<String,VariableModel> variables;
 
   const VariableBox(
       {Key? key,
       required this.overlayEntry,
       required this.componentOperationCubit,
       required this.componentCreationCubit,
-      required this.componentSelectionCubit})
+      required this.componentSelectionCubit,
+      required this.title,
+      required this.onAdded,
+      required this.onChanged, required this.variables, required this.onDeleted})
       : super(key: key);
 
   @override
@@ -38,7 +47,7 @@ class _VariableBoxState extends State<VariableBox> {
 
   @override
   Widget build(BuildContext context) {
-    final variables = ComponentOperationCubit.codeProcessor.variables.entries
+    final variables = widget.variables.entries
         .toList(growable: false);
     return Card(
       elevation: 5,
@@ -53,7 +62,7 @@ class _VariableBoxState extends State<VariableBox> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Variables',
+                  widget.title,
                   style: AppFontStyle.roboto(15, fontWeight: FontWeight.bold),
                 ),
                 InkWell(
@@ -235,6 +244,8 @@ class _VariableBoxState extends State<VariableBox> {
                           break;
                         case DataType.fvbFunction:
                           break;
+                        case DataType.unknown:
+                          break;
                       }
                       if (value == null) {
                         Fluttertoast.showToast(
@@ -243,24 +254,18 @@ class _VariableBoxState extends State<VariableBox> {
                             timeInSecForIosWeb: 3);
                         return;
                       }
-                      ComponentOperationCubit.codeProcessor.variables[name] =
-                          VariableModel(
+                      widget.onAdded.call(VariableModel(
                         name,
                         value,
                         false,
                         null,
                         dataType,
-                        widget.componentOperationCubit.flutterProject!
-                            .currentScreen.name,
-                      );
+                        widget.title,uiAttached: true
+                      ));
+
                       _controller1.text = '';
                       _controller2.text = '';
-                      widget.componentOperationCubit.addVariable(
-                          ComponentOperationCubit
-                              .codeProcessor.variables[name]!);
-                      widget.componentCreationCubit.changedComponent();
-                      widget.componentSelectionCubit
-                          .emit(ComponentSelectionChange());
+
                       setState(() {});
                     },
                     icon: const Icon(
@@ -279,10 +284,13 @@ class _VariableBoxState extends State<VariableBox> {
                 controller: _scrollController,
                 itemBuilder: (context, i) {
                   return EditVariable(
-                      variables[i],
-                      widget.componentCreationCubit,
-                      widget.componentSelectionCubit,
-                      widget.componentOperationCubit);
+                    variables[i],
+                    widget.componentCreationCubit,
+                    widget.componentSelectionCubit,
+                    widget.componentOperationCubit,
+                    onChanged: widget.onChanged,
+                    onDelete: widget.onDeleted,
+                  );
                 },
                 itemCount: variables.length,
               ),
@@ -299,10 +307,11 @@ class EditVariable extends StatefulWidget {
   final ComponentOperationCubit componentOperationCubit;
   final ComponentSelectionCubit componentSelectionCubit;
   final ComponentCreationCubit componentCreationCubit;
-
+  final void Function(VariableModel) onChanged;
+  final void Function(VariableModel) onDelete;
   const EditVariable(this.variable, this.componentCreationCubit,
       this.componentSelectionCubit, this.componentOperationCubit,
-      {Key? key})
+      {Key? key, required this.onChanged,required this.onDelete})
       : super(key: key);
 
   @override
@@ -327,14 +336,32 @@ class _EditVariableState extends State<EditVariable> {
         Expanded(
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Text(
-              widget.variable.key,
-              style: AppFontStyle.roboto(
-                15,
-                color: widget.variable.value.runtimeAssigned
-                    ? Colors.black
-                    : AppColors.theme,
-                fontWeight: FontWeight.w500,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: widget.variable.key));
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.variable.key,
+                        style: AppFontStyle.roboto(
+                          15,
+                          color: widget.variable.value.runtimeAssigned
+                              ? Colors.black
+                              : AppColors.theme,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10,),
+                    const Icon(Icons.copy,size: 18,color: AppColors.grey,)
+                  ],
+                ),
               ),
             ),
           ),
@@ -349,7 +376,9 @@ class _EditVariableState extends State<EditVariable> {
             ),
           ),
         ),
-        if (!widget.variable.value.runtimeAssigned&&([ DataType.int, DataType.double, DataType.string,DataType.bool].contains(widget.variable.value.dataType)))
+        if (!widget.variable.value.runtimeAssigned &&
+            ([DataType.int, DataType.double, DataType.string, DataType.bool]
+                .contains(widget.variable.value.dataType)))
           Expanded(
             child: CustomTextField(
               controller: _textEditingController,
@@ -389,18 +418,13 @@ class _EditVariableState extends State<EditVariable> {
                     break;
                   case DataType.fvbFunction:
                     break;
+                  case DataType.unknown:
+                    // TODO: Handle this case.
+                    break;
                 }
                 if (value != null) {
-                  ComponentOperationCubit.codeProcessor
-                      .variables[widget.variable.key]!.value = value;
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    widget.componentOperationCubit.updateVariable(
-                        ComponentOperationCubit
-                            .codeProcessor.variables[widget.variable.key]!);
-                    widget.componentCreationCubit.changedComponent();
-                    widget.componentSelectionCubit
-                        .emit(ComponentSelectionChange());
-                  });
+                  widget.variable.value.value = value;
+                  widget.onChanged.call(widget.variable.value);
                 }
               },
             ),
@@ -421,11 +445,8 @@ class _EditVariableState extends State<EditVariable> {
           ),
           IconButton(
             onPressed: () {
-              ComponentOperationCubit.codeProcessor.variables
-                  .remove(widget.variable.key);
-              widget.componentCreationCubit.changedComponent();
-              widget.componentSelectionCubit.emit(ComponentSelectionChange());
-              setState(() {});
+              widget.onDelete.call(widget.variable.value);
+             setState(() {});
             },
             icon: const Icon(
               Icons.delete,

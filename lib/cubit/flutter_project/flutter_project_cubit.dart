@@ -49,7 +49,8 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
     emit(FlutterProjectLoadingState());
     final flutterProject = FlutterProject.createNewProject(name, userId);
     ComponentOperationCubit.currentFlutterProject = flutterProject;
-    flutterProject.currentScreen.variables.addAll([
+    flutterProject.variables.addAll({
+      'tabletWidthLimit':
       VariableModel(
           'tabletWidthLimit',
           1200,
@@ -57,16 +58,16 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           'maximum width tablet can have',
           DataType.double,
           flutterProject.currentScreen.name,
-          deletable: false),
-      VariableModel(
+          deletable: false, uiAttached: true),
+      'phoneWidthLimit':VariableModel(
           'phoneWidthLimit',
           900,
           false,
           'maximum width phone can have',
           DataType.double,
           flutterProject.currentScreen.name,
-          deletable: false)
-    ]);
+          deletable: false, uiAttached: true)
+    });
     await FireBridge.saveFlutterProject(userId, flutterProject);
     projects.add(flutterProject);
     emit(FlutterProjectLoadedState(flutterProject));
@@ -138,7 +139,10 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
                   FavouriteModel(component, projectName);
             }
             if (component.name == 'Image.asset') {
-              imageDataList.add((component.parameters[0].value as ImageData));
+              final imageData=component.parameters[0].value as ImageData?;
+              if(imageData!=null) {
+                imageDataList.add(imageData);
+              }
             }
           });
         }
@@ -165,8 +169,8 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           ComponentSelectionModel.unique(flutterProject.rootComponent!),
           flutterProject.rootComponent!);
 
-      if (flutterProject.currentScreen.variables
-              .firstWhereOrNull((e) => e.name == 'tabletWidthLimit') ==
+      if (flutterProject.currentScreen.variables.entries
+              .firstWhereOrNull((e) => e.key == 'tabletWidthLimit') ==
           null) {
         componentOperationCubit.addVariable(VariableModel(
             'tabletWidthLimit',
