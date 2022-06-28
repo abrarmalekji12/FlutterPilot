@@ -19,7 +19,7 @@ void initInjector() {
         productName: 'Flutter Visual Builder', companyName: 'AMSoftwares');
   }
 
-  get.registerSingleton<CodeProcessor>(CodeProcessor.build());
+  get.registerSingleton<CodeProcessor>(CodeProcessor.build(name: 'main'));
   get.registerSingleton<StateManagementBloc>(StateManagementBloc());
   get.registerSingleton<StackActionCubit>(StackActionCubit());
   get.registerSingleton<AuthenticationCubit>(AuthenticationCubit());

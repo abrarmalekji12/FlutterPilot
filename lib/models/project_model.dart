@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../code_to_component.dart';
 import '../common/compiler/code_processor.dart';
 import '../common/compiler/processor_component.dart';
 import '../common/converter/code_converter.dart';
+import '../common/logger.dart';
 import '../common/undo/revert_work.dart';
+import '../component_list.dart';
 import '../constant/string_constant.dart';
+import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/stack_action/stack_action_cubit.dart';
 import '../injector.dart';
 import '../main.dart';
@@ -13,14 +17,10 @@ import '../runtime_provider.dart';
 import '../ui/action_ui.dart';
 import '../ui/models_view.dart';
 import '../ui/project_setting_page.dart';
-import 'local_model.dart';
-import 'variable_model.dart';
-import '../cubit/component_operation/component_operation_cubit.dart';
-import 'other_model.dart';
-import '../common/logger.dart';
-import '../component_list.dart';
-
 import 'component_model.dart';
+import 'local_model.dart';
+import 'other_model.dart';
+import 'variable_model.dart';
 
 class FlutterProject {
   late ProjectSettingsModel settings;
@@ -47,8 +47,7 @@ class FlutterProject {
     }
   }
 
-  Map<String, VariableModel> get variables =>
-      ComponentOperationCubit.codeProcessor.variables;
+  Map<String, VariableModel> get variables => ComponentOperationCubit.codeProcessor.variables;
 
   set variables(Map<String, VariableModel> value) {
     ComponentOperationCubit.codeProcessor.variables.clear();
@@ -65,8 +64,7 @@ class FlutterProject {
     flutterProject.uiScreens.add(ui);
     final custom = StatelessComponent(name: 'MainPage')..root = CScaffold();
     flutterProject.customComponents.add(custom);
-    (ui.rootComponent as CMaterialApp)
-        .addOrUpdateChildWithKey('home', custom.createInstance(null));
+    (ui.rootComponent as CMaterialApp).addOrUpdateChildWithKey('home', custom.createInstance(null));
 
     flutterProject.currentScreen = flutterProject.uiScreens.first;
     flutterProject.mainScreen = flutterProject.uiScreens.first;
@@ -95,41 +93,51 @@ class FlutterProject {
 
   Widget run(final BuildContext context, {bool navigator = false}) {
     if (!navigator) {
-      return rootComponent?.build(context) ?? Container();
-    }
-    final _actionCubit = get<StackActionCubit>();
-    return Builder(builder: (context) {
-      return Scaffold(
-        key: const GlobalObjectKey(deviceScaffoldMessenger),
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Navigator(
-                key: const GlobalObjectKey(navigationKey),
-                onGenerateRoute: (settings) => MaterialPageRoute(
-                  builder: (_) => mainScreen.build(context) ?? Container(),
-                ),
-              ),
-              BlocBuilder<StackActionCubit, StackActionState>(
-                bloc: _actionCubit,
-                builder: (context, state) {
-                  return Stack(
-                    children: [
-                      for (final model in _actionCubit.models)
-                        Center(
-                          child: StackActionWidget(
-                            actionModel: model,
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
+      return ProcessorProvider(
+        get<CodeProcessor>(),
+        Builder(
+          builder: (context) {
+            return rootComponent?.build(context) ?? Container();
+          }
         ),
       );
-    });
+    }
+    final _actionCubit = get<StackActionCubit>();
+    return ProcessorProvider(
+      get<CodeProcessor>(),
+      Builder(builder: (context) {
+        return Scaffold(
+          key: const GlobalObjectKey(deviceScaffoldMessenger),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                Navigator(
+                  key: const GlobalObjectKey(navigationKey),
+                  onGenerateRoute: (settings) => MaterialPageRoute(
+                    builder: (_) => mainScreen.build(context) ?? Container(),
+                  ),
+                ),
+                BlocBuilder<StackActionCubit, StackActionState>(
+                  bloc: _actionCubit,
+                  builder: (context, state) {
+                    return Stack(
+                      children: [
+                        for (final model in _actionCubit.models)
+                          Center(
+                            child: StackActionWidget(
+                              actionModel: model,
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
   }
 
   void setRoot(Component component) {
@@ -139,8 +147,7 @@ class FlutterProject {
 }
 
 class UIScreen {
-  final CodeProcessor processor =
-      CodeProcessor.build(processor: ComponentOperationCubit.codeProcessor);
+  late final CodeProcessor processor;
   String name;
   String actionCode = '';
   Component? rootComponent;
@@ -148,17 +155,17 @@ class UIScreen {
   final List<LocalModel> models = [];
   final RevertWork revertWork = RevertWork.init();
 
-  UIScreen(this.name);
+  UIScreen(this.name){
+    processor = CodeProcessor.build(processor: ComponentOperationCubit.codeProcessor,name: name);
+  }
 
   toJson() => {
         'name': name,
         'actionCode': actionCode,
         'root': CodeOperations.trim(rootComponent?.code(clean: false)),
         'models': models.map((e) => e.toJson()).toList(growable: false),
-        'variables': variables.values
-            .where((element) => element.uiAttached)
-            .map((e) => e.toJson())
-            .toList(growable: false)
+        'variables':
+            variables.values.where((element) => element.uiAttached).map((e) => e.toJson()).toList(growable: false)
       };
 
   Map<String, VariableModel> get variables => processor.variables;
@@ -174,23 +181,19 @@ class UIScreen {
     return uiScreen;
   }
 
-  factory UIScreen.fromJson(
-      Map<String, dynamic> json, final FlutterProject flutterProject) {
+  factory UIScreen.fromJson(Map<String, dynamic> json, final FlutterProject flutterProject) {
     final screen = UIScreen(json['name']);
     screen.actionCode = json['actionCode'] ?? '';
-    screen.models.addAll(
-        List.from(json['models'] ?? []).map((e) => LocalModel.fromJson(e)));
-    screen.variables.addAll(List.from(json['variables'] ?? []).asMap().map((key,
-            value) =>
-        MapEntry(value['name'], VariableModel.fromJson(value, screen.name))));
+    screen.models.addAll(List.from(json['models'] ?? []).map((e) => LocalModel.fromJson(e)));
+    screen.variables.addAll(List.from(json['variables'] ?? [])
+        .asMap()
+        .map((key, value) => MapEntry(value['name'], VariableModel.fromJson(value, screen.name))));
     return screen;
   }
 
   factory UIScreen.otherScreen(final String name, {String type = 'screen'}) {
     final UIScreen uiScreen = UIScreen(name);
-    uiScreen.rootComponent = type == 'screen'
-        ? componentList['Scaffold']!()
-        : componentList['Container']!();
+    uiScreen.rootComponent = type == 'screen' ? componentList['Scaffold']!() : componentList['Container']!();
     return uiScreen;
   }
 
@@ -216,9 +219,7 @@ class UIScreen {
       }
     }
     for (int i in underScores) {
-      name2 = name2.substring(0, i + 1) +
-          name2[i + 1].toUpperCase() +
-          name2.substring(i + 2);
+      name2 = name2.substring(0, i + 1) + name2[i + 1].toUpperCase() + name2.substring(i + 2);
     }
     return firstLetter + name2.replaceAll('_', '');
   }
@@ -234,9 +235,7 @@ class UIScreen {
     rootComponent?.forEach((component) {
       if (component is Clickable) {
         for (final e in (component as Clickable).actionList) {
-          if (e.arguments.isNotEmpty &&
-              (e.arguments[0] is UIScreen?) &&
-              e.arguments[0] != null) {
+          if (e.arguments.isNotEmpty && (e.arguments[0] is UIScreen?) && e.arguments[0] != null) {
             importList.add((e.arguments[0] as UIScreen).name);
           }
         }
@@ -249,25 +248,21 @@ class UIScreen {
     String staticVariablesCode = '';
     String dynamicVariablesDefinitionCode = '';
     String dynamicVariableAssignmentCode = '';
-    for (final variable
-        in ComponentOperationCubit.codeProcessor.variables.entries) {
-      if ([DataType.string, DataType.int, DataType.double, DataType.double]
-          .contains(variable.value.dataType)) {
+    for (final variable in ComponentOperationCubit.codeProcessor.variables.entries) {
+      if ([DataType.string, DataType.int, DataType.double, DataType.double].contains(variable.value.dataType)) {
         if (!variable.value.isFinal) {
           staticVariablesCode +=
               'final ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
         } else {
           dynamicVariablesDefinitionCode +=
               'late ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key};';
-          dynamicVariableAssignmentCode +=
-              '${variable.key} = ${variable.value.assignmentCode};';
+          dynamicVariableAssignmentCode += '${variable.key} = ${variable.value.assignmentCode};';
         }
       }
     }
 
     String functionImplementationCode = '';
-    for (final function
-        in ComponentOperationCubit.codeProcessor.predefinedFunctions.values) {
+    for (final function in ComponentOperationCubit.codeProcessor.predefinedFunctions.values) {
       functionImplementationCode += function.functionCode;
     }
 

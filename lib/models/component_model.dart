@@ -340,6 +340,7 @@ abstract class Component {
   }
 
   Widget build(BuildContext context) {
+    print('HERE $name ${ProcessorProvider.maybeOf(context)?.scopeName}');
     ComponentOperationCubit.codeProcessor = ProcessorProvider.maybeOf(context)!;
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -1128,8 +1129,7 @@ class CustomComponentImpl extends Component {
 
 abstract class CustomComponent extends Component {
   String? extensionName;
-  final CodeProcessor processor =
-      CodeProcessor.build(processor: ComponentOperationCubit.codeProcessor);
+  late final CodeProcessor processor;
   String actionCode;
   Component? root;
   List<CustomComponent> objects = [];
@@ -1141,6 +1141,8 @@ abstract class CustomComponent extends Component {
       this.actionCode = '',
       List<VariableModel>? variables})
       : super(name, []) {
+    processor=
+        CodeProcessor.build(processor: ComponentOperationCubit.codeProcessor,name: name);
     processor.variables.addAll((variables ?? [])
         .asMap()
         .map((key, value) => MapEntry(value.name, value)));
@@ -1174,12 +1176,10 @@ abstract class CustomComponent extends Component {
         processor.executeCode(actionCode);
         processor.functions['initState']?.execute(processor, []);
       }
-      return Builder(builder: (context) {
-        if (RuntimeProvider.of(context) == RuntimeMode.run) {
-          processor.functions['build']?.execute(processor, []);
-        }
-        return root?.build(context) ?? Container();
-      });
+      if (RuntimeProvider.of(context) == RuntimeMode.run) {
+        processor.functions['build']?.execute(processor, []);
+      }
+      return root?.build(context) ?? Container();
     }
   }
 
@@ -1213,9 +1213,13 @@ abstract class CustomComponent extends Component {
     }
     return ProcessorProvider(
       processor,
-      ComponentWidget(
-        key: key(context),
-        child: create(context),
+      Builder(
+        builder: (context) {
+          return ComponentWidget(
+            key: key(context),
+            child: create(context),
+          );
+        }
       ),
     );
   }
@@ -1373,7 +1377,7 @@ class StatelessComponent extends CustomComponent {
     }
     final CodeProcessor processor = CodeProcessor(
       consoleCallback: (value) {},
-      onError: (error, line) {},
+      onError: (error, line) {}, scopeName: 'test',
     );
     processor.executeCode(actionCode, operationType: OperationType.checkOnly);
     return '''class $name extends StatelessWidget {
@@ -1444,4 +1448,5 @@ class ComponentWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return child;
   }
+
 }

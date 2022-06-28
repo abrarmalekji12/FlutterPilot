@@ -56,7 +56,7 @@ void main() async {
     return null;
   }, onError: (error, line) {
     print('XX => $error, LINE :: "$line"');
-  });
+  }, scopeName: 'test');
   const code = '''
 int radius=0;
 bool rtoc=true;
@@ -247,7 +247,7 @@ class MyApp extends StatelessWidget {
                       ),
                   '/projects');
             } else {
-              return getRoute((p0) => const LoginPage(), '/login');
+              return getRoute((p0) => const LandingPage(), '');
             }
           } else if (link == '/run' && settings.arguments is List) {
             final args = settings.arguments as List;
@@ -282,14 +282,14 @@ class MyApp extends StatelessWidget {
   }
 }
 
-getRoute(Widget Function(BuildContext) builder, String name,
+getRoute(Widget Function(BuildContext) builder, String? name,
     {bool anim = true}) {
   if (!anim) {
     return CustomPageRoute(
-        builder: builder, settings: RouteSettings(name: name));
+        builder: builder, settings: name!=null?RouteSettings(name: name):null);
   }
   return MaterialPageRoute(
-      builder: builder, settings: RouteSettings(name: name));
+      builder: builder, settings: name!=null?RouteSettings(name: name):null);
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {

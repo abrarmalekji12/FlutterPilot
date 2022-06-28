@@ -200,14 +200,14 @@ void openAuthDialog(BuildContext context,void Function(int) onSuccess) {
             child: Navigator(
               onGenerateRoute: (settings) {
                 if (settings.name == '/login') {
-                  return getRoute((context) => const LoginPage(), '/login',
+                  return getRoute((context) => const LoginPage(), null,
                       anim: false);
                 } else if (settings.name == '/register') {
-                  return getRoute((_) => const RegisterPage(), '/register',
+                  return getRoute((_) => const RegisterPage(), null,
                       anim: false);
                 } else if (settings.name == '/reset-password') {
                   return getRoute(
-                      (context) => const ResetPasswordPage(), '/reset-password',
+                      (context) => const ResetPasswordPage(), null,
                       anim: false);
                 }
               },

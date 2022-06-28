@@ -119,7 +119,7 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
         consoleMessages.add(
             ConsoleMessage('$error at Line $line', ConsoleMessageType.error));
         _consoleChangeNotifier.value++;
-      },
+      }, scopeName: 'action-code',
     );
     for(final prerequisite in widget.prerequisites) {
       processor.executeCode(prerequisite, operationType: OperationType.checkOnly,);
