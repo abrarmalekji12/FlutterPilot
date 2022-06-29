@@ -58,50 +58,16 @@ void main() async {
     print('XX => $error, LINE :: "$line"');
   }, scopeName: 'test');
   const code = '''
-int radius=0;
-bool rtoc=true;
-    if(rtoc){
-       radius+=1;
-       if(radius>50){
-         rtoc=false;
-         }
-       }  
-      else{
-        radius-=1;
-       if(radius<1){
-        rtoc=true;
-        }  
-        }  
-  print("{{radius}}");
-// Timer.periodic(Duration(milliseconds:300),(timer){
-// if(dir==3){
-//    left-=5;
-//    } 
-//    else if(dir==1){
-//      top+=5;
-//      }
-//      else if(dir==2){
-//        top-=5;
-//        }
-//        else{
-//          left+=5;
-//          } 
-//        
-// print("{{dir}} {{left}} {{top}}");
-//  if(dir==0&&left>100){
-//    dir=1;
-//    }
-//    else if(dir==3&&left<50){
-//      dir=2;
-//      }
-//      else if(dir==1&&top>100){
-//        dir=3
-//        }
-//        else if(dir==2&&top<50){
-//          dir=0;
-//          }
-//  });
-
+ var count=0;
+  var list=[];
+  var t=Timer.periodic(d, (timer) {
+    print("Hello {{list.length}}");
+    count++;
+    list.add(count);
+    if(count>5){
+      timer.cancel();
+    }
+  });
  ''';
 
   /*
@@ -151,7 +117,7 @@ print("hello {{}}");
 addStudent();
 
   */
-  // processor.executeCode(code);
+  processor.executeCode(code);
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
   js=json.decode(data);
@@ -167,7 +133,7 @@ addStudent();
   // 4. Stream type variable
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  runApp(const MyApp());
+  // runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

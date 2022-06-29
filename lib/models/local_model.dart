@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:get/get.dart';
 
 import '../common/compiler/code_processor.dart';
 import '../ui/models_view.dart';
@@ -106,6 +105,8 @@ class LocalModel {
         return 'Iterable';
       case DataType.unknown:
         return 'UNKNOWN';
+      case DataType.fvbVoid:
+        return 'void';
     }
   }
 

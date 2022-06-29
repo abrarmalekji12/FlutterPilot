@@ -22,6 +22,7 @@ import '../../ui/models_view.dart';
 import '../common_methods.dart';
 import '../logger.dart';
 import 'argument_processor.dart';
+import 'datatype_processor.dart';
 import 'fvb_classes.dart';
 
 Color? colorToHex(String hexString) {
@@ -146,10 +147,11 @@ class FVBContinue {}
 
 class FVBArgument {
   final String name;
+  final DataType dataType;
   final FVBArgumentType type;
   final dynamic optionalValue;
 
-  FVBArgument(this.name, {this.type = FVBArgumentType.placed, this.optionalValue});
+  FVBArgument(this.name, {this.type = FVBArgumentType.placed, this.optionalValue, this.dataType = DataType.dynamic});
 
   @override
   String toString() {
@@ -1200,8 +1202,8 @@ class CodeProcessor {
             final className = variable.substring(6);
             final closeCurlyBracket =
                 CodeOperations.findCloseBracket(input, currentIndex, '{'.codeUnits.first, '}'.codeUnits.first);
-            final CodeProcessor processor =
-                CodeProcessor(scope: Scope.object, consoleCallback: consoleCallback, onError: onError,scopeName: 'fun:$className');
+            final CodeProcessor processor = CodeProcessor(
+                scope: Scope.object, consoleCallback: consoleCallback, onError: onError, scopeName: 'fun:$className');
             processor.execute(input.substring(currentIndex + 1, closeCurlyBracket));
             classes[className] = FVBClass(
               className,
@@ -1972,30 +1974,15 @@ class CodeProcessor {
     } else if (variable.startsWith('var~')) {
       valueStack.push(FVBValue(variableName: variable.substring(4), createVarIfNotExist: true));
       return true;
-    } else if (variable.contains('~')) {
-      final split = variable.split('~');
-      DataType? dataType;
-      if (split.length == 2) {
-        if (split[0] != 'final') {
-          dataType = LocalModel.codeToDatatype(split.first, classes);
-          if (dataType == DataType.unknown) {
-            showError('Unknown data type or class name "${split.first}"');
-            return false;
-          }
-        } else {
-          dataType = DataType.dynamic;
-        }
-      } else if (split.length == 3) {
-        dataType = LocalModel.codeToDatatype(split[1], classes);
-        if (dataType == DataType.unknown) {
-          showError('Unknown data type or class name "${split[1]}"');
-          return false;
-        }
+    } else {
+      final value = DataTypeProcessor.getFVBValueFromCode(variable, classes, showError);
+      if (value != null) {
+        valueStack.push(value);
+        return true;
       }
-
-      valueStack.push(FVBValue(
-          variableName: split.last, createVarIfNotExist: true, isVarFinal: split.first == 'final', dataType: dataType));
-      return true;
+      if(error){
+        return false;
+      }
     }
 
     if (object.isNotEmpty) {

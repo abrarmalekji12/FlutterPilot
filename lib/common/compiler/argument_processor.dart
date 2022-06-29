@@ -15,7 +15,8 @@ class ArgumentProcessor {
     }
     for (int i = 0; i < arguments.length; i++) {
       if (arguments[i].type == FVBArgumentType.placed) {
-        processedArguments[i] = processor.process(argumentData[i]);
+        final output= processor.process(argumentData[i]);
+        processedArguments[i] = output;
       } else {
         final name = arguments[i].name.startsWith('this.') ? arguments[i].name.substring(5) : arguments[i].name;
         if (optionArgs[name] != null) {

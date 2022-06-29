@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 /// For non-windows, Uncomment the following 3 imports:
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 /// For Windows uncomment the following import:
-import 'firebase_connection.dart';
+// import 'firebase_connection.dart';
 import '../common/io_lib.dart';
 
 import 'package:get/get.dart';
