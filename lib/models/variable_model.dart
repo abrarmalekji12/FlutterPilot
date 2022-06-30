@@ -1,3 +1,4 @@
+import '../common/compiler/code_processor.dart';
 import '../ui/models_view.dart';
 
 class VariableModel {
@@ -11,10 +12,11 @@ class VariableModel {
   final bool isFinal;
   final bool uiAttached;
   final String parentName;
+  final bool nullable;
 
   VariableModel(this.name, this.value, this.runtimeAssigned, this.description,
       this.dataType, this.parentName,
-      {this.assignmentCode, this.deletable = true,this.isFinal=false,this.uiAttached=false});
+      {this.assignmentCode, this.deletable = true,this.isFinal=false,this.uiAttached=false,this.nullable=false});
 
   Map<String, dynamic> toJson() {
     return {

@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
+import '../../common/compiler/code_processor.dart';
 import '../component_operation/component_operation_cubit.dart';
 import '../../models/variable_model.dart';
 

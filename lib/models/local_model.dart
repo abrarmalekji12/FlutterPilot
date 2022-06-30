@@ -110,6 +110,7 @@ class LocalModel {
       case DataType.fvbVoid:
         return 'void';
     }
+    return 'UNKNOWN';
   }
 
   toJson() {

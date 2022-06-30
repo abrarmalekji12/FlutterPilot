@@ -67,7 +67,7 @@ abstract class CodeOperations {
   static bool isVariableChar(final int codeUnit) {
     return (codeUnit >= CodeProcessor.capitalACodeUnit && codeUnit <= CodeProcessor.smallZCodeUnit) ||
         (codeUnit >= CodeProcessor.zeroCodeUnit && codeUnit <= CodeProcessor.nineCodeUnit) ||
-        codeUnit == CodeProcessor.underScoreCodeUnit;
+        codeUnit == CodeProcessor.underScoreCodeUnit||codeUnit == CodeProcessor.questionMarkCodeUnit;
   }
 
   static String? checkSyntaxInCode(String code) {

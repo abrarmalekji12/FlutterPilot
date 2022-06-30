@@ -1,7 +1,7 @@
 import 'package:dart_style/dart_style.dart';
 
 import '../../code_to_component.dart';
-import '../../ui/models_view.dart';
+import '../compiler/code_processor.dart';
 
 class FVBEngine {
   final Map<String, DataType> variables = {};

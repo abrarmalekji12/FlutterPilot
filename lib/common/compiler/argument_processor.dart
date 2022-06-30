@@ -18,7 +18,7 @@ class ArgumentProcessor {
     for (int i = 0; i < arguments.length; i++) {
       if (arguments[i].type == FVBArgumentType.placed) {
         final output= processor.process(argumentData[i]);
-        if(DataTypeProcessor.checkIfValidDataTypeOfValue(output,arguments[i].dataType, arguments[i].name, processor.showError)) {
+        if(DataTypeProcessor.checkIfValidDataTypeOfValue(output,arguments[i].dataType, arguments[i].name,arguments[i].nullable, processor.showError)) {
           processedArguments[i] = output;
         }
         else{

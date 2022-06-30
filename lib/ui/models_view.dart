@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../common/compiler/code_processor.dart';
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../common/editable_textview.dart';
@@ -13,7 +14,6 @@ import '../cubit/model/model_cubit.dart';
 import '../models/local_model.dart';
 import '../models/variable_model.dart';
 
-enum DataType { fvbVoid,int, double, string, bool, dynamic, list,iterable, map, fvbInstance,fvbFunction, unknown}
 
 class ModelBox extends StatefulWidget {
   final OverlayEntry overlayEntry;

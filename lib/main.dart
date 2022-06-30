@@ -58,23 +58,14 @@ void main() async {
     print('XX => $error, LINE :: "$line"');
   }, scopeName: 'test');
   const code = '''
- var count=0;
-  var list=[];
-  // var t=Timer.periodic(d, (timer) {
-  //   print("Hello {{list.length}}");
-  //   count++;
-  //   list.add(count);
-  //   if(count>5){
-  //     timer.cancel();
-  //   }
-  // });
-  
-  play(dynamic data){
+
+  class Student {
+  double? play(dynamic data){
     print("Hello {{data}}");
-    return 1.78;
+    return null;
  }
- double a=play(3);
- print(a);
+  }
+  print(Student().play('hellow'));
  ''';
 
   /*

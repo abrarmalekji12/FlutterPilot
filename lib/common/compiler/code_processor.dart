@@ -16,13 +16,42 @@ import '../../models/function_model.dart';
 import '../../models/other_model.dart';
 import '../../models/variable_model.dart';
 import '../../ui/build_view/build_view.dart';
-import '../../ui/models_view.dart';
 import '../common_methods.dart';
 import '../logger.dart';
 import 'argument_processor.dart';
 import 'datatype_processor.dart';
 import 'function_processor.dart';
 import 'fvb_classes.dart';
+// enum DataType { fvbVoid,int, double, string, bool, dynamic, list,iterable, map, fvbInstance,fvbFunction, unknown}
+
+class DataType {
+  final String name;
+  final String? fvbName;
+  static const DataType fvbVoid = DataType('fvbVoid');
+  static const DataType int = DataType('int');
+  static const DataType double = DataType('double');
+  static const DataType string = DataType('string');
+  static const DataType bool = DataType('bool');
+  static const DataType dynamic = DataType('dynamic');
+  static const DataType list = DataType('list');
+  static const DataType iterable = DataType('iterable');
+  static const DataType map = DataType('map');
+  static const DataType unknown = DataType('unknown');
+  static const DataType fvbInstance = DataType('fvbInstance');
+  static const DataType fvbFunction = DataType('fvbFunction');
+
+  // static DataType fvbInstance(final String name) => DataType('fvbInstance',fvbName: name);
+  // static DataType fvbFunction(final String name) => DataType('fvbFunction',fvbName: name);
+
+  const DataType(this.name, {this.fvbName});
+
+  @override
+  toString() => name;
+  // @override
+  // operator ==(other) => other is DataType && other.name == name;
+  static get values =>
+      [fvbVoid, int, double, string, bool, dynamic, list, iterable, map, fvbInstance, fvbFunction, unknown];
+}
 
 Color? colorToHex(String hexString) {
   if (hexString.length < 7) {
@@ -149,8 +178,13 @@ class FVBArgument {
   final DataType dataType;
   final FVBArgumentType type;
   final dynamic optionalValue;
+  final bool nullable;
 
-  FVBArgument(this.name, {this.type = FVBArgumentType.placed, this.optionalValue, this.dataType = DataType.dynamic});
+  FVBArgument(this.name,
+      {this.type = FVBArgumentType.placed,
+      this.optionalValue,
+      this.dataType = DataType.dynamic,
+      this.nullable = false});
 
   @override
   String toString() {
@@ -172,8 +206,9 @@ class FVBFunction {
   final Map<String, FVBVariable> localVariables = {};
   final List<FVBArgument> arguments;
   final DataType returnType;
+  final bool canReturnNull;
 
-  FVBFunction(this.name, this.code, this.arguments, {this.returnType = DataType.dynamic});
+  FVBFunction(this.name, this.code, this.arguments, {this.returnType = DataType.dynamic, this.canReturnNull = false});
 
   dynamic execute(final CodeProcessor processor, final List<dynamic> argumentValues) {
     if (arguments.length != argumentValues.length) {
@@ -219,7 +254,7 @@ class FVBFunction {
     for (final entry in globalVariables.entries) {
       processor.variables[entry.key]?.value = entry.value;
     }
-    if (DataTypeProcessor.checkIfValidDataTypeOfValue(output, returnType, name, processor.showError,
+    if (DataTypeProcessor.checkIfValidDataTypeOfValue(output, returnType, name, canReturnNull, processor.showError,
         invalidError:
             'Function $name has return type of ${CodeOperations.getDatatypeToDartType(returnType)} but returned value is of type ${output.runtimeType}')) {
       return output;
@@ -232,14 +267,15 @@ class FVBValue {
   final bool isVarFinal, createVarIfNotExist;
   final String? variableName;
   final DataType? dataType;
+  final bool nullable;
 
-  FVBValue({
-    this.value,
-    this.variableName,
-    this.isVarFinal = false,
-    this.createVarIfNotExist = false,
-    this.dataType,
-  });
+  FVBValue(
+      {this.value,
+      this.variableName,
+      this.isVarFinal = false,
+      this.createVarIfNotExist = false,
+      this.dataType,
+      this.nullable = false});
 
   evaluateValue(CodeProcessor processor) {
     if (variableName == null) {
@@ -271,8 +307,9 @@ class FVBVariable {
   dynamic value;
   final DataType dataType;
   final bool isFinal;
+  final bool nullable;
 
-  FVBVariable(this.name, this.dataType, {this.value, this.isFinal = false});
+  FVBVariable(this.name, this.dataType, {this.value, this.isFinal = false, this.nullable = false});
 
   clone() {
     return FVBVariable(
@@ -327,7 +364,7 @@ class CodeProcessor {
   // static final abNullOperators=['==','!='];
   static final capitalACodeUnit = 'A'.codeUnits.first,
       smallZCodeUnit = 'z'.codeUnits.first,
-      underScoreCodeUnit = '_'.codeUnits.first;
+      underScoreCodeUnit = '_'.codeUnits.first, questionMarkCodeUnit='?'.codeUnits.first;
   static final zeroCodeUnit = '0'.codeUnits.first,
       nineCodeUnit = '9'.codeUnits.first,
       dotCodeUnit = '.'.codeUnits.first,
@@ -667,16 +704,17 @@ class CodeProcessor {
   }
 
   bool setValue(final String variable, dynamic value,
-      {bool isFinal = false, bool createNew = false, DataType? dataType}) {
+      {bool isFinal = false, bool createNew = false, DataType? dataType, bool nullable = false}) {
     if (variable.contains('[')) {
       getOrSetListMapBracketValue(variable, value: value);
       return true;
-    } else if (variables.containsKey(variable)) {
+    }
+    if (variables.containsKey(variable)) {
       if (variables[variable]!.isFinal) {
         showError('Cannot change value of final variable $variable');
         return false;
       } else if (DataTypeProcessor.checkIfValidDataTypeOfValue(
-          value, variables[variable]!.dataType, variable, showError)) {
+          value, variables[variable]!.dataType, variable,  variables[variable]!.nullable, showError)) {
         variables[variable]!.value = value;
       }
       return true;
@@ -690,7 +728,7 @@ class CodeProcessor {
           showError('Cannot change value of final variable $variable');
           return false;
         } else if (DataTypeProcessor.checkIfValidDataTypeOfValue(
-            value, parentProcessor!.variables[variable]!.dataType, variable, showError)) {
+            value, parentProcessor!.variables[variable]!.dataType, variable, parentProcessor!.variables[variable]!.nullable, showError)) {
           parentProcessor!.variables[variable]!.value = value;
           return true;
         }
@@ -700,15 +738,16 @@ class CodeProcessor {
       }
     }
     if (createNew) {
+
       DataType type;
       if (dataType == null) {
         type = DataTypeProcessor.getDartTypeToDatatype(value, showError);
-      } else if (DataTypeProcessor.checkIfValidDataTypeOfValue(value, dataType, variable, showError)) {
+      } else if (DataTypeProcessor.checkIfValidDataTypeOfValue(value, dataType, variable, nullable,showError)) {
         type = dataType;
       } else {
         return false;
       }
-      variables[variable] = VariableModel(variable, value, false, null, type, '',
+      variables[variable] = VariableModel(variable, value, false, null, type, '',nullable: nullable,
           // type: dataType == DataType.fvbInstance
           //     ? (value as FVBInstance).fvbClass.name
           //     : null,
@@ -868,7 +907,7 @@ class CodeProcessor {
           break;
         case '=':
           setValue(aVar.variableName!, b,
-              isFinal: aVar.isVarFinal, createNew: aVar.createVarIfNotExist, dataType: aVar.dataType);
+              isFinal: aVar.isVarFinal, createNew: aVar.createVarIfNotExist, dataType: aVar.dataType,nullable: aVar.nullable);
           r = b;
           break;
         case '++':
@@ -1106,7 +1145,7 @@ class CodeProcessor {
     int stringCount = 0;
     String variable = '';
     String object = '';
-    bool isNumber=true;
+    bool isNumber = true;
     if (T == String || T == ImageData) {
       return processString(input);
     } else if (T == Color && input.startsWith('#')) {
@@ -1208,17 +1247,21 @@ class CodeProcessor {
             }
           }
         }
-      } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||(ch >= zeroCodeUnit && ch <= nineCodeUnit) ||
+      } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
+          (ch >= zeroCodeUnit && ch <= nineCodeUnit) ||
           ch == underScoreCodeUnit ||
           ch == '['.codeUnits.first ||
           ch == ']'.codeUnits.first ||
+          ch == '?'.codeUnits.first ||
           ch == '~'.codeUnits.first) {
-        if(ch == '~'.codeUnits.first||(ch >= zeroCodeUnit && ch <= nineCodeUnit)){
-          isNumber=true;
+        if (ch == '~'.codeUnits.first || (ch >= zeroCodeUnit && ch <= nineCodeUnit)) {
+          isNumber = true;
+        } else {
+          isNumber = false;
         }
         variable += nextToken;
       } else if (ch == dotCodeUnit) {
-        if(isNumber){
+        if (isNumber) {
           variable += nextToken;
           continue;
         }
@@ -1841,7 +1884,7 @@ class CodeProcessor {
           final variable = value.variableName!;
           variables[variable] = VariableModel(
               variable, value.value, false, null, value.dataType ?? DataType.dynamic, '',
-              isFinal: value.isVarFinal);
+              isFinal: value.isVarFinal,nullable: value.nullable);
         }
       }
 
@@ -1922,14 +1965,17 @@ class CodeProcessor {
     } else if (variable == 'continue') {
       valueStack.push(FVBValue(value: FVBContinue()));
       return true;
-    } else if (variable.startsWith('return~')) {
+    } else if(variable=='null'){
+      valueStack.push(FVBValue(value: null));
+      return true;
+    }else if (variable.startsWith('return~')) {
       valueStack.push(FVBValue(
           value: process(
         variable.substring(7),
       )));
       return true;
     } else if (variable.startsWith('var~')) {
-      valueStack.push(FVBValue(variableName: variable.substring(4), createVarIfNotExist: true));
+      valueStack.push(FVBValue(variableName: variable.substring(4), createVarIfNotExist: true, nullable: true));
       return true;
     } else if (parseNumber(variable, valueStack)) {
       return true;

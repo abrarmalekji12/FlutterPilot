@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/foundation.dart';
+import '../../common/compiler/code_processor.dart';
 import '../../injector.dart';
 import '../../models/component_selection.dart';
 import '../../models/variable_model.dart';
