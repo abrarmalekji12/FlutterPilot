@@ -32,4 +32,49 @@ class DataTypeProcessor {
     }
     return null;
   }
+
+  static bool checkIfValidDataTypeOfValue(dynamic value, DataType dataType,String variable, Function showError,{String? invalidError}) {
+    final valueDataType = getDartTypeToDatatype(value,showError);
+    if(value==null&&dataType==DataType.fvbVoid){
+      return true;
+    }
+    if (dataType == valueDataType ||
+        (dataType == DataType.double && valueDataType == DataType.int) ||
+        dataType == DataType.dynamic) {
+      return true;
+    } else {
+      showError(
+          invalidError??'Cannot assign ${LocalModel.dataTypeToCode(valueDataType)} to ${LocalModel.dataTypeToCode(dataType)} : $variable=${value.runtimeType}');
+      return false;
+    }
+  }
+
+  static DataType getDartTypeToDatatype(dynamic value,Function showError) {
+    if(value==null){
+      return DataType.fvbVoid;
+    }
+    final DataType dataType;
+    if (value is int) {
+      dataType = DataType.int;
+    } else if (value is double) {
+      dataType = DataType.double;
+    } else if (value is String) {
+      dataType = DataType.string;
+    } else if (value is bool) {
+      dataType = DataType.bool;
+    } else if (value is List) {
+      dataType = DataType.list;
+    } else if (value is Map) {
+      dataType = DataType.map;
+    } else if (value is FVBInstance) {
+      dataType = DataType.fvbInstance;
+    } else if (value is FVBFunction) {
+      dataType = DataType.fvbFunction;
+    }
+    else {
+      dataType = DataType.unknown;
+      showError('Unknown type of value $value');
+    }
+    return dataType;
+  }
 }

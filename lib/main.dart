@@ -60,14 +60,21 @@ void main() async {
   const code = '''
  var count=0;
   var list=[];
-  var t=Timer.periodic(d, (timer) {
-    print("Hello {{list.length}}");
-    count++;
-    list.add(count);
-    if(count>5){
-      timer.cancel();
-    }
-  });
+  // var t=Timer.periodic(d, (timer) {
+  //   print("Hello {{list.length}}");
+  //   count++;
+  //   list.add(count);
+  //   if(count>5){
+  //     timer.cancel();
+  //   }
+  // });
+  
+  play(dynamic data){
+    print("Hello {{data}}");
+    return 1.78;
+ }
+ double a=play(3);
+ print(a);
  ''';
 
   /*

@@ -73,6 +73,8 @@ class LocalModel {
         return DataType.iterable;
       case 'dynamic':
         return DataType.dynamic;
+      case 'void':
+        return DataType.fvbVoid;
       default:
         if(classes.containsKey(dataType)){
           return DataType.fvbInstance;

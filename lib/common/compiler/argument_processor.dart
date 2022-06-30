@@ -1,5 +1,7 @@
 import '../../code_to_component.dart';
+import '../../ui/models_view.dart';
 import 'code_processor.dart';
+import 'datatype_processor.dart';
 
 class ArgumentProcessor {
   ArgumentProcessor();
@@ -16,7 +18,12 @@ class ArgumentProcessor {
     for (int i = 0; i < arguments.length; i++) {
       if (arguments[i].type == FVBArgumentType.placed) {
         final output= processor.process(argumentData[i]);
-        processedArguments[i] = output;
+        if(DataTypeProcessor.checkIfValidDataTypeOfValue(output,arguments[i].dataType, arguments[i].name, processor.showError)) {
+          processedArguments[i] = output;
+        }
+        else{
+          return [];
+        }
       } else {
         final name = arguments[i].name.startsWith('this.') ? arguments[i].name.substring(5) : arguments[i].name;
         if (optionArgs[name] != null) {
@@ -45,17 +52,20 @@ class ArgumentProcessor {
     for (int i = 0; i < argumentList.length; i++) {
       final type= i < placedLength ? FVBArgumentType.placed : FVBArgumentType.optional;
       if(type == FVBArgumentType.placed) {
-        arguments.add(FVBArgument(argumentList[i],
-            type: type));
+        final value=DataTypeProcessor.getFVBValueFromCode(argumentList[i], processor.classes, processor.showError);
+        arguments.add(FVBArgument(value!=null?value.variableName!:argumentList[i],
+            type: type,dataType: value?.dataType??DataType.dynamic));
       }else{
         final split = CodeOperations.splitBy(argumentList[i], splitBy: '=');
         if(split.length==2){
-          arguments.add(FVBArgument(split[0],
-              type: type,optionalValue: processor.process(split[1])));
+          final value=DataTypeProcessor.getFVBValueFromCode(split[0], processor.classes, processor.showError);
+          arguments.add(FVBArgument(value!=null?value.variableName!:split[0],
+              type: type,optionalValue: processor.process(split[1]),dataType: value?.dataType??DataType.dynamic));
         }
         else{
-          arguments.add(FVBArgument(argumentList[i],
-              type: type));
+          final value=DataTypeProcessor.getFVBValueFromCode(argumentList[i], processor.classes, processor.showError);
+          arguments.add(FVBArgument(value!=null?value.variableName!:argumentList[i],
+              type: type,dataType: value?.dataType??DataType.dynamic));
         }
       }
     }

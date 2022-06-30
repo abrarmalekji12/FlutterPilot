@@ -93,6 +93,7 @@ abstract class Parameter {
           null,
           code
               .replaceAll('\'', '')
+              .replaceAll('"', '')
               .replaceAll('\\\$', '\$')
               .replaceAll('__quote__', '\''));
     }
@@ -224,18 +225,25 @@ class BooleanParameter extends Parameter {
   @override
   get rawValue {
     final result = compiler.code.isNotEmpty
-        ? ComponentOperationCubit.codeProcessor.process<bool>(compiler.code)
+        ? process(compiler.code)
         : null;
     if (result != null) {
       val = result as bool;
     }
     return val;
   }
-
+  process(String value) {
+    try {
+      return ComponentOperationCubit.codeProcessor.process<bool>(CodeOperations.trim(value)!);
+    }
+    on Exception catch (e) {
+      return null;
+    }
+  }
   @override
   get value {
     final result = compiler.code.isNotEmpty
-        ? ComponentOperationCubit.codeProcessor.process<bool>(compiler.code)
+        ? process(compiler.code)
         : null;
     if (result != null && result is! FVBUndefined) {
       val = result as bool;
@@ -277,7 +285,7 @@ class SimpleParameter<T> extends Parameter {
   dynamic get value {
     val=null;
     final result = compiler.code.isNotEmpty
-        ? ComponentOperationCubit.codeProcessor.process<T>(compiler.code)
+        ? process(compiler.code)
         : null;
     if (result != null && result is! FVBUndefined) {
       if (T == Color) {
@@ -311,7 +319,7 @@ class SimpleParameter<T> extends Parameter {
   get rawValue {
     if (compiler.code.isNotEmpty) {
       final result =
-          ComponentOperationCubit.codeProcessor.process<T>(compiler.code);
+          process(compiler.code);
       if (result != null) {
         val = result as T;
       }
@@ -427,7 +435,12 @@ class SimpleParameter<T> extends Parameter {
   }
 
   process(String value) {
-    return ComponentOperationCubit.codeProcessor.process<T>(CodeOperations.trim(value)!);
+    try {
+      return ComponentOperationCubit.codeProcessor.process<T>(CodeOperations.trim(value)!);
+    }
+    on Exception catch (e) {
+      return null;
+    }
   }
 }
 
