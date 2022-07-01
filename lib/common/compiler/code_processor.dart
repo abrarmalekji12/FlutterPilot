@@ -76,6 +76,8 @@ class FVBClass {
 
   FVBClass(this.name, this.fvbFunctions, this.fvbVariables, {this.fvbStaticFunctions, this.fvbStaticVariables});
 
+  @override
+  toString() => name;
   FVBInstance createInstance(final CodeProcessor processor, final List<dynamic> arguments) {
     final instance = FVBInstance(
       FVBClass(
@@ -162,8 +164,26 @@ class FVBInstance {
   final FVBClass fvbClass;
 
   FVBInstance(this.fvbClass);
+
+  @override
+  Type get runtimeType => CustomType(fvbClass.name);
 }
 
+class CustomType extends Type{
+  final String name;
+
+  CustomType(this.name);
+  @override
+  String toString() {
+    return name;
+  }
+  @override
+  bool operator ==(other) => other is Type && other.toString() == name;
+
+  @override
+  int get hashCode => name.hashCode;
+
+}
 enum FVBArgumentType {
   placed,
   optional,
@@ -364,7 +384,7 @@ class CodeProcessor {
   // static final abNullOperators=['==','!='];
   static final capitalACodeUnit = 'A'.codeUnits.first,
       smallZCodeUnit = 'z'.codeUnits.first,
-      underScoreCodeUnit = '_'.codeUnits.first, questionMarkCodeUnit='?'.codeUnits.first;
+      underScoreCodeUnit = '_'.codeUnits.first, questionMarkCodeUnit='?'.codeUnits.first,roundBracketClose=')'.codeUnits.first,roundBracketOpen='('.codeUnits.first;
   static final zeroCodeUnit = '0'.codeUnits.first,
       nineCodeUnit = '9'.codeUnits.first,
       dotCodeUnit = '.'.codeUnits.first,
@@ -1177,6 +1197,7 @@ class CodeProcessor {
 
         continue;
       } else if (ch == '"'.codeUnits.first || ch == '\''.codeUnits.first) {
+        isNumber=false;
         stringOpen = true;
       } else if (ch == '['.codeUnits.first) {
         int count = 0;
@@ -1938,6 +1959,11 @@ class CodeProcessor {
   bool resolveVariable(String variable, String object, valueStack) {
     if (object.isNotEmpty) {
       final value = getValue(object);
+      if(variable=='runtimeType')
+        {
+          valueStack.push(FVBValue(value: value.runtimeType.toString()));
+          return true;
+        }
       if (value is String) {
         switch (variable) {
           case 'length':

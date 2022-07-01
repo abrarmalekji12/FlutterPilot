@@ -60,12 +60,13 @@ void main() async {
   const code = '''
 
   class Student {
-  double? play(dynamic data){
+  double? play({String data}){
     print("Hello {{data}}");
-    return null;
+    return 10.78;
  }
   }
-  print(Student().play('hellow'));
+  print("abrar".length);
+  
  ''';
 
   /*

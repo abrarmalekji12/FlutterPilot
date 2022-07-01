@@ -45,7 +45,7 @@ class DataTypeProcessor {
       valueDataType= dataType;
     }
     if(value==null&&!nullable&&dataType != DataType.dynamic){
-      showError('$variable can not nullable');
+      showError('value of $variable can not null');
       return false;
     }
     if (value == null && dataType == DataType.fvbVoid) {

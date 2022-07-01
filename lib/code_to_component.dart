@@ -31,7 +31,6 @@ abstract class CodeOperations {
     final List<int> outputString = [];
     bool openString = false;
     int spaceCount = 0;
-    code = code.replaceAll(' in ', ':');
     for (int i = 0; i < code.length; i++) {
       if (code[i] != ' ') {
         if (spaceCount >= 1) {
@@ -61,7 +60,9 @@ abstract class CodeOperations {
       }
       outputString.add(code.codeUnitAt(i));
     }
-    return String.fromCharCodes(outputString);
+
+    final finalCode=String.fromCharCodes(outputString).replaceAll('~in~', ':').replaceAll('~is~', '.runtimeType==');
+    return finalCode;
   }
 
   static bool isVariableChar(final int codeUnit) {
