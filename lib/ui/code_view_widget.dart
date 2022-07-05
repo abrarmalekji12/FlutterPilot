@@ -1,4 +1,3 @@
-
 import 'package:code_text_field/code_text_field.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:flutter/foundation.dart';
@@ -24,8 +23,10 @@ class CodeViewerWidget extends StatefulWidget {
 
 class _CodeViewerWidgetState extends State<CodeViewerWidget> {
   late UIScreen screen;
-  final CodeController _codeController =
-      CodeController(language: dart, theme: monokaiSublimeTheme.map((key, value) => MapEntry(key, value.copyWith(fontSize: 14))));
+  final CodeController _codeController = CodeController(
+      language: dart,
+      theme: monokaiSublimeTheme
+          .map((key, value) => MapEntry(key, value.copyWith(fontSize: 14))));
   final ScrollController _controller = ScrollController();
   late String code;
   final DartFormatter _dartFormatter = DartFormatter(fixes: []);
@@ -34,7 +35,7 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
   void initState() {
     super.initState();
 
-    screen = widget.componentOperationCubit.flutterProject!.currentScreen;
+    screen = widget.componentOperationCubit.project!.currentScreen;
   }
 
   @override
@@ -113,27 +114,24 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
                                           onTap: () {
                                             screen = widget
                                                 .componentOperationCubit
-                                                .flutterProject!
+                                                .project!
                                                 .uiScreens[i];
                                             setState(() {});
                                           },
                                           child: FileTile(
                                             selected: widget
                                                     .componentOperationCubit
-                                                    .flutterProject!
+                                                    .project!
                                                     .uiScreens[i] ==
                                                 screen,
-                                            name: widget
-                                                .componentOperationCubit
-                                                .flutterProject!
-                                                .uiScreens[i]
-                                                .name,
+                                            name: widget.componentOperationCubit
+                                                .project!.uiScreens[i].name,
                                           ),
                                         ),
                                       );
                                     },
                                     itemCount: widget.componentOperationCubit
-                                        .flutterProject!.uiScreens.length,
+                                        .project!.uiScreens.length,
                                   ),
                                 ),
                               ],
@@ -221,13 +219,13 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
     // return Future.microtask(() => code=_dartFormatter
     //     .format(widget.componentOperationCubit.flutterProject!.code(screen)));
     // return  code=_dartFormatter.format(widget.componentOperationCubit.flutterProject!.code(screen));
-    return code = _dartFormatter.format(
-        code = screen.code(widget.componentOperationCubit.flutterProject!));
+    return code = _dartFormatter
+        .format(code = screen.code(widget.componentOperationCubit.project!));
   }
 
   void downloadProject(UIScreen screen, String code) {
     final images =
-        widget.componentOperationCubit.flutterProject?.getAllUsedImages() ?? [];
+        widget.componentOperationCubit.project?.getAllUsedImages() ?? [];
     Map<String, dynamic> imageToBase64Map = {};
     for (final img in images) {
       if (img.bytes != null) {
@@ -236,21 +234,21 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
     }
     final DartFormatter formatter = DartFormatter();
     for (final UIScreen uiScreen
-        in widget.componentOperationCubit.flutterProject?.uiScreens ?? []) {
+        in widget.componentOperationCubit.project?.uiScreens ?? []) {
       final name =
-          uiScreen == widget.componentOperationCubit.flutterProject?.mainScreen
+          uiScreen == widget.componentOperationCubit.project?.mainScreen
               ? 'main'
               : uiScreen.name;
       if (uiScreen != screen) {
-        imageToBase64Map['lib/$name.dart'] = formatter.format(
-            uiScreen.code(widget.componentOperationCubit.flutterProject!));
+        imageToBase64Map['lib/$name.dart'] = formatter
+            .format(uiScreen.code(widget.componentOperationCubit.project!));
       } else {
         imageToBase64Map['lib/$name.dart'] = code;
       }
     }
 
     DownloadUtils.download(
-        imageToBase64Map, widget.componentOperationCubit.flutterProject!.name);
+        imageToBase64Map, widget.componentOperationCubit.project!.name);
   }
 }
 

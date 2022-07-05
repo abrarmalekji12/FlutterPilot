@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/converter/string_operation.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/visual_box_drawer/visual_box_cubit.dart';
 import 'operation_model.dart';
@@ -17,7 +18,11 @@ abstract class Parameter {
   String? Function(ComplexParameter)? validToShow;
   ParameterInfo? info;
 
-  Parameter(this.displayName, this.info, this.isRequired);
+  Parameter(String? displayName, this.info, this.isRequired) {
+    this.displayName = (displayName != null
+        ? StringOperation.toNormalCase(displayName)
+        : null);
+  }
 
   get value;
 
@@ -113,7 +118,7 @@ abstract class Parameter {
   }
 
   void withDisplayName(String? name) {
-    displayName = name;
+    displayName = name != null ? StringOperation.toNormalCase(name) : null;
   }
 
   void withInfo(ParameterInfo? info) {
@@ -224,27 +229,26 @@ class BooleanParameter extends Parameter {
 
   @override
   get rawValue {
-    final result = compiler.code.isNotEmpty
-        ? process(compiler.code)
-        : null;
+    final result = compiler.code.isNotEmpty ? process(compiler.code) : null;
     if (result != null) {
       val = result as bool;
     }
     return val;
   }
+
   process(String value) {
     try {
-      return ComponentOperationCubit.codeProcessor.process<bool>(CodeOperations.trim(value)!);
-    }
-    on Exception catch (e) {
+      CodeProcessor.error = false;
+      return ComponentOperationCubit.processor
+          .process<bool>(CodeOperations.trim(value)!);
+    } on Exception catch (e) {
       return null;
     }
   }
+
   @override
   get value {
-    final result = compiler.code.isNotEmpty
-        ? process(compiler.code)
-        : null;
+    final result = compiler.code.isNotEmpty ? process(compiler.code) : null;
     if (result != null && result is! FVBUndefined) {
       val = result as bool;
     }
@@ -283,10 +287,8 @@ class SimpleParameter<T> extends Parameter {
 
   @override
   dynamic get value {
-    val=null;
-    final result = compiler.code.isNotEmpty
-        ? process(compiler.code)
-        : null;
+    val = null;
+    final result = compiler.code.isNotEmpty ? process(compiler.code) : null;
     if (result != null && result is! FVBUndefined) {
       if (T == Color) {
         val = colorToHex(result.toString()) as T?;
@@ -317,9 +319,9 @@ class SimpleParameter<T> extends Parameter {
 
   @override
   get rawValue {
+    val = null;
     if (compiler.code.isNotEmpty) {
-      final result =
-          process(compiler.code);
+      final result = process(compiler.code);
       if (result != null) {
         val = result as T;
       }
@@ -418,8 +420,7 @@ class SimpleParameter<T> extends Parameter {
         if (T == ImageData) {
           val = ImageData(
               null,
-              ComponentOperationCubit.codeProcessor.process<String>(compiler
-                  .code
+              ComponentOperationCubit.processor.process<String>(compiler.code
                   .replaceAll('\'', '')
                   .replaceAll('\\\$', '\$')
                   .replaceAll('__quote__', '\''))) as T;
@@ -434,11 +435,13 @@ class SimpleParameter<T> extends Parameter {
     return false;
   }
 
-  process(String value) {
+  process(String value, {CodeProcessor? processor}) {
+    final code =
+        (T == String || T == ImageData) ? value : CodeOperations.trim(value)!;
     try {
-      return ComponentOperationCubit.codeProcessor.process<T>(CodeOperations.trim(value)!);
-    }
-    on Exception catch (e) {
+      CodeProcessor.error = false;
+      return (processor ?? ComponentOperationCubit.processor).process<T>(code);
+    } on Exception catch (e) {
       return null;
     }
   }
@@ -486,7 +489,6 @@ class ListParameter<T> extends Parameter {
     final processedCode = info?.fromCode(code) ?? code;
     final valueList = CodeOperations.splitBy(
         processedCode.substring(1, processedCode.length - 1));
-    logger('value list $valueList  $code');
     if (valueList.isEmpty) {
       return true;
     }
@@ -987,11 +989,11 @@ class ComponentParameter extends Parameter {
           CodeOperations.splitBy(paramCode.substring(1, paramCode.length - 1));
       for (final compCode in componentCodes) {
         components.add(Component.fromCode(
-            compCode, ComponentOperationCubit.currentFlutterProject!)!);
+            compCode, ComponentOperationCubit.currentProject!)!);
       }
     } else {
       components.add(Component.fromCode(
-          paramCode, ComponentOperationCubit.currentFlutterProject!)!);
+          paramCode, ComponentOperationCubit.currentProject!)!);
     }
     return true;
   }

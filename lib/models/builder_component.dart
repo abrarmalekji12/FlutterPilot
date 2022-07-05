@@ -34,12 +34,12 @@ abstract class BuilderComponent extends Holder {
     }
     if (model != null) {
       for (int i = 0; i < (model?.variables.length ?? 0); i++) {
-        ComponentOperationCubit.codeProcessor
+        ComponentOperationCubit.processor
             .localVariables[model!.variables[i].name] = model!.values[index][i];
       }
     }
-    ComponentOperationCubit.codeProcessor.localVariables['index'] = index;
-    ComponentOperationCubit.codeProcessor.localVariables['count'] =
+    ComponentOperationCubit.processor.localVariables['index'] = index;
+    ComponentOperationCubit.processor.localVariables['count'] =
         model?.values.length ?? itemLengthParameter.value;
     final component = child!.clone(this);
     final widget = (component.build(context));
@@ -151,6 +151,29 @@ class CListViewBuilder extends BuilderComponent {
         return builder(context, index);
       },
       itemCount: count,
+    );
+  }
+}
+
+class CListViewSeparated extends BuilderComponent {
+  CListViewSeparated()
+      : super('ListView.separated', [
+          Parameters.axisParameter()
+            ..withInfo(NamedParameterInfo('scrollDirection'))
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    init();
+    return ListView.separated(
+      scrollDirection: parameters[0].value,
+      itemBuilder: (context, index) {
+        return builder(context, index);
+      },
+      itemCount: count,
+      separatorBuilder: (BuildContext context, int index) {
+        return const Divider();
+      },
     );
   }
 }

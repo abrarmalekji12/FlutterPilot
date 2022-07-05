@@ -4,7 +4,8 @@ import 'code_processor.dart';
 class DataTypeProcessor {
   DataTypeProcessor();
 
-  static FVBValue? getFVBValueFromCode(String variable, Map<String, FVBClass> classes, Function showError) {
+  static FVBValue? getFVBValueFromCode(
+      String variable, Map<String, FVBClass> classes, Function showError) {
     if (variable.contains('~')) {
       final split = variable.split('~');
       bool nullable = false;
@@ -13,7 +14,10 @@ class DataTypeProcessor {
         if (split[0] != 'final') {
           nullable = split.first.endsWith('?');
           dataType = LocalModel.codeToDatatype(
-              nullable ? split.first.substring(0, split.first.length - 1) : split.first, classes);
+              nullable
+                  ? split.first.substring(0, split.first.length - 1)
+                  : split.first,
+              classes);
           if (dataType == DataType.unknown) {
             showError('Unknown data type or class name "${split.first}"');
             return null;
@@ -23,40 +27,47 @@ class DataTypeProcessor {
         }
       } else if (split.length == 3) {
         nullable = split[1].endsWith('?');
-        dataType = LocalModel.codeToDatatype(nullable ?split[1].substring(0, split[1].length - 1) :split[1], classes);
+        dataType = LocalModel.codeToDatatype(
+            nullable ? split[1].substring(0, split[1].length - 1) : split[1],
+            classes);
         if (dataType == DataType.unknown) {
           showError('Unknown data type or class name "${split[1]}"');
           return null;
         }
       }
       return FVBValue(
-          variableName: split.last, createVarIfNotExist: true, isVarFinal: split.first == 'final', dataType: dataType,nullable: nullable);
+          variableName: split.last,
+          createVarIfNotExist: true,
+          isVarFinal: split.first == 'final',
+          dataType: dataType,
+          nullable: nullable);
     }
     return null;
   }
 
-  static bool checkIfValidDataTypeOfValue(dynamic value, DataType dataType, String variable, bool nullable,Function showError,
-      {String? invalidError}) {
+  static bool checkIfValidDataTypeOfValue(dynamic value, DataType dataType,
+      String variable, bool nullable, Function showError,
+      {String? invalidDataTypeError, String? canNotNullError}) {
     final DataType valueDataType;
-    if(value != null) {
+    if (value != null) {
       valueDataType = getDartTypeToDatatype(value, showError);
-    }
-    else{
-      valueDataType= dataType;
-    }
-    if(value==null&&!nullable&&dataType != DataType.dynamic){
-      showError('value of $variable can not null');
-      return false;
+    } else {
+      valueDataType = dataType;
     }
     if (value == null && dataType == DataType.fvbVoid) {
       return true;
     }
+    if (value == null && !nullable && dataType != DataType.dynamic) {
+      showError(canNotNullError ?? 'value of $variable can not null');
+      return false;
+    }
+
     if (dataType == valueDataType ||
         (dataType == DataType.double && valueDataType == DataType.int) ||
         dataType == DataType.dynamic) {
       return true;
     } else {
-      showError(invalidError ??
+      showError(invalidDataTypeError ??
           'Cannot assign ${LocalModel.dataTypeToCode(valueDataType)} to ${LocalModel.dataTypeToCode(dataType)} : $variable=${value.runtimeType}');
       return false;
     }

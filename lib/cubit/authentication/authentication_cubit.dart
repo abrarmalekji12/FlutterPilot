@@ -17,7 +17,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     try {
       final response = await FireBridge.tryLoginWithPreference();
       if (response != null) {
-        authViewModel.userId= response;
+        authViewModel.userId = response;
         emit(AuthSuccessState(response));
       } else {
         emit(AuthenticationInitial());
@@ -34,7 +34,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     try {
       final response = await FireBridge.login(userName, password);
       if (response.userId != null) {
-        authViewModel.userId=response.userId;
+        authViewModel.userId = response.userId;
         emit(AuthSuccessState(response.userId!));
       } else {
         emit(AuthFailedState(response.error ?? ''));
@@ -77,7 +77,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     try {
       final response = await FireBridge.registerUser(userName, password);
       if (response.userId != null) {
-        authViewModel.userId=response.userId;
+        authViewModel.userId = response.userId;
         emit(AuthSuccessState(response.userId!));
       } else {
         emit(AuthFailedState(response.error ?? ''));

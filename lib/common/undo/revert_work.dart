@@ -11,9 +11,10 @@ class RevertWork {
     return _stack.length;
   }
 
-  bool get isEmpty{
+  bool get isEmpty {
     return _stack.isEmpty;
   }
+
   void clear() {
     _stack.clear();
   }

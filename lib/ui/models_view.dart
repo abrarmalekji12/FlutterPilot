@@ -14,7 +14,6 @@ import '../cubit/model/model_cubit.dart';
 import '../models/local_model.dart';
 import '../models/variable_model.dart';
 
-
 class ModelBox extends StatefulWidget {
   final OverlayEntry overlayEntry;
   final ComponentOperationCubit componentOperationCubit;
@@ -382,7 +381,7 @@ class _AddModelValueState extends State<AddModelValue> {
                 }).toList();
                 if (!valueList.contains(null)) {
                   widget.model.values.add(valueList);
-                  BlocProvider.of<ModelCubit>(context, listen: false)
+                  BlocProvider.of<ModelCubit>(context)
                       .changed(widget.model);
 
                   BlocProvider.of<ComponentCreationCubit>(context,
@@ -490,12 +489,12 @@ class _AddVariableTileState extends State<AddVariableTile> {
 
                 widget.model.addVariable(
                     DynamicVariableModel(_controller1.text, dataType));
-                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                BlocProvider.of<ComponentCreationCubit>(context)
                     .changedComponent();
-                BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+                BlocProvider.of<ComponentSelectionCubit>(context)
                     .emit(ComponentSelectionChange());
 
-                BlocProvider.of<ModelCubit>(context, listen: false)
+                BlocProvider.of<ModelCubit>(context)
                     .changed(widget.model);
 
                 setState(() {});
@@ -548,14 +547,14 @@ class _AddModelTileState extends State<AddModelTile> {
             onPressed: () {
               if (_controller.text.isNotEmpty) {
                 final model = LocalModel(_controller.text);
-                BlocProvider.of<ComponentOperationCubit>(context, listen: false)
+                BlocProvider.of<ComponentOperationCubit>(context)
                     .models
                     .add(model);
-                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                BlocProvider.of<ComponentCreationCubit>(context)
                     .changedComponent();
-                BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+                BlocProvider.of<ComponentSelectionCubit>(context)
                     .emit(ComponentSelectionChange());
-                BlocProvider.of<ModelCubit>(context, listen: false)
+                BlocProvider.of<ModelCubit>(context)
                     .changed(model, add: true);
                 _controller.text = '';
               }

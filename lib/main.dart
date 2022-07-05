@@ -1,5 +1,7 @@
 import 'package:flutter_builder/ui/route_not_found.dart';
 
+import 'bloc/action_code/action_code_bloc.dart';
+import 'bloc/error/error_bloc.dart';
 import 'common/html_lib.dart' as html;
 import 'dart:ui';
 
@@ -21,7 +23,6 @@ import 'cubit/authentication/authentication_cubit.dart';
 import 'cubit/flutter_project/flutter_project_cubit.dart';
 import 'cubit/stack_action/stack_action_cubit.dart';
 import 'injector.dart';
-import 'ui/authentication/login.dart';
 import 'ui/home_page.dart';
 
 /// Bubble sort algo
@@ -43,30 +44,27 @@ import 'ui/home_page.dart';
 // arr=[4,2,1,6,1,10,3];
 // sort(arr);
 // print("{{arr}}");
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setPathUrlStrategy();
   initInjector();
   await Preferences.load();
-  final CodeProcessor processor = CodeProcessor(consoleCallback: (message) {
-    if (message.startsWith('print:')) {
-      print(':: => ${message.substring(6)}');
-    }
-    return null;
-  }, onError: (error, line) {
-    print('XX => $error, LINE :: "$line"');
-  }, scopeName: 'test');
+  final CodeProcessor processor = CodeProcessor(
+      consoleCallback: (message) {
+        if (message.startsWith('print:')) {
+          print(':: => ${message.substring(6)}');
+        }
+        return null;
+      },
+      onError: (error, line) {
+        print('XX => $error, LINE :: "$line"');
+      },
+      scopeName: 'test');
   const code = '''
-
-  class Student {
-  double? play({String data}){
-    print("Hello {{data}}");
-    return 10.78;
- }
-  }
-  print("abrar".length);
-  
+String str="Hello World";
+int i=0;
+var ab;
+ab="";
  ''';
 
   /*
@@ -116,7 +114,7 @@ print("hello {{}}");
 addStudent();
 
   */
-  processor.executeCode(code);
+  processor.executeCode(code, declarativeOnly: false);
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
   js=json.decode(data);
@@ -132,7 +130,7 @@ addStudent();
   // 4. Stream type variable
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  // runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -186,6 +184,12 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (context) => get<ComponentCreationCubit>(),
         ),
+        BlocProvider(
+          create: (context) => get<ErrorBloc>(),
+        ),
+        BlocProvider(
+          create: (context) => get<ActionCodeBloc>(),
+        ),
       ],
       child: MaterialApp(
         title: 'Flutter Visual Builder',
@@ -235,9 +239,7 @@ class MyApp extends StatelessWidget {
                   link);
             }
           }
-          return getRoute(
-                  (p0) => const RouteNotFound(),
-              link);
+          return getRoute((p0) => const RouteNotFound(), link);
         },
         theme: ThemeData(
             visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -251,10 +253,12 @@ getRoute(Widget Function(BuildContext) builder, String? name,
     {bool anim = true}) {
   if (!anim) {
     return CustomPageRoute(
-        builder: builder, settings: name!=null?RouteSettings(name: name):null);
+        builder: builder,
+        settings: name != null ? RouteSettings(name: name) : null);
   }
   return MaterialPageRoute(
-      builder: builder, settings: name!=null?RouteSettings(name: name):null);
+      builder: builder,
+      settings: name != null ? RouteSettings(name: name) : null);
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {

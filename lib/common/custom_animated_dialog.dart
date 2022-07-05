@@ -64,7 +64,6 @@ class CustomDialog {
   }
 
   static void hide(BuildContext context) {
-
     Navigator.pop(context);
   }
 }

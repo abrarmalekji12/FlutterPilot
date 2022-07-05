@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'common/compiler/code_processor.dart';
 import 'constant/app_colors.dart';
 import 'constant/font_style.dart';
 import 'models/builder_component.dart';
@@ -19,6 +20,7 @@ final componentList = <String, Component Function()>{
   'Row': () => CRow(),
   'Column': () => CColumn(),
   'Stack': () => CStack(),
+  'IndexedStack': () => CIndexedStack(),
   'Wrap': () => CWrap(),
   'ListView': () => CListView(),
   'Flex': () => CFlex(),
@@ -79,6 +81,7 @@ final componentList = <String, Component Function()>{
   'ListView.builder': () => CListViewBuilder(),
   'GridView.builder': () => CGridViewBuilder(),
   'ListView.Builder': () => CListViewBuilder(),
+  'ListView.separated': () => CListViewSeparated(),
   'GridView.Builder': () => CGridViewBuilder(),
   'NotRecognizedWidget': () => CNotRecognizedWidget(),
   'DropDownButton': () => CDropDownButton(),
@@ -186,13 +189,15 @@ class CRadio extends ClickableComponent {
           Parameters.shortStringParameter()
             ..withDefaultValue('1')
             ..withNamedParamInfoAndSameDisplayName('groupValue'),
-        ]);
+        ]){
+    init(FVBFunction('onChanged', null, [FVBArgument('value',dataType: DataType.bool)],returnType: DataType.fvbVoid));
+  }
 
   @override
   Widget create(BuildContext context) {
     return Radio<String>(
       onChanged: (value) {
-        perform(context, arguments: {'value': value});
+        perform(context, arguments: [value]);
       },
       value: parameters[0].value,
       groupValue: parameters[1].value,
@@ -841,6 +846,23 @@ class CStack extends MultiHolder {
   }
 }
 
+class CIndexedStack extends MultiHolder {
+  CIndexedStack()
+      : super('IndexedStack', [
+          Parameters.alignmentParameter(),
+          Parameters.indexParameter(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return IndexedStack(
+      alignment: parameters[0].value,
+      index: parameters[1].value,
+      children: children.map((e) => e.build(context)).toList(),
+    );
+  }
+}
+
 class CListView extends MultiHolder {
   CListView()
       : super('ListView', [
@@ -932,7 +954,8 @@ class CTooltip extends Holder {
           Parameters.textParameter()
             ..withNamedParamInfoAndSameDisplayName('message'),
           Parameters.googleFontTextStyleParameter()
-            ..withChangeNamed('textStyle')..withDisplayName('textStyle'),
+            ..withChangeNamed('textStyle')
+            ..withDisplayName('textStyle'),
           Parameters.paddingParameter(),
           Parameters.marginParameter(),
           Parameters.enableParameter()
@@ -1064,7 +1087,9 @@ class CInkWell extends ClickableHolder {
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('highlightColor'),
           Parameters.borderRadiusParameter(),
-        ]);
+        ]){
+    init(FVBFunction('onTap', null, [],returnType: DataType.fvbVoid));
+  }
 
   @override
   Widget create(BuildContext context) {
@@ -1087,7 +1112,9 @@ class CInkWell extends ClickableHolder {
 }
 
 class CGestureDetector extends ClickableHolder {
-  CGestureDetector() : super('GestureDetector', []);
+  CGestureDetector() : super('GestureDetector', []){
+    init(FVBFunction('onTap', null, [],returnType: DataType.fvbVoid));
+  }
 
   @override
   Widget create(BuildContext context) {

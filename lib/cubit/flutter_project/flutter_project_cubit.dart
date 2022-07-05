@@ -49,25 +49,26 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
   Future<void> createNewProject(final String name) async {
     emit(FlutterProjectLoadingState());
     final flutterProject = FlutterProject.createNewProject(name, userId);
-    ComponentOperationCubit.currentFlutterProject = flutterProject;
+    ComponentOperationCubit.currentProject = flutterProject;
     flutterProject.variables.addAll({
-      'tabletWidthLimit':
-      VariableModel(
+      'tabletWidthLimit': VariableModel(
           'tabletWidthLimit',
           1200,
           false,
           'maximum width tablet can have',
           DataType.double,
           flutterProject.currentScreen.name,
-          deletable: false, uiAttached: true),
-      'phoneWidthLimit':VariableModel(
+          deletable: false,
+          uiAttached: true),
+      'phoneWidthLimit': VariableModel(
           'phoneWidthLimit',
           900,
           false,
           'maximum width phone can have',
           DataType.double,
           flutterProject.currentScreen.name,
-          deletable: false, uiAttached: true)
+          deletable: false,
+          uiAttached: true)
     });
     await FireBridge.saveFlutterProject(userId, flutterProject);
     projects.add(flutterProject);
@@ -78,7 +79,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
       final ComponentOperationCubit componentOperationCubit,
       {required int userId}) {
     loadFlutterProject(componentSelectionCubit, componentOperationCubit,
-        componentOperationCubit.flutterProject!.name, false,
+        componentOperationCubit.project!.name, false,
         userId: userId);
   }
 
@@ -97,10 +98,11 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
         print('Auth response: ${authResponse.userId}');
       }
       setUserId = userId;
-      ComponentOperationCubit.codeProcessor.variables
+      ComponentOperationCubit.processor.variables
           .removeWhere((key, value) => value.deletable);
-      ComponentOperationCubit.codeProcessor.localVariables.clear();
-      print('CHECKING $userId & ${get<AuthenticationCubit>().authViewModel.userId}');
+      ComponentOperationCubit.processor.localVariables.clear();
+      print(
+          'CHECKING $userId & ${get<AuthenticationCubit>().authViewModel.userId}');
       final response = await FireBridge.loadFlutterProject(userId, projectName,
           ifPublic: userId != get<AuthenticationCubit>().authViewModel.userId);
       if (response.isRight) {
@@ -127,7 +129,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
         final List<ImageData> imageDataList = [];
         componentOperationCubit.setFlutterProject = flutterProject;
         await componentOperationCubit.loadFavourites();
-        final idList = componentOperationCubit.flutterProject!.favouriteList
+        final idList = componentOperationCubit.project!.favouriteList
             .map((e) => e.component.id)
             .toList();
 
@@ -140,8 +142,8 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
                   FavouriteModel(component, projectName);
             }
             if (component.name == 'Image.asset') {
-              final imageData=component.parameters[0].value as ImageData?;
-              if(imageData!=null) {
+              final imageData = component.parameters[0].value as ImageData?;
+              if (imageData != null) {
                 imageDataList.add(imageData);
               }
             }
@@ -170,7 +172,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           ComponentSelectionModel.unique(flutterProject.rootComponent!),
           flutterProject.rootComponent!);
 
-      if (flutterProject.currentScreen.variables.entries
+      if (flutterProject.variables.entries
               .firstWhereOrNull((e) => e.key == 'tabletWidthLimit') ==
           null) {
         componentOperationCubit.addVariable(VariableModel(

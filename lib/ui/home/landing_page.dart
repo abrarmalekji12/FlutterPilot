@@ -30,12 +30,12 @@ class _LandingPageState extends State<LandingPage> {
   @override
   void initState() {
     super.initState();
-  // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-  //   showDialog(context: context, builder: (_){
-  //     ComponentOperationCubit.currentFlutterProject=FlutterProject('abrarr', 1, 'fsdafs');
-  //     return ProjectSettingsPage(componentOperationCubit: ComponentOperationCubit(),);
-  //   });
-  // });
+    // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    //   showDialog(context: context, builder: (_){
+    //     ComponentOperationCubit.currentFlutterProject=FlutterProject('abrarr', 1, 'fsdafs');
+    //     return ProjectSettingsPage(componentOperationCubit: ComponentOperationCubit(),);
+    //   });
+    // });
   }
 
   @override
@@ -131,7 +131,7 @@ class _LandingPageState extends State<LandingPage> {
               InkWell(
                 borderRadius: BorderRadius.circular(20),
                 onTap: () {
-                  openAuthDialog(context,(userId){
+                  openAuthDialog(context, (userId) {
                     Navigator.pushNamed(context, '/projects',
                         arguments: userId);
                   });
@@ -174,7 +174,7 @@ class _LandingPageState extends State<LandingPage> {
   }
 }
 
-void openAuthDialog(BuildContext context,void Function(int) onSuccess) {
+void openAuthDialog(BuildContext context, void Function(int) onSuccess) {
   showDialog(
     context: context,
     builder: (_) => Align(
@@ -190,10 +190,10 @@ void openAuthDialog(BuildContext context,void Function(int) onSuccess) {
           ),
           child: BlocListener<AuthenticationCubit, AuthenticationState>(
             listener: (_, state) {
-              if (state is AuthSuccessState&&state.userId!=-1) {
+              if (state is AuthSuccessState && state.userId != -1) {
                 WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                   Navigator.of(context).pop();
-                 onSuccess(state.userId);
+                  onSuccess(state.userId);
                 });
               }
             },
@@ -206,8 +206,7 @@ void openAuthDialog(BuildContext context,void Function(int) onSuccess) {
                   return getRoute((_) => const RegisterPage(), null,
                       anim: false);
                 } else if (settings.name == '/reset-password') {
-                  return getRoute(
-                      (context) => const ResetPasswordPage(), null,
+                  return getRoute((context) => const ResetPasswordPage(), null,
                       anim: false);
                 }
               },
@@ -237,15 +236,13 @@ class CommonTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       validator: (value) {
-        if (value?.isEmpty??true) {
+        if (value?.isEmpty ?? true) {
           return 'Please enter path';
-        }
-        else if (!value!.contains('_')) {
+        } else if (!value!.contains('_')) {
           return 'Wrong Path';
-        }
-        else if(value.contains(' ')) {
+        } else if (value.contains(' ')) {
           return 'Please enter path without spaces';
-        } else if(RunKey.decrypt(value)==null) {
+        } else if (RunKey.decrypt(value) == null) {
           return 'Wrong Path';
         }
         return null;

@@ -49,21 +49,19 @@ class _PreviewPageState extends State<PreviewPage> {
   @override
   void initState() {
     super.initState();
-    width =
-        ((widget._componentOperationCubit.flutterProject!.uiScreens.length < 10
-                        ? 10
-                        : widget._componentOperationCubit.flutterProject!
-                            .uiScreens.length) *
-                    widget._screenConfigCubit.screenConfig.width +
-                50.0) /
-            1.5;
+    width = ((widget._componentOperationCubit.project!.uiScreens.length < 10
+                    ? 10
+                    : widget
+                        ._componentOperationCubit.project!.uiScreens.length) *
+                widget._screenConfigCubit.screenConfig.width +
+            50.0) /
+        1.5;
     height = widget._screenConfigCubit.screenConfig.width *
         widget._screenConfigCubit.screenConfig.height /
         widget._screenConfigCubit.screenConfig.width;
-    screens.add(widget._componentOperationCubit.flutterProject!.mainScreen);
-    findInteraction(widget._componentOperationCubit.flutterProject!.mainScreen);
-    for (final screen
-        in widget._componentOperationCubit.flutterProject!.uiScreens) {
+    screens.add(widget._componentOperationCubit.project!.mainScreen);
+    findInteraction(widget._componentOperationCubit.project!.mainScreen);
+    for (final screen in widget._componentOperationCubit.project!.uiScreens) {
       if (!screens.contains(screen)) {
         screens.add(screen);
         findInteraction(screen);
@@ -98,13 +96,10 @@ class _PreviewPageState extends State<PreviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final area =
-        (widget._componentOperationCubit.flutterProject!.uiScreens.length < 10
-                ? 10
-                : widget._componentOperationCubit.flutterProject!.uiScreens
-                    .length) *
-            ((widget._screenConfigCubit.screenConfig.width + 50) *
-                (height + 100));
+    final area = (widget._componentOperationCubit.project!.uiScreens.length < 10
+            ? 10
+            : widget._componentOperationCubit.project!.uiScreens.length) *
+        ((widget._screenConfigCubit.screenConfig.width + 50) * (height + 100));
     return Material(
       color: Colors.white,
       child: Column(
@@ -117,11 +112,9 @@ class _PreviewPageState extends State<PreviewPage> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
                   onTap: () {
-                    ComponentOperationCubit.changeVariables(widget
-                        ._componentOperationCubit
-                        .flutterProject!
-                        .currentScreen);
-                   Navigator.pop(context);
+                    ComponentOperationCubit.changeVariables(
+                        widget._componentOperationCubit.project!.currentScreen);
+                    Navigator.pop(context);
                   },
                   child: const Icon(Icons.arrow_back),
                 ),
@@ -129,7 +122,7 @@ class _PreviewPageState extends State<PreviewPage> {
               Padding(
                 padding: const EdgeInsets.all(10),
                 child: Text(
-                  widget._componentOperationCubit.flutterProject!.name,
+                  widget._componentOperationCubit.project!.name,
                   style: AppFontStyle.roboto(15, fontWeight: FontWeight.w500),
                 ),
               ),
@@ -227,7 +220,7 @@ class _PreviewPageState extends State<PreviewPage> {
                                               color: screen ==
                                                       widget
                                                           ._componentOperationCubit
-                                                          .flutterProject!
+                                                          .project!
                                                           .mainScreen
                                                   ? AppColors.theme
                                                   : const Color(0xfff3f3f3),
@@ -284,7 +277,7 @@ class _PreviewPageState extends State<PreviewPage> {
     final Uint8List? pngBytes = byteData?.buffer.asUint8List();
     getAnchorElement(href: 'data:image/png;base64,${base64Encode(pngBytes!)}')
       ..setAttribute('download',
-          '${widget._componentOperationCubit.flutterProject!.name.toUpperCase()}-FVB-${DateTime.now().toLocal().toIso8601String()}.png')
+          '${widget._componentOperationCubit.project!.name.toUpperCase()}-FVB-${DateTime.now().toLocal().toIso8601String()}.png')
       ..click();
   }
 }

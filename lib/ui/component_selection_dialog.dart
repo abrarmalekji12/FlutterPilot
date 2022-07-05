@@ -122,13 +122,12 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
             padding: const EdgeInsets.all(20),
             child: StatefulBuilder(builder: (context, setState2) {
               filteredCustomComponents = componentOperationCubit
-                  .flutterProject!.customComponents
+                  .project!.customComponents
                   .where((element) =>
                       element.name.isCaseInsensitiveContains(filter))
                   .toList();
               filtered = (widget.possibleItems ?? componentNames)
-                  .where(
-                      (element) => element.isCaseInsensitiveContains(filter))
+                  .where((element) => element.isCaseInsensitiveContains(filter))
                   .toList();
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,8 +236,8 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                         OverflowBox(
                           child: RuntimeProvider(
                             runtimeMode: RuntimeMode.viewOnly,
-                            child: LayoutBuilder(
-                                builder: (context, constraints) {
+                            child:
+                                LayoutBuilder(builder: (context, constraints) {
                               return BlocBuilder<ComponentOperationCubit,
                                   ComponentOperationState>(
                                 buildWhen: (context, state) {
@@ -246,25 +245,22 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                                 },
                                 bloc: componentOperationCubit,
                                 builder: (context, state) {
-                                  if (state
-                                      is ComponentOperationLoadingState) {
+                                  if (state is ComponentOperationLoadingState) {
                                     return Shimmer.fromColors(
                                       baseColor: const Color(0xfff2f2f2),
                                       highlightColor: Colors.white,
                                       child: ListView.builder(
-                                        itemBuilder: (BuildContext context,
-                                            int index) {
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
                                           return Container(
                                             height: 100,
                                             padding: const EdgeInsets.all(10),
                                             margin: const EdgeInsets.only(
                                                 bottom: 10),
                                             decoration: BoxDecoration(
-                                                color:
-                                                    const Color(0xfff2f2f2),
+                                                color: const Color(0xfff2f2f2),
                                                 borderRadius:
-                                                    BorderRadius.circular(
-                                                        10)),
+                                                    BorderRadius.circular(10)),
                                           );
                                         },
                                         itemCount: 10,
@@ -479,14 +475,12 @@ class BasicComponentTile extends StatelessWidget {
                       return CustomPopupMenuItem<Component>(
                         value: componentOperationCubit
                             .sameComponentCollection[entry.value]![index],
-                        child:
-                        RuntimeProvider(
+                        child: RuntimeProvider(
                           runtimeMode: RuntimeMode.viewOnly,
                           child: Builder(builder: (context) {
                             return Container(
                               decoration: BoxDecoration(
-                                borderRadius:
-                                    BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(10),
                                 gradient: const LinearGradient(
                                     colors: [
                                       Color(0xfff2f2f2),
@@ -511,8 +505,8 @@ class BasicComponentTile extends StatelessWidget {
                                           ?.height ??
                                       50,
                                   child: componentOperationCubit
-                                      .sameComponentCollection[
-                                          entry.value]![index]
+                                      .sameComponentCollection[entry.value]![
+                                          index]
                                       .build(context),
                                 ),
                               ),

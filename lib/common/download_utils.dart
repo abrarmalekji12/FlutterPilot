@@ -29,9 +29,9 @@ class DownloadUtils {
 
     final _base64 = base64Encode(bytes!);
     // Create the link with the file
-    final anchor =
-    html.getAnchorElement(href: 'data:application/octet-stream;base64,$_base64')
-          ..target = 'blank';
+    final anchor = html.getAnchorElement(
+        href: 'data:application/octet-stream;base64,$_base64')
+      ..target = 'blank';
     // add the name
     anchor.download = fileName + '.zip';
     // trigger download

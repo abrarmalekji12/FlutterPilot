@@ -38,7 +38,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void initState() {
     super.initState();
     _authenticationCubit =
-        BlocProvider.of<AuthenticationCubit>(context, listen: false);
+        BlocProvider.of<AuthenticationCubit>(context);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _authenticationCubit.authViewModel.userName = '';
       _authenticationCubit.authViewModel.password = '';
@@ -57,14 +57,13 @@ class _RegisterPageState extends State<RegisterPage> {
         } else if (state is AuthSuccessState) {
           AppLoader.hide();
           context.read<FlutterProjectCubit>().setUserId = state.userId;
-
         } else if (state is AuthFailedState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
         }
       },
       child: AuthenticationPage(
-        widget: ()=>SingleChildScrollView(
+        widget: () => SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -119,8 +118,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             text: ' Login',
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-
-                                Navigator.pushReplacementNamed(context,'/login');
+                                Navigator.pushReplacementNamed(
+                                    context, '/login');
                               },
                             style: GoogleFonts.getFont(
                               'Lato',

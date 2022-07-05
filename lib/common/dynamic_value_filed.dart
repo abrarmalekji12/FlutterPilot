@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../code_to_component.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
+import '../models/other_model.dart';
+import 'compiler/code_processor.dart';
 
 enum InputOption { defaultConfig, doubleZeroToOne }
 
 class DynamicValueField<T> extends StatefulWidget {
   final TextEditingController textEditingController;
+  final CodeProcessor processor;
   final bool Function(String, dynamic) onProcessedResult;
   final void Function()? onErrorCode;
   final _formKey = GlobalKey<FormState>();
@@ -16,6 +20,7 @@ class DynamicValueField<T> extends StatefulWidget {
   DynamicValueField(
       {Key? key,
       required this.onProcessedResult,
+      required this.processor,
       required this.textEditingController,
       this.onErrorCode,
       this.inputOption = InputOption.defaultConfig})
@@ -60,10 +65,15 @@ class _DynamicValueFieldState<T> extends State<DynamicValueField<T>> {
           ),
         ),
         validator: (data) {
-          final result =
-              ComponentOperationCubit.codeProcessor.process<T>(data ?? '');
-          if (!widget.onProcessedResult(data ?? '', result)) {
-            return '';
+          if (data != null) {
+            CodeProcessor.error = false;
+            if (T == String || T == ImageData) {
+              data = CodeOperations.trim(data);
+            }
+            final result = widget.processor.process<T>(data ?? '');
+            if (!widget.onProcessedResult(data ?? '', result)) {
+              return '';
+            }
           }
         },
       ),

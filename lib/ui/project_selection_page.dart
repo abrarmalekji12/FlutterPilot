@@ -50,10 +50,9 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                   break;
                 case AuthSuccessState:
                   AppLoader.hide();
-                  if((state as AuthSuccessState).userId==-1) {
+                  if ((state as AuthSuccessState).userId == -1) {
                     Navigator.pop(context);
-                    openAuthDialog(context,(userId){
-                  });
+                    openAuthDialog(context, (userId) {});
                   }
                   break;
               }
@@ -82,10 +81,12 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   Row(
-                    children:  [
-                      BackButton(onPressed: (){
-                        Navigator.pop(context);
-                      },),
+                    children: [
+                      BackButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
                       const Spacer(),
                       const LogoutButton(),
                     ],
@@ -406,11 +407,19 @@ class LogoutButton extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () {
-        showDialog(context: context, builder: (_){
-          return MaterialAlertDialog(subtitle: 'Are you sure, you want to logout?', positiveButtonText: 'Yes', negativeButtonText:'No',onPositiveTap: (){
-            BlocProvider.of<AuthenticationCubit>(context, listen: false).logout();
-          },);
-        });
+        showDialog(
+            context: context,
+            builder: (_) {
+              return MaterialAlertDialog(
+                subtitle: 'Are you sure, you want to logout?',
+                positiveButtonText: 'Yes',
+                negativeButtonText: 'No',
+                onPositiveTap: () {
+                  BlocProvider.of<AuthenticationCubit>(context)
+                      .logout();
+                },
+              );
+            });
       },
       child: Container(
         padding: const EdgeInsets.all(10),

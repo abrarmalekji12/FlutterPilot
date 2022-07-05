@@ -27,7 +27,9 @@ class Firebase {
     if (instance == null) {
       instance = Firebase._(options);
       firedart.FirebaseAuth.initialize(options.options['apiKey'], MyToken());
-      firestore=FirebaseFirestore(firedart.Firestore(options.options['projectId'],auth: firedart.FirebaseAuth.instance));
+      firestore = FirebaseFirestore(firedart.Firestore(
+          options.options['projectId'],
+          auth: firedart.FirebaseAuth.instance));
     }
     return instance!;
   }
@@ -39,12 +41,12 @@ class MyToken extends firedart.TokenStore {
 
   @override
   firedart.Token? read() {
-    if(Preferences.get('token')!=null) {
-      return firedart.Token.fromMap(json.decode(Preferences.get('token').toString()));
+    if (Preferences.get('token') != null) {
+      return firedart.Token.fromMap(
+          json.decode(Preferences.get('token').toString()));
     }
     return null;
   }
-
 
   @override
   void write(firedart.Token? token) {
@@ -178,7 +180,7 @@ class CollectionReference {
   }
 
   DocumentReference doc(String? id) {
-    return DocumentReference(collectionReference.document(id??''));
+    return DocumentReference(collectionReference.document(id ?? ''));
   }
 }
 

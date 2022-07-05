@@ -27,7 +27,7 @@ class FVBModuleClasses {
     }, {}),
     'Duration': FVBClass('Duration', {
       'Duration': FVBFunction('Duration', '', [
-        FVBArgument('this.milliseconds',type: FVBArgumentType.optional),
+        FVBArgument('this.milliseconds', type: FVBArgumentType.optional),
       ]),
     }, {
       'milliseconds': FVBVariable('milliseconds', DataType.int),

@@ -33,12 +33,11 @@ class RouteNotFound extends StatelessWidget {
               onPressed: () {
                 Navigator.pushReplacementNamed(context, '');
               },
-
               child: Text(
                 'Go back to main page',
-                style: AppFontStyle.roboto(15, fontWeight: FontWeight.w500,color: Colors.white),
+                style: AppFontStyle.roboto(15,
+                    fontWeight: FontWeight.w500, color: Colors.white),
               ),
-
             ),
           ],
         ),

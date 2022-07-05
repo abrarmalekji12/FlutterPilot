@@ -33,7 +33,7 @@ class Preferences {
     await sharedPreferences.remove(key);
   }
 
-  static dynamic get(String key){
-   return sharedPreferences.get(key);
+  static dynamic get(String key) {
+    return sharedPreferences.get(key);
   }
 }

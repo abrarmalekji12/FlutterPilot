@@ -51,7 +51,8 @@ class LocalModel {
     return '$value';
   }
 
-  static DataType codeToDatatype(final String dataType,Map<String,FVBClass> classes) {
+  static DataType codeToDatatype(
+      final String dataType, Map<String, FVBClass> classes) {
     switch (dataType) {
       case 'int':
         return DataType.int;
@@ -76,7 +77,7 @@ class LocalModel {
       case 'void':
         return DataType.fvbVoid;
       default:
-        if(classes.containsKey(dataType)){
+        if (classes.containsKey(dataType)) {
           return DataType.fvbInstance;
         }
         return DataType.unknown;

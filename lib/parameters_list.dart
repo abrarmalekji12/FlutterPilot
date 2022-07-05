@@ -154,12 +154,13 @@ class Parameters {
         required: false,
         info: NamedParameterInfo('textInputAction'),
         options: {
-         'done': TextInputAction.done,
-         'next': TextInputAction.next,
-         'newline': TextInputAction.newline,
-         'send': TextInputAction.send,
-         'search': TextInputAction.search,
-        }, defaultValue: null,
+          'done': TextInputAction.done,
+          'next': TextInputAction.next,
+          'newline': TextInputAction.newline,
+          'send': TextInputAction.send,
+          'search': TextInputAction.search,
+        },
+        defaultValue: null,
       );
 
   static ComplexParameter inputDecorationParameter() => ComplexParameter(
@@ -896,6 +897,12 @@ class Parameters {
       required: true,
       defaultValue: 1);
 
+  static SimpleParameter<int> indexParameter() => SimpleParameter<int>(
+      info: NamedParameterInfo('index'),
+      name: 'index',
+      required: true,
+      defaultValue: 0);
+
   static ChoiceParameter borderSideParameter() => ChoiceParameter(
         info: NamedParameterInfo('borderSide'),
         required: true,
@@ -1121,14 +1128,14 @@ class Parameters {
           'multiline': TextInputType.multiline,
           'datetime': TextInputType.datetime,
         },
-    getCode: (value) => 'TextInputType.$value',
-    fromCodeToKey: (code) {
-      return code.substring(code.indexOf('.') + 1);
-    },
+        getCode: (value) => 'TextInputType.$value',
+        fromCodeToKey: (code) {
+          return code.substring(code.indexOf('.') + 1);
+        },
         defaultValue: 'text',
         name: 'input type',
         info: NamedParameterInfo('keyboardType'),
-  );
+      );
   static Parameter googleFontTextStyleParameter() => ComplexParameter(
       info: InnerObjectParameterInfo(
           innerObjectName: 'GoogleFonts.getFont', namedIfHaveAny: 'style'),

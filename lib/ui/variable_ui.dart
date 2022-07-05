@@ -23,7 +23,7 @@ class VariableBox extends StatefulWidget {
   final ComponentSelectionCubit componentSelectionCubit;
   final OverlayEntry overlayEntry;
   final String title;
-  final Map<String,VariableModel> variables;
+  final Map<String, VariableModel> variables;
 
   const VariableBox(
       {Key? key,
@@ -33,7 +33,9 @@ class VariableBox extends StatefulWidget {
       required this.componentSelectionCubit,
       required this.title,
       required this.onAdded,
-      required this.onChanged, required this.variables, required this.onDeleted})
+      required this.onChanged,
+      required this.variables,
+      required this.onDeleted})
       : super(key: key);
 
   @override
@@ -48,8 +50,7 @@ class _VariableBoxState extends State<VariableBox> {
 
   @override
   Widget build(BuildContext context) {
-    final variables = widget.variables.entries
-        .toList(growable: false);
+    final variables = widget.variables.entries.toList(growable: false);
     return Card(
       elevation: 5,
       color: Colors.white,
@@ -198,7 +199,7 @@ class _VariableBoxState extends State<VariableBox> {
                       }
 
                       final variables =
-                          ComponentOperationCubit.codeProcessor.variables.keys;
+                          ComponentOperationCubit.processor.variables.keys;
                       for (final variable in variables) {
                         if (variable == name) {
                           Fluttertoast.showToast(
@@ -256,13 +257,8 @@ class _VariableBoxState extends State<VariableBox> {
                         return;
                       }
                       widget.onAdded.call(VariableModel(
-                        name,
-                        value,
-                        false,
-                        null,
-                        dataType,
-                        widget.title,uiAttached: true
-                      ));
+                          name, value, false, null, dataType, widget.title,
+                          uiAttached: true));
 
                       _controller1.text = '';
                       _controller2.text = '';
@@ -312,7 +308,7 @@ class EditVariable extends StatefulWidget {
   final void Function(VariableModel) onDelete;
   const EditVariable(this.variable, this.componentCreationCubit,
       this.componentSelectionCubit, this.componentOperationCubit,
-      {Key? key, required this.onChanged,required this.onDelete})
+      {Key? key, required this.onChanged, required this.onDelete})
       : super(key: key);
 
   @override
@@ -359,8 +355,14 @@ class _EditVariableState extends State<EditVariable> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10,),
-                    const Icon(Icons.copy,size: 18,color: AppColors.grey,)
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    const Icon(
+                      Icons.copy,
+                      size: 18,
+                      color: AppColors.grey,
+                    )
                   ],
                 ),
               ),
@@ -447,7 +449,7 @@ class _EditVariableState extends State<EditVariable> {
           IconButton(
             onPressed: () {
               widget.onDelete.call(widget.variable.value);
-             setState(() {});
+              setState(() {});
             },
             icon: const Icon(
               Icons.delete,

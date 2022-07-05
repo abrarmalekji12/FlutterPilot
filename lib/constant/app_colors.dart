@@ -27,5 +27,7 @@ class AppColors {
 
   //light grey
   static const Color lightGrey = Color(0xFFF2F2F2);
+  //separator color
+  static const Color separator = Color(0xFFE0E0E0);
   static const Color darkGrey = Color(0xFF040E2F);
 }

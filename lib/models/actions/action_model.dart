@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../common/common_methods.dart';
+import '../../common/compiler/processor_component.dart';
 import '../../common/converter/code_converter.dart';
 import '../../constant/font_style.dart';
 import '../../constant/string_constant.dart';
@@ -43,9 +44,7 @@ class CustomAction extends ActionModel {
 
   @override
   void perform(BuildContext context) {
-    ComponentOperationCubit.codeProcessor.executeCode(
-      arguments[0],
-    );
+
   }
 
   @override
@@ -58,7 +57,7 @@ class NewPageInStackAction extends ActionModel {
   @override
   void perform(BuildContext context) {
     if ((arguments[0] as UIScreen?) != null) {
-      BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(
+      BlocProvider.of<StackActionCubit>(context).stackOperation(
           StackOperation.push,
           uiScreen: (arguments[0] as UIScreen));
     }
@@ -93,7 +92,7 @@ class ReplaceCurrentPageInStackAction extends ActionModel {
   @override
   void perform(BuildContext context) {
     if ((arguments[0] as UIScreen?) != null) {
-      BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(
+      BlocProvider.of<StackActionCubit>(context).stackOperation(
           StackOperation.replace,
           uiScreen: (arguments[0] as UIScreen));
     }
@@ -130,7 +129,7 @@ class GoBackInStackAction extends ActionModel {
 
   @override
   void perform(BuildContext context) {
-    BlocProvider.of<StackActionCubit>(context, listen: false)
+    BlocProvider.of<StackActionCubit>(context)
         .stackOperation(StackOperation.pop);
     (const GlobalObjectKey(navigationKey).currentState as NavigatorState).pop();
   }
@@ -157,7 +156,7 @@ class ShowDialogInStackAction extends ActionModel {
 
   @override
   void perform(BuildContext context) {
-    BlocProvider.of<StackActionCubit>(context, listen: false)
+    BlocProvider.of<StackActionCubit>(context)
         .showSimpleDialog(this);
     // (const GlobalObjectKey(navigationKey).currentState as NavigatorState).context;
   }
@@ -185,11 +184,11 @@ class ShowCustomDialogInStackAction extends ActionModel {
   @override
   void perform(BuildContext context) {
     if ((arguments[0] as UIScreen?) != null) {
-      BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(
+      BlocProvider.of<StackActionCubit>(context).stackOperation(
           StackOperation.addOverlay,
           uiScreen: (arguments[0] as UIScreen));
     }
-    BlocProvider.of<StackActionCubit>(context, listen: false)
+    BlocProvider.of<StackActionCubit>(context)
         .showCustomSimpleDialog(this);
   }
 
@@ -238,7 +237,7 @@ class ShowBottomSheetInStackAction extends ActionModel {
   @override
   void perform(BuildContext context) {
     if ((arguments[0] as UIScreen?) != null) {
-      BlocProvider.of<StackActionCubit>(context, listen: false).stackOperation(
+      BlocProvider.of<StackActionCubit>(context).stackOperation(
           StackOperation.addOverlay,
           uiScreen: (arguments[0] as UIScreen));
     }
@@ -291,7 +290,7 @@ class ShowSnackBarAction extends ActionModel {
 
   @override
   void perform(BuildContext context) {
-    // BlocProvider.of<StackActionCubit>(context, listen: false)
+    // BlocProvider.of<StackActionCubit>(context)
     //     .showSnackBar(this);
     (const GlobalObjectKey(deviceScaffoldMessenger).currentState
             as ScaffoldState)
@@ -314,7 +313,7 @@ class ShowSnackBarAction extends ActionModel {
     //     textColor: Colors.white,
     //     fontSize: 16.0
     // );
-    // BlocProvider.of<StackActionCubit>(context, listen: false)
+    // BlocProvider.of<StackActionCubit>(context)
     //     .showCustomSimpleDialog(this);
   }
 
@@ -346,7 +345,7 @@ class ShowSnackBarAction extends ActionModel {
 }
 
 class CustomPageRoute extends MaterialPageRoute {
-  CustomPageRoute({required super.builder,super.settings});
+  CustomPageRoute({required super.builder, super.settings});
 
   @override
   Duration get transitionDuration => const Duration(seconds: 0);

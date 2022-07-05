@@ -15,7 +15,7 @@ class MaterialAlertDialog extends StatelessWidget {
   const MaterialAlertDialog({
     Key? key,
     this.title,
-    this.dismissible= true,
+    this.dismissible = true,
     this.subtitle,
     this.negativeButtonText,
     required this.positiveButtonText,
@@ -26,9 +26,11 @@ class MaterialAlertDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap:dismissible?() {
-        Navigator.of(context).pop();
-      }:null,
+      onTap: dismissible
+          ? () {
+              Navigator.of(context).pop();
+            }
+          : null,
       child: Material(
         color: Colors.transparent,
         child: Center(
@@ -50,8 +52,9 @@ class MaterialAlertDialog extends StatelessWidget {
                       children: [
                         if (title != null) ...[
                           Text(title!,
-                              style: AppFontStyle.roboto(18, color: Colors.black)
-                                  .copyWith(fontWeight: FontWeight.w600)),
+                              style:
+                                  AppFontStyle.roboto(18, color: Colors.black)
+                                      .copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(
                             height: 24,
                           ),
@@ -117,7 +120,9 @@ class MaterialDialogButton extends StatelessWidget {
   final VoidCallback? onPress;
 
   const MaterialDialogButton(
-      {Key? key, this.buttonWidth, this.buttonHeight,
+      {Key? key,
+      this.buttonWidth,
+      this.buttonHeight,
       required this.onPress,
       required this.buttonText})
       : super(key: key);
@@ -135,7 +140,7 @@ class MaterialDialogButton extends StatelessWidget {
         height: buttonHeight,
         child: Text(
           buttonText.toUpperCase(),
-          style:  AppFontStyle.roboto(
+          style: AppFontStyle.roboto(
             14,
             color: AppColors.theme,
           ).copyWith(fontWeight: FontWeight.w500),

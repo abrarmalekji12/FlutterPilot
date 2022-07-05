@@ -105,7 +105,7 @@ class AppIconButton extends StatelessWidget {
       onTap: onPress,
       child: Container(
         alignment: Alignment.center,
-        padding:  EdgeInsets.all(margin),
+        padding: EdgeInsets.all(margin),
         decoration: BoxDecoration(shape: BoxShape.circle, color: background),
         child: Icon(
           icon,

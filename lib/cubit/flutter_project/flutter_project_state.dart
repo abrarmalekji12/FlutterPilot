@@ -21,8 +21,8 @@ class FlutterProjectErrorState extends FlutterProjectState {
   final String? message;
   FlutterProjectErrorState({this.message});
 }
+
 class FlutterProjectLoadingErrorState extends FlutterProjectState {
   final ProjectLoadErrorModel model;
   FlutterProjectLoadingErrorState({required this.model});
 }
-

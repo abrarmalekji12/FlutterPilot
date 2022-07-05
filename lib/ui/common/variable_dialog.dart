@@ -15,17 +15,19 @@ class VariableDialog {
   final void Function(VariableModel) onAdded;
   final void Function(VariableModel) onEdited;
   final void Function(VariableModel) onDeleted;
-  final Map<String,VariableModel> variables;
+  final Map<String, VariableModel> variables;
   late final OverlayEntry _overlayEntry;
 
-  VariableDialog(
-      {required this.componentOperationCubit,
-      required this.componentCreationCubit,
-        required this.title,
-        required this.onAdded,
-        required this.onEdited,
-        required this.onDeleted,
-      required this.componentSelectionCubit,required this.variables,}) {
+  VariableDialog({
+    required this.componentOperationCubit,
+    required this.componentCreationCubit,
+    required this.title,
+    required this.onAdded,
+    required this.onEdited,
+    required this.onDeleted,
+    required this.componentSelectionCubit,
+    required this.variables,
+  }) {
     _overlayEntry = OverlayEntry(
       builder: (_) => Material(
         color: Colors.transparent,
@@ -36,9 +38,11 @@ class VariableDialog {
               componentCreationCubit: componentCreationCubit,
               componentOperationCubit: componentOperationCubit,
               componentSelectionCubit: componentSelectionCubit,
-              overlayEntry: _overlayEntry, onAdded: onAdded,
+              overlayEntry: _overlayEntry,
+              onAdded: onAdded,
               title: title,
-              onChanged: onEdited, variables: variables,
+              onChanged: onEdited,
+              variables: variables,
               onDeleted: onDeleted,
             ),
           ),
@@ -47,12 +51,11 @@ class VariableDialog {
     );
   }
 
-  void show(BuildContext context){
+  void show(BuildContext context) {
     Overlay.of(context)!.insert(_overlayEntry);
   }
 
-  void hide(){
+  void hide() {
     _overlayEntry.remove();
   }
-
 }

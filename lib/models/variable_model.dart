@@ -16,7 +16,21 @@ class VariableModel {
 
   VariableModel(this.name, this.value, this.runtimeAssigned, this.description,
       this.dataType, this.parentName,
-      {this.assignmentCode, this.deletable = true,this.isFinal=false,this.uiAttached=false,this.nullable=false});
+      {this.assignmentCode,
+      this.deletable = true,
+      this.isFinal = false,
+      this.uiAttached = false,
+      this.nullable = false});
+
+  VariableModel clone() {
+    return VariableModel(
+        name, value, runtimeAssigned, description, dataType, parentName,
+        assignmentCode: assignmentCode,
+        deletable: deletable,
+        isFinal: isFinal,
+        uiAttached: uiAttached,
+        nullable: nullable);
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -40,7 +54,8 @@ class VariableModel {
                 .firstWhere((element) => element.name == map['dataType'])
             : DataType.double,
         screen,
-        deletable: map['deletable'] ?? true,uiAttached: map['uiAttached']??false);
+        deletable: map['deletable'] ?? true,
+        uiAttached: map['uiAttached'] ?? false);
   }
 }
 

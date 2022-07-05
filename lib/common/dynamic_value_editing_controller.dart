@@ -8,6 +8,7 @@ class DynamicValueEditingController extends TextEditingController {
     'if': Colors.purple,
     'while': Colors.purple,
   };
+
   @override
   TextSpan buildTextSpan(
       {required BuildContext context,
@@ -41,11 +42,16 @@ class DynamicValueEditingController extends TextEditingController {
       spans.add(TextSpan(
           text: textValue.substring(start, indexList[i]), style: style));
       final bold = textValue.substring(indexList[i], indexList[i + 1] + 2);
-      spans.add(TextSpan(
+      spans.add(
+        TextSpan(
           text: bold,
-          style: AppFontStyle.roboto(13,
-              color: bold.contains(' ') ? Colors.red : AppColors.theme,
-              fontWeight: FontWeight.bold)));
+          style: AppFontStyle.roboto(
+            13,
+            color: AppColors.theme,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
       start = indexList[i + 1] + 2;
     }
     spans.add(TextSpan(

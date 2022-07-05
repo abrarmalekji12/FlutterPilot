@@ -1,13 +1,15 @@
 import 'package:cyclop/cyclop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/error/error_bloc.dart';
 import '../common/compiler/code_processor.dart';
-import '../common/custom_text_field.dart';
 import '../common/dynamic_value_editing_controller.dart';
 import '../common/dynamic_value_filed.dart';
+import '../cubit/component_selection/component_selection_cubit.dart';
+import '../models/component_model.dart';
+import 'action_code_editor.dart';
 import 'image_selection.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
-import '../common/app_switch.dart';
 import '../common/custom_drop_down.dart';
 import '../common/dialog_selection.dart';
 import '../constant/app_colors.dart';
@@ -38,7 +40,7 @@ class ChoiceParameterWidget extends StatelessWidget {
             child: Text(
               parameter.displayName!,
               style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: Colors.black,
                   fontWeight: FontWeight.bold),
             ),
@@ -134,7 +136,7 @@ class ParameterWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (parameter == null) return Container();
     // final error = parameter?.checkIfValidToShow(
-    //     Provider.of<ComponentSelectionCubit>(context, listen: false)
+    //     Provider.of<ComponentSelectionCubit>(context)
     //         .currentSelected);
     // if (error != null) {
     //   return Container(
@@ -173,13 +175,34 @@ class ParameterWidget extends StatelessWidget {
   }
 }
 
-class SimpleParameterWidget extends StatelessWidget {
+class SimpleParameterWidget extends StatefulWidget {
   final SimpleParameter parameter;
+
+  const SimpleParameterWidget({Key? key, required this.parameter})
+      : super(key: key);
+
+  @override
+  State<SimpleParameterWidget> createState() => _SimpleParameterWidgetState();
+}
+
+class _SimpleParameterWidgetState extends State<SimpleParameterWidget> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late ComponentSelectionCubit _componentSelectionCubit;
+  late ComponentOperationCubit _componentOperationCubit;
   final DynamicValueEditingController _textEditingController =
       DynamicValueEditingController();
+  late CodeProcessor processor;
 
-  SimpleParameterWidget({Key? key, required this.parameter}) : super(key: key);
+  @override
+  void initState() {
+    super.initState();
+    _componentSelectionCubit = context.read<ComponentSelectionCubit>();
+    _componentOperationCubit = context.read<ComponentOperationCubit>();
+    final comp = _componentSelectionCubit.currentSelectedRoot;
+    processor = (comp is CustomComponent)
+        ? comp.processor
+        : ComponentOperationCubit.currentProject!.currentScreen.processor;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -192,10 +215,10 @@ class SimpleParameterWidget extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (parameter.displayName != null)
+          if (widget.parameter.displayName != null)
             Expanded(
               child: Text(
-                parameter.displayName!,
+                widget.parameter.displayName!,
                 style: AppFontStyle.roboto(14,
                     color: Colors.black, fontWeight: FontWeight.w500),
               ),
@@ -215,46 +238,29 @@ class SimpleParameterWidget extends StatelessWidget {
   }
 
   Widget _buildInputType(BuildContext context) {
-    switch (parameter.inputType) {
+    switch (widget.parameter.inputType) {
       case ParamInputType.longText:
       case ParamInputType.text:
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          _textEditingController.text = parameter.compiler.code.isNotEmpty
-              ? parameter.compiler.code
-              : '${parameter.getValue() ?? ''}';
+          _textEditingController.text =
+              widget.parameter.compiler.code.isNotEmpty
+                  ? widget.parameter.compiler.code
+                  : '${widget.parameter.getValue() ?? ''}';
         });
         return Form(
           key: _formKey,
           child: SizedBox(
-            width: parameter.inputType == ParamInputType.text ? 110 : 200,
-            height: parameter.inputType != ParamInputType.text ? 60 : null,
+            width:
+                widget.parameter.inputType == ParamInputType.text ? 110 : 200,
+            height:
+                widget.parameter.inputType != ParamInputType.text ? 60 : null,
             child: TextFormField(
-              maxLines: parameter.inputType == ParamInputType.text ? null : 3,
+              maxLines:
+                  widget.parameter.inputType == ParamInputType.text ? null : 3,
               validator: (value) {
-                dynamic result;
-                try {
-                  result = parameter.process(value ?? '');
-                } on Exception catch (error) {
-                  print('ERROR $error');
-                  result = null;
+                if (value != null) {
+                  checkForResult(value);
                 }
-                print('RESULT IS $value $result');
-                parameter.compiler.code = value ?? '';
-                if (result is! FVBUndefined) {
-                  if (parameter.type == double && result.runtimeType == int) {
-                    parameter.val = (result as int).toDouble();
-                  } else {
-                    parameter.val = result;
-                  }
-                  if (parameter.inputCalculateAs != null) {
-                    parameter.val =
-                        parameter.inputCalculateAs!.call(parameter.val!, true);
-                  }
-                }
-                BlocProvider.of<ParameterBuildCubit>(context, listen: false)
-                    .parameterChanged(context, parameter);
-                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
-                    .changedComponent();
                 return null;
               },
               buildCounter: (
@@ -264,7 +270,7 @@ class SimpleParameterWidget extends StatelessWidget {
                 required bool isFocused,
               }) {
                 return Text(
-                  '${parameter.val}',
+                  '${widget.parameter.val}',
                   style: AppFontStyle.roboto(13,
                       fontWeight: FontWeight.w500, color: Colors.blueAccent),
                 );
@@ -272,16 +278,19 @@ class SimpleParameterWidget extends StatelessWidget {
               style: AppFontStyle.roboto(13, fontWeight: FontWeight.w600),
               controller: _textEditingController,
               onChanged: (value) {
-                if (value.isNotEmpty || parameter.val is String) {
+                if (value == widget.parameter.compiler.code) {
+                  return;
+                }
+                if (value.isNotEmpty || widget.parameter.val is String) {
                   _formKey.currentState!.validate();
                   return;
                 } else {
-                  parameter.compiler.code = '';
-                  parameter.val = null;
+                  widget.parameter.compiler.code = '';
+                  widget.parameter.val = null;
                 }
-                BlocProvider.of<ParameterBuildCubit>(context, listen: false)
-                    .parameterChanged(context, parameter);
-                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                BlocProvider.of<ParameterBuildCubit>(context)
+                    .parameterChanged(context, widget.parameter);
+                BlocProvider.of<ComponentCreationCubit>(context)
                     .changedComponent();
               },
               textAlignVertical: TextAlignVertical.center,
@@ -289,7 +298,9 @@ class SimpleParameterWidget extends StatelessWidget {
                   contentPadding: EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical:
-                          parameter.inputType == ParamInputType.text ? 0 : 5),
+                          widget.parameter.inputType == ParamInputType.text
+                              ? 0
+                              : 5),
                   enabled: true,
                   errorText: null,
                   enabledBorder: OutlineInputBorder(
@@ -308,28 +319,33 @@ class SimpleParameterWidget extends StatelessWidget {
           ),
         );
       case ParamInputType.color:
-        return ColorInputWidget(parameter: parameter);
+        return ColorInputWidget(
+          parameter: widget.parameter,
+          processor: processor,
+        );
       case ParamInputType.sliderZeroToOne:
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          _textEditingController.text = parameter.compiler.code.isNotEmpty
-              ? parameter.compiler.code
-              : '${parameter.getValue() ?? ''}';
+          _textEditingController.text =
+              widget.parameter.compiler.code.isNotEmpty
+                  ? widget.parameter.compiler.code
+                  : '${widget.parameter.getValue() ?? ''}';
         });
         return DynamicValueField<double>(
+            processor: processor,
             inputOption: InputOption.doubleZeroToOne,
             onProcessedResult: (code, result) {
-              parameter.val = result;
-              BlocProvider.of<ParameterBuildCubit>(context, listen: false)
-                  .parameterChanged(context, parameter);
-              BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+              widget.parameter.val = result;
+              BlocProvider.of<ParameterBuildCubit>(context)
+                  .parameterChanged(context, widget.parameter);
+              BlocProvider.of<ComponentCreationCubit>(context)
                   .changedComponent();
               return true;
             },
             onErrorCode: () {
-              parameter.val = null;
-              BlocProvider.of<ParameterBuildCubit>(context, listen: false)
-                  .parameterChanged(context, parameter);
-              BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+              widget.parameter.val = null;
+              BlocProvider.of<ParameterBuildCubit>(context)
+                  .parameterChanged(context, widget.parameter);
+              BlocProvider.of<ComponentCreationCubit>(context)
                   .changedComponent();
             },
             textEditingController: _textEditingController);
@@ -337,11 +353,11 @@ class SimpleParameterWidget extends StatelessWidget {
         return BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
             builder: (context, state) {
           WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            if (parameter.compiler.code.isNotEmpty) {
-              _textEditingController.text = parameter.compiler.code;
+            if (widget.parameter.compiler.code.isNotEmpty) {
+              _textEditingController.text = widget.parameter.compiler.code;
             } else {
               _textEditingController.text =
-                  (parameter.val as ImageData?)?.imageName ?? '';
+                  (widget.parameter.val as ImageData?)?.imageName ?? '';
             }
           });
           return StatefulBuilder(builder: (context, setStateForImage) {
@@ -358,8 +374,8 @@ class SimpleParameterWidget extends StatelessWidget {
                                     context,
                                     listen: false))).then((value) {
                   if (value != null && value is ImageData) {
-                    parameter.val = value;
-                    parameter.compiler.code = value.imageName!;
+                    widget.parameter.val = value;
+                    widget.parameter.compiler.code = value.imageName!;
                     setStateForImage(() {});
                     BlocProvider.of<ComponentCreationCubit>(context,
                             listen: false)
@@ -370,12 +386,12 @@ class SimpleParameterWidget extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  parameter.value != null &&
-                          ((parameter.value as ImageData).bytes != null)
+                  widget.parameter.value != null &&
+                          ((widget.parameter.value as ImageData).bytes != null)
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: Image.memory(
-                            (parameter.value as ImageData).bytes!,
+                            (widget.parameter.value as ImageData).bytes!,
                             width: 40,
                             fit: BoxFit.fitHeight,
                           ),
@@ -391,18 +407,15 @@ class SimpleParameterWidget extends StatelessWidget {
                   SizedBox(
                     width: 100,
                     child: DynamicValueField<String>(
+                        processor: processor,
                         onProcessedResult: (code, result) {
-                          if (BlocProvider.of<ComponentOperationCubit>(context,
-                                  listen: false)
-                              .byteCache
+                          if (_componentOperationCubit.byteCache
                               .containsKey(result)) {
-                            parameter.compiler.code = code;
-                            (parameter.val as ImageData).imageName = result;
-                            (parameter.val as ImageData).bytes =
-                                BlocProvider.of<ComponentOperationCubit>(
-                                        context,
-                                        listen: false)
-                                    .byteCache[result];
+                            widget.parameter.compiler.code = code;
+                            (widget.parameter.val as ImageData).imageName =
+                                result;
+                            (widget.parameter.val as ImageData).bytes =
+                                _componentOperationCubit.byteCache[result];
 
                             setStateForImage(() {});
                             BlocProvider.of<ComponentCreationCubit>(context,
@@ -420,6 +433,33 @@ class SimpleParameterWidget extends StatelessWidget {
           });
         });
     }
+  }
+
+  void checkForResult(String value) {
+    dynamic result;
+    try {
+      result = widget.parameter.process(value, processor: processor);
+    } on Exception catch (error) {
+      context.read<ErrorBloc>().add(ConsoleUpdatedEvent(
+          ConsoleMessage(error.toString(), ConsoleMessageType.error)));
+      result = null;
+    }
+    widget.parameter.compiler.code = value;
+    if (result is! FVBUndefined) {
+      if (widget.parameter.type == double && result.runtimeType == int) {
+        widget.parameter.val = (result as int).toDouble();
+      } else {
+        widget.parameter.val = result;
+      }
+      if (widget.parameter.inputCalculateAs != null) {
+        widget.parameter.val = widget.parameter.inputCalculateAs!
+            .call(widget.parameter.val!, true);
+      }
+    }
+    BlocProvider.of<ParameterBuildCubit>(context)
+        .parameterChanged(context, widget.parameter);
+    BlocProvider.of<ComponentCreationCubit>(context)
+        .changedComponent();
   }
 }
 
@@ -473,7 +513,7 @@ class ListParameterWidget extends StatelessWidget {
                   ),
                   onPressed: () {
                     parameter.params.add(parameter.parameterGenerator());
-                    BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                    BlocProvider.of<ParameterBuildCubit>(context)
                         .parameterChanged(context, parameter);
                   },
                 ),
@@ -577,7 +617,7 @@ class ChoiceValueParameterWidget extends StatelessWidget {
                       .toList(),
                   onChanged: (key) {
                     parameter.val = key;
-                    BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                    BlocProvider.of<ParameterBuildCubit>(context)
                         .parameterChanged(context, parameter);
                     BlocProvider.of<ComponentCreationCubit>(context,
                             listen: false)
@@ -593,8 +633,11 @@ class ChoiceValueParameterWidget extends StatelessWidget {
 
 class ColorInputWidget extends StatefulWidget {
   final SimpleParameter parameter;
+  final CodeProcessor processor;
 
-  const ColorInputWidget({Key? key, required this.parameter}) : super(key: key);
+  const ColorInputWidget(
+      {Key? key, required this.parameter, required this.processor})
+      : super(key: key);
 
   @override
   State<ColorInputWidget> createState() => _ColorInputWidgetState();
@@ -605,6 +648,7 @@ class _ColorInputWidgetState extends State<ColorInputWidget> {
   final GlobalKey _editorKey = GlobalKey();
   final DynamicValueEditingController _textEditingController =
       DynamicValueEditingController();
+  late CodeProcessor processor;
 
   @override
   void initState() {
@@ -618,7 +662,7 @@ class _ColorInputWidgetState extends State<ColorInputWidget> {
   Widget build(BuildContext context) {
     final value = widget.parameter.value;
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _textEditingController.text=widget.parameter.compiler.code;
+      _textEditingController.text = widget.parameter.compiler.code;
     });
     return Form(
       key: _formKey,
@@ -635,6 +679,8 @@ class _ColorInputWidgetState extends State<ColorInputWidget> {
                       width: 30,
                       height: 30,
                       child: Checkbox(
+                          visualDensity:
+                              const VisualDensity(horizontal: -4, vertical: -4),
                           value: widget.parameter.compiler.code.isNotEmpty,
                           onChanged: (b) {
                             if (b != null) {
@@ -695,21 +741,24 @@ class _ColorInputWidgetState extends State<ColorInputWidget> {
             width: 100,
             child: DynamicValueField<Color>(
               key: _editorKey,
+              processor: widget.processor,
               textEditingController: _textEditingController,
               onErrorCode: () {
                 widget.parameter.compiler.code = '';
                 widget.parameter.val = null;
-                BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                BlocProvider.of<ParameterBuildCubit>(context)
                     .parameterChanged(context, widget.parameter);
-                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                BlocProvider.of<ComponentCreationCubit>(context)
                     .changedComponent();
               },
               onProcessedResult: (code, result) {
                 widget.parameter.compiler.code = code;
-                widget.parameter.val = fromHex(result);
-                BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                if (result is String) {
+                  widget.parameter.val = fromHex(result);
+                }
+                BlocProvider.of<ParameterBuildCubit>(context)
                     .parameterChanged(context, widget.parameter);
-                BlocProvider.of<ComponentCreationCubit>(context, listen: false)
+                BlocProvider.of<ComponentCreationCubit>(context)
                     .changedComponent();
                 // setState(() {});
                 return true;
@@ -857,11 +906,16 @@ class BooleanParameterWidget extends StatefulWidget {
 
 class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
   final TextEditingController _textEditingController = TextEditingController();
+  late CodeProcessor processor;
 
   @override
   void initState() {
     super.initState();
     _textEditingController.text = widget.parameter.compiler.code;
+    final comp = context.read<ComponentSelectionCubit>().currentSelectedRoot;
+    processor = (comp is CustomComponent)
+        ? comp.processor
+        : ComponentOperationCubit.currentProject!.currentScreen.processor;
   }
 
   @override
@@ -880,11 +934,12 @@ class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
           SizedBox(
             width: 150,
             child: DynamicValueField<bool>(
+                processor: processor,
                 onProcessedResult: (code, value) {
                   widget.parameter.compiler.code = code;
                   if (value != null && value is! FVBUndefined) {
                     widget.parameter.val = value;
-                    BlocProvider.of<ParameterBuildCubit>(context, listen: false)
+                    BlocProvider.of<ParameterBuildCubit>(context)
                         .parameterChanged(context, widget.parameter);
                     BlocProvider.of<ComponentCreationCubit>(context,
                             listen: false)

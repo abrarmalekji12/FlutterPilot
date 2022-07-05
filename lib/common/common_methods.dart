@@ -1,24 +1,27 @@
 import 'package:flutter_builder/common/io_lib.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:win_toast/win_toast.dart';
 
+import '../bloc/error/error_bloc.dart';
 import '../bloc/state_management/state_management_bloc.dart';
 import '../constant/font_style.dart';
 import '../constant/string_constant.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/stack_action/stack_action_cubit.dart';
+import '../injector.dart';
 import '../models/actions/action_model.dart';
-import '../models/component_model.dart';
 import '../models/project_model.dart';
+import '../ui/action_code_editor.dart';
 
 void showToast(final String message, {bool error = false}) async {
   if (Platform.isWindows) {
-    // await WinToast.instance().showToast(type: ToastType.text03, title: message,);
-    print('WINDOWS TOAST $message :: isError => $error');
+    await WinToast.instance().showToast(
+      type: ToastType.text03,
+      title: message,
+    );
   } else {
     await Fluttertoast.showToast(
         msg: message,
@@ -35,11 +38,14 @@ void doAPIOperation(String message,
     {required StackActionCubit stackActionCubit,
     required StateManagementBloc stateManagementBloc}) {
   if (message.startsWith('print:')) {
-    showToast(message.substring(6));
+    get<ErrorBloc>().add(ConsoleUpdatedEvent(
+        ConsoleMessage(message.substring(6), ConsoleMessageType.info)));
   } else if (message.startsWith('api:')) {
     final value = message.replaceAll('api:', '');
     final split = value.split('|');
     final action = split[0];
+    get<ErrorBloc>().add(ConsoleUpdatedEvent(
+        ConsoleMessage('$action ${split[1]}', ConsoleMessageType.success)));
     switch (action) {
       case 'snackbar':
         (const GlobalObjectKey(deviceScaffoldMessenger).currentState
@@ -57,14 +63,14 @@ void doAPIOperation(String message,
         break;
       case 'newpage':
         final UIScreen? screen = ComponentOperationCubit
-            .currentFlutterProject!.uiScreens
+            .currentProject!.uiScreens
             .firstWhereOrNull((screen) => screen.name == split[1]);
         if (screen != null) {
           stackActionCubit.stackOperation(StackOperation.push,
               uiScreen: screen);
         }
-        (const GlobalObjectKey(navigationKey).currentState as NavigatorState)
-            .push(
+        (const GlobalObjectKey(navigationKey).currentState as NavigatorState?)
+            ?.push(
           MaterialPageRoute(
             builder: (context) => screen?.build(context) ?? Container(),
           ),
@@ -82,9 +88,10 @@ void doAPIOperation(String message,
           stackActionCubit.emit(StackUpdatedState());
         }
         break;
+
       case 'replacepage':
         final UIScreen? screen = ComponentOperationCubit
-            .currentFlutterProject!.uiScreens
+            .currentProject!.uiScreens
             .firstWhereOrNull((screen) => screen.name == split[1]);
 
         if (screen != null) {

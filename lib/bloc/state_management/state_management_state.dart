@@ -10,7 +10,6 @@ class StateManagementInitial extends StateManagementState {
   const StateManagementInitial(super.id);
 }
 
-
 class StateManagementUpdatedState extends StateManagementState {
   const StateManagementUpdatedState(super.id);
 }

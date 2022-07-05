@@ -2,25 +2,24 @@ import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
+import 'package:resizable_widget/resizable_widget.dart';
 
 import '../../common/compiler/code_processor.dart';
-import '../../constant/string_constant.dart';
-import '../../cubit/component_creation/component_creation_cubit.dart';
+import '../../constant/app_colors.dart';
+import '../../constant/app_dim.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../cubit/screen_config/screen_config_cubit.dart';
 import '../../cubit/stack_action/stack_action_cubit.dart';
 import '../../injector.dart';
-import '../../models/variable_model.dart';
 import '../../runtime_provider.dart';
+import '../error_widget.dart';
 
 class BuildView extends StatefulWidget {
-  final Function onDismiss;
   final ScreenConfigCubit screenConfigCubit;
   final ComponentOperationCubit componentOperationCubit;
 
   const BuildView(
       {Key? key,
-      required this.onDismiss,
       required this.screenConfigCubit,
       required this.componentOperationCubit})
       : super(key: key);
@@ -30,18 +29,11 @@ class BuildView extends StatefulWidget {
 }
 
 class _BuildViewState extends State<BuildView> {
-  late final CacheMemory _cacheMemory;
-
   @override
   void initState() {
     super.initState();
-    _cacheMemory = CacheMemory(ComponentOperationCubit.codeProcessor);
-
     get<StackActionCubit>().stackOperation(StackOperation.push,
-        uiScreen: ComponentOperationCubit.currentFlutterProject!.mainScreen);
-    ComponentOperationCubit.codeProcessor
-        .executeCode(ComponentOperationCubit.currentFlutterProject!.actionCode);
-
+        uiScreen: ComponentOperationCubit.currentProject!.mainScreen);
   }
 
   @override
@@ -55,64 +47,57 @@ class _BuildViewState extends State<BuildView> {
             _onDismiss(context);
           }
         },
-        child: Stack(
+        child: ResizableWidget(
+          separatorSize: Dimen.separator,
+          separatorColor: AppColors.separator,
+          percentages: const [0.2, 0.8],
           children: [
-            Center(
-              child: RuntimeProvider(
-                runtimeMode: RuntimeMode.run,
-                child: BlocBuilder<ComponentOperationCubit,
-                    ComponentOperationState>(
-                  builder: (_, state) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey, width: 1),
-                      ),
-                      child: GestureDetector(
-                        onTap: () {},
-                        child: DevicePreview(
-                          tools: const [DeviceSection()],
-                          builder: (_) {
-                            return LayoutBuilder(builder: (_, constraints) {
-                              if (Get.isDialogOpen ?? false) {
-                                ComponentOperationCubit
-                                    .codeProcessor
-                                    .variables['dw']!
-                                    .value = constraints.maxWidth;
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () {
+                      _onDismiss(context);
+                    },
+                    child: const Icon(Icons.arrow_back),
+                  ),
+                ),
+                const Expanded(
+                  child: ConsoleWidget(),
+                ),
+              ],
+            ),
+            RuntimeProvider(
+              runtimeMode: RuntimeMode.run,
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey, width: 1),
+                ),
+                child: DevicePreview(
+                  tools: const [DeviceSection()],
+                  builder: (_) {
+                    return LayoutBuilder(builder: (_, constraints) {
+                      if (Get.isDialogOpen ?? false) {
+                        ComponentOperationCubit.currentProject!.variables['dw']!
+                            .value = constraints.maxWidth;
 
-                                ComponentOperationCubit
-                                    .codeProcessor
-                                    .variables['dh']!
-                                    .value = constraints.maxHeight;
-                              }
-                              return Container(
-                                color: Colors.white,
-                                child: widget
-                                    .componentOperationCubit.flutterProject!
-                                    .run(context, navigator: true),
-                              );
-                            });
-                          },
-                          enabled: true,
-                        ),
-                      ),
-                    );
+                        ComponentOperationCubit.currentProject!.variables['dh']!
+                            .value = constraints.maxHeight;
+                      }
+                      return Container(
+                        color: Colors.white,
+                        child: widget.componentOperationCubit.project!
+                            .run(context, navigator: true),
+                      );
+                    });
                   },
+                  enabled: true,
                 ),
               ),
             ),
-            Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () {
-                    _onDismiss(context);
-                  },
-                  child: const Icon(Icons.arrow_back),
-                ),
-              ),
-            )
           ],
         ),
       ),
@@ -120,16 +105,10 @@ class _BuildViewState extends State<BuildView> {
   }
 
   void _onDismiss(BuildContext context) {
-    _cacheMemory.restore(ComponentOperationCubit.codeProcessor);
-    ComponentOperationCubit.codeProcessor.destroyProcess();
+    ComponentOperationCubit.currentProject!.processor.destroyProcess();
     widget.componentOperationCubit.runtimeMode = RuntimeMode.edit;
 
     Navigator.pop(context);
-
-    ComponentOperationCubit.changeVariables(
-        widget.componentOperationCubit.flutterProject!.currentScreen);
-
-    widget.onDismiss.call();
   }
 }
 
@@ -161,7 +140,7 @@ class CacheMemory {
     for (final variable in processor.localVariables.keys) {
       if (localVariables.containsKey(variable)) {
         processor.localVariables[variable] = localVariables[variable];
-      }else{
+      } else {
         removeList.add(variable);
       }
     }

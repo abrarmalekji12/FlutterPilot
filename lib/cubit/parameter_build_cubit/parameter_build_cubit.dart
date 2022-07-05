@@ -11,8 +11,7 @@ class ParameterBuildCubit extends Cubit<ParameterBuildState> {
 
   void parameterChanged(BuildContext context, Parameter parameter) {
     final selectedComponent =
-        BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
-            .currentSelected;
+        BlocProvider.of<ComponentSelectionCubit>(context).currentSelected;
     final paramRule =
         selectedComponent.propertySelection.validateParameters(parameter);
     if (paramRule != null) {

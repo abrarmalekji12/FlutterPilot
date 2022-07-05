@@ -32,9 +32,8 @@ class _ProjectSettingsPageState extends State<ProjectSettingsPage> {
   @override
   void initState() {
     super.initState();
-    project = widget.componentOperationCubit.flutterProject!;
-    projectSettingsModel =
-        widget.componentOperationCubit.flutterProject!.settings;
+    project = widget.componentOperationCubit.project!;
+    projectSettingsModel = widget.componentOperationCubit.project!.settings;
     path = project.getPath;
     undoWork = RevertWork.init();
   }
@@ -308,9 +307,12 @@ class _ProjectSettingsPageState extends State<ProjectSettingsPage> {
                                   model:
                                       projectSettingsModel.collaborators[index],
                                   onDelete: () {
-                                    undoWork.add( projectSettingsModel.collaborators[index], () {
-                                      projectSettingsModel.collaborators
-                                          .remove( projectSettingsModel.collaborators[index]);
+                                    undoWork.add(
+                                        projectSettingsModel
+                                            .collaborators[index], () {
+                                      projectSettingsModel.collaborators.remove(
+                                          projectSettingsModel
+                                              .collaborators[index]);
                                       setState(() {});
                                     }, (p0) {
                                       projectSettingsModel.collaborators
@@ -319,7 +321,7 @@ class _ProjectSettingsPageState extends State<ProjectSettingsPage> {
                                     });
                                   }),
                               itemCount:
-                                  projectSettingsModel.collaborators.length ),
+                                  projectSettingsModel.collaborators.length),
                         ],
                       ),
                     ],

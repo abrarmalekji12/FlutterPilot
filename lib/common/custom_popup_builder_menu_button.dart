@@ -44,7 +44,7 @@ class _CustomPopupMenuBuilderButtonState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    maxHeight= MediaQuery.of(context).size.height;
+    maxHeight = MediaQuery.of(context).size.height;
   }
 
   @override
@@ -85,16 +85,22 @@ class _CustomPopupMenuBuilderButtonState
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
-                                    child: Text(widget.title,style: AppFontStyle.roboto(16,fontWeight: FontWeight.bold),),
+                                    child: Text(
+                                      widget.title,
+                                      style: AppFontStyle.roboto(16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
                                   ),
                                   Container(
                                     constraints: BoxConstraints(
-                                      maxHeight:maxHeight,
+                                      maxHeight: maxHeight,
                                     ),
-
                                     child: ListView.separated(
                                       shrinkWrap: true,
-                                      separatorBuilder: (_,__)=>const Divider(thickness: 1,),
+                                      separatorBuilder: (_, __) =>
+                                          const Divider(
+                                        thickness: 1,
+                                      ),
                                       itemBuilder: (context, i) {
                                         final CustomPopupMenuItem child =
                                             widget.itemBuilder.call(context, i);
@@ -112,7 +118,8 @@ class _CustomPopupMenuBuilderButtonState
                                               expanded = false;
                                             });
                                           },
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           splashColor: Colors.grey,
                                         );
                                       },
@@ -132,7 +139,7 @@ class _CustomPopupMenuBuilderButtonState
         ),
       );
     });
-    if(kIsWeb) {
+    if (kIsWeb) {
       html.window.onResize.listen((event) {
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           overlayEntry?.markNeedsBuild();

@@ -60,7 +60,7 @@ class StackActionCubit extends Cubit<StackActionState> {
         }
         final last = navigationStack.removeLast();
         ComponentOperationCubit.removeVariables(last.uiScreen);
-        if(navigationStack.isEmpty){
+        if (navigationStack.isEmpty) {
           emit(StackClearState());
           return;
         }
@@ -68,11 +68,10 @@ class StackActionCubit extends Cubit<StackActionState> {
 
         do {
           index--;
-          if(index<0){
+          if (index < 0) {
             break;
           }
           ComponentOperationCubit.addVariables(navigationStack[index].uiScreen);
-
         } while (navigationStack[index].overlay);
         break;
     }

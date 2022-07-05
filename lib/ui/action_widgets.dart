@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../bloc/action_code/action_code_bloc.dart';
+import '../bloc/error/error_bloc.dart';
 import '../common/app_text_field.dart';
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
@@ -10,11 +12,15 @@ import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/action_edit/action_edit_cubit.dart';
 import '../cubit/click_action/click_action_cubit.dart';
+import '../cubit/component_creation/component_creation_cubit.dart';
+import '../cubit/component_creation/component_creation_cubit.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
+import '../cubit/component_selection/component_selection_cubit.dart';
 import '../models/actions/action_model.dart';
 import '../models/component_model.dart';
 import '../models/project_model.dart';
 import 'action_code_editor.dart';
+import 'common/badge_widget.dart';
 import 'parameter_ui.dart';
 
 class ActionModelWidget extends StatefulWidget {
@@ -74,7 +80,8 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                   onSelected: (value) {
                     switch (value) {
                       case 'CustomAction':
-                        widget.clickable.actionList.add(CustomAction());
+                        widget.clickable.actionList.add(CustomAction(
+                            code: widget.clickable.getDefaultCode()));
 
                         break;
                       case 'NewPageInStackAction':
@@ -113,8 +120,7 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                     }
 
                     _clickActionCubit.changedState();
-                    BlocProvider.of<ActionEditCubit>(context, listen: false)
-                        .change();
+                    BlocProvider.of<ActionEditCubit>(context).change();
                   },
                   child: const Padding(
                     padding: EdgeInsets.all(10),
@@ -277,7 +283,7 @@ class NewPageInStackActionWidget extends StatelessWidget {
                             items: BlocProvider.of<ComponentOperationCubit>(
                                     context,
                                     listen: false)
-                                .flutterProject!
+                                .project!
                                 .uiScreens
                                 .map<CustomDropdownMenuItem<UIScreen>>(
                                   (e) => CustomDropdownMenuItem<UIScreen>(
@@ -350,11 +356,14 @@ class CustomActionWidget extends StatefulWidget {
 class _CustomActionWidgetState extends State<CustomActionWidget> {
   final DynamicValueEditingController _controller =
       DynamicValueEditingController();
+  late Component root;
+  bool error = false;
 
   @override
   void initState() {
     super.initState();
     _controller.text = widget.action.arguments[0];
+    root = context.read<ComponentSelectionCubit>().currentSelectedRoot;
   }
 
   @override
@@ -372,18 +381,40 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
           ),
           SizedBox(
             height: 400,
-            child: ActionCodeEditor(
-              prerequisites: [ComponentOperationCubit.currentFlutterProject!.actionCode],
-              code: widget.action.arguments[0], onCodeChange: (String value) {
-              widget.action.arguments[0] = value;
-              BlocProvider.of<ClickActionCubit>(context,
-                  listen: false)
-                  .changedState();
+            child: oiBlocBuilder<ActionCodeBloc, ActionCodeState>(
+              builder: (context, state) {
+                final extraCodeBase = (root is CustomComponent)
+                    ? CodeBase((root as CustomComponent).actionCode,
+                        (root as CustomComponent).processor.scopeName)
+                    : CodeBase(
+                        ComponentOperationCubit
+                            .currentProject!.currentScreen.actionCode,
+                        ComponentOperationCubit
+                            .currentProject!.currentScreen.processor.scopeName);
+                return ActionCodeEditor(
+                  functions: (root is! StatelessComponent)?[setStateFunction]:[],
+                  prerequisites: [
+                    CodeBase(
+                        ComponentOperationCubit.currentProject!.actionCode,
+                        ComponentOperationCubit
+                            .currentProject!.processor.scopeName),
+                    extraCodeBase
+                  ],
+                  code: widget.action.arguments[0],
+                  onCodeChange: (String value) {
+                    widget.action.arguments[0] = value;
+                    BlocProvider.of<ClickActionCubit>(context).changedState();
 
-              BlocProvider.of<ActionEditCubit>(context,
-                  listen: false)
-                  .change();
-            },
+                    BlocProvider.of<ActionEditCubit>(context).change();
+                  },
+                  //ComponentOperationCubit
+                  //                       .currentProject!.variables.values
+                  //                       .toList()
+                  variables: [],
+                  onError: (bool error) {},
+                  scopeName: extraCodeBase.scopeName,
+                );
+              },
             ),
           )
         ],
@@ -435,7 +466,7 @@ class ReplaceCurrentPageInStackActionWidget extends StatelessWidget {
                             items: BlocProvider.of<ComponentOperationCubit>(
                                     context,
                                     listen: false)
-                                .flutterProject!
+                                .project!
                                 .uiScreens
                                 .map<CustomDropdownMenuItem<UIScreen>>(
                                   (e) => CustomDropdownMenuItem<UIScreen>(
@@ -587,8 +618,7 @@ class ShowDialogInStackActionWidget extends StatelessWidget {
                       TextEditingValue(text: action.arguments[0] ?? '')),
                   onChange: (data) {
                     action.arguments[0] = data;
-                    BlocProvider.of<ActionEditCubit>(context, listen: false)
-                        .change();
+                    BlocProvider.of<ActionEditCubit>(context).change();
                   },
                 ),
               )
@@ -615,8 +645,7 @@ class ShowDialogInStackActionWidget extends StatelessWidget {
                       TextEditingValue(text: action.arguments[1] ?? '')),
                   onChange: (data) {
                     action.arguments[1] = data;
-                    BlocProvider.of<ActionEditCubit>(context, listen: false)
-                        .change();
+                    BlocProvider.of<ActionEditCubit>(context).change();
                   },
                 ),
               )
@@ -643,8 +672,7 @@ class ShowDialogInStackActionWidget extends StatelessWidget {
                       TextEditingValue(text: action.arguments[2] ?? '')),
                   onChange: (data) {
                     action.arguments[2] = data;
-                    BlocProvider.of<ActionEditCubit>(context, listen: false)
-                        .change();
+                    BlocProvider.of<ActionEditCubit>(context).change();
                   },
                 ),
               )
@@ -671,8 +699,7 @@ class ShowDialogInStackActionWidget extends StatelessWidget {
                       TextEditingValue(text: action.arguments[3] ?? '')),
                   onChange: (data) {
                     action.arguments[3] = data;
-                    BlocProvider.of<ActionEditCubit>(context, listen: false)
-                        .change();
+                    BlocProvider.of<ActionEditCubit>(context).change();
                   },
                 ),
               )
@@ -740,7 +767,7 @@ class ShowCustomDialogInStackActionWidget extends StatelessWidget {
                                 items: BlocProvider.of<ComponentOperationCubit>(
                                         context,
                                         listen: false)
-                                    .flutterProject!
+                                    .project!
                                     .uiScreens
                                     .map<CustomDropdownMenuItem<UIScreen>>(
                                       (e) => CustomDropdownMenuItem<UIScreen>(
@@ -859,7 +886,7 @@ class ShowBottomSheetInStackActionWidget extends StatelessWidget {
                                 items: BlocProvider.of<ComponentOperationCubit>(
                                         context,
                                         listen: false)
-                                    .flutterProject!
+                                    .project!
                                     .uiScreens
                                     .map<CustomDropdownMenuItem<UIScreen>>(
                                       (e) => CustomDropdownMenuItem<UIScreen>(

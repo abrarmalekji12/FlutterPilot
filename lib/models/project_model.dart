@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../bloc/error/error_bloc.dart';
+import '../bloc/state_management/state_management_bloc.dart';
 import '../code_to_component.dart';
 import '../common/compiler/code_processor.dart';
 import '../common/compiler/processor_component.dart';
@@ -23,6 +25,11 @@ import 'other_model.dart';
 import 'variable_model.dart';
 
 class FlutterProject {
+  static const defaultActionCode = '''
+    void main(){
+    print("Hello World!");
+    }
+    ''';
   late ProjectSettingsModel settings;
   late CodeProcessor processor;
   String name;
@@ -40,7 +47,9 @@ class FlutterProject {
   final List<FavouriteModel> favouriteList = [];
 
   FlutterProject(this.name, this.userId, this.docId,
-      {this.device, this.actionCode = '', ProjectSettingsModel? settings}) {
+      {this.device,
+      this.actionCode = defaultActionCode,
+      ProjectSettingsModel? settings}) {
     if (settings != null) {
       this.settings = settings;
     } else {
@@ -61,7 +70,8 @@ class FlutterProject {
   }
 
   factory FlutterProject.createNewProject(String name, int userId) {
-    final FlutterProject flutterProject = FlutterProject(name, userId, null);
+    final FlutterProject flutterProject =
+        FlutterProject(name, userId, null, actionCode: defaultActionCode);
     final ui = UIScreen.mainUI();
     flutterProject.uiScreens.add(ui);
     final custom = StatelessComponent(name: 'MainPage')..root = CScaffold();
@@ -95,14 +105,18 @@ class FlutterProject {
   }
 
   Widget run(final BuildContext context, {bool navigator = false}) {
+    context.read<ErrorBloc>().add(ClearMessageEvent());
+    processor.executeCode(ComponentOperationCubit.currentProject!.actionCode);
     if (!navigator) {
+      processor.finished = true;
       return ProcessorProvider(
         get<CodeProcessor>(),
         Builder(builder: (context) {
-          return rootComponent?.build(context) ?? Container();
+          return currentScreen.build(context) ?? Container();
         }),
       );
     }
+    processor.functions['main']?.execute(processor, []);
     final _actionCubit = get<StackActionCubit>();
     return ProcessorProvider(
       get<CodeProcessor>(),
@@ -148,22 +162,41 @@ class FlutterProject {
 }
 
 class UIScreen {
+  static const defaultActionCode = '''
+    void initState(){
+    // will execute first time only
+    print("Hello World!");
+    }
+    
+    void build(){
+    // will execute every time widget rebuild
+    }
+    ''';
   late final CodeProcessor processor;
   String name;
-  String actionCode = '';
+  String actionCode;
   Component? rootComponent;
+  late final String id;
   final List<String> importList = [];
   final List<LocalModel> models = [];
   final RevertWork revertWork = RevertWork.init();
 
-  UIScreen(this.name) {
+  UIScreen(this.name, {this.actionCode = ''}) {
+    id = 'screen_' + name;
     processor = CodeProcessor.build(
-        processor: ComponentOperationCubit.codeProcessor, name: name);
+        processor: ComponentOperationCubit.currentProject!.processor,
+        name: name);
+    processor.functions['setState'] = FVBFunction('setState', null, [
+      FVBArgument('callback', dataType: DataType.fvbFunction)
+    ], dartCall: (arguments) {
+      (arguments[0] as FVBFunction).execute(processor, []);
+      processor.consoleCallback.call('api:refresh|$id');
+    });
   }
 
   toJson() => {
         'name': name,
-        'actionCode': actionCode,
+        'action_code': actionCode,
         'root': CodeOperations.trim(rootComponent?.code(clean: false)),
         'models': models.map((e) => e.toJson()).toList(growable: false),
         'variables': variables.values
@@ -180,7 +213,8 @@ class UIScreen {
   }
 
   factory UIScreen.mainUI() {
-    final UIScreen uiScreen = UIScreen('HomePage');
+    final UIScreen uiScreen =
+        UIScreen('HomePage', actionCode: defaultActionCode);
     uiScreen.rootComponent = componentList['MaterialApp']!();
     return uiScreen;
   }
@@ -188,7 +222,7 @@ class UIScreen {
   factory UIScreen.fromJson(
       Map<String, dynamic> json, final FlutterProject flutterProject) {
     final screen = UIScreen(json['name']);
-    screen.actionCode = json['actionCode'] ?? '';
+    screen.actionCode = json['action_code'] ?? defaultActionCode;
     screen.models.addAll(
         List.from(json['models'] ?? []).map((e) => LocalModel.fromJson(e)));
     screen.variables.addAll(List.from(json['variables'] ?? []).asMap().map((key,
@@ -198,7 +232,7 @@ class UIScreen {
   }
 
   factory UIScreen.otherScreen(final String name, {String type = 'screen'}) {
-    final UIScreen uiScreen = UIScreen(name);
+    final UIScreen uiScreen = UIScreen(name, actionCode: defaultActionCode);
     uiScreen.rootComponent = type == 'screen'
         ? componentList['Scaffold']!()
         : componentList['Container']!();
@@ -206,14 +240,20 @@ class UIScreen {
   }
 
   Widget? build(BuildContext context) {
+    processor.executeCode(actionCode);
     if (RuntimeProvider.of(context) == RuntimeMode.run) {
-      processor.executeCode(actionCode);
-      processor.functions['build']?.execute(processor, []);
-      print('CALLED BUILD');
+      processor.functions['initState']?.execute(processor, []);
     }
     return ProcessorProvider(
       processor,
-      rootComponent?.build(context) ?? Container(),
+      BlocBuilder<StateManagementBloc, StateManagementState>(
+          buildWhen: (previous, current) => current.id == id,
+          builder: (context, state) {
+            if (RuntimeProvider.of(context) == RuntimeMode.run) {
+              processor.functions['build']?.execute(processor, []);
+            }
+            return rootComponent?.build(context) ?? Container();
+          }),
     );
   }
 
@@ -261,7 +301,7 @@ class UIScreen {
     String dynamicVariablesDefinitionCode = '';
     String dynamicVariableAssignmentCode = '';
     for (final variable
-        in ComponentOperationCubit.codeProcessor.variables.entries) {
+        in ComponentOperationCubit.processor.variables.entries) {
       if ([DataType.string, DataType.int, DataType.double, DataType.double]
           .contains(variable.value.dataType)) {
         if (!variable.value.isFinal) {
@@ -278,7 +318,7 @@ class UIScreen {
 
     String functionImplementationCode = '';
     for (final function
-        in ComponentOperationCubit.codeProcessor.predefinedFunctions.values) {
+        in ComponentOperationCubit.processor.predefinedFunctions.values) {
       functionImplementationCode += function.functionCode;
     }
 

@@ -1,20 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../common/compiler/code_processor.dart';
 import '../../constant/font_style.dart';
+import '../../cubit/component_creation/component_creation_cubit.dart';
+import '../../models/variable_model.dart';
 import '../action_code_editor.dart';
 
 class ActionCodeDialog {
-  final String code;
+  final BuildContext context;
+  final List<FVBFunction> functions;
   final void Function(String) onChanged;
-  late final OverlayEntry _overlayEntry;
-  final List<String>? prerequisites;
+  late OverlayEntry _overlayEntry;
+  final void Function(bool) onError;
+  final void Function() onDismiss;
   final String title;
 
-  ActionCodeDialog(
-      {required this.code,
-      required this.title,
-      required this.onChanged,
-      this.prerequisites}) {
+  ActionCodeDialog({
+    required this.onError,
+    required this.title,
+    required this.functions,
+    required this.context,
+    required this.onChanged,
+    required this.onDismiss,
+  });
+
+  void show(final BuildContext context,
+      {required final String code,
+      required final List<VariableModel> variables,
+      final List<CodeBase>? prerequisites}) {
     _overlayEntry = OverlayEntry(
       builder: (_) {
         return GestureDetector(
@@ -45,7 +59,10 @@ class ActionCodeDialog {
                         InkWell(
                           borderRadius: BorderRadius.circular(10),
                           onTap: () {
-                            _overlayEntry.remove();
+                            if (_overlayEntry.mounted) {
+                              _overlayEntry.remove();
+                              onDismiss.call();
+                            }
                           },
                           child: const Icon(
                             Icons.close,
@@ -58,9 +75,14 @@ class ActionCodeDialog {
                     ),
                     Expanded(
                       child: ActionCodeEditor(
-                          prerequisites: prerequisites ?? [],
-                          onCodeChange: onChanged,
-                          code: code),
+                        prerequisites: prerequisites ?? [],
+                        onCodeChange: onChanged,
+                        onError: onError,
+                        code: code,
+                        variables: variables,
+                        scopeName: title,
+                        functions: functions,
+                      ),
                     )
                   ],
                 ),
@@ -70,13 +92,11 @@ class ActionCodeDialog {
         );
       },
     );
-  }
-
-  void show(BuildContext context) {
     Overlay.of(context)!.insert(_overlayEntry);
   }
 
   void hide() {
     _overlayEntry.remove();
+    context.read<ComponentCreationCubit>().changedComponent();
   }
 }

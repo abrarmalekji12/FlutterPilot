@@ -1,17 +1,22 @@
 import 'package:code_text_field/code_text_field.dart';
+import 'package:dart_style/dart_style.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
-import 'package:highlight/languages/dart.dart';
 import 'package:highlight/highlight.dart';
 import 'package:highlight/src/common_modes.dart';
 import 'package:resizable_widget/resizable_widget.dart';
 
+import '../bloc/action_code/action_code_bloc.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/utils/dateformat_utils.dart';
 import '../constant/app_colors.dart';
+import '../constant/app_dim.dart';
 import '../constant/font_style.dart';
-import '../cubit/component_operation/component_operation_cubit.dart';
+import '../models/variable_model.dart';
 import 'build_view/build_view.dart';
+import 'project_selection_page.dart';
 
 final fvbDart = Mode(refs: {
   '~contains~0~variants~4~contains~2': Mode(
@@ -23,15 +28,15 @@ final fvbDart = Mode(refs: {
       Mode(className: 'subst', variants: [Mode(begin: '\\\$[A-Za-z0-9_]+')]),
   '~contains~0': Mode(className: 'string', variants: [
     Mode(begin: "r'''", end: "'''"),
-    Mode(begin: 'r\"\"\"', end: '\"\"\"'),
+    Mode(begin: 'r"""', end: '"""'),
     Mode(begin: "r'", end: "'", illegal: '\\n'),
-    Mode(begin: 'r\"', end: '\"', illegal: '\\n'),
+    Mode(begin: 'r"', end: '"', illegal: '\\n'),
     Mode(begin: "'''", end: "'''", contains: [
       BACKSLASH_ESCAPE,
       Mode(ref: '~contains~0~variants~4~contains~1'),
       Mode(ref: '~contains~0~variants~4~contains~2')
     ]),
-    Mode(begin: '\"\"\"', end: '\"\"\"', contains: [
+    Mode(begin: '"""', end: '"""', contains: [
       BACKSLASH_ESCAPE,
       Mode(ref: '~contains~0~variants~4~contains~1'),
       Mode(ref: '~contains~0~variants~4~contains~2')
@@ -41,7 +46,7 @@ final fvbDart = Mode(refs: {
       Mode(ref: '~contains~0~variants~4~contains~1'),
       Mode(ref: '~contains~0~variants~4~contains~2')
     ]),
-    Mode(begin: '\"', end: '\"', illegal: '\\n', contains: [
+    Mode(begin: '"', end: '"', illegal: '\\n', contains: [
       BACKSLASH_ESCAPE,
       Mode(ref: '~contains~0~variants~4~contains~1'),
       Mode(ref: '~contains~0~variants~4~contains~2')
@@ -89,11 +94,22 @@ final fvbDart = Mode(refs: {
 
 class ActionCodeEditor extends StatefulWidget {
   final String code;
+  final String scopeName;
   final void Function(String) onCodeChange;
-  final List<String> prerequisites;
+  final List<CodeBase> prerequisites;
+  final void Function(bool) onError;
+  final List<FVBFunction> functions;
+  final List<VariableModel> variables;
 
   const ActionCodeEditor(
-      {Key? key, required this.code, required this.onCodeChange, required this.prerequisites})
+      {Key? key,
+      required this.code,
+      required this.onCodeChange,
+      required this.prerequisites,
+      required this.variables,
+      required this.onError,
+      required this.scopeName,
+      required this.functions})
       : super(key: key);
 
   @override
@@ -106,25 +122,36 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
   final List<ConsoleMessage> consoleMessages = [];
   final ValueNotifier<int> _consoleChangeNotifier = ValueNotifier<int>(0);
   String? code;
-  late CacheMemory memory;
+  final DartFormatter formatter = DartFormatter();
 
   @override
-  initState() {
+  void initState() {
     super.initState();
     processor = CodeProcessor(
       consoleCallback: (message) {
         print('CONSOLE: $message');
+        return null;
       },
       onError: (error, line) {
         consoleMessages.add(
             ConsoleMessage('$error at Line $line', ConsoleMessageType.error));
         _consoleChangeNotifier.value++;
-      }, scopeName: 'action-code',
+      },
+      scopeName: 'action-code',
     );
-    for(final prerequisite in widget.prerequisites) {
-      processor.executeCode(prerequisite, operationType: OperationType.checkOnly,);
+    processor.variables.addAll(widget.variables
+        .asMap()
+        .map((key, value) => MapEntry(value.name, value.clone())));
+
+    processor.functions.addAll(widget.functions
+        .asMap()
+        .map((key, value) => MapEntry(value.name, value)));
+    for (final prerequisite in widget.prerequisites) {
+      processor.executeCode(
+        prerequisite.code,
+        operationType: OperationType.checkOnly,
+      );
     }
-    memory=CacheMemory(processor);
     _codeController = CodeController(
         language: fvbDart,
         theme: monokaiSublimeTheme
@@ -143,48 +170,88 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
     executeAndCheck(code!);
   }
 
-  void executeAndCheck(String code){
+  void executeAndCheck(String code) {
     consoleMessages.clear();
     _consoleChangeNotifier.value = 0;
-    final output=processor.executeCode(code, operationType: OperationType.checkOnly,);
-    processor.destroyProcess(memory: memory);
-    if(output is FVBUndefined){
-      consoleMessages.add(ConsoleMessage(output.toString(), ConsoleMessageType.error));
+    final output = processor.executeCode(
+      code,
+      operationType: OperationType.checkOnly,
+    );
+    processor.destroyProcess();
+    if (output is FVBUndefined) {
+      consoleMessages
+          .add(ConsoleMessage(output.toString(), ConsoleMessageType.error));
+      _consoleChangeNotifier.value++;
+    } else if (_consoleChangeNotifier.value == 0) {
+      consoleMessages.add(
+          ConsoleMessage('Compiled. No Errors.', ConsoleMessageType.success));
+      context
+          .read<ActionCodeBloc>()
+          .add(ActionCodeUpdatedEvent(widget.scopeName));
+
       _consoleChangeNotifier.value++;
     }
-    else if(_consoleChangeNotifier.value==0){
-      consoleMessages.add(ConsoleMessage('Compiled without errors :)', ConsoleMessageType.success));
-      _consoleChangeNotifier.value++;
-    }
+    widget.onError(consoleMessages
+        .where((element) => element.type == ConsoleMessageType.error)
+        .isNotEmpty);
   }
+
   @override
   Widget build(BuildContext context) {
     return ResizableWidget(
+      separatorSize: Dimen.separator,
+      separatorColor: AppColors.separator,
       isHorizontalSeparator: true,
-      percentages: const [
-        0.9,0.1
-      ],
-      separatorColor: Colors.black,separatorSize: 2,
+      percentages: const [0.9, 0.1],
       children: [
-        Container(
-          child: SingleChildScrollView(
-            child: CodeField(
-              // expands: true,
-              minLines: 50,
-              enabled: true,
-              wrap: true,
-              lineNumberStyle: LineNumberStyle(
-                margin: 5,
-                textStyle: AppFontStyle.roboto(14, color: Colors.white)
-                    .copyWith(height: 1.31),
+        Stack(
+          alignment: Alignment.topRight,
+          children: [
+            SingleChildScrollView(
+              child: CodeField(
+                minLines: 50,
+                enabled: true,
+                wrap: true,
+                lineNumberStyle: LineNumberStyle(
+                  margin: 5,
+                  textStyle: AppFontStyle.roboto(14, color: Colors.white)
+                      .copyWith(height: 1.31),
+                ),
+                controller: _codeController,
               ),
-
-              controller: _codeController,
             ),
-          ),
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppIconButton(
+                        icon: Icons.format_align_center,
+                        onPressed: () {
+                          try {
+                            final code = formatter.format(_codeController.text);
+                            final cursor =
+                                _codeController.selection.extentOffset;
+                            _codeController.value = TextEditingValue(
+                                text: code,
+                                selection:
+                                    TextSelection.collapsed(offset: cursor));
+                            widget.onCodeChange(code);
+                          } on FormatterException catch (e) {
+                            return;
+                          }
+                        },
+                        color: Colors.blueAccent),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
         Container(
-        color: const Color(0xff494949),
+          color: const Color(0xff494949),
           padding: const EdgeInsets.all(8),
           alignment: Alignment.topLeft,
           child: ValueListenableBuilder(
@@ -201,11 +268,10 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
     final List<TextSpan> list = [];
     for (final consoleMessage in consoleMessages) {
       list.add(TextSpan(
-        text: '-> '+consoleMessage.message + '\n',
+        text: '-> ' + consoleMessage.message + '\n',
         style: AppFontStyle.roboto(14,
-          color: getColor(consoleMessage.type),
-          fontWeight: FontWeight.w800
-        ),
+            color: getConsoleMessageColor(consoleMessage.type, darkTheme: true),
+            fontWeight: FontWeight.w800),
       ));
     }
     return RichText(
@@ -213,28 +279,36 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
     );
   }
 }
-Color getColor(ConsoleMessageType type) {
+
+Color getConsoleMessageColor(ConsoleMessageType type,
+    {bool darkTheme = false}) {
   switch (type) {
     case ConsoleMessageType.error:
       return AppColors.red;
     case ConsoleMessageType.success:
       return AppColors.green;
     case ConsoleMessageType.info:
-      return Colors.white;
+      return darkTheme ? Colors.white : Colors.black;
     default:
-      return Colors.white;
+      return darkTheme ? Colors.white : Colors.black;
   }
 }
 
-enum ConsoleMessageType {
-  error,
-  info,
-  success
-}
+enum ConsoleMessageType { error, info, success }
 
 class ConsoleMessage {
+  late final String time;
   final String message;
   final ConsoleMessageType type;
 
-  ConsoleMessage(this.message, this.type);
+  ConsoleMessage(this.message, this.type) {
+    time = DateFormatUtils.getCurrentTimeForConsole();
+  }
+}
+
+class CodeBase {
+  final String code;
+  final String scopeName;
+
+  CodeBase(this.code, this.scopeName);
 }

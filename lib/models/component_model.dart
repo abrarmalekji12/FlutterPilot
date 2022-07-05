@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/compiler/code_processor.dart';
 import '../common/compiler/processor_component.dart';
 import '../common/converter/code_converter.dart';
-import '../injector.dart';
+import 'local_model.dart';
 import 'variable_model.dart';
 import 'package:get/get.dart';
 import '../bloc/state_management/state_management_bloc.dart';
@@ -38,6 +38,12 @@ mixin operations {
 
   void replaceChildOperation(Component component, {String? attributeName});
 }
+
+final setStateFunction = FVBFunction(
+    'setState', null, [FVBArgument('callback', dataType: DataType.fvbFunction)],
+    dartCall: (_) {
+
+    });
 
 final Map<String, Component> componentMap = {};
 
@@ -340,7 +346,7 @@ abstract class Component {
   }
 
   Widget build(BuildContext context) {
-    ComponentOperationCubit.codeProcessor = ProcessorProvider.maybeOf(context)!;
+    ComponentOperationCubit.processor = ProcessorProvider.maybeOf(context)!;
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
@@ -523,12 +529,16 @@ abstract class Component {
       boundary = Rect.fromLTWH(position.dx, position.dy, renderBox.size.width,
           renderBox.size.height);
       depth = renderBox.depth;
-      BlocProvider.of<VisualBoxCubit>(context, listen: false).visualUpdated();
+      BlocProvider.of<VisualBoxCubit>(context).visualUpdated();
       logger(
           '======== COMPONENT VISUAL BOX CHANGED  ${boundary?.width} ${renderBox.size.width} ${boundary?.height} ${renderBox.size.height}');
       await Future.delayed(const Duration(milliseconds: 50));
-      position =
-          renderBox.localToGlobal(Offset.zero, ancestor: ancestorRenderBox);
+      if (renderBox.attached) {
+        position =
+            renderBox.localToGlobal(Offset.zero, ancestor: ancestorRenderBox);
+      } else {
+        break;
+      }
     }
   }
 
@@ -563,7 +573,7 @@ abstract class Component {
             break;
           }
           String innerArea = middle.substring(gotIndex, start);
-          if (ComponentOperationCubit.codeProcessor.variables.isNotEmpty) {
+          if (ComponentOperationCubit.processor.variables.isNotEmpty) {
             // for (final variable in ComponentOperationCubit.codeProcessor.variables.values) {
             //   innerArea = innerArea.replaceAll(variable.name,
             //       '${variable!}[index].${variable.name}');
@@ -887,12 +897,34 @@ abstract class ClickableComponent extends Component with Clickable {
 }
 
 mixin Clickable {
+  FVBFunction? function;
   List<ActionModel> actionList = [];
 
-  void perform(BuildContext context, {Map<String, dynamic>? arguments}) {
+  void init(FVBFunction function) {
+    this.function = function;
+  }
+
+  String getDefaultCode() {
+    return function != null
+        ? '''
+           ${LocalModel.dataTypeToCode(function!.returnType)} ${function!.name}(${function!.arguments.map((e) => '${LocalModel.dataTypeToCode(e.dataType)} ${e.name}').join(',')}){
+           // TODO: Implement Logic Here
+           }
+          '''
+        : '';
+  }
+
+  void perform(BuildContext context, {List? arguments}) {
     if (RuntimeProvider.of(context) == RuntimeMode.run) {
       for (final action in actionList) {
-        action.perform(context);
+        if (action is CustomAction) {
+          final processor = ProcessorProvider.maybeOf(context)!;
+          processor.executeCode(action.arguments[0], declarativeOnly: true);
+          processor.functions[function!.name]
+              ?.execute(processor, arguments ?? []);
+        } else {
+          action.perform(context);
+        }
       }
     }
   }
@@ -1140,8 +1172,16 @@ abstract class CustomComponent extends Component {
       this.actionCode = '',
       List<VariableModel>? variables})
       : super(name, []) {
-    processor=
-        CodeProcessor.build(processor: ComponentOperationCubit.codeProcessor,name: name);
+    processor = CodeProcessor.build(
+        processor: ComponentOperationCubit.processor, name: name);
+    if (this is StatefulComponent) {
+      processor.functions['setState'] = FVBFunction('setState', null, [
+        FVBArgument('callback', dataType: DataType.fvbFunction)
+      ], dartCall: (arguments) {
+        (arguments[0] as FVBFunction).execute(processor, []);
+        processor.consoleCallback.call('api:refresh|$id');
+      });
+    }
     processor.variables.addAll((variables ?? [])
         .asMap()
         .map((key, value) => MapEntry(value.name, value)));
@@ -1164,22 +1204,7 @@ abstract class CustomComponent extends Component {
 
   @override
   Widget create(BuildContext context) {
-    if (this is StatelessComponent) {
-      if (RuntimeProvider.of(context) == RuntimeMode.run) {
-        processor.executeCode(actionCode);
-        processor.functions['build']?.execute(processor, []);
-      }
-      return root?.build(context) ?? Container();
-    } else {
-      if (RuntimeProvider.of(context) == RuntimeMode.run) {
-        processor.executeCode(actionCode);
-        processor.functions['initState']?.execute(processor, []);
-      }
-      if (RuntimeProvider.of(context) == RuntimeMode.run) {
-        processor.functions['build']?.execute(processor, []);
-      }
-      return root?.build(context) ?? Container();
-    }
+    return root?.build(context) ?? Container();
   }
 
   void updateRoot(Component? root) {
@@ -1210,16 +1235,25 @@ abstract class CustomComponent extends Component {
         lookForUIChanges(context);
       });
     }
+    processor.executeCode(actionCode);
+    if (this is StatefulComponent) {
+      if (RuntimeProvider.of(context) == RuntimeMode.run) {
+        processor.functions['initState']?.execute(processor, []);
+      }
+    }
     return ProcessorProvider(
       processor,
-      Builder(
-        builder: (context) {
-          return ComponentWidget(
-            key: key(context),
-            child: create(context),
-          );
-        }
-      ),
+      BlocBuilder<StateManagementBloc, StateManagementState>(
+          key: key(context),
+          buildWhen: (previous, current) => current.id == id,
+          builder: (context, state) {
+            if (RuntimeProvider.of(context) == RuntimeMode.run) {
+              processor.functions['build']?.execute(processor, []);
+            }
+            return ComponentWidget(
+              child: create(context),
+            );
+          }),
     );
   }
 
@@ -1269,24 +1303,24 @@ abstract class CustomComponent extends Component {
 
   @override
   Component clone(Component? parent, {bool deepClone = false}) {
-    final comp2 = StatelessComponent(
-      name: name,
-    );
-    comp2.name = name;
+    final CustomComponent customComponent = (this is StatelessComponent)
+        ? StatelessComponent(name: name, actionCode: actionCode)
+        : StatefulComponent(name: name, actionCode: actionCode);
+    customComponent.name = name;
     if (deepClone) {
       for (int i = 0; i < parameters.length; i++) {
-        comp2.parameters[i].cloneOf(parameters[i]);
+        customComponent.parameters[i].cloneOf(parameters[i]);
       }
     } else {
-      comp2.parameters = parameters;
+      customComponent.parameters = parameters;
     }
-    comp2.variables = variables;
-    comp2.root = root?.clone(parent, deepClone: deepClone);
+    customComponent.variables = variables;
+    customComponent.root = root?.clone(parent, deepClone: deepClone);
     if (!deepClone) {
-      comp2.cloneOf = this;
-      cloneElements.add(comp2);
+      customComponent.cloneOf = this;
+      cloneElements.add(customComponent);
     }
-    return comp2;
+    return customComponent;
   }
 
   CustomComponent createInstance(Component? root) {
@@ -1347,6 +1381,12 @@ class _ABCState extends State<ABC> {
 }
 
 class StatelessComponent extends CustomComponent {
+  static const defaultActionCode = ''' 
+   void build(){
+      // this will be called when the component is built
+   }
+      ''';
+
   StatelessComponent(
       {required String name,
       super.actionCode,
@@ -1361,7 +1401,7 @@ class StatelessComponent extends CustomComponent {
   factory StatelessComponent.fromJson(Map<String, dynamic> data) {
     return StatelessComponent(
       name: data['name'],
-      actionCode: data['action_code'] ?? '',
+      actionCode: data['action_code'] ?? defaultActionCode,
       variables: data['variables'] != null
           ? List<VariableModel>.from(data['variables']!
               .map((e) => VariableModel.fromJson(e, data['name'])))
@@ -1376,7 +1416,8 @@ class StatelessComponent extends CustomComponent {
     }
     final CodeProcessor processor = CodeProcessor(
       consoleCallback: (value) {},
-      onError: (error, line) {}, scopeName: 'test',
+      onError: (error, line) {},
+      scopeName: 'test',
     );
     processor.executeCode(actionCode, operationType: OperationType.checkOnly);
     return '''class $name extends StatelessWidget {
@@ -1393,6 +1434,15 @@ class StatelessComponent extends CustomComponent {
 }
 
 class StatefulComponent extends CustomComponent {
+  static const defaultActionCode = ''' 
+     void initState(){
+      // this will be called when the component is created
+      }
+      void build(){
+      // this will be called when the component is built
+      }
+      ''';
+
   StatefulComponent(
       {required String name,
       super.actionCode,
@@ -1407,7 +1457,7 @@ class StatefulComponent extends CustomComponent {
   factory StatefulComponent.fromJson(Map<String, dynamic> data) {
     return StatefulComponent(
       name: data['name'],
-      actionCode: data['action_code'] ?? '',
+      actionCode: data['action_code'] ?? defaultActionCode,
       variables: data['variables'] != null
           ? List<VariableModel>.from(data['variables']!
               .map((e) => VariableModel.fromJson(e, data['name'])))
@@ -1447,5 +1497,4 @@ class ComponentWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return child;
   }
-
 }

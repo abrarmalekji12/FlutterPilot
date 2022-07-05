@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../code_to_component.dart';
 import '../common/common_methods.dart';
+import '../common/compiler/code_processor.dart';
 import '../common/io_lib.dart';
 import '../common/material_alert.dart';
 import '../injector.dart';
@@ -23,11 +24,13 @@ import '../models/component_selection.dart';
 import '../models/parameter_model.dart';
 import '../models/project_model.dart';
 import '../models/variable_model.dart';
+import 'action_code_editor.dart';
 import 'common/action_code_dialog.dart';
+import 'common/badge_widget.dart';
+import 'common/custom_widget_dialog.dart';
 import 'common/variable_dialog.dart';
 import 'project_setting_page.dart';
 import 'component_selection_dialog.dart';
-import 'package:get/get.dart';
 
 import '../component_list.dart';
 
@@ -48,11 +51,10 @@ class _ComponentTreeState extends State<ComponentTree> {
   void initState() {
     super.initState();
     _componentOperationCubit =
-        BlocProvider.of<ComponentOperationCubit>(context, listen: false);
-    _componentCreationCubit =
-        BlocProvider.of<ComponentCreationCubit>(context, listen: false);
+        BlocProvider.of<ComponentOperationCubit>(context);
+    _componentCreationCubit = BlocProvider.of<ComponentCreationCubit>(context);
     _componentSelectionCubit =
-        BlocProvider.of<ComponentSelectionCubit>(context, listen: false);
+        BlocProvider.of<ComponentSelectionCubit>(context);
   }
 
   @override
@@ -71,8 +73,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                     children: [
                       IconButton(
                           onPressed: () {
-                            ComponentOperationCubit.currentFlutterProject =
-                                null;
+                            ComponentOperationCubit.currentProject = null;
 
                             Navigator.pop(context);
                           },
@@ -87,7 +88,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                         child: Text(
                           BlocProvider.of<ComponentOperationCubit>(context,
                                   listen: false)
-                              .flutterProject!
+                              .project!
                               .name,
                           style: AppFontStyle.roboto(16,
                               fontWeight: FontWeight.bold),
@@ -174,8 +175,7 @@ class _ComponentTreeState extends State<ComponentTree> {
               ],
             ),
           ),
-          if (_componentOperationCubit
-              .flutterProject!.uiScreens.isNotEmpty) ...[
+          if (_componentOperationCubit.project!.uiScreens.isNotEmpty) ...[
             BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
               builder: (context, state) {
                 return Padding(
@@ -192,10 +192,10 @@ class _ComponentTreeState extends State<ComponentTree> {
                               child: CustomDropdownButton<UIScreen>(
                                   style: AppFontStyle.roboto(13),
                                   value: _componentOperationCubit
-                                      .flutterProject!.currentScreen,
+                                      .project!.currentScreen,
                                   hint: null,
                                   items: _componentOperationCubit
-                                      .flutterProject!.uiScreens
+                                      .project!.uiScreens
                                       .map<CustomDropdownMenuItem<UIScreen>>(
                                         (e) => CustomDropdownMenuItem<UIScreen>(
                                           value: e,
@@ -213,7 +213,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                                   onChanged: (value) {
                                     if (value !=
                                         _componentOperationCubit
-                                            .flutterProject!.currentScreen) {
+                                            .project!.currentScreen) {
                                       _componentOperationCubit
                                           .changeProjectScreen(value);
                                       _componentSelectionCubit
@@ -276,18 +276,17 @@ class _ComponentTreeState extends State<ComponentTree> {
                               scale: 0.8,
                               child: Checkbox(
                                 onChanged: (value) {
-                                  _componentOperationCubit
-                                          .flutterProject!.mainScreen =
+                                  _componentOperationCubit.project!.mainScreen =
                                       _componentOperationCubit
-                                          .flutterProject!.currentScreen;
+                                          .project!.currentScreen;
                                   _componentOperationCubit
                                       .emit(ComponentUpdatedState());
                                   _componentOperationCubit.updateMainScreen();
                                 },
                                 value: _componentOperationCubit
-                                        .flutterProject!.mainScreen ==
+                                        .project!.mainScreen ==
                                     _componentOperationCubit
-                                        .flutterProject!.currentScreen,
+                                        .project!.currentScreen,
                                 visualDensity: const VisualDensity(
                                     horizontal: -4, vertical: -4),
                                 materialTapTargetSize:
@@ -310,29 +309,27 @@ class _ComponentTreeState extends State<ComponentTree> {
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           children: [
-                            AppIconButton(
-                              icon: Icons.code,
-                              background: Colors.green,
-                              onPress: () {
-                                final screen = ComponentOperationCubit
-                                    .currentFlutterProject!.currentScreen;
-                                final ActionCodeDialog dialog =
-                                    ActionCodeDialog(
-                                        code: screen.actionCode,
-                                        title: screen.name,
-                                        onChanged: (code) {
-                                          _componentOperationCubit
-                                              .updateScreenActionCode(
-                                                  screen, code);
-                                        },
-                                        prerequisites: [
-                                      ComponentOperationCubit
-                                          .currentFlutterProject!.actionCode
-                                    ]);
-                                dialog.show(context);
+                            CustomActionCodeButton(
+                              code: () => _componentOperationCubit
+                                  .project!.currentScreen.actionCode,
+                              title: _componentOperationCubit
+                                  .project!.currentScreen.name,
+                              onChanged: (code) {
+                                _componentOperationCubit.updateScreenActionCode(
+                                    _componentOperationCubit
+                                        .project!.currentScreen,
+                                    code);
                               },
-                              margin: 5,
-                              size: 15,
+                              prerequisites: [
+                                CodeBase(
+                                    ComponentOperationCubit
+                                        .currentProject!.actionCode,
+                                    ComponentOperationCubit
+                                        .currentProject!.processor.scopeName)
+                              ],
+                              onDismiss: () {},
+                              variables: const [],
+                              functions: [setStateFunction],
                             ),
                             const SizedBox(
                               width: 10,
@@ -342,7 +339,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                               background: Colors.blue,
                               onPress: () {
                                 final screen = ComponentOperationCubit
-                                    .currentFlutterProject!.currentScreen;
+                                    .currentProject!.currentScreen;
                                 final componentOperationCubit =
                                     context.read<ComponentOperationCubit>();
                                 final componentCreationCubit =
@@ -395,9 +392,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                           ],
                         ),
                       ),
-                      if (_componentOperationCubit
-                              .flutterProject?.currentScreen !=
-                          _componentOperationCubit.flutterProject?.mainScreen)
+                      if (_componentOperationCubit.project?.currentScreen !=
+                          _componentOperationCubit.project?.mainScreen)
                         TextButton(
                           onPressed: () {
                             showDialog(
@@ -411,13 +407,12 @@ class _ComponentTreeState extends State<ComponentTree> {
                                   _componentOperationCubit
                                       .deleteCurrentUIScreen(
                                           _componentOperationCubit
-                                              .flutterProject!.currentScreen);
-                                  _componentOperationCubit
-                                      .flutterProject!.uiScreens
+                                              .project!.currentScreen);
+                                  _componentOperationCubit.project!.uiScreens
                                       .remove(_componentOperationCubit
-                                          .flutterProject!.currentScreen);
+                                          .project!.currentScreen);
                                   final newScreen = _componentOperationCubit
-                                      .flutterProject!.uiScreens
+                                      .project!.uiScreens
                                       .where((element) =>
                                           element.rootComponent?.name ==
                                               'Scaffold' ||
@@ -516,9 +511,9 @@ class _ComponentTreeState extends State<ComponentTree> {
                                   padding: const EdgeInsets.all(6),
                                   child: SublistWidget(
                                       component: _componentOperationCubit
-                                          .flutterProject!.rootComponent!,
+                                          .project!.rootComponent!,
                                       ancestor: _componentOperationCubit
-                                          .flutterProject!.rootComponent!,
+                                          .project!.rootComponent!,
                                       componentSelectionCubit:
                                           _componentSelectionCubit,
                                       componentOperationCubit:
@@ -542,16 +537,16 @@ class _ComponentTreeState extends State<ComponentTree> {
                                         borderRadius: BorderRadius.circular(10),
                                         onTap: () {
                                           //ADD Custom Widgets
-                                          showScreenNameDialog(
-                                              context, 'Enter widget name',
-                                              (name, _) {
-                                            Navigator.pop(context);
+                                          showCustomWidgetAdd(context,
+                                              (type, value) {
                                             BlocProvider.of<
                                                         ComponentOperationCubit>(
                                                     context,
                                                     listen: false)
-                                                .addCustomComponent(name);
-                                          }, type: false);
+                                                .addCustomComponent(
+                                                    value, type);
+                                            Navigator.pop(context);
+                                          });
                                         },
                                         child: const CircleAvatar(
                                           radius: 10,
@@ -568,7 +563,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                                 ),
                                 for (final CustomComponent comp
                                     in _componentOperationCubit
-                                        .flutterProject!.customComponents) ...[
+                                        .project!.customComponents) ...[
                                   CustomComponentWidget(
                                     comp: comp,
                                     _componentSelectionCubit,
@@ -643,6 +638,85 @@ class _ComponentTreeState extends State<ComponentTree> {
       ),
     );
   }
+
+  void showCustomWidgetAdd(BuildContext context,
+      Function(CustomWidgetType type, String value) param1) {
+    CustomDialog.show(
+      context,
+      CustomWidgetDialog(
+        onSubmit: param1,
+      ),
+    );
+  }
+}
+
+class CustomActionCodeButton extends StatefulWidget {
+  final String Function() code;
+  final String title;
+  final List<VariableModel> variables;
+  final List<FVBFunction> functions;
+  final void Function(String) onChanged;
+  final List<CodeBase>? prerequisites;
+  final void Function() onDismiss;
+
+  const CustomActionCodeButton(
+      {Key? key,
+      required this.code,
+      required this.functions,
+      required this.title,
+      required this.variables,
+      required this.onChanged,
+      this.prerequisites,
+      required this.onDismiss})
+      : super(key: key);
+
+  @override
+  State<CustomActionCodeButton> createState() => _CustomActionCodeButtonState();
+}
+
+class _CustomActionCodeButtonState extends State<CustomActionCodeButton> {
+  bool error = false;
+  late ActionCodeDialog dialog;
+
+  @override
+  void initState() {
+    dialog = ActionCodeDialog(
+      onChanged: widget.onChanged,
+      onError: (error) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          setState(() {
+            this.error = error;
+          });
+        });
+      },
+      onDismiss: widget.onDismiss,
+      context: context,
+      title: widget.title,
+      functions: widget.functions,
+    );
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BadgeWidget(
+      error: error,
+      child: AppIconButton(
+        icon: Icons.code,
+        background: Colors.green,
+        onPress: () {
+          dialog.show(
+            context,
+            variables: widget.variables,
+            code: widget.code.call(),
+            prerequisites: widget.prerequisites,
+          );
+        },
+        margin: 5,
+        size: 15,
+      ),
+    );
+  }
 }
 
 class CustomComponentWidget extends StatelessWidget {
@@ -667,25 +741,24 @@ class CustomComponentWidget extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              AppIconButton(
-                icon: Icons.code,
-                background: Colors.green,
-                onPress: () {
-                  final ActionCodeDialog dialog = ActionCodeDialog(
-                      code: comp.actionCode,
-                      title: comp.name,
-                      onChanged: (code) {
-                        _componentOperationCubit
-                            .updateCustomComponentActionCode(comp, code);
-                      },
-                      prerequisites: [
-                        ComponentOperationCubit
-                            .currentFlutterProject!.actionCode
-                      ]);
-                  dialog.show(context);
+              CustomActionCodeButton(
+                code: () => comp.actionCode,
+                title: comp.name,
+                onChanged: (code) {
+                  _componentOperationCubit.updateCustomComponentActionCode(
+                      comp, code);
                 },
-                margin: 5,
-                size: 15,
+                prerequisites: [
+                  CodeBase(
+                      ComponentOperationCubit.currentProject!.actionCode,
+                      ComponentOperationCubit
+                          .currentProject!.processor.scopeName)
+                ],
+                onDismiss: () {
+                  context.read<ComponentCreationCubit>().changedComponent();
+                },
+                variables: comp.variables.values.toList(),
+                functions: [setStateFunction],
               ),
               const SizedBox(
                 width: 10,
@@ -722,12 +795,26 @@ class CustomComponentWidget extends StatelessWidget {
         ),
         OnHoverMenuChangeWidget(
           buildWidget: (showMenu) => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               ComponentTile(
                   component: comp,
                   ancestor: comp,
                   componentSelectionCubit: _componentSelectionCubit),
+              const SizedBox(
+                width: 20,
+              ),
+              Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.theme,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    comp is StatelessComponent ? 'Stateless' : 'Stateful',
+                    style: AppFontStyle.roboto(13, color: Colors.white),
+                  )),
+              const Spacer(),
               if (showMenu)
                 ComponentModificationMenu(
                   component: comp,
@@ -1615,17 +1702,16 @@ class _SublistWidgetState extends State<SublistWidget> {
   void performReversibleOperation(void Function() work) {
     final operation = Operation(
         CodeOperations.trim(widget
-            .componentOperationCubit.flutterProject!.rootComponent!
+            .componentOperationCubit.project!.rootComponent!
             .code(clean: false))!,
         widget.componentSelectionCubit.currentSelected.treeSelection.first.id);
     widget.componentOperationCubit.revertWork.add(operation, work, (p0) {
       final Operation operation = p0;
-      widget.componentOperationCubit.flutterProject!.setRootComponent =
+      widget.componentOperationCubit.project!.setRootComponent =
           Component.fromCode(
-              operation.code, widget.componentOperationCubit.flutterProject!);
+              operation.code, widget.componentOperationCubit.project!);
       widget.componentOperationCubit.emit(ComponentUpdatedState());
-      widget.componentOperationCubit.flutterProject!.rootComponent!
-          .forEach((comp) {
+      widget.componentOperationCubit.project!.rootComponent!.forEach((comp) {
         if (comp.name == 'Image.asset') {
           final imageData = (comp.parameters[0].value as ImageData);
           if (widget.componentOperationCubit.byteCache
@@ -1835,8 +1921,7 @@ class ComponentModificationMenu extends StatelessWidget {
           if (!disableOperations &&
               menuEnable &&
               customNamed == null &&
-              component !=
-                  componentOperationCubit.flutterProject!.rootComponent!) ...[
+              component != componentOperationCubit.project!.rootComponent!) ...[
             CustomPopupMenuButton(
               itemHeight: 60,
               itemBuilder: (context) {
@@ -1893,7 +1978,7 @@ class ComponentModificationMenu extends StatelessWidget {
                         customNamed == null &&
                         component.type != 1 &&
                         component !=
-                            componentOperationCubit.flutterProject!
+                            componentOperationCubit.project!
                                 .rootComponent! // &&   (component.type == 2 && compChildren >= 1)
                     ) {
                   list.add('remove tree');
@@ -1917,9 +2002,8 @@ class ComponentModificationMenu extends StatelessWidget {
                 } else if (e == 'remove from favourites') {
                   componentOperationCubit.removeFromFavourites(component);
                 } else if (e == 'create custom widget') {
-                  showCustomWidgetRename(context, 'Enter name of widget',
-                      (value) {
-                    componentOperationCubit.addCustomComponent(value,
+                  showCustomWidgetAdd(context, (type, value) {
+                    componentOperationCubit.addCustomComponent(value, type,
                         root: component);
 
                     Navigator.pop(context);
@@ -2082,8 +2166,7 @@ class ComponentModificationMenu extends StatelessWidget {
           componentSelectionCubit.currentSelected.treeSelection.first.id);
     } else {
       operation = Operation(
-          CodeOperations.trim(componentOperationCubit
-              .flutterProject!.rootComponent!
+          CodeOperations.trim(componentOperationCubit.project!.rootComponent!
               .code(clean: false))!,
           componentSelectionCubit.currentSelected.treeSelection.first.id);
     }
@@ -2091,7 +2174,7 @@ class ComponentModificationMenu extends StatelessWidget {
       final Operation operation = p0;
       if (ancestor is CustomComponent) {
         (ancestor as CustomComponent).root = Component.fromCode(
-            operation.code, componentOperationCubit.flutterProject!);
+            operation.code, componentOperationCubit.project!);
         componentOperationCubit.emit(ComponentUpdatedState());
         componentOperationCubit
             .refreshCustomComponents(ancestor as CustomComponent);
@@ -2111,11 +2194,10 @@ class ComponentModificationMenu extends StatelessWidget {
           }
         });
       } else {
-        componentOperationCubit.flutterProject!.setRootComponent =
-            Component.fromCode(
-                operation.code, componentOperationCubit.flutterProject!);
+        componentOperationCubit.project!.setRootComponent = Component.fromCode(
+            operation.code, componentOperationCubit.project!);
         componentOperationCubit.emit(ComponentUpdatedState());
-        componentOperationCubit.flutterProject!.rootComponent!.forEach((comp) {
+        componentOperationCubit.project!.rootComponent!.forEach((comp) {
           if (comp.name == 'Image.asset') {
             final imageData = (comp.parameters[0].value as ImageData);
             if (componentOperationCubit.byteCache
@@ -2327,6 +2409,15 @@ class ComponentModificationMenu extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void showCustomWidgetAdd(
+      BuildContext context, Function(CustomWidgetType, String) onAdd) {
+    CustomDialog.show(
+        context,
+        CustomWidgetDialog(
+          onSubmit: onAdd,
+        ));
   }
 }
 

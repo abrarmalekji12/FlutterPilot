@@ -27,20 +27,20 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
 
   ScreenConfigCubit() : super(ScreenConfigInitial()) {
     screenConfig = screenConfigs[0];
-    ComponentOperationCubit.codeProcessor.variables['dw'] = VariableModel(
+    ComponentOperationCubit.processor.variables['dw'] = VariableModel(
         'dw', screenConfig.width, true, 'device width', DataType.double, '',
         assignmentCode: 'MediaQuery.maybeOf(context)?.size.width??0',
         deletable: false);
-    ComponentOperationCubit.codeProcessor.variables['dh'] = VariableModel(
+    ComponentOperationCubit.processor.variables['dh'] = VariableModel(
         'dh', screenConfig.height, true, 'device height', DataType.double, '',
         assignmentCode: 'MediaQuery.maybeOf(context)?.size.height??0',
         deletable: false);
   }
 
   void applyCurrentSizeToVariables() {
-    ComponentOperationCubit.codeProcessor.variables['dw']!.value =
+    ComponentOperationCubit.currentProject!.variables['dw']!.value =
         screenConfig.width;
-    ComponentOperationCubit.codeProcessor.variables['dh']!.value =
+    ComponentOperationCubit.currentProject!.variables['dh']!.value =
         screenConfig.height;
   }
 
@@ -70,9 +70,9 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
 
   void changeScreenConfig(ScreenConfig config) {
     screenConfig = config;
-    ComponentOperationCubit.currentFlutterProject!.variables['dw']!.value =
+    ComponentOperationCubit.currentProject!.variables['dw']!.value =
         screenConfig.width;
-    ComponentOperationCubit.currentFlutterProject!.variables['dh']!.value =
+    ComponentOperationCubit.currentProject!.variables['dh']!.value =
         screenConfig.height;
     emit(ScreenConfigChangeState());
   }

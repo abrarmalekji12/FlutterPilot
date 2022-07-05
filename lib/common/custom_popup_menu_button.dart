@@ -61,7 +61,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
       return GestureDetector(
         onTap: () {
           overlayEntry?.remove();
-            expanded = false;
+          expanded = false;
         },
         child: Material(
           color: Colors.transparent,
@@ -132,7 +132,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                                     filteredItems[i].value
                                                         as T);
                                                 overlayEntry?.remove();
-                                                  expanded = false;
+                                                expanded = false;
                                               },
                                               borderRadius:
                                                   BorderRadius.circular(10),
@@ -156,7 +156,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
         ),
       );
     });
-    if(kIsWeb) {
+    if (kIsWeb) {
       html.window.onResize.listen((event) {
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           overlayEntry?.markNeedsBuild();

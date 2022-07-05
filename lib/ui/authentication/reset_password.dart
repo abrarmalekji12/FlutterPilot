@@ -35,7 +35,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   void initState() {
     super.initState();
     _authenticationCubit =
-        BlocProvider.of<AuthenticationCubit>(context, listen: false);
+        BlocProvider.of<AuthenticationCubit>(context);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _userNameController.text = _authenticationCubit.authViewModel.userName;
     });
@@ -52,8 +52,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           AppLoader.show(context);
         } else if (state is AuthSuccessState) {
           AppLoader.hide();
-          Navigator.pushReplacementNamed(context, '/projects',arguments: state.userId);
-
+          Navigator.pushReplacementNamed(context, '/projects',
+              arguments: state.userId);
         } else if (state is AuthFailedState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
@@ -62,14 +62,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           Fluttertoast.showToast(
               msg: 'Please check your email box.', timeInSecForIosWeb: 3);
 
-          Navigator.pushReplacementNamed(context,'/login');
+          Navigator.pushReplacementNamed(context, '/login');
         } else if (state is AuthErrorState) {
           AppLoader.hide();
           Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
         }
       },
       child: AuthenticationPage(
-        widget: ()=>SingleChildScrollView(
+        widget: () => SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -123,8 +123,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           TextSpan(
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-
-                                Navigator.pushReplacementNamed(context,'/register');
+                                Navigator.pushReplacementNamed(
+                                    context, '/register');
                               },
                             text: ' Create New',
                             style: GoogleFonts.getFont(

@@ -77,9 +77,7 @@ class MaterialSimpleAlertDialog extends StatelessWidget {
                             buttonText: negativeButtonText!,
                             onPress: () {
                               onNegativeTap?.call();
-                              BlocProvider.of<StackActionCubit>(context,
-                                      listen: false)
-                                  .back();
+                              BlocProvider.of<StackActionCubit>(context).back();
                             },
                           ),
                           const SizedBox(
@@ -92,9 +90,7 @@ class MaterialSimpleAlertDialog extends StatelessWidget {
                           buttonText: positiveButtonText,
                           onPress: () {
                             onPositiveTap?.call();
-                            BlocProvider.of<StackActionCubit>(context,
-                                    listen: false)
-                                .back();
+                            BlocProvider.of<StackActionCubit>(context).back();
                           },
                         ),
                       ],

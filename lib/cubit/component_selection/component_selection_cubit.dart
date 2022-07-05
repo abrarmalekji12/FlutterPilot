@@ -8,9 +8,8 @@ import '../../models/component_selection.dart';
 part 'component_selection_state.dart';
 
 class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
-  ComponentSelectionModel currentSelected =
-      ComponentSelectionModel.unique(CNotRecognizedWidget());
-  Component currentSelectedRoot = CNotRecognizedWidget();
+  late ComponentSelectionModel currentSelected;
+  late Component currentSelectedRoot;
   Component? lastTapped;
 
   ComponentSelectionCubit() : super(ComponentSelectionInitial());

@@ -105,7 +105,7 @@ class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
         ),
       );
     });
-    if(kIsWeb) {
+    if (kIsWeb) {
       html.window.onResize.listen((event) {
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           overlayEntry?.markNeedsBuild();

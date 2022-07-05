@@ -48,7 +48,6 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
       onTap: () {
         if (widget.componentOperationCubit.state
             is! ComponentOperationLoadingState) {
-
           Navigator.pop(context);
         }
       },
@@ -85,7 +84,7 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                                 .byteCache[value.name] = bytes;
                             widget.componentOperationCubit
                                 .uploadImage(imageData);
-                            Navigator.pop(context,imageData);
+                            Navigator.pop(context, imageData);
                           });
                         }
                       });
@@ -162,7 +161,8 @@ class _ImageSelectionWidgetState extends State<ImageSelectionWidget> {
                                           filteredImageDataList![index]
                                               .imageName!] =
                                       filteredImageDataList![index].bytes!;
-                                  Navigator.pop(context, filteredImageDataList![index]);
+                                  Navigator.pop(
+                                      context, filteredImageDataList![index]);
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(5),

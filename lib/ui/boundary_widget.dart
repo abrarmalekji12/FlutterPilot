@@ -28,12 +28,12 @@ class BoundaryWidget extends StatelessWidget {
                 painter: BoundaryPainter(
                     boundaries: boundaries,
                     errorBoundary:
-                        BlocProvider.of<VisualBoxCubit>(context, listen: false)
+                        BlocProvider.of<VisualBoxCubit>(context)
                                     .errorMessage !=
                                 null
                             ? BlocProvider.of<ComponentOperationCubit>(context,
                                     listen: false)
-                                .flutterProject!
+                                .project!
                                 .rootComponent!
                                 .boundary!
                             : null),
@@ -46,7 +46,7 @@ class BoundaryWidget extends StatelessWidget {
   }
 
   List<Boundary> getAllBoundaries(BuildContext context) {
-    return BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+    return BlocProvider.of<ComponentSelectionCubit>(context)
         .currentSelected
         .visualSelection
         .where((element) => element.boundary != null)
@@ -64,38 +64,38 @@ class BoundaryWidget extends StatelessWidget {
 
 // List<Boundary> getAllBoundaries(BuildContext context) {
 //   final List<Boundary> boundaries = [];
-//   if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//   if (BlocProvider.of<ComponentSelectionCubit>(context)
 //       .currentSelected is CustomComponent) {
-//     if ((BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//     if ((BlocProvider.of<ComponentSelectionCubit>(context)
 //                 .currentSelected as CustomComponent)
 //             .root
 //             ?.boundary !=
 //         null) {
 //       boundaries.add(Boundary(
-//           (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//           (BlocProvider.of<ComponentSelectionCubit>(context)
 //                   .currentSelected as CustomComponent)
 //               .root!
 //               .boundary!,
-//           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//           BlocProvider.of<ComponentSelectionCubit>(context)
 //               .currentSelected
 //               .));
 //     }
-//   } else if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//   } else if (BlocProvider.of<ComponentSelectionCubit>(context)
 //       .currentSelectedRoot is CustomComponent) {
 //     final rootComp =
-//         BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//         BlocProvider.of<ComponentSelectionCubit>(context)
 //             .currentSelectedRoot as CustomComponent;
 //     addCustomComponentInstancesBoundary(context, rootComp, boundaries);
-//   } else if (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//   } else if (BlocProvider.of<ComponentSelectionCubit>(context)
 //           .currentSelected
 //           .boundary !=
 //       null) {
 //     boundaries.add(
 //       Boundary(
-//           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//           BlocProvider.of<ComponentSelectionCubit>(context)
 //               .currentSelected
 //               .boundary!,
-//           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//           BlocProvider.of<ComponentSelectionCubit>(context)
 //               .currentSelected
 //               .name),
 //     );
@@ -108,9 +108,9 @@ class BoundaryWidget extends StatelessWidget {
 //     CustomComponent rootComp, List<Boundary> boundaries) {
 //   final comp = CustomComponent.findSameLevelComponent(
 //       rootComp,
-//       (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//       (BlocProvider.of<ComponentSelectionCubit>(context)
 //           .currentSelectedRoot as CustomComponent),
-//       BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//       BlocProvider.of<ComponentSelectionCubit>(context)
 //           .currentSelected);
 //   if (comp.boundary != null) {
 //     boundaries.add(Boundary(comp.boundary!, comp.name));
@@ -118,9 +118,9 @@ class BoundaryWidget extends StatelessWidget {
 //     for (final customComponent in rootComp.objects) {
 //       final comp = CustomComponent.findSameLevelComponent(
 //           customComponent,
-//           (BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//           (BlocProvider.of<ComponentSelectionCubit>(context)
 //               .currentSelectedRoot as CustomComponent),
-//           BlocProvider.of<ComponentSelectionCubit>(context, listen: false)
+//           BlocProvider.of<ComponentSelectionCubit>(context)
 //               .currentSelected);
 //       if (comp.boundary != null) {
 //         boundaries.add(Boundary(comp.boundary!, comp.name));
