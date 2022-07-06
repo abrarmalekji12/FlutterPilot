@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/action_code/action_code_bloc.dart';
-import '../bloc/error/error_bloc.dart';
-import '../common/app_text_field.dart';
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../common/custom_text_field.dart';
@@ -12,15 +10,12 @@ import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/action_edit/action_edit_cubit.dart';
 import '../cubit/click_action/click_action_cubit.dart';
-import '../cubit/component_creation/component_creation_cubit.dart';
-import '../cubit/component_creation/component_creation_cubit.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/component_selection/component_selection_cubit.dart';
 import '../models/actions/action_model.dart';
 import '../models/component_model.dart';
 import '../models/project_model.dart';
 import 'action_code_editor.dart';
-import 'common/badge_widget.dart';
 import 'parameter_ui.dart';
 
 class ActionModelWidget extends StatefulWidget {
@@ -381,7 +376,7 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
           ),
           SizedBox(
             height: 400,
-            child: oiBlocBuilder<ActionCodeBloc, ActionCodeState>(
+            child: BlocBuilder<ActionCodeBloc, ActionCodeState>(
               builder: (context, state) {
                 final extraCodeBase = (root is CustomComponent)
                     ? CodeBase((root as CustomComponent).actionCode,

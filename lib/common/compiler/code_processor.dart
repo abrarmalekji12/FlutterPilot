@@ -440,7 +440,11 @@ class CodeProcessor {
       underScoreCodeUnit = '_'.codeUnits.first,
       questionMarkCodeUnit = '?'.codeUnits.first,
       roundBracketClose = ')'.codeUnits.first,
-      roundBracketOpen = '('.codeUnits.first;
+      roundBracketOpen = '('.codeUnits.first,
+      squareBracketClose = ']'.codeUnits.first,
+      squareBracketOpen = '['.codeUnits.first,
+      curlyBracketClose = '}'.codeUnits.first,
+      curlyBracketOpen = '{'.codeUnits.first;
   static final zeroCodeUnit = '0'.codeUnits.first,
       nineCodeUnit = '9'.codeUnits.first,
       dotCodeUnit = '.'.codeUnits.first,
@@ -1440,10 +1444,18 @@ class CodeProcessor {
       } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
           (ch >= zeroCodeUnit && ch <= nineCodeUnit) ||
           ch == underScoreCodeUnit ||
-          ch == '['.codeUnits.first ||
-          ch == ']'.codeUnits.first ||
-          ch == '?'.codeUnits.first ||
+          ch == squareBracketOpen||
+          ch == squareBracketClose ||
+          ch == questionMarkCodeUnit ||
           ch == '~'.codeUnits.first) {
+        if(ch == questionMarkCodeUnit){
+          final colonIndex=CodeOperations.findChar(input, currentIndex+1, colonCodeUnit);
+          if(colonIndex!=-1){
+
+            valueStack.push(FVBValue(value: process(input.substring(currentIndex, colonIndex))));
+            continue;
+          }
+        }
         if (ch == '~'.codeUnits.first ||
             (ch >= zeroCodeUnit && ch <= nineCodeUnit)) {
           isNumber = true;

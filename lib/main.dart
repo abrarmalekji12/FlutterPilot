@@ -61,10 +61,12 @@ void main() async {
       },
       scopeName: 'test');
   const code = '''
-String str="Hello World";
+  
 int i=0;
+// String str=i==0?"Hello World":"No World";
 var ab;
 ab="";
+print(str);
  ''';
 
   /*
@@ -130,7 +132,7 @@ addStudent();
   // 4. Stream type variable
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  runApp(const MyApp());
+  // runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

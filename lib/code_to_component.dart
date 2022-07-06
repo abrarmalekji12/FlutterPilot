@@ -169,7 +169,28 @@ abstract class CodeOperations {
         return null;
     }
   }
-
+  static int findChar(
+      String input,
+      int startIndex,
+      int target,
+      ) {
+    int count = 0;
+    for (int i = startIndex + 1; i < input.length; i++) {
+      final unit = input[i].codeUnits.first;
+      if (unit == target) {
+        if (count == 0) {
+          return i;
+        }
+      }
+      if(unit == CodeProcessor.roundBracketOpen||unit == CodeProcessor.squareBracketOpen||unit == CodeProcessor.curlyBracketOpen){
+        count++;
+      }
+      else if (unit == CodeProcessor.roundBracketClose || unit == CodeProcessor.squareBracketClose || unit == CodeProcessor.curlyBracketClose) {
+        count--;
+      }
+    }
+    return -1;
+  }
   static int findCloseBracket(
     String input,
     int openIndex,
