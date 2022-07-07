@@ -1,29 +1,28 @@
-import 'package:flutter_builder/ui/route_not_found.dart';
-
-import 'bloc/action_code/action_code_bloc.dart';
-import 'bloc/error/error_bloc.dart';
-import 'common/html_lib.dart' as html;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'cubit/component_creation/component_creation_cubit.dart';
-import 'ui/home/landing_page.dart';
-import 'cubit/component_operation/component_operation_cubit.dart';
-import 'models/actions/action_model.dart';
-import 'ui/project_selection_page.dart';
+import 'package:flutter_builder/ui/route_not_found.dart';
 import 'package:url_strategy/url_strategy.dart';
 
+import 'bloc/action_code/action_code_bloc.dart';
+import 'bloc/error/error_bloc.dart';
 import 'bloc/state_management/state_management_bloc.dart';
 import 'common/compiler/code_processor.dart';
+import 'common/html_lib.dart' as html;
 import 'common/shared_preferences.dart';
 import 'constant/app_colors.dart';
 import 'cubit/authentication/authentication_cubit.dart';
+import 'cubit/component_creation/component_creation_cubit.dart';
+import 'cubit/component_operation/component_operation_cubit.dart';
 import 'cubit/flutter_project/flutter_project_cubit.dart';
 import 'cubit/stack_action/stack_action_cubit.dart';
 import 'injector.dart';
+import 'models/actions/action_model.dart';
+import 'ui/home/landing_page.dart';
 import 'ui/home_page.dart';
+import 'ui/project_selection_page.dart';
 
 /// Bubble sort algo
 // sort(arr){
@@ -61,9 +60,8 @@ void main() async {
       },
       scopeName: 'test');
   const code = '''
-  
-int i=0;
-// String str=i==0?"Hello World":"No World";
+  final i=0;
+String str=i==0&&5>2?"Hello World":"No World";
 var ab;
 ab="";
 print(str);
@@ -142,8 +140,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      html.document
-          .addEventListener('contextmenu', (event) => event.preventDefault());
+      html.document.addEventListener('contextmenu', (event) => event.preventDefault());
     }
     if (!kDebugMode) {
       FlutterError.onError = (
@@ -154,8 +151,8 @@ class MyApp extends StatelessWidget {
 
         final exception = details.exception;
         if (exception is FlutterError) {
-          ifIsOverflowError = !exception.diagnostics.any((e) =>
-              e.value.toString().startsWith('A RenderFlex overflowed by'));
+          ifIsOverflowError =
+              !exception.diagnostics.any((e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
         }
 
         // Ignore if is overflow error.
@@ -243,24 +240,17 @@ class MyApp extends StatelessWidget {
           }
           return getRoute((p0) => const RouteNotFound(), link);
         },
-        theme: ThemeData(
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-            primaryColor: AppColors.theme),
+        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity, primaryColor: AppColors.theme),
       ),
     );
   }
 }
 
-getRoute(Widget Function(BuildContext) builder, String? name,
-    {bool anim = true}) {
+getRoute(Widget Function(BuildContext) builder, String? name, {bool anim = true}) {
   if (!anim) {
-    return CustomPageRoute(
-        builder: builder,
-        settings: name != null ? RouteSettings(name: name) : null);
+    return CustomPageRoute(builder: builder, settings: name != null ? RouteSettings(name: name) : null);
   }
-  return MaterialPageRoute(
-      builder: builder,
-      settings: name != null ? RouteSettings(name: name) : null);
+  return MaterialPageRoute(builder: builder, settings: name != null ? RouteSettings(name: name) : null);
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
