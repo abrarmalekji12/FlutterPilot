@@ -60,11 +60,11 @@ void main() async {
       },
       scopeName: 'test');
   const code = '''
-  final i=0;
-String str=i==0&&5>2?"Hello World":"No World";
-var ab;
-ab="";
+bool getVal()=>false;
+final i=0;
+String str=getVal()?"Hello World":"No World";
 print(str);
+
  ''';
 
   /*

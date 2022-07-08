@@ -6,7 +6,7 @@ import 'code_processor.dart';
 
 class FunctionProcessor {
   static FVBFunction parse(
-      CodeProcessor processor, String name, String argument, String body) {
+      CodeProcessor processor, String name, String argument, String body,{bool lambda=false}) {
     final argumentList = CodeOperations.splitBy(argument);
     if (name.isNotEmpty) {
       final split = name.split('~');
@@ -21,7 +21,7 @@ class FunctionProcessor {
           returnType: split.length == 2
               ? LocalModel.codeToDatatype(dataTypeCode, processor.classes)
               : DataType.dynamic,
-          canReturnNull: nullable);
+          canReturnNull: nullable,isLambda: lambda);
       if (processor.operationType == OperationType.checkOnly) {
         function.execute(processor,
             argumentList.map((e) => FVBUndefined('')).toList(growable: false));

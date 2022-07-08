@@ -242,9 +242,10 @@ class FVBFunction {
   final List<FVBArgument> arguments;
   final DataType returnType;
   final bool canReturnNull;
+  final bool isLambda;
 
   FVBFunction(this.name, this.code, this.arguments,
-      {this.returnType = DataType.dynamic, this.canReturnNull = false, this.dartCall});
+      {this.returnType = DataType.dynamic, this.canReturnNull = false, this.dartCall, this.isLambda=false,});
 
   dynamic execute(final CodeProcessor processor, final List<dynamic> argumentValues) {
     if (arguments.length != argumentValues.length) {
@@ -276,7 +277,7 @@ class FVBFunction {
     }
     final variables = Map<String, VariableModel>.from(processor.variables);
     final returnedOutput = processor.execute(code!);
-    final output = returnedOutput is FVBReturn ? returnedOutput.value : null;
+    final output = isLambda?returnedOutput:(returnedOutput is FVBReturn ? returnedOutput.value : null);
     processor.variables.clear();
     processor.variables.addAll(variables);
     for (int i = 0; i < arguments.length; i++) {
@@ -689,10 +690,10 @@ class CodeProcessor {
     if (ch == '=') {
       return 1;
     }
-    if(ch=='&&'||ch=='||'){
+    if(ch=='&&'||ch=='||'|| ch == '?'){
       return 2;
     }
-    if (ch == '<' || ch == '>' || ch == '<=' || ch == '>=' || ch == '==' || ch == '!=' || ch == '?') {
+    if (ch == '<' || ch == '>' || ch == '<=' || ch == '>=' || ch == '==' || ch == '!=' ) {
       return 3;
     }
     if (ch == '+' || ch == '-' || ch == '|' || ch == '&' || ch == '!') {
@@ -1234,7 +1235,7 @@ class CodeProcessor {
     }
 
     this.declarativeOnly = oldDeclarativeMode;
-    return;
+    return globalOutput;
   }
 
   dynamic process<T>(
@@ -1367,6 +1368,8 @@ class CodeProcessor {
               if (error) {
                 return null;
               }
+
+
               processOperator(operatorStack.pop()!, valueStack, operatorStack);
             }
             operatorStack.push('?');
@@ -1408,16 +1411,16 @@ class CodeProcessor {
         }
       } else {
         if (variable.isNotEmpty && ch == '('.codeUnits[0]) {
-          final int m = CodeOperations.findCloseBracket(input, currentIndex, '('.codeUnits.first, ')'.codeUnits.first);
+          final int closeRoundBracket = CodeOperations.findCloseBracket(input, currentIndex, '('.codeUnits.first, ')'.codeUnits.first);
 
           if (variable == 'for') {
             if (declarativeOnly) {
               showError('for is not allowed in declarative mode');
               return;
             }
-            int endIndex = CodeOperations.findCloseBracket(input, m + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-            final insideFor = input.substring(currentIndex + 1, m);
-            final innerCode = input.substring(m + 2, endIndex);
+            int endIndex = CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
+            final insideFor = input.substring(currentIndex + 1, closeRoundBracket);
+            final innerCode = input.substring(closeRoundBracket + 2, endIndex);
             final splits = CodeOperations.splitBy(insideFor, splitBy: ';');
             if (splits.length != 3) {
               if (insideFor.contains(':')) {
@@ -1464,13 +1467,13 @@ class CodeProcessor {
             currentIndex = endIndex;
             continue;
           }
-          final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, m));
+          final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeRoundBracket));
 
-          if (scope == Scope.object && (input.length <= m + 1 || input[m + 1] != '{')) {
-            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, m));
+          if (declarativeOnly && (input.length <= closeRoundBracket + 1 || input[closeRoundBracket + 1] != '{')) {
+            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeRoundBracket));
             functions[variable] = FVBFunction(variable, '', processArgDefinitionList(argumentList));
             variable = '';
-            currentIndex = m;
+            currentIndex = closeRoundBracket;
             continue;
           } else if (classes.containsKey(variable)) {
             final fvbClass = classes[variable]!;
@@ -1484,7 +1487,7 @@ class CodeProcessor {
               ),
             );
             variable = '';
-            currentIndex = m;
+            currentIndex = closeRoundBracket;
             continue;
           } else if (object.isNotEmpty) {
             final objectInstance = getValue(object);
@@ -1554,7 +1557,8 @@ class CodeProcessor {
                       value: objectInstance.replaceRange(processedArgs[0], processedArgs[1], processedArgs[2])));
                   break;
               }
-            } else if (objectInstance is Iterable) {
+            }
+            else if (objectInstance is Iterable) {
               final processedArgs = argumentList.map((e) => process(e)).toList();
               switch (variable) {
                 case 'add':
@@ -1707,7 +1711,8 @@ class CodeProcessor {
                   }
                   break;
               }
-            } else if (objectInstance is Map) {
+            }
+            else if (objectInstance is Map) {
               final processedArgs = argumentList.map((e) => process(e)).toList();
               switch (variable) {
                 case 'remove':
@@ -1736,17 +1741,17 @@ class CodeProcessor {
             }
             variable = '';
             object = '';
-            currentIndex = m;
+            currentIndex = closeRoundBracket;
             continue;
           } else if (variable == 'while') {
             if (declarativeOnly) {
               showError('While statement is not allowed in declarative mode');
               return;
             }
-            int endIndex = CodeOperations.findCloseBracket(input, m + 1, '{'.codeUnits.first, '}'.codeUnits.first);
+            int endIndex = CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
 
-            final innerCode = input.substring(m + 2, endIndex);
-            final conditionalCode = input.substring(currentIndex + 1, m);
+            final innerCode = input.substring(closeRoundBracket + 2, endIndex);
+            final conditionalCode = input.substring(currentIndex + 1, closeRoundBracket);
             int count = 0;
             while (process(conditionalCode) == true) {
               final output = execute(innerCode);
@@ -1762,14 +1767,15 @@ class CodeProcessor {
             variable = '';
             currentIndex = endIndex;
             continue;
-          } else if (variable == 'if') {
+          }
+          else if (variable == 'if') {
             if (declarativeOnly) {
               showError('If statement is not allowed in declarative mode');
               return;
             }
             final List<ConditionalStatement> conditionalStatements = [];
-            int endBracket = CodeOperations.findCloseBracket(input, m + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-            conditionalStatements.add(ConditionalStatement(argumentList[0], input.substring(m + 2, endBracket)));
+            int endBracket = CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
+            conditionalStatements.add(ConditionalStatement(argumentList[0], input.substring(closeRoundBracket + 2, endBracket)));
             currentIndex = endBracket;
             while (input.length > endBracket + 7 && input.substring(endBracket + 1, endBracket + 5) == 'else') {
               int startBracket = endBracket + 6;
@@ -1822,16 +1828,17 @@ class CodeProcessor {
             }
             variable = '';
             continue;
-          } else if (variable == 'switch') {
+          }
+          else if (variable == 'switch') {
             if (declarativeOnly) {
               showError('Switch statement is not allowed in declarative mode');
               return;
             }
             final value = process(argumentList[0]);
-            int endBracket = CodeOperations.findCloseBracket(input, m + 1, '{'.codeUnits.first, '}'.codeUnits.first);
+            int endBracket = CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
             int index = 0;
             final List<CaseStatement> list = [];
-            final String innerCode = input.substring(m + 2, endBracket);
+            final String innerCode = input.substring(closeRoundBracket + 2, endBracket);
             int caseIndex = -1;
             while (index < endBracket) {
               index = innerCode.indexOf('case', index);
@@ -1877,46 +1884,57 @@ class CodeProcessor {
             }
             currentIndex = endBracket;
             continue;
-          } else if (input.length > m + 1 && input[m + 1] == '{') {
-            int closeBracketIndex =
-                CodeOperations.findCloseBracket(input, m + 1, '{'.codeUnits.first, '}'.codeUnits.first);
+          }
+          else if (input.length > closeRoundBracket + 1 && input[closeRoundBracket + 1] == '{') {
+            final int closeBracketIndex =
+                CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
             // final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, m));
             // functions[variable] = FVBFunction(
             //     variable, input.substring(m + 2, closeBracketIndex), processArgDefinitionList(argumentList));
             final function = FunctionProcessor.parse(
-                this, variable, input.substring(currentIndex + 1, m), input.substring(m + 2, closeBracketIndex));
+                this, variable, input.substring(currentIndex + 1, closeRoundBracket), input.substring(closeRoundBracket + 2, closeBracketIndex));
             functions[function.name] = function;
             variable = '';
             currentIndex = closeBracketIndex;
             continue;
-          } else if (functions.containsKey(variable)) {
+          }
+          if (closeRoundBracket + 1 < input.length &&
+              input[closeRoundBracket + 1] == '=' &&
+              input[closeRoundBracket + 2] == '>') {
+            currentIndex=_handleLambdaFunction(variable, input, currentIndex, closeRoundBracket, valueStack);
+            continue;
+          }
+          else if (functions.containsKey(variable)) {
             if (valueStack.isEmpty && declarativeOnly) {
               showError('can not call function $variable in declarative mode');
               return;
             }
-            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, m));
+            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeRoundBracket));
             final output =
                 functions[variable]!.execute(this, processArgList(argumentList, functions[variable]!.arguments));
             if (output != null) {
               valueStack.push(FVBValue(value: output));
             }
             variable = '';
-            currentIndex = m;
+            currentIndex = closeRoundBracket;
             continue;
-          } else if (variables.containsKey(variable) || localVariables.containsKey(variable)) {
+          }
+          else if (variables.containsKey(variable) || localVariables.containsKey(variable)) {
             final function = (variables[variable]?.value ?? localVariables[variable]) as FVBFunction;
-            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, m));
+            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeRoundBracket));
             final output = function.execute(this, processArgList(argumentList, function.arguments));
             if (output != null) {
               valueStack.push(FVBValue(value: output));
             }
             variable = '';
-            currentIndex = m;
+            currentIndex = closeRoundBracket;
             continue;
-          } else if (!predefinedFunctions.containsKey(variable)) {
+          }
+          else if (!predefinedFunctions.containsKey(variable)) {
             showError('No predefined function named $variable found');
             return;
-          } else {
+          }
+          else {
             if (valueStack.isEmpty && declarativeOnly) {
               showError('can not call function $variable in declarative mode');
               return;
@@ -1925,21 +1943,20 @@ class CodeProcessor {
             final output = predefinedFunctions[variable]!.perform.call(processedArgs);
             valueStack.push(FVBValue(value: output));
             variable = '';
-            currentIndex = m;
+            currentIndex = closeRoundBracket;
           }
           continue;
-        } else if (ch == '('.codeUnits[0]) {
+        }
+        else if (ch == '('.codeUnits[0]) {
           final closeOpenBracket =
               CodeOperations.findCloseBracket(input, currentIndex, '('.codeUnits.first, ')'.codeUnits.first);
           if (closeOpenBracket + 1 < input.length &&
               input[closeOpenBracket + 1] == '=' &&
               input[closeOpenBracket + 2] == '>') {
-            final function = FunctionProcessor.parse(this, '', input.substring(currentIndex + 1, closeOpenBracket),
-                input.substring(closeOpenBracket + 3, input.length));
-            currentIndex = input.length - 1;
-            valueStack.push(FVBValue(value: function));
+           currentIndex=_handleLambdaFunction(variable, input, currentIndex, closeOpenBracket, valueStack);
             continue;
-          } else if (input.length > closeOpenBracket + 1 && input[closeOpenBracket + 1] == '{') {
+          }
+          else if (input.length > closeOpenBracket + 1 && input[closeOpenBracket + 1] == '{') {
             final int closeCurlyBracketIndex =
                 CodeOperations.findCloseBracket(input, closeOpenBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
             final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeOpenBracket))
@@ -2146,6 +2163,16 @@ class CodeProcessor {
 
     valueStack.push(FVBValue(variableName: variable)..evaluateValue(this));
     return true;
+  }
+
+  int _handleLambdaFunction(final String variable,final String input, final int currentIndex, final int closeOpenBracket,final Stack2<FVBValue> valueStack) {
+    final function = FunctionProcessor.parse(this, variable, input.substring(currentIndex + 1, closeOpenBracket),
+        input.substring(closeOpenBracket + 3, input.length),lambda: true);
+    if(function.name.isNotEmpty){
+      functions[function.name] = function;
+    }
+    valueStack.push(FVBValue(value: function));
+    return input.length - 1;
   }
 }
 
