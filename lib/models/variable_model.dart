@@ -1,37 +1,29 @@
 import '../common/compiler/code_processor.dart';
-import '../ui/models_view.dart';
 
-class VariableModel {
-  String name;
-  dynamic value;
-  final DataType dataType;
-  bool runtimeAssigned;
+class VariableModel extends FVBVariable {
   String? description;
-  String? assignmentCode;
   final bool deletable;
-  final bool isFinal;
   final bool uiAttached;
-  final String parentName;
-  final bool nullable;
 
-  VariableModel(this.name, this.value, this.runtimeAssigned, this.description,
-      this.dataType, this.parentName,
-      {this.assignmentCode,
+  VariableModel(super.name, super.dataType,
+      {this.description,
+      super.value,
       this.deletable = true,
-      this.isFinal = false,
+      super.isFinal = false,
       this.uiAttached = false,
-      this.nullable = false});
+      super.nullable = false});
 
+  @override
   VariableModel clone() {
-    return VariableModel(
-        name, value, runtimeAssigned, description, dataType, parentName,
-        assignmentCode: assignmentCode,
+    return VariableModel(name, dataType,
         deletable: deletable,
         isFinal: isFinal,
+        value: value,
         uiAttached: uiAttached,
         nullable: nullable);
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'name': name,
@@ -40,22 +32,24 @@ class VariableModel {
       'description': description,
       'dataType': dataType.name,
       'uiAttached': uiAttached,
+      'isFinal': isFinal,
+      'nullable': nullable,
     };
   }
 
   factory VariableModel.fromJson(Map<String, dynamic> map, String screen) {
     return VariableModel(
         map['name'],
-        map['value'],
-        false,
-        map['description'],
         map['dataType'] != null
             ? DataType.values
                 .firstWhere((element) => element.name == map['dataType'])
             : DataType.double,
-        screen,
+        value: map['value'],
         deletable: map['deletable'] ?? true,
-        uiAttached: map['uiAttached'] ?? false);
+        uiAttached: map['uiAttached'] ?? false,
+        isFinal: map['isFinal'] ?? false,
+        nullable: map['nullable'] ?? false,
+        description: map['description']);
   }
 }
 

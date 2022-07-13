@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'common/compiler/painter.dart';
 import 'common/logger.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -1028,6 +1029,23 @@ class Parameters {
       inputType: ParamInputType.longText,
       required: true);
 
+  static CodeParameter<CustomPainter> painterParameter() =>
+      CodeParameter<CustomPainter>(
+          'painter', NamedParameterInfo('painter'), true,
+          actionCode: '''
+  void paint(Canvas canvas,Size size){
+  // TODO: implement your logic here
+  
+  }
+  
+  bool shouldRepaint(painter) => true;
+  ''',
+          functions: [],
+          apiBindCallback: (String api, List<dynamic> args) {},
+          evaluate: (value) {
+        return PainterWrapper(value);
+      });
+
   static SimpleParameter shortStringParameter() => SimpleParameter<String>(
       name: 'text',
       defaultValue: '',
@@ -1136,6 +1154,7 @@ class Parameters {
         name: 'input type',
         info: NamedParameterInfo('keyboardType'),
       );
+
   static Parameter googleFontTextStyleParameter() => ComplexParameter(
       info: InnerObjectParameterInfo(
           innerObjectName: 'GoogleFonts.getFont', namedIfHaveAny: 'style'),

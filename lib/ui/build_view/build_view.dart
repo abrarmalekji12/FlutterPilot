@@ -80,17 +80,10 @@ class _BuildViewState extends State<BuildView> {
                   tools: const [DeviceSection()],
                   builder: (_) {
                     return LayoutBuilder(builder: (_, constraints) {
-                      if (Get.isDialogOpen ?? false) {
-                        ComponentOperationCubit.currentProject!.variables['dw']!
-                            .value = constraints.maxWidth;
-
-                        ComponentOperationCubit.currentProject!.variables['dh']!
-                            .value = constraints.maxHeight;
-                      }
                       return Container(
                         color: Colors.white,
                         child: widget.componentOperationCubit.project!
-                            .run(context, navigator: true),
+                            .run(context, constraints, navigator: true),
                       );
                     });
                   },
@@ -105,7 +98,8 @@ class _BuildViewState extends State<BuildView> {
   }
 
   void _onDismiss(BuildContext context) {
-    ComponentOperationCubit.currentProject!.processor.destroyProcess();
+    ComponentOperationCubit.currentProject!.processor
+        .destroyProcess(deep: true);
     widget.componentOperationCubit.runtimeMode = RuntimeMode.edit;
 
     Navigator.pop(context);
@@ -117,9 +111,9 @@ class CacheMemory {
   final Map<String, dynamic> localVariables = {};
 
   CacheMemory(final CodeProcessor processor) {
-    for (final variable in processor.variables.entries) {
-      variables[variable.key] = variable.value.value;
-    }
+    // for (final variable in processor.variables.entries) {
+    //   variables[variable.key] = variable.value.value;
+    // }
     for (final variable in processor.localVariables.entries) {
       localVariables[variable.key] = variable.value;
     }
@@ -127,16 +121,17 @@ class CacheMemory {
 
   void restore(final CodeProcessor processor) {
     final List<String> removeList = [];
-    for (final variable in processor.variables.entries) {
-      if (variables.containsKey(variable.key)) {
-        variable.value.value = variables[variable.key];
-      } else {
-        removeList.add(variable.key);
-      }
-    }
-    for (final key in removeList) {
-      processor.variables.remove(key);
-    }
+    // for (final variable in processor.variables.entries) {
+    //   if (variables.containsKey(variable.key)) {
+    //     variable.value.value = variables[variable.key];
+    //   } else {
+    //     removeList.add(variable.key);
+    //   }
+    // }
+    // for (final key in removeList) {
+    //   processor.variables.remove(key);
+    // }
+    removeList.clear();
     for (final variable in processor.localVariables.keys) {
       if (localVariables.containsKey(variable)) {
         processor.localVariables[variable] = localVariables[variable];

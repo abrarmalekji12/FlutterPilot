@@ -8,8 +8,15 @@ class StringOperation {
     return str.toLowerCase();
   }
 
-  static String toCamelCase(String str) {
-    return str.split('_').map((word) => capitalize(word)).join();
+  static String toCamelCase(String str, {bool startWithLower = false}) {
+    return str
+        .split('_')
+        .asMap()
+        .entries
+        .map((value) => (value.key == 0&&startWithLower
+            ? value.value.toLowerCase()
+            : capitalize(value.value)))
+        .join();
   }
 
   static String toNormalCase(String str) {

@@ -330,6 +330,8 @@ class AppIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      borderRadius: BorderRadius.circular(buttonSize/2)
+      ,
       child: Container(
         width: buttonSize,
         height: buttonSize,

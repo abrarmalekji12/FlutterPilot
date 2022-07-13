@@ -45,7 +45,7 @@ void doAPIOperation(String message,
     final split = value.split('|');
     final action = split[0];
     get<ErrorBloc>().add(ConsoleUpdatedEvent(
-        ConsoleMessage('$action ${split[1]}', ConsoleMessageType.success)));
+        ConsoleMessage('$action ${split[1]}', ConsoleMessageType.event)));
     switch (action) {
       case 'snackbar':
         (const GlobalObjectKey(deviceScaffoldMessenger).currentState

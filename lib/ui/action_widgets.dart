@@ -379,18 +379,23 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
             child: BlocBuilder<ActionCodeBloc, ActionCodeState>(
               builder: (context, state) {
                 final extraCodeBase = (root is CustomComponent)
-                    ? CodeBase((root as CustomComponent).actionCode,
+                    ? CodeBase(() => (root as CustomComponent).actionCode,
+                        () => (root as CustomComponent).variables.values,
                         (root as CustomComponent).processor.scopeName)
                     : CodeBase(
-                        ComponentOperationCubit
+                        () => ComponentOperationCubit
                             .currentProject!.currentScreen.actionCode,
+                        () => ComponentOperationCubit
+                        .currentProject!.currentScreen.variables.values,
                         ComponentOperationCubit
                             .currentProject!.currentScreen.processor.scopeName);
                 return ActionCodeEditor(
                   functions: (root is! StatelessComponent)?[setStateFunction]:[],
                   prerequisites: [
                     CodeBase(
-                        ComponentOperationCubit.currentProject!.actionCode,
+                            () => ComponentOperationCubit.currentProject!.actionCode,
+
+                            () => ComponentOperationCubit.currentProject!.variables.values,
                         ComponentOperationCubit
                             .currentProject!.processor.scopeName),
                     extraCodeBase
@@ -405,7 +410,7 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
                   //ComponentOperationCubit
                   //                       .currentProject!.variables.values
                   //                       .toList()
-                  variables: [],
+                  variables: null,
                   onError: (bool error) {},
                   scopeName: extraCodeBase.scopeName,
                 );

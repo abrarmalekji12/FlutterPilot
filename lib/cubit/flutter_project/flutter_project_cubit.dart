@@ -6,13 +6,11 @@ import '../../injector.dart';
 import '../../models/component_selection.dart';
 import '../../models/variable_model.dart';
 import '../../models/other_model.dart';
-import '../../ui/models_view.dart';
 import '../authentication/authentication_cubit.dart';
 import '../component_operation/component_operation_cubit.dart';
 import '../component_selection/component_selection_cubit.dart';
 import '../../firestore/firestore_bridge.dart';
 import '../../models/project_model.dart';
-import 'package:meta/meta.dart';
 
 part 'flutter_project_state.dart';
 
@@ -51,24 +49,16 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
     final flutterProject = FlutterProject.createNewProject(name, userId);
     ComponentOperationCubit.currentProject = flutterProject;
     flutterProject.variables.addAll({
-      'tabletWidthLimit': VariableModel(
-          'tabletWidthLimit',
-          1200,
-          false,
-          'maximum width tablet can have',
-          DataType.double,
-          flutterProject.currentScreen.name,
+      'tabletWidthLimit': VariableModel('tabletWidthLimit', DataType.double,
+          description: 'maximum width tablet can have',
+          value: 1200,
           deletable: false,
           uiAttached: true),
-      'phoneWidthLimit': VariableModel(
-          'phoneWidthLimit',
-          900,
-          false,
-          'maximum width phone can have',
-          DataType.double,
-          flutterProject.currentScreen.name,
+      'phoneWidthLimit': VariableModel('phoneWidthLimit', DataType.double,
           deletable: false,
-          uiAttached: true)
+          value: 900,
+          uiAttached: true,
+          description: 'maximum width phone can have')
     });
     await FireBridge.saveFlutterProject(userId, flutterProject);
     projects.add(flutterProject);
@@ -95,30 +85,39 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
         final authResponse =
             await FireBridge.login('test_fvb@mailinator.com', 'test123');
         get<AuthenticationCubit>().authViewModel.userId = authResponse.userId;
-        print('Auth response: ${authResponse.userId}');
+        if (kDebugMode) {
+          print('Auth response: ${authResponse.userId}');
+        }
       }
       setUserId = userId;
-      ComponentOperationCubit.processor.variables
-          .removeWhere((key, value) => value.deletable);
-      ComponentOperationCubit.processor.localVariables.clear();
-      print(
-          'CHECKING $userId & ${get<AuthenticationCubit>().authViewModel.userId}');
+      if (kDebugMode) {
+        print(
+            'CHECKING $userId & ${get<AuthenticationCubit>().authViewModel.userId}');
+      }
       final response = await FireBridge.loadFlutterProject(userId, projectName,
           ifPublic: userId != get<AuthenticationCubit>().authViewModel.userId);
       if (response.isRight) {
         switch (response.right.projectLoadError) {
           case ProjectLoadError.notPermission:
-            print('Not permission');
+            if (kDebugMode) {
+              print('Not permission');
+            }
             break;
           case ProjectLoadError.networkError:
-            print('Network error');
+            if (kDebugMode) {
+              print('Network error');
+            }
             break;
 
           case ProjectLoadError.otherError:
-            print('Project not found $projectName $userId');
+            if (kDebugMode) {
+              print('Project not found $projectName $userId');
+            }
             break;
           case ProjectLoadError.notFound:
-            print('Project not found $projectName $userId');
+            if (kDebugMode) {
+              print('Project not found $projectName $userId');
+            }
             break;
         }
         emit(FlutterProjectLoadingErrorState(model: response.right));
@@ -134,7 +133,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
             .toList();
 
         for (final uiScreen in flutterProject.uiScreens) {
-          ComponentOperationCubit.changeVariables(uiScreen);
+          // ComponentOperationCubit.changeVariables(uiScreen);
           uiScreen.rootComponent?.forEach((component) async {
             final index = idList.indexOf(component.id);
             if (index >= 0) {
@@ -167,7 +166,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
           print('IMAGE DATA ${imageData.imageName} ${imageData.bytes?.length}');
         }
       }
-      ComponentOperationCubit.changeVariables(flutterProject.currentScreen);
+      // ComponentOperationCubit.changeVariables(flutterProject.currentScreen);
       componentSelectionCubit.init(
           ComponentSelectionModel.unique(flutterProject.rootComponent!),
           flutterProject.rootComponent!);
@@ -176,21 +175,17 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
               .firstWhereOrNull((e) => e.key == 'tabletWidthLimit') ==
           null) {
         componentOperationCubit.addVariable(VariableModel(
-            'tabletWidthLimit',
-            1200,
-            false,
-            'maximum width tablet can have',
-            DataType.double,
-            flutterProject.currentScreen.name,
-            deletable: false));
+            'tabletWidthLimit', DataType.double,
+            deletable: false,
+            description: 'maximum width tablet can have',
+            value: 1200,uiAttached: true));
         componentOperationCubit.addVariable(VariableModel(
-            'phoneWidthLimit',
-            900,
-            false,
-            'maximum width phone can have',
-            DataType.double,
-            flutterProject.currentScreen.name,
-            deletable: false));
+          'phoneWidthLimit',
+          DataType.double,
+          deletable: false,
+          description: 'maximum width tablet can have',
+          value: 900,uiAttached: true
+        ));
       }
 
       componentOperationCubit

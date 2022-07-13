@@ -3,7 +3,6 @@ import 'package:meta/meta.dart';
 
 import '../../models/actions/action_model.dart';
 import '../../models/project_model.dart';
-import '../component_operation/component_operation_cubit.dart';
 
 part 'stack_action_state.dart';
 
@@ -42,24 +41,24 @@ class StackActionCubit extends Cubit<StackActionState> {
     switch (operation) {
       case StackOperation.push:
         navigationStack.add(Route(uiScreen!));
-        ComponentOperationCubit.changeVariables(uiScreen);
+        // ComponentOperationCubit.changeVariables(uiScreen);
         break;
       case StackOperation.replace:
         final last = navigationStack.removeLast();
         navigationStack.add(Route(uiScreen!));
-        ComponentOperationCubit.removeVariables(last.uiScreen);
-        ComponentOperationCubit.addVariables(uiScreen);
+        // ComponentOperationCubit.removeVariables(last.uiScreen);
+        // ComponentOperationCubit.addVariables(uiScreen);
         break;
       case StackOperation.addOverlay:
         navigationStack.add(Route(uiScreen!, overlay: true));
-        ComponentOperationCubit.addVariables(uiScreen);
+        // ComponentOperationCubit.addVariables(uiScreen);
         break;
       case StackOperation.pop:
         if (navigationStack.isEmpty) {
           throw Exception('Navigation Stack is Empty !! ');
         }
         final last = navigationStack.removeLast();
-        ComponentOperationCubit.removeVariables(last.uiScreen);
+        // ComponentOperationCubit.removeVariables(last.uiScreen);
         if (navigationStack.isEmpty) {
           emit(StackClearState());
           return;
@@ -71,7 +70,7 @@ class StackActionCubit extends Cubit<StackActionState> {
           if (index < 0) {
             break;
           }
-          ComponentOperationCubit.addVariables(navigationStack[index].uiScreen);
+          // ComponentOperationCubit.addVariables(navigationStack[index].uiScreen);
         } while (navigationStack[index].overlay);
         break;
     }

@@ -8,10 +8,12 @@ class CustomTextField extends StatelessWidget {
   final TextEditingController? controller;
   final FormFieldValidator<String>? validator;
   final FocusNode? focusNode;
+  final bool enabled;
   const CustomTextField(
       {Key? key,
       required this.onChange,
       this.hint,
+        this.enabled=true,
       this.controller,
       this.validator,
       this.focusNode})
@@ -24,6 +26,7 @@ class CustomTextField extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
         child: TextFormField(
+          enabled: enabled,
           onChanged: onChange,
           controller: controller,
           focusNode: focusNode,

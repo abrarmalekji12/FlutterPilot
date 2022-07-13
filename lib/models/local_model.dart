@@ -27,7 +27,7 @@ class LocalModel {
 
   String get implementationCode {
     return '''
-    class $name{${variables.map((e) => 'final ${dataTypeToCode(e.dataType)} ${e.name};').join(' ')} $name( ${variables.map((e) => 'this.${e.name}').join(',')});
+    class $name{${variables.map((e) => 'final ${DataType.dataTypeToCode(e.dataType)} ${e.name};').join(' ')} $name( ${variables.map((e) => 'this.${e.name}').join(',')});
     }
     ''';
   }
@@ -51,68 +51,6 @@ class LocalModel {
     return '$value';
   }
 
-  static DataType codeToDatatype(
-      final String dataType, Map<String, FVBClass> classes) {
-    switch (dataType) {
-      case 'int':
-        return DataType.int;
-      case 'double':
-        return DataType.double;
-      case 'String':
-        return DataType.string;
-      case 'bool':
-        return DataType.bool;
-      case 'List':
-        return DataType.list;
-      case 'Map':
-        return DataType.map;
-      case 'Object':
-        return DataType.fvbInstance;
-      case 'Function':
-        return DataType.fvbFunction;
-      case 'Iterable':
-        return DataType.iterable;
-      case 'dynamic':
-        return DataType.dynamic;
-      case 'void':
-        return DataType.fvbVoid;
-      default:
-        if (classes.containsKey(dataType)) {
-          return DataType.fvbInstance;
-        }
-        return DataType.unknown;
-    }
-  }
-
-  static String dataTypeToCode(final DataType dataType) {
-    switch (dataType) {
-      case DataType.int:
-        return 'int';
-      case DataType.double:
-        return 'double';
-      case DataType.string:
-        return 'String';
-      case DataType.dynamic:
-        return 'dynamic';
-      case DataType.bool:
-        return 'bool';
-      case DataType.list:
-        return 'List';
-      case DataType.map:
-        return 'Map';
-      case DataType.fvbInstance:
-        return 'Object';
-      case DataType.fvbFunction:
-        return 'Function';
-      case DataType.iterable:
-        return 'Iterable';
-      case DataType.unknown:
-        return 'UNKNOWN';
-      case DataType.fvbVoid:
-        return 'void';
-    }
-    return 'UNKNOWN';
-  }
 
   toJson() {
     final valueList = [];

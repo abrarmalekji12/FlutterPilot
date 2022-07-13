@@ -112,8 +112,8 @@ class _PreviewPageState extends State<PreviewPage> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
                   onTap: () {
-                    ComponentOperationCubit.changeVariables(
-                        widget._componentOperationCubit.project!.currentScreen);
+                    // ComponentOperationCubit.changeVariables(
+                    //     widget._componentOperationCubit.project!.currentScreen);
                     Navigator.pop(context);
                   },
                   child: const Icon(Icons.arrow_back),
@@ -197,7 +197,7 @@ class _PreviewPageState extends State<PreviewPage> {
                               runAlignment: WrapAlignment.center,
                               alignment: WrapAlignment.center,
                               children: screens.map((screen) {
-                                ComponentOperationCubit.changeVariables(screen);
+                                // ComponentOperationCubit.changeVariables(screen);
                                 return Padding(
                                   padding: const EdgeInsets.all(10),
                                   child: Column(

@@ -67,6 +67,7 @@ final componentList = <String, Component Function()>{
   'Transform.translate': () => CTransformTranslate(),
   'VerticalDivider': () => CVerticalDivider(),
   'RichText': () => CRichText(),
+  'CustomPaint':() => CCustomPaint(),
   'TextField': () => CTextField(),
   'InputDecorator': () => CInputDecorator(),
   'InkWell': () => CInkWell(),
@@ -135,6 +136,17 @@ class CRichText extends Component {
   }
 }
 
+class CCustomPaint extends Component {
+  CCustomPaint() : super('CustomPaint', [Parameters.painterParameter()]);
+
+  @override
+  Widget create(BuildContext context) {
+    return CustomPaint(
+      painter: parameters[0].value,
+    );
+  }
+}
+
 class CNotRecognizedWidget extends Component {
   CNotRecognizedWidget() : super('NotRecognized', []);
 
@@ -189,8 +201,10 @@ class CRadio extends ClickableComponent {
           Parameters.shortStringParameter()
             ..withDefaultValue('1')
             ..withNamedParamInfoAndSameDisplayName('groupValue'),
-        ]){
-    init(FVBFunction('onChanged', null, [FVBArgument('value',dataType: DataType.bool)],returnType: DataType.fvbVoid));
+        ]) {
+    init(FVBFunction(
+        'onChanged', null, [FVBArgument('value', dataType: DataType.bool)],
+        returnType: DataType.fvbVoid));
   }
 
   @override
@@ -1087,8 +1101,8 @@ class CInkWell extends ClickableHolder {
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('highlightColor'),
           Parameters.borderRadiusParameter(),
-        ]){
-    init(FVBFunction('onTap', null, [],returnType: DataType.fvbVoid));
+        ]) {
+    init(FVBFunction('onTap', null, [], returnType: DataType.fvbVoid));
   }
 
   @override
@@ -1112,8 +1126,8 @@ class CInkWell extends ClickableHolder {
 }
 
 class CGestureDetector extends ClickableHolder {
-  CGestureDetector() : super('GestureDetector', []){
-    init(FVBFunction('onTap', null, [],returnType: DataType.fvbVoid));
+  CGestureDetector() : super('GestureDetector', []) {
+    init(FVBFunction('onTap', null, [], returnType: DataType.fvbVoid));
   }
 
   @override

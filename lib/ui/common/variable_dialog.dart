@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../common/compiler/code_processor.dart';
 import '../../cubit/component_creation/component_creation_cubit.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../cubit/component_selection/component_selection_cubit.dart';
@@ -15,7 +16,7 @@ class VariableDialog {
   final void Function(VariableModel) onAdded;
   final void Function(VariableModel) onEdited;
   final void Function(VariableModel) onDeleted;
-  final Map<String, VariableModel> variables;
+  final Map<String, FVBVariable> variables;
   late final OverlayEntry _overlayEntry;
 
   VariableDialog({

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../common/compiler/code_processor.dart';
 import '../../common/undo/revert_work.dart';
 import '../../injector.dart';
+import '../../models/component_selection.dart';
 import '../../models/local_model.dart';
 import '../../models/variable_model.dart';
 import '../../models/parameter_model.dart';
@@ -15,6 +16,7 @@ import '../../firestore/firestore_bridge.dart';
 import '../../models/component_model.dart';
 import '../../runtime_provider.dart';
 import '../component_creation/component_creation_cubit.dart';
+import '../component_selection/component_selection_cubit.dart';
 import '../visual_box_drawer/visual_box_cubit.dart';
 
 part 'component_operation_state.dart';
@@ -51,28 +53,28 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  static void changeVariables(final UIScreen screen) {
-    ComponentOperationCubit.processor.variables
-        .removeWhere((key, value) => value.deletable && !value.uiAttached);
-    for (final entry in screen.variables.entries) {
-      ComponentOperationCubit.processor.variables[entry.key] = entry.value;
-    }
-  }
+  // static void changeVariables(final UIScreen screen) {
+  //   ComponentOperationCubit.processor.variables
+  //       .removeWhere((key, value) => value.deletable && !value.uiAttached);
+  //   for (final entry in screen.variables.entries) {
+  //     ComponentOperationCubit.processor.variables[entry.key] = entry.value;
+  //   }
+  // }
 
-  static void addVariables(final UIScreen screen) {
-    for (final entry in screen.variables.entries) {
-      ComponentOperationCubit.processor.variables[entry.key] = entry.value;
-    }
-  }
+  // static void addVariables(final UIScreen screen) {
+  //   for (final entry in screen.variables.entries) {
+  //     ComponentOperationCubit.processor.variables[entry.key] = entry.value;
+  //   }
+  // }
 
-  static void removeVariables(final UIScreen screen) {
-    ComponentOperationCubit.processor.variables
-        .removeWhere((key, value) => screen.name == value.parentName);
-  }
+  // static void removeVariables(final UIScreen screen) {
+  //   ComponentOperationCubit.processor.variables
+  //       .removeWhere((key, value) => screen.name == value.parentName);
+  // }
 
   void changeProjectScreen(final UIScreen screen) {
     project!.currentScreen = screen;
-    changeVariables(screen);
+    // changeVariables(screen);
     emit(ComponentUpdatedState());
     changeProjectScreenInDB();
   }
@@ -486,6 +488,12 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
+  void refreshPropertyChanges(ComponentSelectionCubit cubit){
+    if (cubit.currentSelectedRoot is CustomComponent) {
+      refreshCustomComponents(cubit.currentSelectedRoot as CustomComponent);
+    }
+    emit(ComponentUpdatedState());
+  }
   bool isFavourite(final Component component) {
     if (project == null) {
       print('Method::isFavourite flutterProject is null');
@@ -702,15 +710,13 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   Future<void> updateVariable(VariableModel variableModel) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.updateVariable(project!.userId, project!,
-        ComponentOperationCubit.processor.variables[variableModel.name]!);
+    await FireBridge.updateVariable(project!.userId, project!);
     emit(ComponentOperationInitial());
   }
 
-  Future<void> updateScreenVariable(VariableModel variableModel) async {
+  Future<void> updateScreenVariable() async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.updateUIScreenVariable(project!.userId, project!,
-        ComponentOperationCubit.processor.variables[variableModel.name]!);
+    await FireBridge.updateUIScreenVariable(project!.userId, project!);
     emit(ComponentOperationInitial());
   }
 }

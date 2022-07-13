@@ -16,34 +16,31 @@ class ArgumentProcessor {
       }
     }
     for (int i = 0; i < arguments.length; i++) {
-      if (arguments[i].type == FVBArgumentType.placed) {
-        final output = processor.process(argumentData[i]);
+      final name = arguments[i].name.startsWith('this.')
+          ? arguments[i].name.substring(5)
+          : arguments[i].name;
+      if (arguments[i].type == FVBArgumentType.placed ||
+          arguments[i].type == FVBArgumentType.optionalPlaced) {
+        final output = argumentData.length > i
+            ? processor.process(argumentData[i])
+            : (arguments[i].type == FVBArgumentType.optionalPlaced
+                ? arguments[i].defaultVal
+                : throw Exception('Missing argument ${arguments[i].name}'));
         if (DataTypeProcessor.checkIfValidDataTypeOfValue(
-            output,
-            arguments[i].dataType,
-            arguments[i].name,
-            arguments[i].nullable,
-            processor.showError)) {
+            output, arguments[i].dataType, name, arguments[i].nullable)) {
           processedArguments[i] = output;
         } else {
           return [];
         }
       } else {
-        final name = arguments[i].name.startsWith('this.')
-            ? arguments[i].name.substring(5)
-            : arguments[i].name;
         if (optionArgs[name] != null) {
           final output = processor.process(optionArgs[name]);
           if (DataTypeProcessor.checkIfValidDataTypeOfValue(
-              output,
-              arguments[i].dataType,
-              arguments[i].name,
-              arguments[i].nullable,
-              processor.showError)) {
+              output, arguments[i].dataType, name, arguments[i].nullable)) {
             processedArguments[i] = output;
           }
         } else {
-          processedArguments[i] = arguments[i].optionalValue;
+          processedArguments[i] = arguments[i].defaultVal;
         }
       }
     }
@@ -51,49 +48,91 @@ class ArgumentProcessor {
   }
 
   static List<FVBArgument> processArgumentDefinition(
-      final CodeProcessor processor, List<String> argumentList) {
+      final CodeProcessor processor, List<String> argumentList,
+      {Map<String, FVBVariable>? variables}) {
     if (argumentList.isEmpty) {
       return [];
     }
     final List<FVBArgument> arguments = [];
     int placedLength = argumentList.length;
-    if (argumentList.last.startsWith('{')) {
+    final last = argumentList.last;
+    FVBArgumentType lastArgType = FVBArgumentType.placed;
+    if (last.startsWith('{') || last.startsWith('[')) {
       placedLength--;
       final lastArgCode = argumentList.removeLast();
       argumentList.addAll(CodeOperations.splitBy(
               lastArgCode.substring(1, lastArgCode.length - 1))
           .where((element) => element.isNotEmpty));
+      if (last.startsWith('{')) {
+        lastArgType = FVBArgumentType.optionalNamed;
+      } else {
+        lastArgType = FVBArgumentType.optionalPlaced;
+      }
     }
     for (int i = 0; i < argumentList.length; i++) {
-      final type =
-          i < placedLength ? FVBArgumentType.placed : FVBArgumentType.optional;
+      final type = i < placedLength ? FVBArgumentType.placed : lastArgType;
       if (type == FVBArgumentType.placed) {
-        final value = DataTypeProcessor.getFVBValueFromCode(
-            argumentList[i], processor.classes, processor.showError);
-        arguments.add(FVBArgument(
-            value != null ? value.variableName! : argumentList[i],
-            type: type,
-            dataType: value?.dataType ?? DataType.dynamic));
-      } else {
-        final split = CodeOperations.splitBy(argumentList[i], splitBy: '=');
-        if (split.length == 2) {
-          final value = DataTypeProcessor.getFVBValueFromCode(
-              split[0], processor.classes, processor.showError);
-          arguments.add(FVBArgument(
-              value != null ? value.variableName! : split[0],
+        if (argumentList[i].startsWith('this.')) {
+          final compatibleVar =
+              getCompatibleVarForThis(argumentList[i].substring(5), variables);
+          arguments.add(FVBArgument(argumentList[i],
               type: type,
-              optionalValue: processor.process(split[1]),
-              dataType: value?.dataType ?? DataType.dynamic));
+              dataType: compatibleVar.dataType,
+              nullable: compatibleVar.nullable));
         } else {
           final value = DataTypeProcessor.getFVBValueFromCode(
-              argumentList[i], processor.classes, processor.showError);
+              argumentList[i], CodeProcessor.classes, processor.enableError);
+
           arguments.add(FVBArgument(
               value != null ? value.variableName! : argumentList[i],
               type: type,
-              dataType: value?.dataType ?? DataType.dynamic));
+              dataType: value?.dataType ?? DataType.dynamic,
+              nullable: value?.nullable ?? false));
+        }
+      } else {
+        final split = CodeOperations.splitBy(argumentList[i], splitBy: '=');
+        final FVBVariable? compatibleVar;
+        if (argumentList[i].startsWith('this.')) {
+          compatibleVar =
+              getCompatibleVarForThis(argumentList[i].substring(5), variables);
+        } else {
+          compatibleVar = null;
+        }
+
+        if (split.length == 2) {
+          final value = DataTypeProcessor.getFVBValueFromCode(
+              split[0], CodeProcessor.classes, processor.enableError);
+          arguments.add(FVBArgument(
+              value != null ? value.variableName! : split[0],
+              type: type,
+              defaultVal: processor.process(split[1]),
+              dataType: compatibleVar?.dataType ??
+                  value?.dataType ??
+                  DataType.dynamic,
+              nullable: compatibleVar?.nullable ?? value?.nullable ?? false));
+        } else {
+          final value = DataTypeProcessor.getFVBValueFromCode(
+              argumentList[i], CodeProcessor.classes, processor.enableError);
+          arguments.add(FVBArgument(
+              value != null ? value.variableName! : argumentList[i],
+              type: type,
+              dataType: compatibleVar?.dataType ??value?.dataType ?? DataType.dynamic,
+              nullable: compatibleVar?.nullable ?? value?.nullable ?? false));
         }
       }
     }
     return arguments;
+  }
+
+  static FVBVariable getCompatibleVarForThis(
+      final String argument, final Map<String, FVBVariable>? variables) {
+    if (variables == null) {
+      throw Exception('Wrong use of keyword "this"');
+    }
+    final compatibleVar = variables[argument];
+    if (compatibleVar == null) {
+      throw Exception('Invalid use og "this", No variable $argument exist');
+    }
+    return compatibleVar;
   }
 }

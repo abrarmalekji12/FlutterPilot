@@ -154,6 +154,8 @@ class ParameterWidget extends StatelessWidget {
           parameter: parameter as ChoiceValueListParameter);
     } else if (parameter is ListParameter) {
       return ListParameterWidget(parameter: parameter as ListParameter);
+    } else if (parameter is CodeParameter) {
+      return CodeParameterWidget(parameter: parameter as CodeParameter);
     }
     switch (parameter.runtimeType) {
       case ChoiceParameter:
@@ -169,9 +171,61 @@ class ParameterWidget extends StatelessWidget {
             parameter: parameter as ChoiceValueParameter);
       case BooleanParameter:
         return BooleanParameterWidget(parameter: parameter as BooleanParameter);
+
       default:
         return Container();
     }
+  }
+}
+
+class CodeParameterWidget extends StatelessWidget {
+  final CodeParameter parameter;
+
+  const CodeParameterWidget({Key? key, required this.parameter})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+            color: const Color(0xfff2f2f2),
+            borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(3),
+        child: Column(
+          children: [
+            Text(
+              parameter.displayName!,
+              style: AppFontStyle.roboto(14,
+                  color: Colors.black, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            SizedBox(
+              height: 400,
+              child: ActionCodeEditor(
+                code: parameter.actionCode,
+                onCodeChange: (code) {
+                  parameter.actionCode=code;
+                  context.read<ComponentCreationCubit>().changedComponent();
+                },
+                prerequisites: [
+                  CodeBase(
+                      () => ComponentOperationCubit.currentProject!.actionCode,
+                      () => ComponentOperationCubit
+                          .currentProject!.variables.values,
+                      ComponentOperationCubit
+                          .currentProject!.processor.scopeName)
+                ],
+                onError: (error) {},
+                scopeName: 'test:${parameter.displayName}',
+                functions: parameter.processor.functions.values,
+                variables: () => [],
+              ),
+            )
+          ],
+        ));
   }
 }
 
@@ -458,8 +512,7 @@ class _SimpleParameterWidgetState extends State<SimpleParameterWidget> {
     }
     BlocProvider.of<ParameterBuildCubit>(context)
         .parameterChanged(context, widget.parameter);
-    BlocProvider.of<ComponentCreationCubit>(context)
-        .changedComponent();
+    BlocProvider.of<ComponentCreationCubit>(context).changedComponent();
   }
 }
 

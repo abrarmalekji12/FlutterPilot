@@ -94,10 +94,10 @@ class _ConsoleWidgetState extends State<ConsoleWidget> {
                       Expanded(
                         child: Text(
                           consoleMessage.message,
-                          style: AppFontStyle.roboto(14,
+                          style: AppFontStyle.roboto(consoleMessage.type==ConsoleMessageType.event?10:14,
                               color:
                                   getConsoleMessageColor(consoleMessage.type),
-                              fontWeight: FontWeight.w500),
+                              fontWeight: consoleMessage.type==ConsoleMessageType.event?FontWeight.w700:FontWeight.w500),
                         ),
                       ),
                       Text(consoleMessage.time,

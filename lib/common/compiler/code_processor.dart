@@ -19,42 +19,18 @@ import '../../models/variable_model.dart';
 import '../../ui/action_code_editor.dart';
 import '../../ui/build_view/build_view.dart';
 import '../common_methods.dart';
+import '../converter/string_operation.dart';
+import '../ide/suggestion_processor.dart';
 import '../logger.dart';
 import 'argument_processor.dart';
+import 'constants.dart';
 import 'datatype_processor.dart';
 import 'function_processor.dart';
 import 'fvb_classes.dart';
+import 'fvb_converter.dart';
+
+part 'fvb_behaviour.dart';
 // enum DataType { fvbVoid,int, double, string, bool, dynamic, list,iterable, map, fvbInstance,fvbFunction, unknown}
-
-class DataType {
-  final String name;
-  final String? fvbName;
-  static const DataType fvbVoid = DataType('fvbVoid');
-  static const DataType int = DataType('int');
-  static const DataType double = DataType('double');
-  static const DataType string = DataType('string');
-  static const DataType bool = DataType('bool');
-  static const DataType dynamic = DataType('dynamic');
-  static const DataType list = DataType('list');
-  static const DataType iterable = DataType('iterable');
-  static const DataType map = DataType('map');
-  static const DataType unknown = DataType('unknown');
-  static const DataType fvbInstance = DataType('fvbInstance');
-  static const DataType fvbFunction = DataType('fvbFunction');
-
-  // static DataType fvbInstance(final String name) => DataType('fvbInstance',fvbName: name);
-  // static DataType fvbFunction(final String name) => DataType('fvbFunction',fvbName: name);
-
-  const DataType(this.name, {this.fvbName});
-
-  @override
-  toString() => name;
-
-  // @override
-  // operator ==(other) => other is DataType && other.name == name;
-  static get values =>
-      [fvbVoid, int, double, string, bool, dynamic, list, iterable, map, fvbInstance, fvbFunction, unknown];
-}
 
 Color? colorToHex(String hexString) {
   if (hexString.length < 7) {
@@ -70,317 +46,44 @@ Color? colorToHex(String hexString) {
   return Color(colorInt);
 }
 
-class FVBClass {
-  final String name;
-  final Map<String, FVBFunction> fvbFunctions;
-  final Map<String, FVBFunction>? fvbStaticFunctions;
-  final Map<String, FVBVariable> fvbVariables;
-  final Map<String, FVBVariable>? fvbStaticVariables;
-
-  FVBClass(this.name, this.fvbFunctions, this.fvbVariables, {this.fvbStaticFunctions, this.fvbStaticVariables});
-
-  @override
-  toString() => name;
-
-  FVBInstance createInstance(final CodeProcessor processor, final List<dynamic> arguments) {
-    final instance = FVBInstance(
-      FVBClass(
-          name,
-          fvbFunctions,
-          fvbVariables.map(
-            (key, value) => MapEntry(
-              key,
-              value.clone(),
-            ),
-          ),
-          fvbStaticFunctions: fvbStaticFunctions,
-          fvbStaticVariables: fvbStaticVariables),
-    );
-    if (fvbFunctions.containsKey(name)) {
-      instance.fvbClass.executeFunction(name, arguments, processor);
-    }
-    return instance;
-  }
-
-  FVBFunction? getFunction(CodeProcessor processor, String name) {
-    final FVBFunction? function;
-    if (fvbFunctions.containsKey(name)) {
-      function = fvbFunctions[name];
-    } else if (fvbStaticFunctions != null && fvbStaticFunctions!.containsKey(name)) {
-      function = fvbStaticFunctions![name];
-    } else if (fvbVariables.containsKey(name)) {
-      function = fvbVariables[name]!.value;
-    } else if (fvbStaticVariables != null && fvbStaticVariables!.containsKey(name)) {
-      function = fvbStaticVariables![name]!.value;
-    } else {
-      processor.showError('Function $name not found in class $name');
-      function = null;
-    }
-    return function;
-  }
-
-  executeFunction(String name, List<dynamic> arguments, CodeProcessor processor) {
-    final Map<String, dynamic> oldVariables = {};
-    final Map<String, dynamic> globalVariables = {};
-    for (final MapEntry<String, FVBVariable> entry in fvbVariables.entries) {
-      if (processor.localVariables.containsKey(entry.key)) {
-        oldVariables[entry.key] = processor.localVariables[entry.key];
-      }
-      processor.localVariables[entry.key] = entry.value.value;
-      if (processor.variables.containsKey(entry.key)) {
-        globalVariables[entry.key] = processor.variables[entry.key]?.value;
-        processor.variables[entry.key]?.value = entry.value.value;
-      }
-    }
-    final variables = Map<String, VariableModel>.from(processor.variables);
-
-    final output = getFunction(processor, name)?.execute(processor, arguments);
-
-    for (final MapEntry<String, FVBVariable> entry in fvbVariables.entries) {
-      final type = CodeOperations.getDatatypeToDartType(entry.value.dataType);
-      final assignedType = processor.localVariables[entry.key].runtimeType;
-      if (![DataType.int, DataType.double, DataType.string, DataType.bool, DataType.fvbInstance]
-              .contains(entry.value.dataType) ||
-          processor.localVariables[entry.key] == null ||
-          assignedType == type ||
-          (double == type && int == assignedType)) {
-        entry.value.value = processor.localVariables[entry.key];
-      } else {
-        processor.showError(
-            'Type mismatch in variable ${entry.key} :: variable is type of ${CodeOperations.getDatatypeToDartType(entry.value.dataType)} and assigned type is ${processor.localVariables[entry.key].runtimeType}');
-      }
-    }
-    processor.variables.clear();
-    processor.variables.addAll(variables);
-    for (final entry in globalVariables.entries) {
-      processor.variables[entry.key]?.value = entry.value;
-    }
-    for (final MapEntry entry in fvbVariables.entries) {
-      if (oldVariables.containsKey(entry.key)) {
-        processor.localVariables[entry.key] = oldVariables[entry.key];
-      } else {
-        processor.localVariables.remove(entry.key);
-      }
-    }
-
-    return output;
-  }
-}
-
-class FVBInstance {
-  final FVBClass fvbClass;
-
-  FVBInstance(this.fvbClass);
-
-  @override
-  Type get runtimeType => CustomType(fvbClass.name);
-}
-
-class CustomType extends Type {
-  final String name;
-
-  CustomType(this.name);
-
-  @override
-  String toString() {
-    return name;
-  }
-
-  @override
-  bool operator ==(other) => other is Type && other.toString() == name;
-
-  @override
-  int get hashCode => name.hashCode;
-}
-
-enum FVBArgumentType {
-  placed,
-  optional,
-}
-
-class FVBBreak {}
-
-class FVBContinue {}
-
-class FVBReturn {
-  final dynamic value;
-
-  FVBReturn(this.value);
-}
-
-class FVBArgument {
-  final String name;
-  final DataType dataType;
-  final FVBArgumentType type;
-  final dynamic optionalValue;
-  final bool nullable;
-
-  FVBArgument(this.name,
-      {this.type = FVBArgumentType.placed,
-      this.optionalValue,
-      this.dataType = DataType.dynamic,
-      this.nullable = false});
-
-  @override
-  String toString() {
-    return '$name :: $type';
-  }
-}
-
-class FVBArgumentValue {
-  final String? name;
-  final dynamic value;
-
-  FVBArgumentValue(this.value, {this.name});
-}
-
-class FVBFunction {
-  String? code;
-  Function(List<dynamic>)? dartCall;
-  String name;
-  final Map<String, FVBVariable> localVariables = {};
-  final List<FVBArgument> arguments;
-  final DataType returnType;
-  final bool canReturnNull;
-  final bool isLambda;
-
-  FVBFunction(this.name, this.code, this.arguments,
-      {this.returnType = DataType.dynamic, this.canReturnNull = false, this.dartCall, this.isLambda=false,});
-
-  dynamic execute(final CodeProcessor processor, final List<dynamic> argumentValues) {
-    if (arguments.length != argumentValues.length) {
-      processor.showError('Not enough arguments in function $name ');
-    }
-    if (dartCall != null) {
-      return dartCall?.call(argumentValues);
-    }
-    final Map<String, dynamic> oldVariables = {};
-    final Map<String, dynamic> globalVariables = {};
-    for (int i = 0; i < arguments.length; i++) {
-      if (arguments[i].name.startsWith('this.')) {
-        final name = arguments[i].name.substring(5);
-        if (processor.localVariables.containsKey(name)) {
-          processor.localVariables[name] = argumentValues[i];
-        } else {
-          processor.showError('No variable named "$name" found');
-        }
-      } else {
-        if (processor.localVariables.containsKey(arguments[i].name)) {
-          oldVariables[arguments[i].name] = processor.localVariables[arguments[i]];
-        }
-        if (processor.variables.containsKey(arguments[i].name)) {
-          globalVariables[arguments[i].name] = processor.variables[arguments[i].name]?.value;
-          processor.variables[arguments[i].name]?.value = argumentValues[i];
-        }
-        processor.localVariables[arguments[i].name] = argumentValues[i];
-      }
-    }
-    final variables = Map<String, VariableModel>.from(processor.variables);
-    final returnedOutput = processor.execute(code!);
-    final output = isLambda?returnedOutput:(returnedOutput is FVBReturn ? returnedOutput.value : null);
-    processor.variables.clear();
-    processor.variables.addAll(variables);
-    for (int i = 0; i < arguments.length; i++) {
-      if (oldVariables.containsKey(arguments[i].name)) {
-        processor.localVariables[arguments[i].name] = oldVariables[arguments[i].name];
-      } else {
-        processor.localVariables.remove(arguments[i].name);
-      }
-    }
-    for (final entry in globalVariables.entries) {
-      processor.variables[entry.key]?.value = entry.value;
-    }
-    if (DataTypeProcessor.checkIfValidDataTypeOfValue(
-      output,
-      returnType,
-      name,
-      canReturnNull,
-      processor.showError,
-      invalidDataTypeError:
-          'Function $name has return type of ${CodeOperations.getDatatypeToDartType(returnType)} but returned value is of type ${output.runtimeType}',
-      canNotNullError:
-          'Function $name has return type of ${CodeOperations.getDatatypeToDartType(returnType)} but returned value is null',
-    )) {
-      return output;
-    }
-  }
-}
-
-class FVBValue {
-  dynamic value;
-  final bool isVarFinal, createVarIfNotExist;
-  final String? variableName;
-  final DataType? dataType;
-  final bool nullable;
-
-  FVBValue(
-      {this.value,
-      this.variableName,
-      this.isVarFinal = false,
-      this.createVarIfNotExist = false,
-      this.dataType,
-      this.nullable = false});
-
-  evaluateValue(CodeProcessor processor) {
-    if (variableName == null) {
-      return value;
-    }
-    value = processor.getValue(variableName!);
-    return value;
-  }
-
-  @override
-  toString() {
-    return '(variableName: $variableName, value: $value, createVarIfNotExist: $createVarIfNotExist, isVarFinal: $isVarFinal)';
-  }
-}
-
-class FVBUndefined {
-  final String varName;
-
-  FVBUndefined(this.varName);
-
-  @override
-  toString() {
-    return '[undefined "$varName"]';
-  }
-}
-
-class FVBVariable {
-  final String name;
-  dynamic value;
-  final DataType dataType;
-  final bool isFinal;
-  final bool nullable;
-
-  FVBVariable(this.name, this.dataType, {this.value, this.isFinal = false, this.nullable = false});
-
-  clone() {
-    return FVBVariable(
-      name,
-      dataType,
-    );
-  }
-}
-
-enum Scope { main, object }
-
-enum OperationType { regular, checkOnly }
+final Map<String, CodeProcessor> processorMap = {};
+const List<String> keywords = [
+  'class ',
+  'while',
+  'if',
+  'else',
+  'else if',
+  'for(',
+  'switch(',
+  'case:',
+  'default:',
+  'break;',
+  'continue;',
+  'return ',
+];
 
 class CodeProcessor {
   final CodeProcessor? parentProcessor;
   CacheMemory? cacheMemory;
   final String scopeName;
   final Map<String, dynamic> ignoreVariables = {'dw': 0, 'dh': 0};
-  final Map<String, VariableModel> variables = {};
-  final Map<String, FunctionModel> predefinedFunctions = {};
+  final Map<String, FVBVariable> variables = {};
+  final Map<String, FVBVariable> _staticVariables = {};
+  final Map<String, FVBFunction> _staticFunctions = {};
+  static final Map<String, FunctionModel> predefinedFunctions = {};
   final Map<String, FVBFunction> functions = {};
-  final Map<String, FVBClass> classes = {};
+  static final Map<String, FVBClass> classes = {};
   final Map<String, dynamic> localVariables = {};
-  OperationType operationType = OperationType.regular;
+  static OperationType operationType = OperationType.regular;
   final Scope scope;
   static bool error = false;
   bool finished = false;
+  static final VariableModel _piVariable = VariableModel('pi', DataType.double,
+      deletable: false,
+      value: math.pi,
+      description: 'it is mathematical value of pi',
+      isFinal: true);
+
   static final arithmeticOperators = [
     '+',
     '-',
@@ -421,24 +124,30 @@ class CodeProcessor {
       nineCodeUnit = '9'.codeUnits.first,
       dotCodeUnit = '.'.codeUnits.first,
       colonCodeUnit = ':'.codeUnits.first;
-  final String? Function(String) consoleCallback;
-  final void Function(String, String) onError;
-  final List<Timer> timers = [];
-  bool declarativeOnly = false;
 
-  factory CodeProcessor.build({CodeProcessor? processor, required String name}) {
-    return CodeProcessor(
+  static final List<Timer> timers = [];
+  final String? Function(String, {List<dynamic>? arguments}) consoleCallback;
+  final void Function(String, String) onError;
+  bool declarativeOnly = false;
+  static final List<String> lastCodes = [];
+  static int lastCodeCount = 0;
+  void Function(CodeSuggestion?)? onSuggestions;
+
+  factory CodeProcessor.build(
+      {CodeProcessor? processor, required String name}) {
+    final codeProcessor = CodeProcessor(
       parentProcessor: processor,
-      consoleCallback: (message) {
-        doAPIOperation(message,
-            stackActionCubit: get<StackActionCubit>(), stateManagementBloc: get<StateManagementBloc>());
-        return null;
-      },
-      onError: (error, line) {
-        get<ErrorBloc>().add(ConsoleUpdatedEvent(ConsoleMessage(error, ConsoleMessageType.error)));
-      },
+      consoleCallback: processor?.consoleCallback ?? defaultConsoleCallback,
+      onError: processor?.onError ?? defaultOnError,
       scopeName: name,
     );
+    if (processor != null && processor.onSuggestions != null) {
+      codeProcessor.onSuggestions = processor.onSuggestions;
+    }
+    if (!name.startsWith('fun:') && !processorMap.containsKey(name)) {
+      processorMap[name] = codeProcessor;
+    }
+    return codeProcessor;
   }
 
   CodeProcessor(
@@ -448,68 +157,21 @@ class CodeProcessor {
       required this.consoleCallback,
       required this.onError}) {
     error = false;
-    if (parentProcessor == null) {
-      variables['pi'] =
-          VariableModel('pi', math.pi, false, 'it is mathematical value of pi', DataType.double, '', deletable: false);
-      variables['JSON'] = VariableModel(
-          'JSON',
-          FVBInstance(FVBClass('JSON', {
-            'decode': FVBFunction('decode', null, [FVBArgument('text')])
-              ..dartCall = (data) {
-                return json.decode(data[0]);
-              },
-            'encode': FVBFunction('encode', null, [FVBArgument('json')])
-              ..dartCall = (data) {
-                return json.encode(data[0]);
-              }
-          }, {})),
-          false,
-          'it is a json parser',
-          DataType.fvbInstance,
-          '',
-          deletable: false);
+    if (scopeName == ComponentOperationCubit.currentProject?.name) {
+      variables['pi'] = _piVariable;
     }
-    classes['Timer'] = FVBClass('Timer', {
-      'Timer': FVBFunction('Timer', '', [FVBArgument('duration'), FVBArgument('callback')]),
-      'cancel': FVBFunction('cancel', '', []),
-    }, {}, fvbStaticFunctions: {
-      'periodic': FVBFunction('periodic', null, [FVBArgument('duration'), FVBArgument('callback')])
-        ..dartCall = (arguments) {
-          final timerInstance = classes['Timer']!.createInstance(this, arguments);
 
-          if (operationType == OperationType.checkOnly) {
-            (arguments[1] as FVBFunction).execute(this, [timerInstance]);
-            timerInstance.fvbClass.fvbFunctions['cancel']!.dartCall = (args) {};
-          } else {
-            final timer = Timer.periodic(
-                Duration(milliseconds: (arguments[0] as FVBInstance).fvbClass.fvbVariables['milliseconds']!.value),
-                (timer) {
-              if (finished || error) {
-                timer.cancel();
-                return;
-              }
-              (arguments[1] as FVBFunction).execute(this, [timerInstance]);
-            });
-            timers.add(timer);
-            timerInstance.fvbClass.fvbFunctions['cancel']!.dartCall = (args) {
-              timer.cancel();
-              timers.remove(timer);
-            };
-          }
-
-          return timerInstance;
-        },
-    });
-    classes.addAll(FVBModuleClasses.fvbClasses);
     predefinedFunctions['res'] = FunctionModel<dynamic>('res', (arguments) {
       if (variables['dw']!.value > variables['tabletWidthLimit']!.value) {
         return arguments[0];
-      } else if (variables['dw']!.value > variables['phoneWidthLimit']!.value || arguments.length == 2) {
+      } else if (variables['dw']!.value > variables['phoneWidthLimit']!.value ||
+          arguments.length == 2) {
         return arguments[1];
       } else {
         return arguments[2];
       }
-    }, '''
+    },
+        functionCode: '''
     double res(double large,double medium,[double? small]){
     if(dw>tabletWidthLimit){
       return large;
@@ -521,9 +183,87 @@ class CodeProcessor {
       return small;
     }
   }
-    ''');
+    ''',
+        description: 'return one of the argument according to the screen size');
+    predefinedFunctions['print'] = FunctionModel<void>('print', (arguments) {
+      if (arguments.isEmpty) {
+        enableError('print function requires at least one argument');
+        return;
+      }
+      consoleCallback
+          .call('print:${arguments.map((e) => e.toString()).join('')}');
+    }, description: 'print the given arguments');
 
-    predefinedFunctions['ifElse'] = FunctionModel<dynamic>('ifElse', (arguments) {
+    predefinedFunctions['showSnackbar'] =
+        FunctionModel<void>('showSnackbar', (arguments) {
+      if (arguments.length < 2) {
+        enableError('showSnackbar requires 2 arguments!!');
+        return;
+      }
+      consoleCallback.call('api:snackbar|${arguments[0]}|${arguments[1]}');
+    }, description: 'show a snackbar');
+    predefinedFunctions['newPage'] =
+        FunctionModel<void>('newPage', (arguments) {
+      if (arguments.isEmpty) {
+        enableError('newPage requires 1 argument!!');
+        return;
+      }
+      consoleCallback.call('api:newpage|${arguments[0]}');
+    }, description: 'open a new page');
+    predefinedFunctions['goBack'] = FunctionModel<void>('goBack', (arguments) {
+      consoleCallback.call('api:goback|');
+    }, description: 'go back to previous page');
+    predefinedFunctions['lookUp'] =
+        FunctionModel<dynamic>('lookUp', (arguments) {
+      final id = arguments[0];
+      FVBInstance? out;
+      ComponentOperationCubit.currentProject?.currentScreen.rootComponent
+          ?.forEach((p0) {
+        if (p0.id == id) {
+          if (p0 is CTextField) {
+            out = classes['TextField']?.createInstance(this, [])
+              ?..variables['text']?.value = p0.textEditingController.text
+              ..functions['setText']?.dartCall = (arguments) {
+                p0.textEditingController.text = arguments[0];
+              };
+          }
+        }
+      });
+      return out;
+    }, description: 'look up a component by id');
+
+    predefinedFunctions['refresh'] =
+        FunctionModel<void>('refresh', (arguments) {
+      consoleCallback
+          .call('api:refresh|${arguments.isNotEmpty ? arguments[0] : ''}');
+    }, description: 'refresh specific widget by ID');
+    predefinedFunctions['get'] = FunctionModel<dynamic>('get', (arguments) {
+      final url = arguments[0] as String;
+      final futureOfGet = classes['Future']!.createInstance(this, []);
+      http.get(Uri.parse(url)).then((value) {
+        (futureOfGet.variables['onValue']?.value as FVBFunction?)
+            ?.execute(this, [value.body]);
+      }).onError((error, stackTrace) {
+        (futureOfGet.variables['onError']?.value as FVBFunction?)
+            ?.execute(this, [error!]);
+      });
+      return futureOfGet;
+    }, description: 'get data from a url');
+  }
+
+  void enableSuggestion(void Function(CodeSuggestion?) suggestions) {
+    onSuggestions = suggestions;
+  }
+
+  void disableSuggestion() {
+    onSuggestions = null;
+  }
+
+  static init() {
+    classes.addAll(FVBModuleClasses.fvbClasses);
+
+    predefinedFunctions['ifElse'] =
+        FunctionModel<dynamic>('ifElse', (arguments) {
       if (arguments.length >= 2) {
         if (arguments[0] == true) {
           return arguments[1];
@@ -531,117 +271,85 @@ class CodeProcessor {
           return arguments[2];
         }
       }
-    }, '''
+    }, functionCode: '''
     double? ifElse(bool expression,double ifTrue,[double? elseTrue]){
     if(expression){
       return ifTrue;
     }
     return elseTrue;
     }
-    ''');
+    ''', description: 'inline if-else function (expression,ifTrue,elseTrue)');
 
     predefinedFunctions['randInt'] = FunctionModel<int>('randInt', (arguments) {
       if (arguments.length == 1) {
         return math.Random.secure().nextInt(arguments[0] ?? 100);
       }
       return 0;
-    }, '''
+    }, functionCode: '''
     int randInt(int? max){
     return math.Random.secure().nextInt(max??100);
     }
-    ''');
+    ''', description: 'return a random integer between 0 and max');
+    predefinedFunctions['jsonEncode'] =
+        FunctionModel<String>('jsonEncode', (arguments) {
+      if (arguments.length == 1) {
+        return jsonEncode(arguments[0]);
+      }
+      return '';
+    }, description: 'encode a json object');
+    predefinedFunctions['jsonDecode'] =
+        FunctionModel<dynamic>('jsonDecode', (arguments) {
+      if (arguments.length == 1) {
+        return jsonDecode(arguments[0]);
+      }
+      return '';
+    }, description: 'decode a json object');
 
-    predefinedFunctions['randDouble'] = FunctionModel<double>('randDouble', (arguments) {
+    predefinedFunctions['randDouble'] =
+        FunctionModel<double>('randDouble', (arguments) {
       return math.Random.secure().nextDouble();
-    }, '''
+    }, functionCode: '''
     double randDouble(){
     return math.Random.secure().nextDouble();
     }
-    ''');
-    predefinedFunctions['randBool'] = FunctionModel<bool>('randBool', (arguments) {
+    ''', description: 'return a random double');
+    predefinedFunctions['randBool'] =
+        FunctionModel<bool>('randBool', (arguments) {
       return math.Random.secure().nextBool();
-    }, '''
+    }, functionCode: '''
     bool randBool(){
     return math.Random.secure().nextBool();
     }
-    ''');
-    predefinedFunctions['randColor'] = FunctionModel<String>('randColor', (arguments) {
-      return '#' + Colors.primaries[math.Random().nextInt(Colors.primaries.length)].value.toRadixString(16);
-    }, '''
+    ''', description: 'return a random boolean');
+    predefinedFunctions['randColor'] =
+        FunctionModel<String>('randColor', (arguments) {
+      return '#' +
+          Colors.primaries[math.Random().nextInt(Colors.primaries.length)].value
+              .toRadixString(16);
+    }, functionCode: '''
     String randColor(){
     return '#'+Colors.primaries[math.Random().nextInt(Colors.primaries.length)].value.toRadixString(16);
     }
-    ''');
+    ''', description: 'return a random color');
     predefinedFunctions['sin'] = FunctionModel<double>('sin', (arguments) {
       return math.sin(arguments[0]);
-    }, ''' ''');
+    }, description: 'return the sine of the given angle (radian)');
     predefinedFunctions['cos'] = FunctionModel<double>('cos', (arguments) {
       return math.cos(arguments[0]);
-    }, ''' ''');
+    }, description: 'return the cosine of the given angle (radian)');
+  }
 
-    predefinedFunctions['print'] = FunctionModel<void>('print', (arguments) {
-      if (arguments.isEmpty) {
-        showError('print function requires at least one argument');
-        return;
-      }
-      consoleCallback.call('print:${arguments.map((e) => e.toString()).join('')}');
-    }, ''' ''');
+  static String? defaultConsoleCallback(String message,
+      {List<dynamic>? arguments}) {
+    doAPIOperation(message,
+        stackActionCubit: get<StackActionCubit>(),
+        stateManagementBloc: get<StateManagementBloc>());
+    return null;
+  }
 
-    predefinedFunctions['showSnackbar'] = FunctionModel<void>('showSnackbar', (arguments) {
-      if (arguments.length < 2) {
-        showError('showSnackbar requires 2 arguments!!');
-        return;
-      }
-      consoleCallback.call('api:snackbar|${arguments[0]}|${arguments[1]}');
-    }, ''' ''');
-    predefinedFunctions['newPage'] = FunctionModel<void>('newPage', (arguments) {
-      if (arguments.isEmpty) {
-        showError('newPage requires 1 argument!!');
-        return;
-      }
-      consoleCallback.call('api:newpage|${arguments[0]}');
-    }, ''' ''');
-    predefinedFunctions['goBack'] = FunctionModel<void>('goBack', (arguments) {
-      consoleCallback.call('api:goback|');
-    }, ''' ''');
-
-    predefinedFunctions['toInt'] = FunctionModel<int?>('toInt', (arguments) {
-      return int.tryParse(arguments[0]);
-    }, ''' ''');
-    predefinedFunctions['toDouble'] = FunctionModel<double?>('toDouble', (arguments) {
-      return double.tryParse(arguments[0]);
-    }, ''' ''');
-
-    predefinedFunctions['lookUp'] = FunctionModel<dynamic>('lookUp', (arguments) {
-      final id = arguments[0];
-      FVBInstance? out;
-      ComponentOperationCubit.currentProject?.currentScreen.rootComponent?.forEach((p0) {
-        if (p0.id == id) {
-          if (p0 is CTextField) {
-            out = classes['TextField']?.createInstance(this, [])
-              ?..fvbClass.fvbVariables['text']?.value = p0.textEditingController.text
-              ..fvbClass.fvbFunctions['setText']?.dartCall = (arguments) {
-                p0.textEditingController.text = arguments[0];
-              };
-          }
-        }
-      });
-      return out;
-    }, ''' ''');
-
-    predefinedFunctions['refresh'] = FunctionModel<void>('refresh', (arguments) {
-      consoleCallback.call('api:refresh|${arguments.isNotEmpty ? arguments[0] : ''}');
-    }, ''' ''');
-    predefinedFunctions['get'] = FunctionModel<dynamic>('get', (arguments) {
-      final url = arguments[0] as String;
-      final futureOfGet = classes['Future']!.createInstance(this, []);
-      http.get(Uri.parse(url)).then((value) {
-        (futureOfGet.fvbClass.fvbVariables['onValue']?.value as FVBFunction?)?.execute(this, [value.body]);
-      }).onError((error, stackTrace) {
-        (futureOfGet.fvbClass.fvbVariables['onError']?.value as FVBFunction?)?.execute(this, [error!]);
-      });
-      return futureOfGet;
-    }, ''' ''');
+  static void defaultOnError(error, line) {
+    get<ErrorBloc>().add(
+        ConsoleUpdatedEvent(ConsoleMessage(error, ConsoleMessageType.error)));
   }
 
   void addVariable(String name, VariableModel value) {
@@ -668,7 +376,8 @@ class CodeProcessor {
         a == '>=-' ||
         a == '<=-' ||
         a == '&&' ||
-        a == '||';
+        a == '||' ||
+        a == '??';
   }
 
   bool isOperator(int ch) {
@@ -683,6 +392,7 @@ class CodeProcessor {
         ch == '~'.codeUnits[0] ||
         ch == '%'.codeUnits[0] ||
         ch == '!'.codeUnits[0] ||
+        ch == '?'.codeUnits[0] ||
         ch == '|'.codeUnits[0];
   }
 
@@ -690,25 +400,43 @@ class CodeProcessor {
     if (ch == '=') {
       return 1;
     }
-    if(ch=='&&'||ch=='||'|| ch == '?'){
+    if (ch == '&&' || ch == '||' || ch == '?' || ch == '??') {
       return 2;
     }
-    if (ch == '<' || ch == '>' || ch == '<=' || ch == '>=' || ch == '==' || ch == '!=' ) {
+    if (ch == '<' ||
+        ch == '>' ||
+        ch == '<=' ||
+        ch == '>=' ||
+        ch == '<-' ||
+        ch == '>-' ||
+        ch == '<=-' ||
+        ch == '>=-' ||
+        ch == '==' ||
+        ch == '!=') {
       return 3;
     }
     if (ch == '+' || ch == '-' || ch == '|' || ch == '&' || ch == '!') {
       return 4;
     }
-    if (ch == '*' || ch == '/' || ch == '%') {
+    if (ch == '*' || ch == '/' || ch == '%' || ch == '~/') {
       return 5;
     }
     return 0;
   }
 
-  void destroyProcess() {
+  void destroyProcess({CacheMemory? cacheMemory, required bool deep}) {
     finished = true;
-    cacheMemory?.restore(this);
-    resetParameters();
+    if (cacheMemory != null) {
+      cacheMemory.restore(this);
+    } else if (this.cacheMemory != null) {
+      this.cacheMemory?.restore(this);
+      this.cacheMemory = null;
+    }
+    variables.removeWhere((key, value) =>
+        (value is VariableModel) && !value.uiAttached && value.deletable);
+    if (deep) {
+      resetStaticParameters();
+    }
     // if (memory == null) {
     //   final List<String> removeList = [];
     //   for (final entry in variables.entries) {
@@ -724,69 +452,131 @@ class CodeProcessor {
     // }
   }
 
-  dynamic getValue(final String variable, {FVBClass? fvbClass}) {
+  dynamic getValue(final String variable, {String object = ''}) {
+    if (object.isNotEmpty) {
+      final value = getValue(object);
+      if (variable == 'runtimeType') {
+        // valueStack.push(FVBValue(value: value.runtimeType.toString()));
+        return value.runtimeType.toString();
+      }
+      if (value is FVBInstance) {
+        return value.processor.getValue(variable);
+      } else if (value is FVBClass) {
+        return value.getValue(variable);
+      } else {
+        return null;
+      }
+    }
     if (variable.contains('[')) {
-      return getOrSetListMapBracketValue(variable, fvbClass: fvbClass);
+      return getOrSetListMapBracketValue(variable);
     } else if (variable == 'true') {
       return true;
     } else if (variable == 'false') {
       return false;
-    } else if (fvbClass != null) {
-      if (fvbClass.fvbVariables.containsKey(variable)) {
-        return fvbClass.fvbVariables[variable]!.value;
-      } else if (fvbClass.fvbStaticVariables?.containsKey(variable) ?? false) {
-        return fvbClass.fvbStaticVariables![variable]!.value;
-      } else if (fvbClass.fvbFunctions.containsKey(variable)) {
-        return fvbClass.fvbFunctions[variable]!;
-      } else if (fvbClass.fvbStaticFunctions?.containsKey(variable) ?? false) {
-        return fvbClass.fvbStaticFunctions![variable]!;
-      }
-    } else if (variables.containsKey(variable)) {
-      return variables[variable]!.value;
-    } else if (localVariables.containsKey(variable)) {
-      return localVariables[variable];
-    } else if (functions.containsKey(variable)) {
-      return functions[variable];
-    } else if (classes.containsKey(variable)) {
+    }
+    // else if (fvbClass != null) {
+    //   if (fvbClass.fvbStaticVariables?.containsKey(variable) ?? false) {
+    //     return fvbClass.fvbStaticVariables![variable]!.value;
+    //   } else if (fvbClass.fvbFunctions.containsKey(variable)) {
+    //     return fvbClass.fvbFunctions[variable]!;
+    //   } else if (fvbClass.fvbStaticFunctions?.containsKey(variable) ?? false) {
+    //     return fvbClass.fvbStaticFunctions![variable]!;
+    //   }
+    // }
+    else if (classes.containsKey(variable)) {
       return classes[variable];
     }
-    if (parentProcessor != null) {
-      if (parentProcessor!.variables.containsKey(variable)) {
-        return parentProcessor!.variables[variable]!.value;
-      } else if (parentProcessor!.localVariables.containsKey(variable)) {
-        return parentProcessor!.localVariables[variable];
-      } else if (parentProcessor!.functions.containsKey(variable)) {
-        return parentProcessor!.functions[variable];
-      } else if (parentProcessor!.classes.containsKey(variable)) {
-        return parentProcessor!.classes[variable];
+    CodeProcessor? pointer = this;
+    while (pointer != null) {
+      if (pointer.variables.containsKey(variable)) {
+        if (!pointer.variables[variable]!.nullable &&
+            pointer.variables[variable]!.value == null) {
+          throw Exception('variable $variable is not initialized');
+        }
+        return pointer.variables[variable]!.value;
+      } else if (pointer.localVariables.containsKey(variable)) {
+        return pointer.localVariables[variable];
+      } else if (pointer.functions.containsKey(variable)) {
+        return pointer.functions[variable];
       }
+      pointer = pointer.parentProcessor;
     }
-    if (operationType == OperationType.checkOnly && ignoreVariables.containsKey(variable)) {
+    if (operationType == OperationType.checkOnly &&
+        ignoreVariables.containsKey(variable)) {
       return ignoreVariables[variable];
     }
     // else if (operationType == OperationType.checkOnly) {
     //   showError('Variable $variable not found!!');
     //   return null;
     // }
-    return FVBUndefined(variable);
+    throw Exception('variable $variable does not exist!!');
   }
 
   bool setValue(final String variable, dynamic value,
-      {bool isFinal = false, bool createNew = false, DataType? dataType, bool nullable = false}) {
+      {bool isFinal = false,
+      bool isStatic = false,
+      bool createNew = false,
+      String object = '',
+      DataType? dataType,
+      bool nullable = false}) {
     if (declarativeOnly && !createNew) {
-      showError('Cannot set variable $variable in declarative mode');
-      return false;
+      throw Exception('Cannot set variable $variable in declarative mode');
+    }
+    if (createNew) {
+      if (isStatic &&
+          scopeName == ComponentOperationCubit.currentProject!.name) {
+        throw Exception('Cannot create a static variable global scope');
+      }
+
+      DataType type;
+      if (dataType == null) {
+        type = DataTypeProcessor.getDartTypeToDatatype(value);
+      } else if (DataTypeProcessor.checkIfValidDataTypeOfValue(
+          value, dataType, variable, nullable)) {
+        type = dataType;
+      } else {
+        return false;
+      }
+      if (variables.containsKey(variable)) {
+        throw Exception('Variable $variable already exists');
+      }
+      final variableModel = VariableModel(variable, type,
+          nullable: nullable,
+          value: value,
+
+          // type: dataType == DataType.fvbInstance
+          //     ? (value as FVBInstance).fvbClass.name
+          //     : null,
+          isFinal: isFinal);
+      if (isStatic) {
+        _staticVariables[variable] = variableModel;
+      } else {
+        variables[variable] = variableModel;
+      }
+      return true;
+    }
+    if (object.isNotEmpty) {
+      final objectValue = getValue(object);
+      if (objectValue is FVBInstance) {
+        objectValue.processor.setValue(variable, value);
+      } else if (objectValue is FVBClass) {
+        objectValue.setValue(variable, value);
+      }
+      return true;
     }
     if (variable.contains('[')) {
       getOrSetListMapBracketValue(variable, value: value);
       return true;
     }
+
     if (variables.containsKey(variable)) {
       if (variables[variable]!.isFinal) {
-        showError('Cannot change value of final variable $variable');
-        return false;
+        throw Exception('Cannot change value of final variable $variable');
       } else if (DataTypeProcessor.checkIfValidDataTypeOfValue(
-          value, variables[variable]!.dataType, variable, variables[variable]!.nullable, showError)) {
+          value,
+          variables[variable]!.dataType,
+          variable,
+          variables[variable]!.nullable)) {
         variables[variable]!.value = value;
       }
       return true;
@@ -794,58 +584,46 @@ class CodeProcessor {
       localVariables[variable] = value;
       return true;
     }
-    if (parentProcessor != null) {
-      if (parentProcessor!.variables.containsKey(variable)) {
-        if (parentProcessor!.variables[variable]!.isFinal) {
-          showError('Cannot change value of final variable $variable');
-          return false;
-        } else if (DataTypeProcessor.checkIfValidDataTypeOfValue(value, parentProcessor!.variables[variable]!.dataType,
-            variable, parentProcessor!.variables[variable]!.nullable, showError)) {
-          parentProcessor!.variables[variable]!.value = value;
+    CodeProcessor? parent = parentProcessor;
+    while (parent != null) {
+      if (parent.variables.containsKey(variable)) {
+        if (parent.variables[variable]!.isFinal) {
+          throw Exception('Cannot change value of final variable $variable');
+        } else if (DataTypeProcessor.checkIfValidDataTypeOfValue(
+          value,
+          parent.variables[variable]!.dataType,
+          variable,
+          parent.variables[variable]!.nullable,
+        )) {
+          parent.variables[variable]!.value = value;
           return true;
         }
-      } else if (parentProcessor!.localVariables.containsKey(variable)) {
-        parentProcessor!.localVariables[variable] = value;
+      } else if (parent.localVariables.containsKey(variable)) {
+        parent.localVariables[variable] = value;
         return true;
       }
+      parent = parent.parentProcessor;
     }
-    if (createNew) {
-      DataType type;
-      if (dataType == null) {
-        type = DataTypeProcessor.getDartTypeToDatatype(value, showError);
-      } else if (DataTypeProcessor.checkIfValidDataTypeOfValue(value, dataType, variable, nullable, showError)) {
-        type = dataType;
-      } else {
-        return false;
-      }
-      variables[variable] = VariableModel(variable, value, false, null, type, '',
-          nullable: nullable,
-          // type: dataType == DataType.fvbInstance
-          //     ? (value as FVBInstance).fvbClass.name
-          //     : null,
-          isFinal: isFinal);
-    } else {
-      showError('Variable $variable not found');
-      return false;
-    }
-    return true;
+    throw Exception('Variable $variable not found');
   }
 
-  getOrSetListMapBracketValue(String variable, {dynamic value, FVBClass? fvbClass}) {
+  getOrSetListMapBracketValue(String variable, {dynamic value}) {
     int openBracket = variable.indexOf('[');
     if (openBracket != -1) {
-      final closeBracket =
-          CodeOperations.findCloseBracket(variable, openBracket, '['.codeUnits.first, ']'.codeUnits.first);
+      final closeBracket = CodeOperations.findCloseBracket(
+          variable, openBracket, '['.codeUnits.first, ']'.codeUnits.first);
       final key = process(variable.substring(openBracket + 1, closeBracket));
       final subVar = variable.substring(0, openBracket);
       openBracket = variable.indexOf('[', closeBracket);
-      dynamic mapValue = getValue(subVar, fvbClass: fvbClass);
+      dynamic mapValue = getValue(subVar);
       if (value != null && openBracket == -1) {
         mapValue[key] = value;
         return true;
       } else {
         if ((mapValue is Map && mapValue.containsKey(key)) ||
-            ((mapValue is List || mapValue is String) && key is int && key < mapValue.length)) {
+            ((mapValue is List || mapValue is String) &&
+                key is int &&
+                key < mapValue.length)) {
           mapValue = mapValue[key];
         } else {
           // showError('can not use [ ] with $mapValue');
@@ -853,15 +631,17 @@ class CodeProcessor {
         }
       }
       while (openBracket != -1) {
-        final closeBracket =
-            CodeOperations.findCloseBracket(variable, openBracket, '['.codeUnits.first, ']'.codeUnits.first);
+        final closeBracket = CodeOperations.findCloseBracket(
+            variable, openBracket, '['.codeUnits.first, ']'.codeUnits.first);
         final key = process(variable.substring(openBracket + 1, closeBracket));
         openBracket = variable.indexOf('[', closeBracket);
         if (value != null && openBracket == -1) {
           mapValue[key] = value;
         } else {
           if ((mapValue is Map && mapValue.containsKey(key)) ||
-              ((mapValue is List || mapValue is String) && key is int && key < mapValue.length)) {
+              ((mapValue is List || mapValue is String) &&
+                  key is int &&
+                  key < mapValue.length)) {
             mapValue = mapValue[key];
           } else {
             return FVBUndefined('$variable not have "$key"');
@@ -872,23 +652,28 @@ class CodeProcessor {
     }
   }
 
-  void processOperator(final String operator, final Stack2<FVBValue> valueStack, final Stack2<String> operatorStack) {
+  void processOperator(final String operator, final String object,
+      final Stack2<FVBValue> valueStack, final Stack2<String> operatorStack) {
     dynamic a, b;
     late FVBValue aVar, bVar;
     if (valueStack.isEmpty) {
-      showError('ValueStack is Empty, syntax error !!');
-      return;
+      throw Exception('ValueStack is Empty, syntax error !!');
     } else {
       bVar = valueStack.pop()!;
-      b = bVar.value;
+      b = bVar.evaluateValue(this, ignoreIfNotExist: bVar.createVar);
     }
 
-    if (valueStack.isEmpty && operator != '-' && operator != '--' && operator != '++' && operator != '!') {
-      showError('Not enough values for operation "$operator", syntax error !!');
-      return;
-    } else if (valueStack.isNotEmpty && (valueStack.peek?.value != null || operator == '=')) {
+    if (valueStack.isEmpty &&
+        operator != '-' &&
+        operator != '--' &&
+        operator != '++' &&
+        operator != '!') {
+      throw Exception(
+          'Not enough values for operation "$operator", syntax error !!');
+    } else if ((operator != '-' || valueStack.length > operatorStack.length) &&
+        valueStack.isNotEmpty) {
       aVar = valueStack.pop()!;
-      a = aVar.value;
+      a = aVar.evaluateValue(this, ignoreIfNotExist: bVar.createVar);
       // else if(a!=null&&b!=null&&(a is! int&& a is! double) || (b is! int&& b is! double) ){
       //   if(arithmeticOperators.contains(operator)){
       //     showError('can not use $operator with ${aVar.variableName ?? aVar.value} and ${bVar.variableName ?? bVar.value}');
@@ -896,17 +681,19 @@ class CodeProcessor {
       //   }
       // }
     }
+    if (b is FVBTest) {
+      valueStack.push(bVar);
+      return;
+    } else if (a is FVBTest) {
+      valueStack.push(aVar);
+      return;
+    }
 
     late dynamic r;
     try {
       switch (operator) {
-        case '?':
-          final condition = valueStack.pop()?.evaluateValue(this);
-          if (condition == true) {
-            r = a;
-          } else {
-            r = b;
-          }
+        case '??':
+          r = a ?? b;
           break;
         case '--':
         case '+':
@@ -943,8 +730,7 @@ class CodeProcessor {
           if (a is int && b is int) {
             r = a % b;
           } else {
-            showError('Can not do $a % $b, both are not type of int');
-            return;
+            throw Exception('Can not do $a % $b, both are not type of int');
           }
           break;
         case '<':
@@ -977,9 +763,11 @@ class CodeProcessor {
         case '=':
           setValue(aVar.variableName!, b,
               isFinal: aVar.isVarFinal,
-              createNew: aVar.createVarIfNotExist,
+              createNew: aVar.createVar,
               dataType: aVar.dataType,
-              nullable: aVar.nullable);
+              isStatic: aVar.static,
+              nullable: aVar.nullable,
+              object: object);
           r = b;
           break;
         case '++':
@@ -990,8 +778,7 @@ class CodeProcessor {
             setValue(name, value! + 1);
             r = value! + 1;
           } else {
-            showError('Variable $name is not defined');
-            r = null;
+            throw Exception('Variable $name is not defined');
           }
 
           break;
@@ -1002,8 +789,7 @@ class CodeProcessor {
             setValue(name, value! + b);
             r = value! + b;
           } else {
-            showError('Variable $name is not defined');
-            r = null;
+            throw Exception('Variable $name is not defined');
           }
           break;
         case '-=':
@@ -1013,8 +799,7 @@ class CodeProcessor {
             setValue(name, value! - b);
             r = value! + b;
           } else {
-            showError('Variable $name is not defined');
-            r = null;
+            throw Exception('Variable $name is not defined');
           }
           break;
         case '*=':
@@ -1025,8 +810,7 @@ class CodeProcessor {
             setValue(name, value! * b);
             r = value! * b;
           } else {
-            showError('Variable $name is not defined');
-            r = null;
+            throw Exception('Variable $name is not defined');
           }
           break;
         case '/=':
@@ -1036,8 +820,7 @@ class CodeProcessor {
             setValue(name, value! / b);
             r = value! / b;
           } else {
-            showError('Variable $name is not defined');
-            r = null;
+            throw Exception('Variable $name is not defined');
           }
           break;
         case '<=':
@@ -1074,11 +857,10 @@ class CodeProcessor {
           r = a ^ b;
           break;
         default:
-          showError('Unknown operator $operator');
-          return;
+          throw Exception('Unknown operator $operator');
       }
     } catch (e) {
-      showError(e.toString());
+      enableError(e.toString());
       r = null;
     }
     valueStack.push(FVBValue(value: r));
@@ -1106,19 +888,19 @@ class CodeProcessor {
       }
     }
     if (startList.length != endList.length) {
-      showError('Invalid syntax in string');
+      enableError('Invalid syntax in string');
       return null;
     }
     while (startList.isNotEmpty) {
       si = startList.removeAt(0);
       ei = endList.removeAt(0);
       if (si + 2 == ei) {
-        showError('No expression between {{ and }} !!');
+        enableError('No expression between {{ and }} !!');
         return null;
         // return CodeOutput.right('No variables');
       }
       if (ei > code.length) {
-        showError('Not enough characters in string');
+        enableError('Not enough characters in string');
         return null;
       }
       final variableName = code.substring(si + 2, ei);
@@ -1127,7 +909,7 @@ class CodeProcessor {
         resolve: true,
       );
       if (value is FVBUndefined) {
-        showError('undefined ${value.varName}');
+        enableError('undefined ${value.varName}');
         return null;
       }
       final k1 = '{{$variableName}}';
@@ -1141,19 +923,32 @@ class CodeProcessor {
     return code;
   }
 
-  void resetParameters() {
+  void resetStaticParameters() {
     while (timers.isNotEmpty) {
       timers.removeLast().cancel();
     }
+    for (final processor in processorMap.values) {
+      processor.destroyProcess(deep: false);
+    }
+  }
+
+  bool get isSuggestionEnable {
+    return operationType == OperationType.checkOnly && onSuggestions != null;
   }
 
   dynamic executeCode<T>(final String input,
-      {OperationType operationType = OperationType.regular, bool declarativeOnly = true}) {
+      {OperationType type = OperationType.regular,
+      bool declarativeOnly = true,
+      List<String>? arguments}) {
     error = false;
-    this.operationType = operationType;
-    destroyProcess();
+    operationType = type;
+    finished = false;
     String trimCode = '';
     bool commentOpen = false;
+    if (isSuggestionEnable) {
+      lastCodeCount = 0;
+      onSuggestions!.call(null);
+    }
     for (final line in input.split('\n')) {
       int index = -1;
       bool openString = false;
@@ -1186,45 +981,56 @@ class CodeProcessor {
         trimCode += line;
       }
     }
-    try {
-      final singleSpaceCode = CodeOperations.trimAvoidSingleSpace(trimCode)!;
-      final checkForError = CodeOperations.checkSyntaxInCode(trimCode);
-      if (checkForError != null) {
-        showError(checkForError);
-        return null;
-      }
-      if (!declarativeOnly) {
-        cacheMemory = CacheMemory(this);
-      }
-      return execute<T>(CodeOperations.trim(singleSpaceCode)!, declarativeOnly: declarativeOnly);
-    } on Exception catch (_) {
+    final singleSpaceCode = CodeOperations.trimAvoidSingleSpace(trimCode)!;
+    final checkForError = CodeOperations.checkSyntaxInCode(trimCode);
+    if (checkForError != null) {
+      enableError(checkForError);
       return null;
     }
+    cacheMemory = CacheMemory(this);
+    final code = CodeOperations.trim(singleSpaceCode)!;
+
+    final output = execute<T>(code, declarativeOnly: declarativeOnly);
+    // if(functions.containsKey(scopeName)){
+    //   if(arguments==null){
+    //     enableError('Invalid arguments for constructor $scopeName ');
+    //     return null;
+    //   }
+    //   functions[scopeName]!.execute(this, ArgumentProcessor.process(this, arguments, functions[scopeName]!.arguments));
+    // }
+    return output;
   }
 
   dynamic execute<T>(final String trimCode, {bool declarativeOnly = false}) {
-    finished = false;
     final oldDeclarativeMode = this.declarativeOnly;
     this.declarativeOnly = declarativeOnly;
     int count = 0;
     int lastPoint = 0;
+
     dynamic globalOutput;
     for (int i = 0; i < trimCode.length; i++) {
       if (trimCode[i] == '{' || trimCode[i] == '[' || trimCode[i] == '(') {
         count++;
-      } else if (trimCode[i] == '}' || trimCode[i] == ']' || trimCode[i] == ')') {
+      } else if (trimCode[i] == '}' ||
+          trimCode[i] == ']' ||
+          trimCode[i] == ')') {
         count--;
       }
       if (count == 0 && (trimCode[i] == ';' || trimCode.length == i + 1)) {
-        final code = trimCode.substring(lastPoint, trimCode.length == i + 1 ? i + 1 : i);
-        final output = process<T>(code);
+        final endIndex = trimCode[i] == ';' ? i : i + 1;
+        final code = trimCode.substring(lastPoint, endIndex);
+        final output = process<T>(
+          code,
+        );
         lastPoint = i + 1;
         if (error) {
           break;
         }
         globalOutput = output;
 
-        if (output is FVBContinue || output is FVBBreak || output is FVBReturn) {
+        if (output is FVBContinue ||
+            output is FVBBreak ||
+            output is FVBReturn) {
           this.declarativeOnly = oldDeclarativeMode;
           return globalOutput;
         }
@@ -1238,832 +1044,854 @@ class CodeProcessor {
     return globalOutput;
   }
 
-  dynamic process<T>(
-    final String input, {
-    bool resolve = false,
-  }) {
-    if (T == String || T == ImageData) {
-      return processString(input);
-    } else if (T == Color && input.startsWith('#')) {
-      return input;
-    }
-    final Stack2<FVBValue> valueStack = Stack2<FVBValue>();
-    final Stack2<String> operatorStack = Stack2<String>();
-    bool stringOpen = false;
-    int stringCount = 0;
-    String variable = '';
-    String object = '';
-    bool isNumber = true;
-    for (int currentIndex = 0; currentIndex < input.length; currentIndex++) {
-      if (error) {
-        return null;
-      }
-      final String nextToken = input[currentIndex];
-      final ch = nextToken.codeUnits.first;
-      if (stringOpen) {
-        if (stringCount == 0 && (ch == '"'.codeUnits.first || ch == '\''.codeUnits.first)) {
-          stringOpen = !stringOpen;
-          if (currentIndex - variable.length - 1 >= 0 &&
-              (input[currentIndex - variable.length - 1] == '"' || input[currentIndex - variable.length - 1] == '\'')) {
-            valueStack.push(FVBValue(value: processString(variable)));
-            variable = '';
-            continue;
-          } else {
-            return null;
-          }
-        } else if (ch == '{'.codeUnits.first) {
-          stringCount++;
-        } else if (ch == '}'.codeUnits.first) {
-          stringCount--;
-        }
-        variable += nextToken;
-
-        continue;
-      } else if (ch == '"'.codeUnits.first || ch == '\''.codeUnits.first) {
-        isNumber = false;
-        stringOpen = true;
-      } else if (ch == '['.codeUnits.first) {
-        int count = 0;
-
-        for (int i = currentIndex + 1; i < input.length; i++) {
-          if (input[i] == ']' && count == 0) {
-            final substring = input.substring(currentIndex + 1, i);
-            if (!substring.contains(',') && (valueStack.peek?.value is List || valueStack.peek?.value is Map)) {
-              valueStack.push(FVBValue(value: valueStack.pop()!.value[process(substring)]));
-              currentIndex = i;
-              break;
-            } else if (variable.isNotEmpty) {
-              variable = variable + '[$substring]';
-              currentIndex = i;
-              break;
-            } else {
-              valueStack.push(FVBValue(value: CodeOperations.splitBy(substring).map((e) => process(e)).toList()));
-              variable = '';
-              currentIndex = i;
-              break;
-            }
-          } else if (input[i] == '[') {
-            count++;
-          } else if (input[i] == ']') {
-            count--;
-          }
-        }
-        continue;
-      } else if (ch == '{'.codeUnits.first) {
-        if (variable.isNotEmpty && variable.startsWith('class~')) {
-          final className = variable.substring(6);
-          final closeCurlyBracket =
-              CodeOperations.findCloseBracket(input, currentIndex, '{'.codeUnits.first, '}'.codeUnits.first);
-          final CodeProcessor processor = CodeProcessor(
-              scope: Scope.object, consoleCallback: consoleCallback, onError: onError, scopeName: 'fun:$className');
-          processor.execute(input.substring(currentIndex + 1, closeCurlyBracket), declarativeOnly: true);
-          classes[className] = FVBClass(
-            className,
-            processor.functions,
-            processor.variables.map(
-              (key, value) => MapEntry(key, FVBVariable(value.name, value.dataType, value: value.value)),
-            ),
-          );
-
-          currentIndex = closeCurlyBracket;
-          variable = '';
-          continue;
+  dynamic process<T>(final String input, {bool resolve = false}) {
+    int editIndex = -1;
+    if (isSuggestionEnable) {
+      if (lastCodeCount >= lastCodes.length) {
+        lastCodes.add(input);
+      } else if (lastCodes[lastCodeCount] != input) {
+        if (input.length == 1) {
+          editIndex = 0;
+          print('HERE I AM == $editIndex');
         } else {
-          int count = 0;
-          for (int i = currentIndex + 1; i < input.length; i++) {
-            if (input[i] == '}' && count == 0) {
-              valueStack.push(
-                FVBValue(
-                    value: Map.from(
-                  CodeOperations.splitBy(input.substring(currentIndex + 1, i)).asMap().map((e, n) {
-                    final split = CodeOperations.splitBy(n, splitBy: ':');
-                    return MapEntry(process(split[0]), process(split[1]));
-                  }),
-                )),
-              );
-              variable = '';
-              currentIndex = i + 1;
-              break;
-            } else if (input[i] == '{') {
-              count++;
-            } else if (input[i] == '}') {
-              count--;
-            }
-          }
-        }
-      } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
-          (ch >= zeroCodeUnit && ch <= nineCodeUnit) ||
-          ch == underScoreCodeUnit ||
-          ch == squareBracketOpen ||
-          ch == squareBracketClose ||
-          ch == questionMarkCodeUnit ||
-          ch == '~'.codeUnits.first) {
-        if (ch == questionMarkCodeUnit) {
-          final colonIndex = CodeOperations.findChar(input, currentIndex, colonCodeUnit);
-          if (colonIndex != -1) {
-            if (variable.isNotEmpty) {
-              resolveVariable(variable, object, valueStack);
-            }
-            while (operatorStack.isNotEmpty && getPrecedence('?') <= getPrecedence(operatorStack.peek!)) {
-              if (error) {
-                return null;
-              }
-
-
-              processOperator(operatorStack.pop()!, valueStack, operatorStack);
-            }
-            operatorStack.push('?');
-            valueStack.push(FVBValue(value: process(input.substring(currentIndex + 1, colonIndex))));
-            currentIndex = colonIndex;
-            variable = '';
-            object = '';
-            continue;
-          }
-        }
-        if (ch == '~'.codeUnits.first || (ch >= zeroCodeUnit && ch <= nineCodeUnit)) {
-          isNumber = true;
-        } else {
-          isNumber = false;
-        }
-        variable += nextToken;
-      } else if (ch == dotCodeUnit) {
-        if (isNumber) {
-          variable += nextToken;
-          continue;
-        }
-        if (object.isNotEmpty && variable.isNotEmpty) {
-          final obj = getValue(object);
-          object = 'instance';
-          localVariables[object] =
-              getValue(variable, fvbClass: obj is FVBInstance ? obj.fvbClass : (obj is FVBClass ? obj : null));
-          variable = '';
-          continue;
-        } else if (variable.isNotEmpty) {
-          object = variable;
-          variable = '';
-          continue;
-        } else if (valueStack.isNotEmpty) {
-          variable = 'instance';
-          localVariables[variable] = valueStack.pop()?.value!;
-          object = variable;
-          variable = '';
-          continue;
-        }
-      } else {
-        if (variable.isNotEmpty && ch == '('.codeUnits[0]) {
-          final int closeRoundBracket = CodeOperations.findCloseBracket(input, currentIndex, '('.codeUnits.first, ')'.codeUnits.first);
-
-          if (variable == 'for') {
-            if (declarativeOnly) {
-              showError('for is not allowed in declarative mode');
-              return;
-            }
-            int endIndex = CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-            final insideFor = input.substring(currentIndex + 1, closeRoundBracket);
-            final innerCode = input.substring(closeRoundBracket + 2, endIndex);
-            final splits = CodeOperations.splitBy(insideFor, splitBy: ';');
-            if (splits.length != 3) {
-              if (insideFor.contains(':')) {
-                final split = CodeOperations.splitBy(insideFor, splitBy: ':');
-                final list = process(split[1]);
-                if (list is! Iterable) {
-                  showError('Invalid for each loop');
-                } else {
-                  if (operationType == OperationType.regular) {
-                    for (final item in list) {
-                      localVariables[split[0]] = item;
-                      final output = execute(innerCode);
-                      if (output is FVBBreak) {
-                        break;
-                      }
-                    }
-                  } else if (operationType == OperationType.checkOnly) {
-                    execute(innerCode);
-                  }
-                }
-              } else {
-                showError('For loop syntax error');
-              }
-            } else {
-              process(splits[0]);
-              int count = 0;
-              while (process(splits[1]) == true) {
-                final output = execute(innerCode);
-                if (output is FVBBreak) {
-                  break;
-                }
-                process(splits[2]);
-                if (operationType == OperationType.checkOnly) {
-                  break;
-                }
-                count++;
-                if (count > 1000) {
-                  showError('For loop goes infinite!!');
+          final lastCode = lastCodes[lastCodeCount];
+          if ((lastCode.length - input.length).abs() < 5) {
+            if (input != lastCode) {
+              for (int i = 0; i < input.length && i < lastCode.length; i++) {
+                if (input[i] != lastCode[i]) {
+                  editIndex = i;
                   break;
                 }
               }
-            }
-            variable = '';
-            currentIndex = endIndex;
-            continue;
-          }
-          final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeRoundBracket));
-
-          if (declarativeOnly && (input.length <= closeRoundBracket + 1 || input[closeRoundBracket + 1] != '{')) {
-            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeRoundBracket));
-            functions[variable] = FVBFunction(variable, '', processArgDefinitionList(argumentList));
-            variable = '';
-            currentIndex = closeRoundBracket;
-            continue;
-          } else if (classes.containsKey(variable)) {
-            final fvbClass = classes[variable]!;
-            valueStack.push(
-              FVBValue(
-                value: fvbClass.createInstance(
-                    this,
-                    fvbClass.fvbFunctions.containsKey(variable)
-                        ? processArgList(argumentList, fvbClass.fvbFunctions[variable]!.arguments)
-                        : []),
-              ),
-            );
-            variable = '';
-            currentIndex = closeRoundBracket;
-            continue;
-          } else if (object.isNotEmpty) {
-            final objectInstance = getValue(object);
-            if (objectInstance is FVBInstance || objectInstance is FVBClass) {
-              final fvbArguments = objectInstance is FVBInstance
-                  ? objectInstance.fvbClass.getFunction(this, variable)?.arguments
-                  : (objectInstance as FVBClass).getFunction(this, variable)?.arguments;
-              if (fvbArguments == null) {
-                showError('Function "$variable" not found in class $object');
-                return;
-              }
-              final processedArgs = processArgList(argumentList, fvbArguments);
-              final dynamic output;
-              if (objectInstance is FVBInstance) {
-                output = objectInstance.fvbClass.executeFunction(variable, processedArgs, this);
-              } else {
-                output = objectInstance.executeFunction(variable, processedArgs, this);
-              }
-              if (output != null) {
-                valueStack.push(FVBValue(value: output));
-              }
-            } else if (objectInstance is String) {
-              final processedArgs = argumentList.map((e) => process(e)).toList();
-              switch (variable) {
-                case 'substring':
-                  valueStack.push(FVBValue(value: objectInstance.substring(processedArgs[0], processedArgs[1])));
-                  break;
-                case 'split':
-                  valueStack.push(FVBValue(value: objectInstance.split(processedArgs[0])));
-                  break;
-                case 'contains':
-                  valueStack.push(FVBValue(value: objectInstance.contains(processedArgs[0])));
-                  break;
-                case 'startsWith':
-                  valueStack.push(FVBValue(value: objectInstance.startsWith(processedArgs[0])));
-                  break;
-                case 'endsWith':
-                  valueStack.push(FVBValue(value: objectInstance.endsWith(processedArgs[0])));
-                  break;
-                case 'trim':
-                  valueStack.push(FVBValue(value: objectInstance.trim()));
-                  break;
-                case 'toLowerCase':
-                  valueStack.push(FVBValue(value: objectInstance.toLowerCase()));
-                  break;
-                case 'toUpperCase':
-                  valueStack.push(FVBValue(value: objectInstance.toUpperCase()));
-                  break;
-                case 'replaceAll':
-                  valueStack.push(FVBValue(value: objectInstance.replaceAll(processedArgs[0], processedArgs[1])));
-                  break;
-                case 'replaceFirst':
-                  valueStack.push(FVBValue(value: objectInstance.replaceFirst(processedArgs[0], processedArgs[1])));
-                  break;
-                case 'indexOf':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.indexOf(
-                          processedArgs[0], processedArgs.length > 1 ? processedArgs[1] : null)));
-                  break;
-                case 'lastIndexOf':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.lastIndexOf(
-                          processedArgs[0], processedArgs.length > 1 ? processedArgs[1] : null)));
-                  break;
-                case 'replaceRange':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.replaceRange(processedArgs[0], processedArgs[1], processedArgs[2])));
-                  break;
+              if (editIndex == -1) {
+                editIndex = (input.length > lastCode.length)
+                    ? input.length - 1
+                    : lastCode.length - 1;
               }
             }
-            else if (objectInstance is Iterable) {
-              final processedArgs = argumentList.map((e) => process(e)).toList();
-              switch (variable) {
-                case 'add':
-                  if (objectInstance is List) {
-                    objectInstance.add(processedArgs[0]);
-                  }
-                  break;
-                case 'insert':
-                  if (objectInstance is List) {
-                    objectInstance.insert(processedArgs[0], processedArgs[1]);
-                  }
-                  break;
-                case 'clear':
-                  if (objectInstance is List) {
-                    objectInstance.clear();
-                  }
-                  break;
-                case 'addAll':
-                  if (objectInstance is List) {
-                    objectInstance.addAll(processedArgs[0]);
-                  }
-                  break;
-                case 'removeAt':
-                  if (objectInstance is List) {
-                    objectInstance.removeAt(processedArgs[0]);
-                  }
-                  break;
-                case 'remove':
-                  if (objectInstance is List) {
-                    objectInstance.remove(processedArgs[0]);
-                  }
-                  break;
-                case 'indexOf':
-                  if (objectInstance is List) {
-                    valueStack.push(FVBValue(
-                        value: objectInstance.indexOf(
-                            processedArgs[0], processedArgs.length > 1 ? processedArgs[1] : null)));
-                  }
-                  break;
-                case 'contains':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.contains(
-                    processedArgs[0],
-                  )));
-                  break;
-                case 'where':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.where((e) => (processedArgs[0] as FVBFunction).execute(this, [e]))));
-                  break;
-                case 'indexWhere':
-                  if (objectInstance is List) {
-                    valueStack.push(FVBValue(
-                        value: objectInstance.indexWhere((e) => (processedArgs[0] as FVBFunction).execute(this, [e]))));
-                  }
-                  break;
-                case 'firstWhere':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.firstWhere((e) => (processedArgs[0] as FVBFunction).execute(this, [e]))));
-                  break;
-                case 'any':
-                  valueStack.push(
-                      FVBValue(value: objectInstance.any((e) => (processedArgs[0] as FVBFunction).execute(this, [e]))));
-                  break;
-
-                case 'forEach':
-                  for (var e in objectInstance) {
-                    (processedArgs[0] as FVBFunction).execute(this, [e]);
-                  }
-                  break;
-
-                case 'sort':
-                  if (objectInstance is List) {
-                    objectInstance.sort();
-                  }
-                  break;
-
-                case 'map':
-                  valueStack.push(
-                      FVBValue(value: objectInstance.map((e) => (processedArgs[0] as FVBFunction).execute(this, [e]))));
-                  break;
-                case 'reduce':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.reduce((e, f) => (processedArgs[0] as FVBFunction).execute(this, [e, f]))));
-                  break;
-                case 'fold':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.fold(
-                          processedArgs[0], (e, f) => (processedArgs[1] as FVBFunction).execute(this, [e, f]))));
-                  break;
-                case 'every':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.every((e) => (processedArgs[0] as FVBFunction).execute(this, [e]))));
-                  break;
-                case 'expand':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.expand((e) => (processedArgs[0] as FVBFunction).execute(this, [e]))));
-                  break;
-                case 'take':
-                  valueStack.push(FVBValue(value: objectInstance.take(processedArgs[0])));
-                  break;
-                case 'takeWhile':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.takeWhile((e) => (processedArgs[0] as FVBFunction).execute(this, [e]))));
-                  break;
-                case 'skip':
-                  valueStack.push(FVBValue(value: objectInstance.skip(processedArgs[0])));
-                  break;
-                case 'skipWhile':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.skipWhile((e) => (processedArgs[0] as FVBFunction).execute(this, [e]))));
-                  break;
-                case 'elementAt':
-                  valueStack.push(FVBValue(value: objectInstance.elementAt(processedArgs[0])));
-                  break;
-                case 'sublist':
-                  if (objectInstance is List) {
-                    valueStack.push(FVBValue(value: objectInstance.sublist(processedArgs[0], processedArgs[1])));
-                  }
-                  break;
-                case 'getRange':
-                  if (objectInstance is List) {
-                    valueStack.push(FVBValue(value: objectInstance.getRange(processedArgs[0], processedArgs[1])));
-                  }
-                  break;
-                case 'removeRange':
-                  if (objectInstance is List) {
-                    objectInstance.removeRange(processedArgs[0], processedArgs[1]);
-                  }
-                  break;
-                case 'setRange':
-                  if (objectInstance is List) {
-                    objectInstance.setRange(processedArgs[0], processedArgs[1], processedArgs[2]);
-                  }
-                  break;
-                case 'fillRange':
-                  if (objectInstance is List) {
-                    objectInstance.fillRange(processedArgs[0], processedArgs[1], processedArgs[2]);
-                  }
-                  break;
-                case 'toList':
-                  valueStack.push(FVBValue(
-                      value: objectInstance.toList(growable: processedArgs.isNotEmpty ? processedArgs[0] : true)));
-                  break;
-                case 'toSet':
-                  valueStack.push(FVBValue(value: objectInstance.toSet()));
-                  break;
-                case 'asMap':
-                  if (objectInstance is List) {
-                    valueStack.push(FVBValue(value: objectInstance.asMap()));
-                  }
-                  break;
-              }
-            }
-            else if (objectInstance is Map) {
-              final processedArgs = argumentList.map((e) => process(e)).toList();
-              switch (variable) {
-                case 'remove':
-                  objectInstance.remove(processedArgs[0]);
-                  break;
-                case 'containsKey':
-                  valueStack.push(FVBValue(value: objectInstance.containsKey(processedArgs[0])));
-                  break;
-                case 'containsValue':
-                  valueStack.push(FVBValue(value: objectInstance.containsValue(processedArgs[0])));
-                  break;
-                case 'map':
-                  valueStack.push(FVBValue(
-                      value: objectInstance
-                          .map((key, value) => (processedArgs[0] as FVBFunction).execute(this, [key, value]))));
-                  break;
-                case 'forEach':
-                  objectInstance.forEach((key, value) {
-                    (processedArgs[0] as FVBFunction).execute(this, [key, value]);
-                  });
-                  break;
-                case 'clear':
-                  objectInstance.clear();
-                  break;
-              }
-            }
-            variable = '';
-            object = '';
-            currentIndex = closeRoundBracket;
-            continue;
-          } else if (variable == 'while') {
-            if (declarativeOnly) {
-              showError('While statement is not allowed in declarative mode');
-              return;
-            }
-            int endIndex = CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-
-            final innerCode = input.substring(closeRoundBracket + 2, endIndex);
-            final conditionalCode = input.substring(currentIndex + 1, closeRoundBracket);
-            int count = 0;
-            while (process(conditionalCode) == true) {
-              final output = execute(innerCode);
-              if (output is FVBBreak) {
-                break;
-              }
-              count++;
-              if (count > 1000) {
-                showError('While loop goes infinite!!');
-                break;
-              }
-            }
-            variable = '';
-            currentIndex = endIndex;
-            continue;
-          }
-          else if (variable == 'if') {
-            if (declarativeOnly) {
-              showError('If statement is not allowed in declarative mode');
-              return;
-            }
-            final List<ConditionalStatement> conditionalStatements = [];
-            int endBracket = CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-            conditionalStatements.add(ConditionalStatement(argumentList[0], input.substring(closeRoundBracket + 2, endBracket)));
-            currentIndex = endBracket;
-            while (input.length > endBracket + 7 && input.substring(endBracket + 1, endBracket + 5) == 'else') {
-              int startBracket = endBracket + 6;
-              if (input.substring(startBracket, endBracket + 8) == 'if') {
-                startBracket += 2;
-                int endRoundBracket =
-                    CodeOperations.findCloseBracket(input, startBracket, '('.codeUnits.first, ')'.codeUnits.first);
-                endBracket = CodeOperations.findCloseBracket(
-                    input, endRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-                conditionalStatements.add(ConditionalStatement(
-                  input.substring(startBracket + 1, endRoundBracket),
-                  input.substring(endRoundBracket + 2, endBracket),
-                ));
-                currentIndex = endBracket;
-              } else {
-                startBracket = endBracket + 5;
-                endBracket =
-                    CodeOperations.findCloseBracket(input, startBracket, '{'.codeUnits.first, '}'.codeUnits.first);
-                conditionalStatements.add(
-                  ConditionalStatement(
-                    null,
-                    input.substring(startBracket + 1, endBracket),
-                  ),
-                );
-                currentIndex = endBracket;
-                break;
-              }
-            }
-            for (final statement in conditionalStatements) {
-              if (operationType == OperationType.checkOnly) {
-                if (statement.condition != null) {
-                  execute(statement.condition!);
-                }
-                execute(statement.body);
-                continue;
-              }
-              if (statement.condition == null) {
-                final output = execute(statement.body);
-                if (output != null) {
-                  valueStack.push(FVBValue(value: output));
-                }
-                break;
-              } else if (process(statement.condition!) == true) {
-                final output = execute(statement.body);
-                if (output != null) {
-                  valueStack.push(FVBValue(value: output));
-                }
-                break;
-              }
-            }
-            variable = '';
-            continue;
-          }
-          else if (variable == 'switch') {
-            if (declarativeOnly) {
-              showError('Switch statement is not allowed in declarative mode');
-              return;
-            }
-            final value = process(argumentList[0]);
-            int endBracket = CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-            int index = 0;
-            final List<CaseStatement> list = [];
-            final String innerCode = input.substring(closeRoundBracket + 2, endBracket);
-            int caseIndex = -1;
-            while (index < endBracket) {
-              index = innerCode.indexOf('case', index);
-              if (index != -1) {
-                if (caseIndex != -1) {
-                  final split = CodeOperations.splitBy(innerCode.substring(caseIndex, index), splitBy: ':');
-                  list.add(CaseStatement(split[0], split[1]));
-                }
-                caseIndex = index + 5;
-                index += 5;
-              } else {
-                break;
-              }
-            }
-            final defaultIndex = innerCode.indexOf('default', caseIndex);
-            if (caseIndex != -1) {
-              final split = CodeOperations.splitBy(
-                  innerCode.substring(caseIndex, defaultIndex != -1 ? defaultIndex : innerCode.length),
-                  splitBy: ':');
-              list.add(CaseStatement(split[0], split[1]));
-            }
-            if (defaultIndex != -1) {
-              list.add(
-                CaseStatement(
-                  null,
-                  innerCode.substring(defaultIndex + 8),
-                ),
-              );
-            }
-
-            bool isTrue = false;
-            for (final statement in list) {
-              if (statement.condition == null) {
-                execute(statement.body);
-                break;
-              } else if (process(statement.condition!) == value || isTrue) {
-                final value = execute(statement.body);
-                isTrue = true;
-                if (value is FVBBreak) {
-                  break;
-                }
-              }
-            }
-            currentIndex = endBracket;
-            continue;
-          }
-          else if (input.length > closeRoundBracket + 1 && input[closeRoundBracket + 1] == '{') {
-            final int closeBracketIndex =
-                CodeOperations.findCloseBracket(input, closeRoundBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-            // final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, m));
-            // functions[variable] = FVBFunction(
-            //     variable, input.substring(m + 2, closeBracketIndex), processArgDefinitionList(argumentList));
-            final function = FunctionProcessor.parse(
-                this, variable, input.substring(currentIndex + 1, closeRoundBracket), input.substring(closeRoundBracket + 2, closeBracketIndex));
-            functions[function.name] = function;
-            variable = '';
-            currentIndex = closeBracketIndex;
-            continue;
-          }
-          if (closeRoundBracket + 1 < input.length &&
-              input[closeRoundBracket + 1] == '=' &&
-              input[closeRoundBracket + 2] == '>') {
-            currentIndex=_handleLambdaFunction(variable, input, currentIndex, closeRoundBracket, valueStack);
-            continue;
-          }
-          else if (functions.containsKey(variable)) {
-            if (valueStack.isEmpty && declarativeOnly) {
-              showError('can not call function $variable in declarative mode');
-              return;
-            }
-            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeRoundBracket));
-            final output =
-                functions[variable]!.execute(this, processArgList(argumentList, functions[variable]!.arguments));
-            if (output != null) {
-              valueStack.push(FVBValue(value: output));
-            }
-            variable = '';
-            currentIndex = closeRoundBracket;
-            continue;
-          }
-          else if (variables.containsKey(variable) || localVariables.containsKey(variable)) {
-            final function = (variables[variable]?.value ?? localVariables[variable]) as FVBFunction;
-            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeRoundBracket));
-            final output = function.execute(this, processArgList(argumentList, function.arguments));
-            if (output != null) {
-              valueStack.push(FVBValue(value: output));
-            }
-            variable = '';
-            currentIndex = closeRoundBracket;
-            continue;
-          }
-          else if (!predefinedFunctions.containsKey(variable)) {
-            showError('No predefined function named $variable found');
-            return;
-          }
-          else {
-            if (valueStack.isEmpty && declarativeOnly) {
-              showError('can not call function $variable in declarative mode');
-              return;
-            }
-            final processedArgs = argumentList.map((e) => process(e)).toList();
-            final output = predefinedFunctions[variable]!.perform.call(processedArgs);
-            valueStack.push(FVBValue(value: output));
-            variable = '';
-            currentIndex = closeRoundBracket;
-          }
-          continue;
-        }
-        else if (ch == '('.codeUnits[0]) {
-          final closeOpenBracket =
-              CodeOperations.findCloseBracket(input, currentIndex, '('.codeUnits.first, ')'.codeUnits.first);
-          if (closeOpenBracket + 1 < input.length &&
-              input[closeOpenBracket + 1] == '=' &&
-              input[closeOpenBracket + 2] == '>') {
-           currentIndex=_handleLambdaFunction(variable, input, currentIndex, closeOpenBracket, valueStack);
-            continue;
-          }
-          else if (input.length > closeOpenBracket + 1 && input[closeOpenBracket + 1] == '{') {
-            final int closeCurlyBracketIndex =
-                CodeOperations.findCloseBracket(input, closeOpenBracket + 1, '{'.codeUnits.first, '}'.codeUnits.first);
-            final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, closeOpenBracket))
-                .where((element) => element.isNotEmpty)
-                .toList();
-            final arguments = processArgDefinitionList(argumentList);
-            final function = FVBFunction('', input.substring(closeOpenBracket + 2, closeCurlyBracketIndex), arguments);
-            currentIndex = closeCurlyBracketIndex;
-            valueStack.push(FVBValue(value: function));
-            continue;
-          }
-        }
-
-        if (variable.isNotEmpty) {
-          if (!resolveVariable(variable, object, valueStack)) {
-            return null;
-          }
-          variable = '';
-        }
-        if (isOperator(ch)) {
-          String operator = input[currentIndex];
-
-          if (currentIndex + 1 < input.length && isOperator(input[currentIndex + 1].codeUnits.first)) {
-            if (currentIndex + 2 < input.length &&
-                isValidOperator(operator + input[currentIndex + 1] + input[currentIndex + 2])) {
-              operator += (input[currentIndex + 1] + input[currentIndex + 2]);
-              currentIndex += 2;
-            } else if (isValidOperator(operator + input[currentIndex + 1])) {
-              operator = operator + input[currentIndex + 1];
-              currentIndex++;
-            }
-          }
-          if (operatorStack.isEmpty || getPrecedence(operator) > getPrecedence(operatorStack.peek!)) {
-            operatorStack.push(operator);
           } else {
-            while (operatorStack.isNotEmpty && getPrecedence(operator) <= getPrecedence(operatorStack.peek!)) {
-              if (error) {
-                return null;
-              }
-              processOperator(operatorStack.pop()!, valueStack, operatorStack);
-            }
-            operatorStack.push(operator);
-          }
-        } else if (ch == '('.codeUnits[0]) {
-          final index = CodeOperations.findCloseBracket(input, currentIndex, '('.codeUnits.first, ')'.codeUnits.first);
-          if (index == -1) {
-            return null;
-          }
-          final innerProcess = process<T>(input.substring(currentIndex + 1, index), resolve: true);
-          if (innerProcess != null) {
-            valueStack.push(FVBValue(value: innerProcess));
-            currentIndex = index;
-            continue;
-          } else {
-            return null;
+            onSuggestions?.call(null);
           }
         }
+        lastCodes[lastCodeCount] = input;
       }
+      lastCodeCount++;
     }
-    if (variable.isNotEmpty) {
-      if (!resolveVariable(variable, object, valueStack)) {
-        return null;
+    try {
+      if (T == String || T == ImageData) {
+        return processString(input);
+      } else if (T == Color && input.startsWith('#')) {
+        return input;
       }
-      variable = '';
-    }
-
-    // Empty out the operator stack at the end of the input
-    while (operatorStack.isNotEmpty) {
-      if (error) {
-        return null;
-      }
-      processOperator(operatorStack.pop()!, valueStack, operatorStack);
-    }
-
-    // Print the result if no error has been seen.
-    if (!error && valueStack.isNotEmpty) {
-      dynamic result;
-      while (valueStack.isNotEmpty) {
+      final Stack2<FVBValue> valueStack = Stack2<FVBValue>();
+      final Stack2<String> operatorStack = Stack2<String>();
+      bool stringOpen = false;
+      int stringCount = 0;
+      String variable = '';
+      String object = '';
+      bool isNumber = true;
+      for (int currentIndex = 0; currentIndex < input.length; currentIndex++) {
         if (error) {
           return null;
         }
+        final String nextToken = input[currentIndex];
+        final ch = nextToken.codeUnits.first;
+        if (stringOpen) {
+          if (stringCount == 0 &&
+              (ch == '"'.codeUnits.first || ch == '\''.codeUnits.first)) {
+            stringOpen = !stringOpen;
+            if (currentIndex - variable.length - 1 >= 0 &&
+                (input[currentIndex - variable.length - 1] == '"' ||
+                    input[currentIndex - variable.length - 1] == '\'')) {
+              valueStack.push(FVBValue(value: processString(variable)));
+              variable = '';
+              continue;
+            } else {
+              return null;
+            }
+          } else if (ch == '{'.codeUnits.first) {
+            stringCount++;
+          } else if (ch == '}'.codeUnits.first) {
+            stringCount--;
+          }
+          variable += nextToken;
 
-        final FVBValue value = valueStack.pop()!;
-        result = value.evaluateValue(this);
-        if (value.variableName != null && value.createVarIfNotExist) {
-          final variable = value.variableName!;
-          variables[variable] = VariableModel(
-              variable, value.value, false, null, value.dataType ?? DataType.dynamic, '',
-              isFinal: value.isVarFinal, nullable: value.nullable);
+          continue;
+        } else if (ch == '"'.codeUnits.first || ch == '\''.codeUnits.first) {
+          isNumber = false;
+          stringOpen = true;
+        } else if (ch == '['.codeUnits.first) {
+          int count = 0;
+
+          for (int i = currentIndex + 1; i < input.length; i++) {
+            if (input[i] == ']' && count == 0) {
+              final substring = input.substring(currentIndex + 1, i);
+              if (!substring.contains(',') &&
+                  (valueStack.peek?.value is List ||
+                      valueStack.peek?.value is Map)) {
+                valueStack.push(FVBValue(
+                    value: valueStack.pop()!.value[process(substring)]));
+                currentIndex = i;
+                break;
+              } else if (variable.isNotEmpty) {
+                variable = variable + '[$substring]';
+                currentIndex = i;
+                break;
+              } else {
+                valueStack.push(FVBValue(
+                    value: CodeOperations.splitBy(substring)
+                        .map((e) => process(e))
+                        .toList()));
+                variable = '';
+                currentIndex = i;
+                break;
+              }
+            } else if (input[i] == '[') {
+              count++;
+            } else if (input[i] == ']') {
+              count--;
+            }
+          }
+          continue;
+        } else if (ch == '{'.codeUnits.first) {
+          if (variable.isNotEmpty && variable.startsWith('class$space')) {
+            final className = variable.substring(6);
+            final closeCurlyBracket = CodeOperations.findCloseBracket(
+                input, currentIndex, '{'.codeUnits.first, '}'.codeUnits.first);
+            final CodeProcessor processor = CodeProcessor(
+                scope: Scope.object,
+                consoleCallback: consoleCallback,
+                onError: onError,
+                scopeName: className);
+            processor.execute(
+                input.substring(currentIndex + 1, closeCurlyBracket),
+                declarativeOnly: true);
+            classes[className] = FVBClass(
+              className,
+              processor.functions,
+              Map.fromEntries(processor.variables.entries.map(
+                  (entry) => MapEntry(entry.key, () => entry.value.clone()))),
+              parent: this,
+              fvbStaticVariables: processor._staticVariables,
+              fvbStaticFunctions: processor._staticFunctions,
+            );
+
+            currentIndex = closeCurlyBracket;
+            variable = '';
+            continue;
+          } else {
+            int count = 0;
+            for (int i = currentIndex + 1; i < input.length; i++) {
+              if (input[i] == '}' && count == 0) {
+                valueStack.push(
+                  FVBValue(
+                      value: Map.from(
+                    CodeOperations.splitBy(input.substring(currentIndex + 1, i))
+                        .asMap()
+                        .map((e, n) {
+                      final split = CodeOperations.splitBy(n, splitBy: ':');
+                      return MapEntry(process(split[0]), process(split[1]));
+                    }),
+                  )),
+                );
+                variable = '';
+                currentIndex = i + 1;
+                break;
+              } else if (input[i] == '{') {
+                count++;
+              } else if (input[i] == '}') {
+                count--;
+              }
+            }
+          }
+        } else if ((ch >= capitalACodeUnit && ch <= smallZCodeUnit) ||
+            (ch >= zeroCodeUnit && ch <= nineCodeUnit) ||
+            ch == underScoreCodeUnit ||
+            ch == squareBracketOpen ||
+            ch == squareBracketClose ||
+            ch == questionMarkCodeUnit ||
+            ch == spaceCodeUnit) {
+          if (ch == questionMarkCodeUnit) {
+            if (currentIndex + 1 < input.length &&
+                input[currentIndex + 1] == '?') {
+              finishProcessing(
+                  variable, '??', object, operatorStack, valueStack);
+              operatorStack.push('??');
+              variable = '';
+              object = '';
+              currentIndex++;
+              continue;
+            }
+            final colonIndex = CodeOperations.findChar(
+                input, currentIndex, colonCodeUnit, [spaceCodeUnit]);
+
+            if (colonIndex != -1) {
+              int index = CodeOperations.findChar(
+                  input, colonIndex + 1, ','.codeUnits.first, [spaceCodeUnit]);
+              if (index == -1) {
+                index = input.length;
+              }
+              finishProcessing(
+                  variable, '?', object, operatorStack, valueStack);
+              // operatorStack.push('?');
+              if (valueStack.pop()?.value == true) {
+                valueStack.push(FVBValue(
+                    value: process(
+                        input.substring(currentIndex + 1, colonIndex))));
+              } else {
+                valueStack.push(FVBValue(
+                  value: process(
+                    input.substring(colonIndex + 1, index),
+                  ),
+                ));
+              }
+              currentIndex = index;
+              variable = '';
+              object = '';
+              continue;
+            }
+          }
+          if ((ch >= zeroCodeUnit && ch <= nineCodeUnit)) {
+            isNumber = true;
+          } else {
+            isNumber = false;
+          }
+          variable += nextToken;
+          if (editIndex == currentIndex && isSuggestionEnable) {
+            _handleVariableAndFunctionSuggestions(variable, object, valueStack);
+          }
+        } else if (ch == dotCodeUnit) {
+          if (isNumber) {
+            variable += nextToken;
+            continue;
+          }
+          if (object.isNotEmpty && variable.isNotEmpty) {
+            final obj = getValue(object);
+            object = 'instance';
+            if (obj is FVBInstance) {
+              localVariables[object] = obj.processor.getValue(variable);
+            } else if (obj is FVBClass) {
+              localVariables[object] = obj.getValue(variable);
+            }
+            variable = '';
+            if (editIndex == currentIndex && onSuggestions != null) {
+              print('HANDLING 2 FOR ${input[editIndex]}');
+              _handleVariableAndFunctionSuggestions(
+                  variable, object, valueStack);
+            }
+            continue;
+          } else if (variable.isNotEmpty) {
+            object = variable;
+            variable = '';
+            if (editIndex == currentIndex && onSuggestions != null) {
+              print('HANDLING 3 FOR ${input[editIndex]}');
+              _handleVariableAndFunctionSuggestions(
+                  variable, object, valueStack);
+            }
+            continue;
+          } else if (valueStack.isNotEmpty) {
+            variable = 'instance';
+            localVariables[variable] = valueStack.pop()?.value!;
+            object = variable;
+            variable = '';
+            if (editIndex == currentIndex && onSuggestions != null) {
+              print('HANDLING 4 FOR ${input[editIndex]}');
+              _handleVariableAndFunctionSuggestions(
+                  variable, object, valueStack);
+            }
+            continue;
+          }
+        } else {
+          /// Functions corner
+          /// Condition 1 :: Variable is Not Empty
+          if (variable.isNotEmpty && ch == '('.codeUnits[0]) {
+            final int closeRoundBracket = CodeOperations.findCloseBracket(
+                input, currentIndex, '('.codeUnits.first, ')'.codeUnits.first);
+
+            if (variable == 'for') {
+              if (declarativeOnly) {
+                enableError('for is not allowed in declarative mode');
+                return;
+              }
+              int endIndex = CodeOperations.findCloseBracket(
+                  input,
+                  closeRoundBracket + 1,
+                  '{'.codeUnits.first,
+                  '}'.codeUnits.first);
+              final insideFor =
+                  input.substring(currentIndex + 1, closeRoundBracket);
+              final innerCode =
+                  input.substring(closeRoundBracket + 2, endIndex);
+              final splits = CodeOperations.splitBy(insideFor, splitBy: ';');
+              if (splits.length != 3) {
+                if (insideFor.contains(':')) {
+                  final split = CodeOperations.splitBy(insideFor, splitBy: ':');
+                  final list = process(split[1]);
+                  if (list is! Iterable) {
+                    enableError('Invalid for each loop');
+                  } else {
+                    if (operationType == OperationType.regular) {
+                      for (final item in list) {
+                        localVariables[split[0]] = item;
+                        final output = execute(innerCode);
+                        if (output is FVBBreak || error || finished) {
+                          break;
+                        }
+                      }
+                    } else if (operationType == OperationType.checkOnly) {
+                      execute(innerCode);
+                    }
+                  }
+                } else {
+                  enableError('For loop syntax error');
+                }
+              } else {
+                process(splits[0]);
+                int count = 0;
+                while (process(splits[1]) == true) {
+                  final output = execute(innerCode);
+                  if (output is FVBBreak || error || finished) {
+                    break;
+                  }
+                  process(splits[2]);
+                  if (operationType == OperationType.checkOnly) {
+                    break;
+                  }
+                  count++;
+                  if (count > 1000) {
+                    enableError('For loop goes infinite!!');
+                    break;
+                  }
+                }
+              }
+              variable = '';
+              currentIndex = endIndex;
+              continue;
+            }
+            final argumentList = CodeOperations.splitBy(
+                input.substring(currentIndex + 1, closeRoundBracket));
+
+            /// Constructor Corner
+            /// Named and Normal Contractors
+            if (declarativeOnly &&
+                (object == scopeName || scopeName == variable)) {
+              if (object == scopeName) {
+                variable = '$object.$variable';
+              }
+              final String body;
+              final openRoundBracket = currentIndex;
+              if (closeRoundBracket + 1 < input.length &&
+                  input[closeRoundBracket + 1] == '{') {
+                final closeCurlyBracket = CodeOperations.findCloseBracket(
+                    input,
+                    closeRoundBracket + 1,
+                    '{'.codeUnits.first,
+                    '}'.codeUnits.first);
+                body =
+                    input.substring(closeRoundBracket + 2, closeCurlyBracket);
+                currentIndex = closeCurlyBracket;
+              } else {
+                body = '';
+                currentIndex = closeRoundBracket;
+              }
+              final argumentList = CodeOperations.splitBy(
+                  input.substring(openRoundBracket + 1, closeRoundBracket));
+              functions[variable] = FVBFunction(variable, body,
+                  processArgDefinitionList(argumentList, variables: variables));
+              variable = '';
+              object = '';
+              continue;
+            }
+
+            /// Named Constructor
+            else if (classes.containsKey(object) &&
+                classes[object]!
+                    .fvbFunctions
+                    .containsKey('$object.$variable')) {
+              final fvbClass = classes[object]!;
+              final constructorName = '$object.$variable';
+              valueStack.push(
+                FVBValue(
+                  value: fvbClass.createInstance(
+                      parentProcessor,
+                      processArgList(argumentList,
+                          fvbClass.fvbFunctions[constructorName]!.arguments),
+                      constructorName: '$object.$variable'),
+                ),
+              );
+              variable = '';
+              object = '';
+              currentIndex = closeRoundBracket;
+              continue;
+            } else if (classes.containsKey(variable)) {
+              final fvbClass = classes[variable]!;
+              valueStack.push(FVBValue(
+                value: fvbClass.createInstance(
+                  parentProcessor,
+                  fvbClass.fvbFunctions.containsKey(variable)
+                      ? processArgList(argumentList,
+                          fvbClass.fvbFunctions[variable]!.arguments)
+                      : [],
+                ),
+              ));
+              variable = '';
+              currentIndex = closeRoundBracket;
+              continue;
+            } else if (!declarativeOnly &&
+                (processorMap.containsKey(variable) ||
+                    (processorMap.containsKey(object) &&
+                        processorMap[object]!
+                            .functions
+                            .containsKey('$object.$variable')))) {
+              final FVBFunction? function;
+              if (processorMap.containsKey(object)) {
+                function =
+                    processorMap[object]!.functions['$object.$variable']!;
+                function.execute(processorMap[object]!,
+                    processArgList(argumentList, function.arguments));
+              } else {
+                final processor = processorMap[variable];
+                function = processor!.functions[variable];
+                if (function != null) {
+                  function.execute(processor,
+                      processArgList(argumentList, function.arguments));
+                } else {
+                  throw Exception(
+                      'No constructor $variable found in class $variable');
+                }
+              }
+            } else if (object.isNotEmpty) {
+              /// Object dot function is called.
+              final objectInstance = getValue(object);
+              if (objectInstance is FVBInstance || objectInstance is FVBClass) {
+                final fvbArguments = objectInstance is FVBInstance
+                    ? objectInstance.getFunction(this, variable)?.arguments
+                    : (objectInstance as FVBClass)
+                        .getFunction(this, variable)
+                        ?.arguments;
+                if (fvbArguments == null) {
+                  throw Exception(
+                      'Function "$variable" not found in class $object');
+                }
+                final processedArgs =
+                    processArgList(argumentList, fvbArguments);
+                final dynamic output;
+                if (objectInstance is FVBInstance) {
+                  output =
+                      objectInstance.executeFunction(variable, processedArgs);
+                } else {
+                  output = (objectInstance as FVBClass)
+                      .executeFunction(this, variable, processedArgs);
+                }
+                if (output != null) {
+                  valueStack.push(FVBValue(value: output));
+                }
+              } else {
+                _handleObjectMethods(
+                    objectInstance, variable, argumentList, valueStack);
+              }
+              variable = '';
+              object = '';
+              currentIndex = closeRoundBracket;
+              continue;
+            } else if (variable == 'while') {
+              if (declarativeOnly) {
+                enableError(
+                    'While statement is not allowed in declarative mode');
+                return;
+              }
+              int endIndex = CodeOperations.findCloseBracket(
+                  input,
+                  closeRoundBracket + 1,
+                  '{'.codeUnits.first,
+                  '}'.codeUnits.first);
+
+              final innerCode =
+                  input.substring(closeRoundBracket + 2, endIndex);
+              final conditionalCode =
+                  input.substring(currentIndex + 1, closeRoundBracket);
+              int count = 0;
+              while (process(conditionalCode) == true) {
+                final output = execute(innerCode);
+                if (output is FVBBreak || error || finished) {
+                  break;
+                }
+                count++;
+                if (count > 10000) {
+                  enableError('While loop goes infinite!!');
+                  break;
+                }
+              }
+              variable = '';
+              currentIndex = endIndex;
+              continue;
+            } else if (variable == 'if') {
+              if (declarativeOnly) {
+                enableError('If statement is not allowed in declarative mode');
+                return;
+              }
+              final List<ConditionalStatement> conditionalStatements = [];
+              int endBracket = CodeOperations.findCloseBracket(
+                  input,
+                  closeRoundBracket + 1,
+                  '{'.codeUnits.first,
+                  '}'.codeUnits.first);
+              conditionalStatements.add(ConditionalStatement(argumentList[0],
+                  input.substring(closeRoundBracket + 2, endBracket)));
+              currentIndex = endBracket;
+              while (input.length > endBracket + 7 &&
+                  input.substring(endBracket + 1, endBracket + 5) == 'else') {
+                int startBracket = endBracket + 6;
+                if (input.substring(startBracket, endBracket + 8) == 'if') {
+                  startBracket += 2;
+                  int endRoundBracket = CodeOperations.findCloseBracket(input,
+                      startBracket, '('.codeUnits.first, ')'.codeUnits.first);
+                  endBracket = CodeOperations.findCloseBracket(
+                      input,
+                      endRoundBracket + 1,
+                      '{'.codeUnits.first,
+                      '}'.codeUnits.first);
+                  conditionalStatements.add(ConditionalStatement(
+                    input.substring(startBracket + 1, endRoundBracket),
+                    input.substring(endRoundBracket + 2, endBracket),
+                  ));
+                  currentIndex = endBracket;
+                } else {
+                  startBracket = endBracket + 5;
+                  endBracket = CodeOperations.findCloseBracket(input,
+                      startBracket, '{'.codeUnits.first, '}'.codeUnits.first);
+                  conditionalStatements.add(
+                    ConditionalStatement(
+                      null,
+                      input.substring(startBracket + 1, endBracket),
+                    ),
+                  );
+                  currentIndex = endBracket;
+                  break;
+                }
+              }
+              for (final statement in conditionalStatements) {
+                if (operationType == OperationType.checkOnly) {
+                  if (statement.condition != null) {
+                    execute(statement.condition!);
+                  }
+                  execute(statement.body);
+                  continue;
+                }
+                if (statement.condition == null) {
+                  final output = execute(statement.body);
+                  if (output != null) {
+                    valueStack.push(FVBValue(value: output));
+                  }
+                  break;
+                } else if (process(statement.condition!) == true) {
+                  final output = execute(statement.body);
+                  if (output != null) {
+                    valueStack.push(FVBValue(value: output));
+                  }
+                  break;
+                }
+              }
+              variable = '';
+              continue;
+            } else if (variable == 'switch') {
+              if (declarativeOnly) {
+                enableError(
+                    'Switch statement is not allowed in declarative mode');
+                return;
+              }
+              final value = process(argumentList[0]);
+              int endBracket = CodeOperations.findCloseBracket(
+                  input,
+                  closeRoundBracket + 1,
+                  '{'.codeUnits.first,
+                  '}'.codeUnits.first);
+              int index = 0;
+              final List<CaseStatement> list = [];
+              final String innerCode =
+                  input.substring(closeRoundBracket + 2, endBracket);
+              int caseIndex = -1;
+              while (index < endBracket) {
+                index = innerCode.indexOf('case', index);
+                if (index != -1) {
+                  if (caseIndex != -1) {
+                    final split = CodeOperations.splitBy(
+                        innerCode.substring(caseIndex, index),
+                        splitBy: ':');
+                    list.add(CaseStatement(split[0], split[1]));
+                  }
+                  caseIndex = index + 5;
+                  index += 5;
+                } else {
+                  break;
+                }
+              }
+              final defaultIndex = innerCode.indexOf('default', caseIndex);
+              if (caseIndex != -1) {
+                final split = CodeOperations.splitBy(
+                    innerCode.substring(caseIndex,
+                        defaultIndex != -1 ? defaultIndex : innerCode.length),
+                    splitBy: ':');
+                list.add(CaseStatement(split[0], split[1]));
+              }
+              if (defaultIndex != -1) {
+                list.add(
+                  CaseStatement(
+                    null,
+                    innerCode.substring(defaultIndex + 8),
+                  ),
+                );
+              }
+
+              bool isTrue = false;
+              for (final statement in list) {
+                if (statement.condition == null) {
+                  execute(statement.body);
+                  break;
+                } else if (process(statement.condition!) == value || isTrue) {
+                  final value = execute(statement.body);
+                  isTrue = true;
+                  if (value is FVBBreak) {
+                    break;
+                  }
+                }
+              }
+              currentIndex = endBracket;
+              continue;
+            } else if (input.length > closeRoundBracket + 1 &&
+                input[closeRoundBracket + 1] == '{') {
+              final int closeBracketIndex = CodeOperations.findCloseBracket(
+                  input,
+                  closeRoundBracket + 1,
+                  '{'.codeUnits.first,
+                  '}'.codeUnits.first);
+              // final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, m));
+              // functions[variable] = FVBFunction(
+              //     variable, input.substring(m + 2, closeBracketIndex), processArgDefinitionList(argumentList));
+
+              bool static = false;
+              if (variable.startsWith('static$space')) {
+                static = true;
+                variable = variable.substring(7);
+              }
+              final function = FunctionProcessor.parse(
+                  this,
+                  variable,
+                  input.substring(currentIndex + 1, closeRoundBracket),
+                  input.substring(closeRoundBracket + 2, closeBracketIndex));
+              if (static) {
+                _staticFunctions[function.name] = function;
+              } else {
+                functions[function.name] = function;
+              }
+              variable = '';
+              currentIndex = closeBracketIndex;
+              continue;
+            } else if (closeRoundBracket + 2 < input.length &&
+                input[closeRoundBracket + 1] == '=' &&
+                input[closeRoundBracket + 2] == '>') {
+              currentIndex = _handleLambdaFunction(
+                  variable, input, currentIndex, closeRoundBracket, valueStack);
+              variable = '';
+              continue;
+            } else {
+              /// function execution
+              CodeProcessor? processor = this;
+              while (processor != null) {
+                if (processor.functions.containsKey(variable)) {
+                  currentIndex = _handleFunction(
+                      processor.functions[variable]!,
+                      variable,
+                      input,
+                      currentIndex,
+                      closeRoundBracket,
+                      valueStack);
+                  variable = '';
+                  break;
+                } else if (processor.variables.containsKey(variable) ||
+                    processor.localVariables.containsKey(variable)) {
+                  final function = (processor.variables[variable]?.value ??
+                      processor.localVariables[variable]) as FVBFunction;
+                  final argumentList = CodeOperations.splitBy(
+                      input.substring(currentIndex + 1, closeRoundBracket));
+                  final output = function.execute(
+                      this, processArgList(argumentList, function.arguments));
+                  if (output != null) {
+                    valueStack.push(FVBValue(value: output));
+                  }
+                  variable = '';
+                  currentIndex = closeRoundBracket;
+                  break;
+                }
+                processor = processor.parentProcessor;
+              }
+              if (variable.isEmpty) {
+                continue;
+              }
+              if (!predefinedFunctions.containsKey(variable)) {
+                enableError('No predefined function named $variable found');
+                return;
+              }
+              final processedArgs =
+                  argumentList.map((e) => process(e)).toList();
+              final output =
+                  predefinedFunctions[variable]!.perform.call(processedArgs);
+              valueStack.push(FVBValue(value: output));
+              variable = '';
+              currentIndex = closeRoundBracket;
+            }
+            continue;
+          } else if (ch == '('.codeUnits[0]) {
+            final closeOpenBracket = CodeOperations.findCloseBracket(
+                input, currentIndex, '('.codeUnits.first, ')'.codeUnits.first);
+            if (closeOpenBracket + 1 < input.length &&
+                input[closeOpenBracket + 1] == '=' &&
+                input[closeOpenBracket + 2] == '>') {
+              currentIndex = _handleLambdaFunction(
+                  variable, input, currentIndex, closeOpenBracket, valueStack);
+              continue;
+            } else if (input.length > closeOpenBracket + 1 &&
+                input[closeOpenBracket + 1] == '{') {
+              final int closeCurlyBracketIndex =
+                  CodeOperations.findCloseBracket(input, closeOpenBracket + 1,
+                      '{'.codeUnits.first, '}'.codeUnits.first);
+              final function = FunctionProcessor.parse(
+                this,
+                '',
+                input.substring(currentIndex + 1, closeOpenBracket),
+                input.substring(closeOpenBracket + 2, closeCurlyBracketIndex),
+              );
+              currentIndex = closeCurlyBracketIndex;
+              valueStack.push(FVBValue(value: function));
+              continue;
+            }
+          }
+
+          if (variable.isNotEmpty) {
+            if (!resolveVariable(variable, object, valueStack)) {
+              return null;
+            }
+            variable = '';
+          }
+          if (isOperator(ch)) {
+            object = '';
+            String operator = input[currentIndex];
+
+            if (currentIndex + 1 < input.length &&
+                isOperator(input[currentIndex + 1].codeUnits.first)) {
+              if (currentIndex + 2 < input.length &&
+                  isValidOperator(operator +
+                      input[currentIndex + 1] +
+                      input[currentIndex + 2])) {
+                operator += (input[currentIndex + 1] + input[currentIndex + 2]);
+                currentIndex += 2;
+              } else if (isValidOperator(operator + input[currentIndex + 1])) {
+                operator = operator + input[currentIndex + 1];
+                currentIndex++;
+              }
+            }
+            if (operatorStack.isEmpty ||
+                getPrecedence(operator) > getPrecedence(operatorStack.peek!)) {
+              operatorStack.push(operator);
+            } else {
+              while (operatorStack.isNotEmpty &&
+                  getPrecedence(operator) <=
+                      getPrecedence(operatorStack.peek!)) {
+                if (error) {
+                  return null;
+                }
+                processOperator(
+                    operatorStack.pop()!, object, valueStack, operatorStack);
+              }
+              operatorStack.push(operator);
+            }
+          } else if (ch == '('.codeUnits[0]) {
+            final index = CodeOperations.findCloseBracket(
+                input, currentIndex, '('.codeUnits.first, ')'.codeUnits.first);
+            if (index == -1) {
+              return null;
+            }
+            final innerProcess = process<T>(
+                input.substring(currentIndex + 1, index),
+                resolve: true);
+            if (innerProcess != null) {
+              valueStack.push(FVBValue(value: innerProcess));
+              currentIndex = index;
+              continue;
+            } else {
+              return null;
+            }
+          }
         }
       }
-
-      if (operatorStack.isNotEmpty || valueStack.isNotEmpty) {
-        logger('Expression error.');
-      } else {
-        return result;
+      if (variable.isNotEmpty) {
+        if (!resolveVariable(variable, object, valueStack)) {
+          return null;
+        }
+        variable = '';
       }
+
+      // Empty out the operator stack at the end of the input
+      while (operatorStack.isNotEmpty) {
+        if (error) {
+          return null;
+        }
+        processOperator(
+            operatorStack.pop()!, object, valueStack, operatorStack);
+      }
+
+      // Print the result if no error has been seen.
+      if (!error && valueStack.isNotEmpty) {
+        dynamic result;
+        while (valueStack.isNotEmpty) {
+          if (error) {
+            return null;
+          }
+
+          final FVBValue value = valueStack.pop()!;
+          result = value.evaluateValue(this, ignoreIfNotExist: true);
+          if (value.variableName != null && value.createVar) {
+            if (variables.containsKey(value.variableName!)) {
+              throw Exception('Variable ${value.variableName} already exists');
+            }
+
+            final variableModel = VariableModel(
+              value.variableName!,
+              value.dataType ?? DataType.dynamic,
+              isFinal: value.isVarFinal,
+              nullable: value.nullable,
+              value: value.value,
+            );
+            if (value.static) {
+              _staticVariables[value.variableName!] = variableModel;
+            } else {
+              variables[value.variableName!] = variableModel;
+            }
+          }
+        }
+
+        if (operatorStack.isNotEmpty || valueStack.isNotEmpty) {
+          logger('Expression error.');
+        } else {
+          return result;
+        }
+      }
+      return null;
+    } on Exception catch (_) {
+      enableError(_.toString() + ' at code $input ');
+      return null;
     }
-    return null;
   }
 
-  List<dynamic> processArgList(List<String> argumentList, List<FVBArgument> arguments) {
+  List<dynamic> processArgList(
+      List<String> argumentList, List<FVBArgument> arguments) {
     return ArgumentProcessor.process(this, argumentList, arguments);
   }
 
-  List<FVBArgument> processArgDefinitionList(List<String> argumentList) {
-    return ArgumentProcessor.processArgumentDefinition(this, argumentList);
+  List<FVBArgument> processArgDefinitionList(List<String> argumentList,
+      {Map<String, FVBVariable>? variables}) {
+    return ArgumentProcessor.processArgumentDefinition(this, argumentList,
+        variables: variables);
   }
 
   bool parseNumber(String number, valueStack) {
@@ -2083,47 +1911,21 @@ class CodeProcessor {
     return false;
   }
 
-  void showError(String message, {String line = ''}) {
+  void enableError(String message, {String line = ''}) {
     error = true;
-    onError.call(message.replaceAll('~', ' '), line.replaceAll('~', ' '));
-    throw Exception(message);
+    onError.call(message.replaceAll(space, ' ') + ' at $scopeName',
+        line.replaceAll(space, ' '));
   }
 
   bool isString(String value) {
     if (value.length >= 2) {
-      return value[0] == value[value.length - 1] && (value[0] == '\'' || value[0] == '"');
+      return value[0] == value[value.length - 1] &&
+          (value[0] == '\'' || value[0] == '"');
     }
     return false;
   }
 
   bool resolveVariable(String variable, String object, valueStack) {
-    if (object.isNotEmpty) {
-      final value = getValue(object);
-      if (variable == 'runtimeType') {
-        valueStack.push(FVBValue(value: value.runtimeType.toString()));
-        return true;
-      }
-      if (value is String) {
-        switch (variable) {
-          case 'length':
-            valueStack.push(FVBValue(value: value.length));
-            return true;
-        }
-      } else if (value is List) {
-        switch (variable) {
-          case 'length':
-            valueStack.push(FVBValue(value: value.length));
-            break;
-        }
-        object = '';
-        variable = '';
-      } else if (value is FVBInstance) {
-        valueStack.push(FVBValue(value: getValue(variable, fvbClass: value.fvbClass)));
-      } else if (value is FVBClass) {
-        valueStack.push(FVBValue(value: getValue(variable, fvbClass: value)));
-      }
-      return true;
-    }
     if (variable == 'break') {
       valueStack.push(FVBValue(value: FVBBreak()));
       return true;
@@ -2133,7 +1935,7 @@ class CodeProcessor {
     } else if (variable == 'null') {
       valueStack.push(FVBValue(value: null));
       return true;
-    } else if (variable.startsWith('return~')) {
+    } else if (variable.startsWith('return$space')) {
       valueStack.push(
         FVBValue(
           value: FVBReturn(
@@ -2144,14 +1946,18 @@ class CodeProcessor {
         ),
       );
       return true;
-    } else if (variable.startsWith('var~')) {
+    } else if (variable.startsWith('var$space')) {
       valueStack.push(FVBValue(
-          variableName: variable.substring(4), dataType: DataType.dynamic, createVarIfNotExist: true, nullable: true));
+          variableName: variable.substring(4),
+          dataType: DataType.dynamic,
+          createVar: true,
+          nullable: true));
       return true;
     } else if (parseNumber(variable, valueStack)) {
       return true;
     } else {
-      final value = DataTypeProcessor.getFVBValueFromCode(variable, classes, showError);
+      final value =
+          DataTypeProcessor.getFVBValueFromCode(variable, classes, enableError);
       if (value != null) {
         valueStack.push(value);
         return true;
@@ -2160,19 +1966,419 @@ class CodeProcessor {
         return false;
       }
     }
-
-    valueStack.push(FVBValue(variableName: variable)..evaluateValue(this));
+    valueStack.push(FVBValue(variableName: variable, object: object));
     return true;
   }
 
-  int _handleLambdaFunction(final String variable,final String input, final int currentIndex, final int closeOpenBracket,final Stack2<FVBValue> valueStack) {
-    final function = FunctionProcessor.parse(this, variable, input.substring(currentIndex + 1, closeOpenBracket),
-        input.substring(closeOpenBracket + 3, input.length),lambda: true);
-    if(function.name.isNotEmpty){
-      functions[function.name] = function;
+  int _handleLambdaFunction(
+      String variable,
+      final String input,
+      final int currentIndex,
+      final int closeOpenBracket,
+      final Stack2<FVBValue> valueStack) {
+    bool static = false;
+    if (variable.startsWith('static$space')) {
+      static = true;
+      variable = variable.substring(7);
+    }
+    final function = FunctionProcessor.parse(
+        this,
+        variable,
+        input.substring(currentIndex + 1, closeOpenBracket),
+        input.substring(closeOpenBracket + 3, input.length),
+        lambda: true);
+    if (function.name.isNotEmpty) {
+      if (static) {
+        _staticFunctions[function.name] = function;
+      } else {
+        functions[function.name] = function;
+      }
     }
     valueStack.push(FVBValue(value: function));
     return input.length - 1;
+  }
+
+  int _handleFunction(
+      final FVBFunction function,
+      final String variable,
+      final String input,
+      int currentIndex,
+      final int closeRoundBracket,
+      final Stack2<FVBValue> valueStack) {
+    if (valueStack.isEmpty && declarativeOnly) {
+      throw Exception('can not call function $variable in declarative mode');
+    }
+    final argumentList = CodeOperations.splitBy(
+        input.substring(currentIndex + 1, closeRoundBracket));
+    final output = function.execute(
+        this, processArgList(argumentList, function.arguments));
+    if (output != null) {
+      valueStack.push(FVBValue(value: output));
+    }
+    return closeRoundBracket;
+  }
+
+  void _handleObjectMethods(final objectInstance, final String variable,
+      final List<String> argumentList, final Stack2<FVBValue> valueStack) {
+    if (objectInstance is String) {
+      final processedArgs = argumentList.map((e) => process(e)).toList();
+      switch (variable) {
+        case 'substring':
+          valueStack.push(FVBValue(
+              value: objectInstance.substring(
+                  processedArgs[0], processedArgs[1])));
+          break;
+        case 'split':
+          valueStack
+              .push(FVBValue(value: objectInstance.split(processedArgs[0])));
+          break;
+        case 'contains':
+          valueStack
+              .push(FVBValue(value: objectInstance.contains(processedArgs[0])));
+          break;
+        case 'startsWith':
+          valueStack.push(
+              FVBValue(value: objectInstance.startsWith(processedArgs[0])));
+          break;
+        case 'endsWith':
+          valueStack
+              .push(FVBValue(value: objectInstance.endsWith(processedArgs[0])));
+          break;
+        case 'trim':
+          valueStack.push(FVBValue(value: objectInstance.trim()));
+          break;
+        case 'toLowerCase':
+          valueStack.push(FVBValue(value: objectInstance.toLowerCase()));
+          break;
+        case 'toUpperCase':
+          valueStack.push(FVBValue(value: objectInstance.toUpperCase()));
+          break;
+        case 'replaceAll':
+          valueStack.push(FVBValue(
+              value: objectInstance.replaceAll(
+                  processedArgs[0], processedArgs[1])));
+          break;
+        case 'replaceFirst':
+          valueStack.push(FVBValue(
+              value: objectInstance.replaceFirst(
+                  processedArgs[0], processedArgs[1])));
+          break;
+        case 'indexOf':
+          valueStack.push(FVBValue(
+              value: objectInstance.indexOf(processedArgs[0],
+                  processedArgs.length > 1 ? processedArgs[1] : null)));
+          break;
+        case 'lastIndexOf':
+          valueStack.push(FVBValue(
+              value: objectInstance.lastIndexOf(processedArgs[0],
+                  processedArgs.length > 1 ? processedArgs[1] : null)));
+          break;
+        case 'replaceRange':
+          valueStack.push(FVBValue(
+              value: objectInstance.replaceRange(
+                  processedArgs[0], processedArgs[1], processedArgs[2])));
+          break;
+      }
+    } else if (objectInstance is Iterable) {
+      final processedArgs = argumentList.map((e) => process(e)).toList();
+      switch (variable) {
+        case 'add':
+          if (objectInstance is List) {
+            objectInstance.add(processedArgs[0]);
+          }
+          break;
+        case 'insert':
+          if (objectInstance is List) {
+            objectInstance.insert(processedArgs[0], processedArgs[1]);
+          }
+          break;
+        case 'clear':
+          if (objectInstance is List) {
+            objectInstance.clear();
+          }
+          break;
+        case 'addAll':
+          if (objectInstance is List) {
+            objectInstance.addAll(processedArgs[0]);
+          }
+          break;
+        case 'removeAt':
+          if (objectInstance is List) {
+            objectInstance.removeAt(processedArgs[0]);
+          }
+          break;
+        case 'remove':
+          if (objectInstance is List) {
+            objectInstance.remove(processedArgs[0]);
+          }
+          break;
+        case 'indexOf':
+          if (objectInstance is List) {
+            valueStack.push(FVBValue(
+                value: objectInstance.indexOf(processedArgs[0],
+                    processedArgs.length > 1 ? processedArgs[1] : null)));
+          }
+          break;
+        case 'contains':
+          valueStack.push(FVBValue(
+              value: objectInstance.contains(
+            processedArgs[0],
+          )));
+          break;
+        case 'where':
+          valueStack.push(FVBValue(
+              value: objectInstance.where((e) =>
+                  (processedArgs[0] as FVBFunction).execute(this, [e]))));
+          break;
+        case 'indexWhere':
+          if (objectInstance is List) {
+            valueStack.push(FVBValue(
+                value: objectInstance.indexWhere((e) =>
+                    (processedArgs[0] as FVBFunction).execute(this, [e]))));
+          }
+          break;
+        case 'firstWhere':
+          valueStack.push(FVBValue(
+              value: objectInstance.firstWhere((e) =>
+                  (processedArgs[0] as FVBFunction).execute(this, [e]))));
+          break;
+        case 'any':
+          valueStack.push(FVBValue(
+              value: objectInstance.any((e) =>
+                  (processedArgs[0] as FVBFunction).execute(this, [e]))));
+          break;
+
+        case 'forEach':
+          for (var e in objectInstance) {
+            (processedArgs[0] as FVBFunction).execute(this, [e]);
+          }
+          break;
+
+        case 'sort':
+          if (objectInstance is List) {
+            objectInstance.sort();
+          }
+          break;
+
+        case 'map':
+          valueStack.push(FVBValue(
+              value: objectInstance.map((e) =>
+                  (processedArgs[0] as FVBFunction).execute(this, [e]))));
+          break;
+        case 'reduce':
+          valueStack.push(FVBValue(
+              value: objectInstance.reduce((e, f) =>
+                  (processedArgs[0] as FVBFunction).execute(this, [e, f]))));
+          break;
+        case 'fold':
+          valueStack.push(FVBValue(
+              value: objectInstance.fold(
+                  processedArgs[0],
+                  (e, f) => (processedArgs[1] as FVBFunction)
+                      .execute(this, [e, f]))));
+          break;
+        case 'every':
+          valueStack.push(FVBValue(
+              value: objectInstance.every((e) =>
+                  (processedArgs[0] as FVBFunction).execute(this, [e]))));
+          break;
+        case 'expand':
+          valueStack.push(FVBValue(
+              value: objectInstance.expand((e) =>
+                  (processedArgs[0] as FVBFunction).execute(this, [e]))));
+          break;
+        case 'take':
+          valueStack
+              .push(FVBValue(value: objectInstance.take(processedArgs[0])));
+          break;
+        case 'takeWhile':
+          valueStack.push(FVBValue(
+              value: objectInstance.takeWhile((e) =>
+                  (processedArgs[0] as FVBFunction).execute(this, [e]))));
+          break;
+        case 'skip':
+          valueStack
+              .push(FVBValue(value: objectInstance.skip(processedArgs[0])));
+          break;
+        case 'skipWhile':
+          valueStack.push(FVBValue(
+              value: objectInstance.skipWhile((e) =>
+                  (processedArgs[0] as FVBFunction).execute(this, [e]))));
+          break;
+        case 'elementAt':
+          valueStack.push(
+              FVBValue(value: objectInstance.elementAt(processedArgs[0])));
+          break;
+        case 'sublist':
+          if (objectInstance is List) {
+            valueStack.push(FVBValue(
+                value: objectInstance.sublist(
+                    processedArgs[0], processedArgs[1])));
+          }
+          break;
+        case 'getRange':
+          if (objectInstance is List) {
+            valueStack.push(FVBValue(
+                value: objectInstance.getRange(
+                    processedArgs[0], processedArgs[1])));
+          }
+          break;
+        case 'removeRange':
+          if (objectInstance is List) {
+            objectInstance.removeRange(processedArgs[0], processedArgs[1]);
+          }
+          break;
+        case 'setRange':
+          if (objectInstance is List) {
+            objectInstance.setRange(
+                processedArgs[0], processedArgs[1], processedArgs[2]);
+          }
+          break;
+        case 'fillRange':
+          if (objectInstance is List) {
+            objectInstance.fillRange(
+                processedArgs[0], processedArgs[1], processedArgs[2]);
+          }
+          break;
+        case 'toList':
+          valueStack.push(FVBValue(
+              value: objectInstance.toList(
+                  growable:
+                      processedArgs.isNotEmpty ? processedArgs[0] : true)));
+          break;
+        case 'toSet':
+          valueStack.push(FVBValue(value: objectInstance.toSet()));
+          break;
+        case 'asMap':
+          if (objectInstance is List) {
+            valueStack.push(FVBValue(value: objectInstance.asMap()));
+          }
+          break;
+      }
+    } else if (objectInstance is Map) {
+      final processedArgs = argumentList.map((e) => process(e)).toList();
+      switch (variable) {
+        case 'remove':
+          objectInstance.remove(processedArgs[0]);
+          break;
+        case 'containsKey':
+          valueStack.push(
+              FVBValue(value: objectInstance.containsKey(processedArgs[0])));
+          break;
+        case 'containsValue':
+          valueStack.push(
+              FVBValue(value: objectInstance.containsValue(processedArgs[0])));
+          break;
+        case 'map':
+          valueStack.push(FVBValue(
+              value: objectInstance.map((key, value) =>
+                  (processedArgs[0] as FVBFunction)
+                      .execute(this, [key, value]))));
+          break;
+        case 'forEach':
+          objectInstance.forEach((key, value) {
+            (processedArgs[0] as FVBFunction).execute(this, [key, value]);
+          });
+          break;
+        case 'clear':
+          objectInstance.clear();
+          break;
+      }
+    }
+  }
+
+  void finishProcessing(final String variable, final String operator,
+      final String object, operatorStack, valueStack) {
+    if (variable.isNotEmpty) {
+      resolveVariable(variable, object, valueStack);
+    }
+    while (operatorStack.isNotEmpty &&
+        getPrecedence(operator) <= getPrecedence(operatorStack.peek!)) {
+      if (error) {
+        return;
+      }
+
+      processOperator(operatorStack.pop()!, object, valueStack, operatorStack);
+    }
+  }
+
+  void _handleVariableAndFunctionSuggestions(
+    final String variable,
+    final String object,
+    final Stack2<FVBValue> valueStack,
+  ) {
+    final CodeSuggestion suggestion;
+    if (object.isNotEmpty) {
+      suggestion = CodeSuggestion(variable);
+      final obj = getValue(object);
+      if (obj is FVBInstance) {
+        suggestion.addAll(
+          SuggestionProcessor.processFunctions(
+              obj.functions, variable, object, obj.fvbClass.name, false),
+        );
+        suggestion.addAll(SuggestionProcessor.processVariables(
+            obj.variables, variable, object, false));
+      } else if (obj is FVBClass) {
+        if (obj.fvbStaticFunctions != null) {
+          suggestion.addAll(
+            SuggestionProcessor.processFunctions(
+                obj.fvbStaticFunctions!, variable, object, '', false,
+                static: true),
+          );
+        }
+        if (obj.fvbStaticVariables != null) {
+          suggestion.addAll(SuggestionProcessor.processVariables(
+              obj.fvbStaticVariables!, variable, object, false,
+              static: true));
+        }
+      }
+    } else {
+      final list = variable.split(space);
+      list.remove('final');
+      list.remove('var');
+      final keyword = list.last;
+      suggestion = CodeSuggestion(keyword);
+      if (list.length == 1) {
+        CodeProcessor? processor = this;
+        final globalName = ComponentOperationCubit.currentProject!.name;
+        suggestion.addAll(keywords
+            .where(
+                (element) => element != keyword && element.startsWith(keyword))
+            .map((e) => SuggestionTile(
+                e, globalName, SuggestionType.keyword, e, 0,
+                global: true)));
+        suggestion.addAll(
+          predefinedFunctions.entries.where((e) => e.key.contains(keyword)).map(
+                (e) => SuggestionTile(e.value, '', SuggestionType.builtInFun,
+                    e.value.name + '()', 1),
+              ),
+        );
+        SuggestionProcessor.processClasses(
+            classes, keyword, object, valueStack,suggestion);
+        while (processor != null) {
+          final global = processor.scopeName == globalName;
+          suggestion.addAll(SuggestionProcessor.processFunctions(
+              processor.functions,
+              keyword,
+              processor.scopeName,
+              processor.scopeName,
+              global));
+          suggestion.addAll(
+            SuggestionProcessor.processVariables(
+                processor.variables, keyword, processor.scopeName, global),
+          );
+          processor = processor.parentProcessor;
+        }
+      } else if (list.length == 2) {
+        if (list.first.contains(keyword)) {
+          final suggest1 =
+              StringOperation.toCamelCase(list.first, startWithLower: true);
+          suggestion.add(SuggestionTile(
+              suggest1, '', SuggestionType.keyword, suggest1, 0));
+        }
+      }
+    }
+    onSuggestions?.call(suggestion);
   }
 }
 
@@ -2189,6 +2395,8 @@ class Stack2<E> {
   E? get peek => isNotEmpty ? _list.last : null;
 
   bool get isEmpty => _list.isEmpty;
+
+  int get length => _list.length;
 
   bool get isNotEmpty => _list.isNotEmpty;
 
@@ -2232,4 +2440,86 @@ class CaseStatement {
   final String body;
 
   CaseStatement(this.condition, this.body);
+}
+
+class SuggestionTile {
+  final dynamic value;
+  final String scope;
+  final SuggestionType type;
+  final bool global;
+  final String result;
+  final int resultCursorEnd;
+  final int? resultCursorStart;
+  int priority = 0;
+
+  String get title {
+    if (type == SuggestionType.keyword) {
+      return value;
+    }
+    return value.name;
+  }
+
+  SuggestionTile(
+      this.value, this.scope, this.type, this.result, this.resultCursorEnd,
+      {this.global = false, this.resultCursorStart});
+}
+
+class CodeSuggestion {
+  final String code;
+  final List<SuggestionTile> suggestions = [];
+
+  CodeSuggestion(this.code);
+
+  void addAll(final Iterable<SuggestionTile> suggestions) {
+    for (final suggestion in suggestions) {
+      add(suggestion);
+    }
+  }
+
+  void add(SuggestionTile suggestion) {
+    int priority = 0;
+    if (suggestion.type == SuggestionType.keyword) {
+      priority += 1;
+    } else if (suggestion.type == SuggestionType.variable &&
+        !suggestion.global) {
+      priority += 1;
+    }
+    int start = 0;
+    final name = suggestion.title;
+    if (name != code) {
+      while (name.isNotEmpty &&
+          code.isNotEmpty &&
+          start + 1 < name.length - code.length &&
+          (start = name.indexOf(code, start + 1)) >= 0) {
+        priority += (name.length - start) ~/ name.length;
+      }
+    } else {
+      priority += 10;
+    }
+
+    int i = suggestions.length - 1;
+    while (i >= 0 && suggestions[i].priority < priority) {
+      i--;
+    }
+
+    i++;
+    if (i < suggestions.length) {
+      suggestions.insert(i, suggestion);
+    } else {
+      suggestions.add(suggestion);
+    }
+  }
+}
+
+enum SuggestionType {
+  variable,
+  localVariable,
+  function,
+  classes,
+  staticVar,
+  staticFun,
+  builtInFun,
+  builtInVar,
+  argument,
+  keyword,
 }

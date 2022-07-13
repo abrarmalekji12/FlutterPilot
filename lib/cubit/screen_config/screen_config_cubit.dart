@@ -5,7 +5,6 @@ import '../component_operation/component_operation_cubit.dart';
 import '../../models/variable_model.dart';
 
 import '../../screen_model.dart';
-import '../../ui/models_view.dart';
 
 part 'screen_config_state.dart';
 
@@ -28,13 +27,11 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
   ScreenConfigCubit() : super(ScreenConfigInitial()) {
     screenConfig = screenConfigs[0];
     ComponentOperationCubit.processor.variables['dw'] = VariableModel(
-        'dw', screenConfig.width, true, 'device width', DataType.double, '',
-        assignmentCode: 'MediaQuery.maybeOf(context)?.size.width??0',
-        deletable: false);
+        'dw', DataType.double,
+        deletable: false,isFinal: true,description:  'device width',value: screenConfig.width,);
     ComponentOperationCubit.processor.variables['dh'] = VariableModel(
-        'dh', screenConfig.height, true, 'device height', DataType.double, '',
-        assignmentCode: 'MediaQuery.maybeOf(context)?.size.height??0',
-        deletable: false);
+        'dh', DataType.double,
+        deletable: false,isFinal: true,description: 'device height',value: screenConfig.height,);
   }
 
   void applyCurrentSizeToVariables() {

@@ -1,44 +1,36 @@
 import '../../models/local_model.dart';
 import 'code_processor.dart';
+import 'constants.dart';
 
 class DataTypeProcessor {
   DataTypeProcessor();
 
   static FVBValue? getFVBValueFromCode(
       String variable, Map<String, FVBClass> classes, Function showError) {
-    if (variable.contains('~')) {
-      final split = variable.split('~');
+    if (variable.contains(space)) {
+      final split = variable.split(space);
       bool nullable = false;
+      final bool static=split.remove('static');
+      final bool isFinal=split.remove('final');
       DataType? dataType;
-      if (split.length == 2) {
-        if (split[0] != 'final') {
-          nullable = split.first.endsWith('?');
-          dataType = LocalModel.codeToDatatype(
-              nullable
-                  ? split.first.substring(0, split.first.length - 1)
-                  : split.first,
-              classes);
-          if (dataType == DataType.unknown) {
-            showError('Unknown data type or class name "${split.first}"');
-            return null;
-          }
-        } else {
-          dataType = DataType.dynamic;
-        }
-      } else if (split.length == 3) {
-        nullable = split[1].endsWith('?');
-        dataType = LocalModel.codeToDatatype(
-            nullable ? split[1].substring(0, split[1].length - 1) : split[1],
+      if (split.length==2) {
+        nullable = split.first.endsWith('?');
+        dataType = DataType.codeToDatatype(
+            nullable ?split.first.substring(0, split.first.length - 1) : split.first,
             classes);
         if (dataType == DataType.unknown) {
-          showError('Unknown data type or class name "${split[1]}"');
+          showError('Unknown data type or class name "${split.first}"');
           return null;
         }
       }
+      else{
+        dataType = DataType.dynamic;
+      }
       return FVBValue(
           variableName: split.last,
-          createVarIfNotExist: true,
-          isVarFinal: split.first == 'final',
+          createVar: true,
+          isVarFinal: isFinal,
+          static: static,
           dataType: dataType,
           nullable: nullable);
     }
@@ -46,11 +38,11 @@ class DataTypeProcessor {
   }
 
   static bool checkIfValidDataTypeOfValue(dynamic value, DataType dataType,
-      String variable, bool nullable, Function showError,
+      String variable, bool nullable,
       {String? invalidDataTypeError, String? canNotNullError}) {
     final DataType valueDataType;
     if (value != null) {
-      valueDataType = getDartTypeToDatatype(value, showError);
+      valueDataType = getDartTypeToDatatype(value);
     } else {
       valueDataType = dataType;
     }
@@ -58,22 +50,20 @@ class DataTypeProcessor {
       return true;
     }
     if (value == null && !nullable && dataType != DataType.dynamic) {
-      showError(canNotNullError ?? 'value of $variable can not null');
-      return false;
+      throw Exception(canNotNullError ?? 'value of $variable can not null');
     }
 
     if (dataType == valueDataType ||
-        (dataType == DataType.double && valueDataType == DataType.int) ||
-        dataType == DataType.dynamic) {
+        (dataType == DataType.double && valueDataType == DataType.int) ||(dataType == DataType.num && (valueDataType == DataType.int||valueDataType == DataType.double))
+        ||dataType == DataType.dynamic) {
       return true;
     } else {
-      showError(invalidDataTypeError ??
-          'Cannot assign ${LocalModel.dataTypeToCode(valueDataType)} to ${LocalModel.dataTypeToCode(dataType)} : $variable=${value.runtimeType}');
-      return false;
+      throw Exception(invalidDataTypeError ??
+          'Cannot assign ${DataType.dataTypeToCode(valueDataType)} to ${DataType.dataTypeToCode(dataType)} : $variable=${value.runtimeType}');
     }
   }
 
-  static DataType getDartTypeToDatatype(dynamic value, Function showError) {
+  static DataType getDartTypeToDatatype(dynamic value) {
     if (value == null) {
       return DataType.fvbVoid;
     }
@@ -96,7 +86,7 @@ class DataTypeProcessor {
       dataType = DataType.fvbFunction;
     } else {
       dataType = DataType.unknown;
-      showError('Unknown type of value $value');
+      throw Exception('Unknown type of value $value');
     }
     return dataType;
   }

@@ -27,7 +27,7 @@ class ActionCodeDialog {
 
   void show(final BuildContext context,
       {required final String code,
-      required final List<VariableModel> variables,
+      required final List<FVBVariable> Function()? variables,
       final List<CodeBase>? prerequisites}) {
     _overlayEntry = OverlayEntry(
       builder: (_) {

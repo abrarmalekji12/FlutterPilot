@@ -1,14 +1,18 @@
+
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_builder/ui/route_not_found.dart';
+import 'package:keyboard_event/keyboard_event.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 import 'bloc/action_code/action_code_bloc.dart';
 import 'bloc/error/error_bloc.dart';
+import 'bloc/key_fire/key_fire_bloc.dart';
 import 'bloc/state_management/state_management_bloc.dart';
+import 'code_to_component.dart';
 import 'common/compiler/code_processor.dart';
 import 'common/html_lib.dart' as html;
 import 'common/shared_preferences.dart';
@@ -23,6 +27,7 @@ import 'models/actions/action_model.dart';
 import 'ui/home/landing_page.dart';
 import 'ui/home_page.dart';
 import 'ui/project_selection_page.dart';
+import 'common/io_lib.dart';
 
 /// Bubble sort algo
 // sort(arr){
@@ -47,9 +52,20 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setPathUrlStrategy();
   initInjector();
+  if(Platform.isWindows) {
+    await KeyboardEvent.init();
+    get<KeyboardEvent>().startListening((keyEvent) {
+      if(keyEvent.isKeyDown) {
+        get<KeyFireBloc>().add(FireKeyDownEvent(keyEvent.vkName!));
+      }
+      if(keyEvent.isKeyUP) {
+        get<KeyFireBloc>().add(FireKeyUpEvent(keyEvent.vkName!));
+      }
+    });
+  }
   await Preferences.load();
   final CodeProcessor processor = CodeProcessor(
-      consoleCallback: (message) {
+      consoleCallback: (message, {List? arguments}) {
         if (message.startsWith('print:')) {
           print(':: => ${message.substring(6)}');
         }
@@ -59,12 +75,24 @@ void main() async {
         print('XX => $error, LINE :: "$line"');
       },
       scopeName: 'test');
-  const code = '''
-bool getVal()=>false;
-final i=0;
-String str=getVal()?"Hello World":"No World";
-print(str);
 
+  const code = '''
+  class Message{
+  String text;
+  bool my;
+  static int abc;
+  Message(this.text, this.my);
+  void send({bool fast=false}){
+  print("fast {{fast}}");
+  }
+  static void play(){
+    print("playing");
+    }
+}
+
+void main(){
+Message.play();
+}
  ''';
 
   /*
@@ -114,7 +142,8 @@ print("hello {{}}");
 addStudent();
 
   */
-  processor.executeCode(code, declarativeOnly: false);
+  processor.executeCode(code, declarativeOnly: true);
+  processor.functions['main']?.execute(processor, []);
   /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
   js=json.decode(data);
@@ -130,7 +159,7 @@ addStudent();
   // 4. Stream type variable
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  // runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -140,7 +169,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      html.document.addEventListener('contextmenu', (event) => event.preventDefault());
+      html.document
+          .addEventListener('contextmenu', (event) => event.preventDefault());
     }
     if (!kDebugMode) {
       FlutterError.onError = (
@@ -151,8 +181,8 @@ class MyApp extends StatelessWidget {
 
         final exception = details.exception;
         if (exception is FlutterError) {
-          ifIsOverflowError =
-              !exception.diagnostics.any((e) => e.value.toString().startsWith('A RenderFlex overflowed by'));
+          ifIsOverflowError = !exception.diagnostics.any((e) =>
+              e.value.toString().startsWith('A RenderFlex overflowed by'));
         }
 
         // Ignore if is overflow error.
@@ -188,6 +218,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => get<ActionCodeBloc>(),
+        ),
+        BlocProvider(
+          create: (context) => get<KeyFireBloc>(),
         ),
       ],
       child: MaterialApp(
@@ -240,17 +273,24 @@ class MyApp extends StatelessWidget {
           }
           return getRoute((p0) => const RouteNotFound(), link);
         },
-        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity, primaryColor: AppColors.theme),
+        theme: ThemeData(
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            primaryColor: AppColors.theme),
       ),
     );
   }
 }
 
-getRoute(Widget Function(BuildContext) builder, String? name, {bool anim = true}) {
+getRoute(Widget Function(BuildContext) builder, String? name,
+    {bool anim = true}) {
   if (!anim) {
-    return CustomPageRoute(builder: builder, settings: name != null ? RouteSettings(name: name) : null);
+    return CustomPageRoute(
+        builder: builder,
+        settings: name != null ? RouteSettings(name: name) : null);
   }
-  return MaterialPageRoute(builder: builder, settings: name != null ? RouteSettings(name: name) : null);
+  return MaterialPageRoute(
+      builder: builder,
+      settings: name != null ? RouteSettings(name: name) : null);
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {

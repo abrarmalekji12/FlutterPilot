@@ -20,6 +20,7 @@ class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
     this.currentSelectedRoot = currentSelectedRoot;
   }
 
+
   void changeComponentSelection(ComponentSelectionModel component,
       {required Component root, bool scroll = true}) {
     if (currentSelected != component) {

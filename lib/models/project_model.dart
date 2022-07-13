@@ -17,7 +17,6 @@ import '../injector.dart';
 import '../main.dart';
 import '../runtime_provider.dart';
 import '../ui/action_ui.dart';
-import '../ui/models_view.dart';
 import '../ui/project_setting_page.dart';
 import 'component_model.dart';
 import 'local_model.dart';
@@ -58,9 +57,9 @@ class FlutterProject {
     processor = get<CodeProcessor>();
   }
 
-  Map<String, VariableModel> get variables => processor.variables;
+  Map<String, FVBVariable> get variables => processor.variables;
 
-  set variables(Map<String, VariableModel> value) {
+  set variables(Map<String, FVBVariable> value) {
     processor.variables.clear();
     processor.variables.addAll(value);
   }
@@ -104,8 +103,12 @@ class FlutterProject {
     return imageList;
   }
 
-  Widget run(final BuildContext context, {bool navigator = false}) {
+  Widget run(final BuildContext context, final BoxConstraints constraints,
+      {bool navigator = false}) {
     context.read<ErrorBloc>().add(ClearMessageEvent());
+    processor.destroyProcess(deep: true);
+    processor.variables['dw']!.value = constraints.maxWidth;
+    processor.variables['dh']!.value = constraints.maxHeight;
     processor.executeCode(ComponentOperationCubit.currentProject!.actionCode);
     if (!navigator) {
       processor.finished = true;
@@ -200,14 +203,14 @@ class UIScreen {
         'root': CodeOperations.trim(rootComponent?.code(clean: false)),
         'models': models.map((e) => e.toJson()).toList(growable: false),
         'variables': variables.values
-            .where((element) => element.uiAttached)
+            .where((element) => element is VariableModel && element.uiAttached)
             .map((e) => e.toJson())
             .toList(growable: false)
       };
 
-  Map<String, VariableModel> get variables => processor.variables;
+  Map<String, FVBVariable> get variables => processor.variables;
 
-  set variables(Map<String, VariableModel> value) {
+  set variables(Map<String, FVBVariable> value) {
     processor.variables.clear();
     processor.variables.addAll(value);
   }
@@ -240,15 +243,18 @@ class UIScreen {
   }
 
   Widget? build(BuildContext context) {
+    processor.destroyProcess(deep: false);
     processor.executeCode(actionCode);
     if (RuntimeProvider.of(context) == RuntimeMode.run) {
       processor.functions['initState']?.execute(processor, []);
     }
+
     return ProcessorProvider(
       processor,
       BlocBuilder<StateManagementBloc, StateManagementState>(
           buildWhen: (previous, current) => current.id == id,
           builder: (context, state) {
+            ComponentOperationCubit.processor=processor;
             if (RuntimeProvider.of(context) == RuntimeMode.run) {
               processor.functions['build']?.execute(processor, []);
             }
@@ -306,20 +312,21 @@ class UIScreen {
           .contains(variable.value.dataType)) {
         if (!variable.value.isFinal) {
           staticVariablesCode +=
-              'final ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
+              'final ${DataType.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
         } else {
           dynamicVariablesDefinitionCode +=
-              'late ${LocalModel.dataTypeToCode(variable.value.dataType)} ${variable.key};';
-          dynamicVariableAssignmentCode +=
-              '${variable.key} = ${variable.value.assignmentCode};';
+              'late ${DataType.dataTypeToCode(variable.value.dataType)} ${variable.key};';
+          // dynamicVariableAssignmentCode +=
+          //     '${variable.key} = ${variable.value.};';
         }
       }
     }
 
     String functionImplementationCode = '';
-    for (final function
-        in ComponentOperationCubit.processor.predefinedFunctions.values) {
-      functionImplementationCode += function.functionCode;
+    for (final function in CodeProcessor.predefinedFunctions.values) {
+      if(function.functionCode!=null) {
+        functionImplementationCode += function.functionCode!;
+      }
     }
 
     final String className = getClassName;

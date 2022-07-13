@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/compiler/code_processor.dart';
 import '../common/compiler/processor_component.dart';
 import '../common/converter/code_converter.dart';
+import '../ui/build_view/build_view.dart';
 import 'local_model.dart';
 import 'variable_model.dart';
 import 'package:get/get.dart';
@@ -41,9 +42,7 @@ mixin operations {
 
 final setStateFunction = FVBFunction(
     'setState', null, [FVBArgument('callback', dataType: DataType.fvbFunction)],
-    dartCall: (_) {
-
-    });
+    dartCall: (_) {});
 
 final Map<String, Component> componentMap = {};
 
@@ -346,7 +345,6 @@ abstract class Component {
   }
 
   Widget build(BuildContext context) {
-    ComponentOperationCubit.processor = ProcessorProvider.maybeOf(context)!;
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
@@ -356,12 +354,15 @@ abstract class Component {
         key: key(context),
         buildWhen: (previous, current) => current.id == id,
         builder: (context, state) {
+          ComponentOperationCubit.processor =
+              ProcessorProvider.maybeOf(context)!;
           return ComponentWidget(
             child: create(context),
           );
         },
       );
     }
+    ComponentOperationCubit.processor = ProcessorProvider.maybeOf(context)!;
     return ComponentWidget(
       key: key(context),
       child: create(context),
@@ -907,7 +908,7 @@ mixin Clickable {
   String getDefaultCode() {
     return function != null
         ? '''
-           ${LocalModel.dataTypeToCode(function!.returnType)} ${function!.name}(${function!.arguments.map((e) => '${LocalModel.dataTypeToCode(e.dataType)} ${e.name}').join(',')}){
+           ${DataType.dataTypeToCode(function!.returnType)} ${function!.name}(${function!.arguments.map((e) => '${DataType.dataTypeToCode(e.dataType)} ${e.name}').join(',')}){
            // TODO: Implement Logic Here
            }
           '''
@@ -1164,6 +1165,7 @@ abstract class CustomComponent extends Component {
   String actionCode;
   Component? root;
   List<CustomComponent> objects = [];
+  List<String>? arguments;
 
   CustomComponent(
       {required this.extensionName,
@@ -1173,7 +1175,8 @@ abstract class CustomComponent extends Component {
       List<VariableModel>? variables})
       : super(name, []) {
     processor = CodeProcessor.build(
-        processor: ComponentOperationCubit.processor, name: name);
+        processor: ComponentOperationCubit.currentProject!.processor,
+        name: name);
     if (this is StatefulComponent) {
       processor.functions['setState'] = FVBFunction('setState', null, [
         FVBArgument('callback', dataType: DataType.fvbFunction)
@@ -1187,9 +1190,9 @@ abstract class CustomComponent extends Component {
         .map((key, value) => MapEntry(value.name, value)));
   }
 
-  Map<String, VariableModel> get variables => processor.variables;
+  Map<String, FVBVariable> get variables => processor.variables;
 
-  set variables(Map<String, VariableModel> value) {
+  set variables(Map<String, FVBVariable> value) {
     processor.variables.clear();
     processor.variables.addAll(value);
   }
@@ -1235,7 +1238,9 @@ abstract class CustomComponent extends Component {
         lookForUIChanges(context);
       });
     }
-    processor.executeCode(actionCode);
+    processor.destroyProcess(deep: false);
+    processor.executeCode(actionCode, arguments: arguments);
+    (cloneOf as CustomComponent?)?.variables = processor.variables;
     if (this is StatefulComponent) {
       if (RuntimeProvider.of(context) == RuntimeMode.run) {
         processor.functions['initState']?.execute(processor, []);
@@ -1314,7 +1319,10 @@ abstract class CustomComponent extends Component {
     } else {
       customComponent.parameters = parameters;
     }
-    customComponent.variables = variables;
+
+    customComponent.arguments = arguments;
+    customComponent.variables =
+        variables.map((key, value) => MapEntry(key, value.clone()));
     customComponent.root = root?.clone(parent, deepClone: deepClone);
     if (!deepClone) {
       customComponent.cloneOf = this;
@@ -1415,11 +1423,13 @@ class StatelessComponent extends CustomComponent {
       return '';
     }
     final CodeProcessor processor = CodeProcessor(
-      consoleCallback: (value) {},
+      consoleCallback: (value, {List<dynamic>? arguments}) {
+        return null;
+      },
       onError: (error, line) {},
       scopeName: 'test',
     );
-    processor.executeCode(actionCode, operationType: OperationType.checkOnly);
+    processor.executeCode(actionCode, type: OperationType.checkOnly);
     return '''class $name extends StatelessWidget {
           const $name({Key? key}) : super(key: key);
         

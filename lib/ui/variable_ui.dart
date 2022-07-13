@@ -12,7 +12,8 @@ import '../cubit/component_selection/component_selection_cubit.dart';
 import '../models/variable_model.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'models_view.dart';
+import 'project_selection_page.dart';
+
 
 class VariableBox extends StatefulWidget {
   final void Function(VariableModel) onAdded;
@@ -23,7 +24,7 @@ class VariableBox extends StatefulWidget {
   final ComponentSelectionCubit componentSelectionCubit;
   final OverlayEntry overlayEntry;
   final String title;
-  final Map<String, VariableModel> variables;
+  final Map<String, FVBVariable> variables;
 
   const VariableBox(
       {Key? key,
@@ -257,7 +258,7 @@ class _VariableBoxState extends State<VariableBox> {
                         return;
                       }
                       widget.onAdded.call(VariableModel(
-                          name, value, false, null, dataType, widget.title,
+                          name, dataType,value: value,
                           uiAttached: true));
 
                       _controller1.text = '';
@@ -300,7 +301,7 @@ class _VariableBoxState extends State<VariableBox> {
 }
 
 class EditVariable extends StatefulWidget {
-  final MapEntry<String, VariableModel> variable;
+  final MapEntry<String, FVBVariable> variable;
   final ComponentOperationCubit componentOperationCubit;
   final ComponentSelectionCubit componentSelectionCubit;
   final ComponentCreationCubit componentCreationCubit;
@@ -328,9 +329,10 @@ class _EditVariableState extends State<EditVariable> {
 
   @override
   Widget build(BuildContext context) {
+    final variable=widget.variable.value;
     return Row(
       children: [
-        Expanded(
+        Flexible(
           child: Align(
             alignment: Alignment.centerLeft,
             child: InkWell(
@@ -348,7 +350,7 @@ class _EditVariableState extends State<EditVariable> {
                         widget.variable.key,
                         style: AppFontStyle.roboto(
                           15,
-                          color: widget.variable.value.runtimeAssigned
+                          color: widget.variable.value.isFinal
                               ? Colors.black
                               : AppColors.theme,
                           fontWeight: FontWeight.w500,
@@ -379,11 +381,11 @@ class _EditVariableState extends State<EditVariable> {
             ),
           ),
         ),
-        if (!widget.variable.value.runtimeAssigned &&
-            ([DataType.int, DataType.double, DataType.string, DataType.bool]
-                .contains(widget.variable.value.dataType)))
           Expanded(
             child: CustomTextField(
+              enabled: !variable.isFinal&&(variable is VariableModel&&variable.uiAttached) &&
+                  ([DataType.int, DataType.double, DataType.string, DataType.bool]
+                      .contains(variable.dataType)),
               controller: _textEditingController,
               onChange: (val) {
                 late final dynamic value;
@@ -427,34 +429,32 @@ class _EditVariableState extends State<EditVariable> {
                 }
                 if (value != null) {
                   widget.variable.value.value = value;
-                  widget.onChanged.call(widget.variable.value);
+                  widget.onChanged.call(widget.variable.value as VariableModel);
                 }
               },
             ),
           ),
-        if (widget.variable.value.description != null)
-          Expanded(
-            child: Center(
-              child: Text(
-                widget.variable.value.description!,
-                style: AppFontStyle.roboto(12,
-                    color: Colors.black, fontWeight: FontWeight.w600),
-              ),
-            ),
+        if((variable is VariableModel&&variable.description != null))
+        Container(
+          width: 200,
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            variable.description!,
+            style: AppFontStyle.roboto(12,
+                color: Colors.black, fontWeight: FontWeight.w600),
           ),
-        if (widget.variable.value.deletable) ...[
+        ),
+        if (variable is VariableModel&&variable.uiAttached&&variable.deletable) ...[
           const SizedBox(
             width: 20,
           ),
-          IconButton(
+          AppIconButton(
             onPressed: () {
-              widget.onDelete.call(widget.variable.value);
+              widget.onDelete.call(variable);
               setState(() {});
             },
-            icon: const Icon(
-              Icons.delete,
-              color: Colors.red,
-            ),
+            icon: Icons.delete,
+            color: Colors.red,
           )
         ]
       ],

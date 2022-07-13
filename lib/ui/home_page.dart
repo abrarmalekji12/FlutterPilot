@@ -48,6 +48,7 @@ import 'common/badge_widget.dart';
 import 'common/variable_dialog.dart';
 import 'component_selection_dialog.dart';
 import 'component_tree.dart';
+import 'custom_component_property.dart';
 import 'emulation_view.dart';
 import 'error_widget.dart';
 import 'models_view.dart';
@@ -528,8 +529,7 @@ class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
             onAdded: (model) {
               ComponentOperationCubit.currentProject!.variables[model.name] =
                   model;
-              componentOperationCubit.addVariable(ComponentOperationCubit
-                  .currentProject!.variables[model.name]!);
+              componentOperationCubit.addVariable( ComponentOperationCubit.currentProject!.variables[model.name] as VariableModel);
               componentCreationCubit.changedComponent();
               componentSelectionCubit.emit(ComponentSelectionChange());
             },
@@ -538,7 +538,7 @@ class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
                   .currentProject!.variables[model.name]!.value = model.value;
               Future.delayed(const Duration(milliseconds: 500), () {
                 componentOperationCubit.updateVariable(ComponentOperationCubit
-                    .currentProject!.variables[model.name]!);
+                    .currentProject!.variables[model.name]! as VariableModel);
                 componentCreationCubit.changedComponent();
                 componentSelectionCubit.emit(ComponentSelectionChange());
               });
@@ -694,7 +694,7 @@ class _ActionCodeShowHideMenuState extends State<ActionCodeShowHideMenu> {
         dialog.show(
           context,
           code: componentOperationCubit.project!.actionCode,
-          variables: componentOperationCubit.project!.variables.values.toList(),
+          variables: ()=>componentOperationCubit.project!.variables.values.toList(growable: false),
         );
       },
       child: BadgeWidget(
@@ -778,15 +778,11 @@ class _PrototypeShowcaseState extends State<PrototypeShowcase> {
             },
             builder: (context, state) {
               if (ComponentOperationCubit.currentProject != null) {
-                ComponentOperationCubit.processor.variables['dw']!.value =
-                    MediaQuery.of(context).size.width;
-                ComponentOperationCubit.processor.variables['dh']!.value =
-                    MediaQuery.of(context).size.height;
                 get<StackActionCubit>().stackOperation(StackOperation.push,
                     uiScreen:
                         ComponentOperationCubit.currentProject!.mainScreen);
                 return ComponentOperationCubit.currentProject!
-                    .run(context, navigator: true);
+                    .run(context,BoxConstraints(maxWidth: MediaQuery.of(context).size.width,maxHeight: MediaQuery.of(context).size.height), navigator: true);
               }
               return Container();
             },
@@ -995,6 +991,12 @@ class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
                                     ),
                                   ),
                                 ),
+                              if (_componentSelectionCubit.currentSelected
+                                  .intendedSelection is CustomComponent)
+                                CustomComponentProperty(
+                                  component: _componentSelectionCubit.currentSelected
+                                      .intendedSelection as CustomComponent,
+                                ),
                               for (final param in _componentSelectionCubit
                                   .currentSelected.propertySelection.parameters)
                                 ParameterWidget(
@@ -1157,7 +1159,7 @@ class CenterMainSide extends StatelessWidget {
                               child: Stack(
                                 children: [
                                   _componentOperationCubit.project!
-                                      .run(context),
+                                      .run(context,BoxConstraints(maxWidth: _screenConfigCubit.screenConfig.width, maxHeight: _screenConfigCubit.screenConfig.height)),
                                   const BoundaryWidget(),
                                 ],
                               ),
@@ -1222,7 +1224,7 @@ class CenterMainSide extends StatelessWidget {
       //tappedComp,
       final original = tappedComp.getOriginal() ?? tappedComp;
       _componentSelectionCubit.changeComponentSelection(
-        ComponentSelectionModel([original], [tappedComp], original),
+        ComponentSelectionModel([original], [tappedComp], original,original),
         root: original != tappedComp
             ? original.getRootCustomComponent(
                 ComponentOperationCubit.currentProject!)!

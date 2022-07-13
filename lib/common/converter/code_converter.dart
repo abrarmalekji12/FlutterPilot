@@ -2,6 +2,7 @@ import 'package:dart_style/dart_style.dart';
 
 import '../../code_to_component.dart';
 import '../compiler/code_processor.dart';
+import '../compiler/constants.dart';
 
 class FVBEngine {
   final Map<String, DataType> variables = {};
@@ -46,7 +47,7 @@ class FVBEngine {
           (charCode >= '0'.codeUnits.first &&
               charCode <= '9'.codeUnits.first) ||
           code[i] == '_' ||
-          code[i] == '~') {
+          code[i] == space) {
         variableName += code[i];
         if (variableName == 'class') {
           classBlock = true;

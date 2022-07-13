@@ -30,4 +30,8 @@ class AppColors {
   //separator color
   static const Color separator = Color(0xFFE0E0E0);
   static const Color darkGrey = Color(0xFF040E2F);
+
+  // dark grey
+  static const Color darkGrey2 = Color(0xFF0A0A0A);
+
 }

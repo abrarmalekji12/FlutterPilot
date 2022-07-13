@@ -9,6 +9,8 @@ import 'package:highlight/src/common_modes.dart';
 import 'package:resizable_widget/resizable_widget.dart';
 
 import '../bloc/action_code/action_code_bloc.dart';
+import '../bloc/key_fire/key_fire_bloc.dart';
+import '../bloc/suggestion_code/suggestion_code_bloc.dart';
 import '../common/compiler/code_processor.dart';
 import '../common/utils/dateformat_utils.dart';
 import '../constant/app_colors.dart';
@@ -16,6 +18,7 @@ import '../constant/app_dim.dart';
 import '../constant/font_style.dart';
 import '../models/variable_model.dart';
 import 'build_view/build_view.dart';
+import 'ide/suggestion.dart';
 import 'project_selection_page.dart';
 
 final fvbDart = Mode(refs: {
@@ -98,8 +101,9 @@ class ActionCodeEditor extends StatefulWidget {
   final void Function(String) onCodeChange;
   final List<CodeBase> prerequisites;
   final void Function(bool) onError;
-  final List<FVBFunction> functions;
-  final List<VariableModel> variables;
+  final Iterable<FVBFunction> functions;
+  final Iterable<FVBVariable> Function()? variables;
+  final Iterable<FVBClass>? classes;
 
   const ActionCodeEditor(
       {Key? key,
@@ -109,7 +113,8 @@ class ActionCodeEditor extends StatefulWidget {
       required this.variables,
       required this.onError,
       required this.scopeName,
-      required this.functions})
+      required this.functions,
+      this.classes})
       : super(key: key);
 
   @override
@@ -120,16 +125,33 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
   late final CodeController _codeController;
   late final CodeProcessor processor;
   final List<ConsoleMessage> consoleMessages = [];
+  final SuggestionCodeBloc _suggestionCodeBloc = SuggestionCodeBloc();
   final ValueNotifier<int> _consoleChangeNotifier = ValueNotifier<int>(0);
   String? code;
   final DartFormatter formatter = DartFormatter();
+  final FocusNode _focusNode = FocusNode();
+  final GlobalKey _textFieldKey = GlobalKey();
+  late double _topBox, _bottomBox;
+  OverlayEntry? suggestionOverlayEntry;
+  BoxConstraints? _boxConstraints;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    suggestionOverlayEntry?.remove();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(() {
+      if (_boxConstraints != null) {
+        showOverlaidTag(context, _boxConstraints!);
+      }
+    });
     processor = CodeProcessor(
-      consoleCallback: (message) {
-        print('CONSOLE: $message');
+      consoleCallback: (message, {List? arguments}) {
         return null;
       },
       onError: (error, line) {
@@ -137,21 +159,15 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
             ConsoleMessage('$error at Line $line', ConsoleMessageType.error));
         _consoleChangeNotifier.value++;
       },
-      scopeName: 'action-code',
+      scopeName: widget.scopeName,
     );
-    processor.variables.addAll(widget.variables
-        .asMap()
-        .map((key, value) => MapEntry(value.name, value.clone())));
 
-    processor.functions.addAll(widget.functions
-        .asMap()
-        .map((key, value) => MapEntry(value.name, value)));
-    for (final prerequisite in widget.prerequisites) {
-      processor.executeCode(
-        prerequisite.code,
-        operationType: OperationType.checkOnly,
-      );
-    }
+    processor.functions.addAll(
+      widget.functions.toList(growable: false).asMap().map(
+            (key, value) => MapEntry(value.name, value),
+          ),
+    );
+
     _codeController = CodeController(
         language: fvbDart,
         theme: monokaiSublimeTheme
@@ -170,14 +186,86 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
     executeAndCheck(code!);
   }
 
+  void showOverlaidTag(BuildContext context, BoxConstraints constraints) async {
+    if (mounted) {
+      suggestionOverlayEntry?.remove();
+      suggestionOverlayEntry = OverlayEntry(builder: (context) {
+        if (!mounted) {
+          suggestionOverlayEntry?.remove();
+          return const Offstage();
+        }
+        final TextPainter painter = TextPainter(
+          textScaleFactor: 1.15,
+          textDirection: TextDirection.ltr,
+          text: _codeController.buildTextSpan(context: context),
+        );
+        painter.layout(maxWidth: constraints.maxWidth - 20);
+        final Rect caretPrototype =
+            Rect.fromLTWH(0.0, 0.0, 2, painter.preferredLineHeight);
+        final offset = painter.getOffsetForCaret(
+            TextPosition(
+                offset: _codeController.selection.baseOffset -
+                    (_suggestionCodeBloc.suggestion?.code.length ?? 0)),
+            caretPrototype);
+        final top =
+            _focusNode.offset.dy + offset.dy + painter.preferredLineHeight;
+        if (top > _topBox && top < _bottomBox) {
+          return Positioned(
+            // Decides where to place the tag on the screen.
+            top: top,
+            left: _focusNode.offset.dx + offset.dx,
+            // Tag code.
+            child: SuggestionWidget(
+              suggestionCodeBloc: _suggestionCodeBloc,
+            ),
+          );
+        }
+        return const Offstage();
+      });
+
+      Overlay.of(context)!.insert(suggestionOverlayEntry!);
+    }
+  }
+
   void executeAndCheck(String code) {
     consoleMessages.clear();
     _consoleChangeNotifier.value = 0;
+    if (widget.variables != null) {
+      processor.variables.addAll(widget.variables!
+          .call()
+          .where((element) => element is VariableModel && element.uiAttached)
+          .where((element) => element is VariableModel && element.uiAttached)
+          .toList(growable: false)
+          .asMap()
+          .map((key, value) => MapEntry(value.name, value.clone())));
+    }
+    final cache = CacheMemory(processor);
+    for (final prerequisite in widget.prerequisites) {
+      processor.variables.addAll(prerequisite.variables
+          .call()
+          .where((element) => element is VariableModel && element.uiAttached)
+          .toList(growable: false)
+          .asMap()
+          .map((key, value) => MapEntry(value.name, value.clone())));
+      processor.executeCode(
+        prerequisite.code(),
+        type: OperationType.checkOnly,
+      );
+    }
+    processor.enableSuggestion((suggestions) {
+      _suggestionCodeBloc.add(SuggestionUpdatedEvent(suggestions));
+      if (suggestions != null && _boxConstraints != null) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          showOverlaidTag(context, _boxConstraints!);
+        });
+      }
+    });
     final output = processor.executeCode(
       code,
-      operationType: OperationType.checkOnly,
+      type: OperationType.checkOnly,
     );
-    processor.destroyProcess();
+    processor.destroyProcess(cacheMemory: cache, deep: true);
+    processor.disableSuggestion();
     if (output is FVBUndefined) {
       consoleMessages
           .add(ConsoleMessage(output.toString(), ConsoleMessageType.error));
@@ -198,70 +286,107 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return ResizableWidget(
-      separatorSize: Dimen.separator,
-      separatorColor: AppColors.separator,
-      isHorizontalSeparator: true,
-      percentages: const [0.9, 0.1],
-      children: [
-        Stack(
-          alignment: Alignment.topRight,
+    return LayoutBuilder(builder: (context, constraints) {
+      if (_boxConstraints == null) {
+        _boxConstraints = constraints;
+        final size = MediaQuery.of(context).size;
+        _topBox = (size.height / 2) - (constraints.maxHeight / 2);
+        _bottomBox = (size.height / 2) + (constraints.maxHeight / 2);
+      }
+      if (suggestionOverlayEntry == null) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          showOverlaidTag(context, constraints);
+        });
+      }
+      return BlocListener<KeyFireBloc, KeyFireState>(
+        listener: (context, state) {
+          if (state is DownKeyEventFired) {
+            if (_suggestionCodeBloc.suggestion != null) {
+              if ((state.key == 'RETURN' || state.key == 'ENTER')) {
+                _handleEnter();
+              } else if (state.key == 'UP') {
+                final offset = _codeController.selection.baseOffset;
+                _suggestionCodeBloc.add(SuggestionSelectionChangeEvent(-1));
+                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                  _codeController.selection =
+                      TextSelection.collapsed(offset: offset);
+                });
+              } else if (state.key == 'DOWN') {
+                final offset = _codeController.selection.baseOffset;
+                _suggestionCodeBloc.add(SuggestionSelectionChangeEvent(1));
+                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                  _codeController.selection =
+                      TextSelection.collapsed(offset: offset);
+                });
+              }
+            }
+          }
+        },
+        child: ResizableWidget(
+          separatorSize: Dimen.separator,
+          separatorColor: AppColors.separator,
+          isHorizontalSeparator: true,
+          percentages: const [0.9, 0.1],
           children: [
-            SingleChildScrollView(
-              child: CodeField(
-                minLines: 50,
-                enabled: true,
-                wrap: true,
-                lineNumberStyle: LineNumberStyle(
-                  margin: 5,
-                  textStyle: AppFontStyle.roboto(14, color: Colors.white)
-                      .copyWith(height: 1.31),
-                ),
-                controller: _codeController,
-              ),
-            ),
-            Align(
+            Stack(
               alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AppIconButton(
-                        icon: Icons.format_align_center,
-                        onPressed: () {
-                          try {
-                            final code = formatter.format(_codeController.text);
-                            final cursor =
-                                _codeController.selection.extentOffset;
-                            _codeController.value = TextEditingValue(
-                                text: code,
-                                selection:
-                                    TextSelection.collapsed(offset: cursor));
-                            widget.onCodeChange(code);
-                          } on FormatterException catch (e) {
-                            return;
-                          }
-                        },
-                        color: Colors.blueAccent),
-                  ],
+              children: [
+                SingleChildScrollView(
+                  controller: _scrollController,
+                  child: CodeField(
+                    minLines: 50,
+                    enabled: true,
+                    focusNode: _focusNode,
+                    key: _textFieldKey,
+                    wrap: true,
+                    controller: _codeController,
+                  ),
                 ),
-              ),
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppIconButton(
+                            icon: Icons.format_align_center,
+                            onPressed: () {
+                              try {
+                                final code =
+                                    formatter.format(_codeController.text);
+                                final cursor =
+                                    _codeController.selection.extentOffset;
+                                _codeController.value = TextEditingValue(
+                                    text: code,
+                                    selection: TextSelection.collapsed(
+                                        offset: cursor));
+                                widget.onCodeChange(code);
+                              } on FormatterException {
+                                return;
+                              }
+                            },
+                            color: Colors.blueAccent),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
+            Container(
+              color: const Color(0xff494949),
+              padding: const EdgeInsets.all(8),
+              alignment: Alignment.topLeft,
+              child: ValueListenableBuilder(
+                  valueListenable: _consoleChangeNotifier,
+                  builder: (context, value, child) {
+                    return printConsoleMessage();
+                  }),
+            )
           ],
         ),
-        Container(
-          color: const Color(0xff494949),
-          padding: const EdgeInsets.all(8),
-          alignment: Alignment.topLeft,
-          child: ValueListenableBuilder(
-              valueListenable: _consoleChangeNotifier,
-              builder: (context, value, child) {
-                return printConsoleMessage();
-              }),
-        )
-      ],
-    );
+      );
+    });
   }
 
   Widget printConsoleMessage() {
@@ -278,6 +403,34 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
       text: TextSpan(children: list),
     );
   }
+
+  void _handleEnter() {
+    final text = _codeController.text;
+    final index = _codeController.selection.baseOffset;
+    final suggestion = _suggestionCodeBloc
+        .suggestion!.suggestions[_suggestionCodeBloc.selectionIndex];
+    final offset = index +
+        (-_suggestionCodeBloc.suggestion!.code.length +
+            suggestion.result.length);
+    final newText =
+        text.substring(0, index - _suggestionCodeBloc.suggestion!.code.length) +
+            suggestion.result +
+            text.substring(index);
+    _suggestionCodeBloc.suggestion = null;
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _codeController.value = TextEditingValue(
+          text: newText,
+          selection: suggestion.resultCursorStart != null
+              ? TextSelection(
+                  baseOffset: offset -
+                      suggestion.result.length +
+                      suggestion.resultCursorStart! -
+                      1,
+                  extentOffset: offset - suggestion.resultCursorEnd)
+              : TextSelection.collapsed(
+                  offset: offset - suggestion.resultCursorEnd));
+    });
+  }
 }
 
 Color getConsoleMessageColor(ConsoleMessageType type,
@@ -287,6 +440,8 @@ Color getConsoleMessageColor(ConsoleMessageType type,
       return AppColors.red;
     case ConsoleMessageType.success:
       return AppColors.green;
+    case ConsoleMessageType.event:
+      return darkTheme ? AppColors.lightGrey : AppColors.darkGrey;
     case ConsoleMessageType.info:
       return darkTheme ? Colors.white : Colors.black;
     default:
@@ -294,7 +449,7 @@ Color getConsoleMessageColor(ConsoleMessageType type,
   }
 }
 
-enum ConsoleMessageType { error, info, success }
+enum ConsoleMessageType { error, info, success, event }
 
 class ConsoleMessage {
   late final String time;
@@ -307,8 +462,9 @@ class ConsoleMessage {
 }
 
 class CodeBase {
-  final String code;
+  final String Function() code;
+  final Iterable<FVBVariable> Function() variables;
   final String scopeName;
 
-  CodeBase(this.code, this.scopeName);
+  CodeBase(this.code, this.variables, this.scopeName);
 }

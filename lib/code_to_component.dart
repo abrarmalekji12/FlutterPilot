@@ -1,4 +1,5 @@
 import 'common/compiler/code_processor.dart';
+import 'common/compiler/constants.dart';
 import 'ui/models_view.dart';
 
 abstract class CodeOperations {
@@ -8,15 +9,24 @@ abstract class CodeOperations {
     }
     final List<int> outputString = [];
     bool openString = false;
+    bool openStringFormat=false;
     code = code.replaceAll(' in ', ':');
     for (int i = 0; i < code.length; i++) {
       if (code[i] == '\'' ||
           code[i] == '"' ||
-          code[i] == '`' ||
-          (code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
-          (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')) {
+          code[i] == '`' ) {
         openString = !openString;
-      } else if (!openString &&
+      }
+      else if((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
+          (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')){
+        if(code[i]=='{'){
+          openStringFormat=true;
+        }
+        else{
+          openStringFormat=false;
+        }
+      }
+      else if ((!openString ||openStringFormat)&&
           (code[i] == ' ' || (removeBackSlash && code[i] == '\n'))) {
         continue;
       }
@@ -32,13 +42,14 @@ abstract class CodeOperations {
     final List<int> outputString = [];
     bool openString = false;
     int spaceCount = 0;
+    bool openStringFormat=false;
     for (int i = 0; i < code.length; i++) {
       if (code[i] != ' ') {
         if (spaceCount >= 1) {
           if (i - spaceCount - 1 >= 0 &&
               isVariableChar(code[i].codeUnits.first) &&
               isVariableChar(code[i - spaceCount - 1].codeUnits.first)) {
-            outputString.add('~'.codeUnits.first);
+            outputString.add(spaceCodeUnit);
           } else {
             outputString.add(' '.codeUnits.first);
           }
@@ -47,11 +58,17 @@ abstract class CodeOperations {
       }
       if (code[i] == '\'' ||
           code[i] == '"' ||
-          code[i] == '`' ||
-          (code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
-          (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')) {
+          code[i] == '`') {
         openString = !openString;
-      } else if (!openString) {
+      } else if((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
+          (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')){
+        if(code[i]=='{'){
+          openStringFormat=true;
+        }
+        else{
+          openStringFormat=false;
+        }
+      }else if (!openString||openStringFormat) {
         if (code[i] == ' ') {
           spaceCount++;
           continue;
@@ -63,8 +80,8 @@ abstract class CodeOperations {
     }
 
     final finalCode = String.fromCharCodes(outputString)
-        .replaceAll('~in~', ':')
-        .replaceAll('~is~', '.runtimeType==');
+        .replaceAll('${space}in$space', ':')
+        .replaceAll('${space}is$space', '.runtimeType==');
     return finalCode;
   }
 
@@ -173,6 +190,7 @@ abstract class CodeOperations {
       String input,
       int startIndex,
       int target,
+      List<int> stopWhen
       ) {
     int count = 0;
     for (int i = startIndex + 1; i < input.length; i++) {
@@ -181,6 +199,9 @@ abstract class CodeOperations {
         if (count == 0) {
           return i;
         }
+      }
+      if (stopWhen.contains(unit)) {
+        return -1;
       }
       if(unit == CodeProcessor.roundBracketOpen||unit == CodeProcessor.squareBracketOpen||unit == CodeProcessor.curlyBracketOpen){
         count++;

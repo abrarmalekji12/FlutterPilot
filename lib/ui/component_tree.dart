@@ -322,13 +322,16 @@ class _ComponentTreeState extends State<ComponentTree> {
                               },
                               prerequisites: [
                                 CodeBase(
-                                    ComponentOperationCubit
+                                    () => ComponentOperationCubit
                                         .currentProject!.actionCode,
+                                    ()=> ComponentOperationCubit.currentProject!.variables.values,
                                     ComponentOperationCubit
                                         .currentProject!.processor.scopeName)
                               ],
-                              onDismiss: () {},
-                              variables: const [],
+                              onDismiss: () {
+                                context.read<ComponentCreationCubit>().changedComponent();
+                              },
+                              variables: null,
                               functions: [setStateFunction],
                             ),
                             const SizedBox(
@@ -356,7 +359,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                                     onAdded: (model) {
                                       componentOperationCubit
                                           .addVariableForScreen(
-                                              screen.variables[model.name]!);
+                                              model);
                                       componentCreationCubit.changedComponent();
                                       componentSelectionCubit
                                           .emit(ComponentSelectionChange());
@@ -368,8 +371,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                                           const Duration(milliseconds: 500),
                                           () {
                                         componentOperationCubit
-                                            .updateScreenVariable(
-                                                screen.variables[model.name]!);
+                                            .updateScreenVariable();
                                         componentCreationCubit
                                             .changedComponent();
                                         componentSelectionCubit
@@ -653,7 +655,7 @@ class _ComponentTreeState extends State<ComponentTree> {
 class CustomActionCodeButton extends StatefulWidget {
   final String Function() code;
   final String title;
-  final List<VariableModel> variables;
+  final List<FVBVariable> Function()? variables;
   final List<FVBFunction> functions;
   final void Function(String) onChanged;
   final List<CodeBase>? prerequisites;
@@ -750,14 +752,15 @@ class CustomComponentWidget extends StatelessWidget {
                 },
                 prerequisites: [
                   CodeBase(
-                      ComponentOperationCubit.currentProject!.actionCode,
+                      ()=>ComponentOperationCubit.currentProject!.actionCode,
+                      ()=>ComponentOperationCubit.currentProject!.variables.values,
                       ComponentOperationCubit
                           .currentProject!.processor.scopeName)
                 ],
                 onDismiss: () {
                   context.read<ComponentCreationCubit>().changedComponent();
                 },
-                variables: comp.variables.values.toList(),
+                variables: ()=>comp.variables.values.toList(),
                 functions: [setStateFunction],
               ),
               const SizedBox(
@@ -1283,7 +1286,7 @@ class _SublistWidgetState extends State<SublistWidget> {
     print('CLONES >>> ${clones.length} ');
     widget.componentSelectionCubit.changeComponentSelection(
         ComponentSelectionModel([widget.component],
-            [widget.component, ...clones], widget.component),
+            [widget.component, ...clones], widget.component,widget.component),
         root: widget.ancestor,
         scroll: false);
     if (GlobalObjectKey(widget.component).currentContext != null) {

@@ -1,9 +1,11 @@
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_it/get_it.dart';
+import 'package:keyboard_event/keyboard_event.dart';
 import 'package:win_toast/win_toast.dart';
 
 import 'bloc/action_code/action_code_bloc.dart';
 import 'bloc/error/error_bloc.dart';
+import 'bloc/key_fire/key_fire_bloc.dart';
 import 'bloc/state_management/state_management_bloc.dart';
 import 'common/common_methods.dart';
 import 'common/compiler/code_processor.dart';
@@ -28,9 +30,14 @@ void initInjector() {
   get.registerSingleton<StateManagementBloc>(StateManagementBloc());
   get.registerSingleton<StackActionCubit>(StackActionCubit());
   get.registerSingleton<ErrorBloc>(ErrorBloc());
+  if(Platform.isWindows) {
+    get.registerSingleton<KeyboardEvent>(KeyboardEvent());
+  }
+  get.registerSingleton<KeyFireBloc>(KeyFireBloc());
   get.registerFactory<ActionCodeBloc>(() => ActionCodeBloc());
   get.registerSingleton<AuthenticationCubit>(AuthenticationCubit());
   get.registerSingleton<FlutterProjectCubit>(FlutterProjectCubit());
   get.registerSingleton<ComponentOperationCubit>(ComponentOperationCubit());
   get.registerSingleton<ComponentCreationCubit>(ComponentCreationCubit());
+  CodeProcessor.init();
 }
