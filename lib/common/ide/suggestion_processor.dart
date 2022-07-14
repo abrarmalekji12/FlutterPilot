@@ -48,19 +48,19 @@ class SuggestionProcessor {
   }
 
   static List<SuggestionTile> processFunctions(
-      final Map<String, FVBFunction> functions,
+      final Iterable<FVBFunction> functions,
       String keyword,
       String object,
       String name,
       bool global,
       {bool static = false}) {
-    return functions.entries
+    return functions
         .where(
-            (element) => element.key.contains(keyword) && element.key != name && !element.key.startsWith('$name.'))
+            (element) => element.name.contains(keyword) && element.name != name && !element.name.startsWith('$name.'))
         .map((e) {
-      final sampleCode = e.value.sampleCode;
+      final sampleCode = e.sampleCode;
       return SuggestionTile(
-          e.value,
+          e,
           object,
           static ? SuggestionType.staticFun : SuggestionType.function,
           global: global,
@@ -69,4 +69,38 @@ class SuggestionProcessor {
           resultCursorStart: sampleCode.start);
     }).toList(growable: false);
   }
+
+  static List<SuggestionTile> processNamedConstructor(
+      final Iterable<FVBFunction> functions,
+      String keyword,
+      String object,
+      String name,
+      bool global,
+      {bool static = false}) {
+    return functions
+        .where(
+            (element) => element.name.contains(keyword))
+        .map((e) {
+      final sampleCode = e.sampleCode;
+      return SuggestionTile(
+          e,
+          object,
+          static ? SuggestionType.staticFun : SuggestionType.function,
+          global: global,
+          sampleCode.code.split('.')[1],
+          sampleCode.end,
+          resultCursorStart: sampleCode.start);
+    }).toList(growable: false);
+  }
+}
+
+class SuggestionConfig{
+  NamedParameterSuggestion? namedParameterSuggestion;
+  SuggestionConfig();
+}
+
+class NamedParameterSuggestion{
+  final List<String> parameters;
+  final int lastCodeCount;
+  NamedParameterSuggestion(this.parameters, this.lastCodeCount);
 }

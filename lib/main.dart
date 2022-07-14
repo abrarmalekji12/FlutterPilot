@@ -91,7 +91,12 @@ void main() async {
 }
 
 void main(){
-Message.play();
+print('hello');
+var future=Future.delayed(Duration(milliseconds:1000),(){
+print('HERE');
+});
+
+print('hello 2');
 }
  ''';
 

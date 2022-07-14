@@ -66,6 +66,7 @@ class CodeProcessor {
   final CodeProcessor? parentProcessor;
   CacheMemory? cacheMemory;
   final String scopeName;
+  final SuggestionConfig suggestionConfig = SuggestionConfig();
   final Map<String, dynamic> ignoreVariables = {'dw': 0, 'dh': 0};
   final Map<String, FVBVariable> variables = {};
   final Map<String, FVBVariable> _staticVariables = {};
@@ -1052,7 +1053,6 @@ class CodeProcessor {
       } else if (lastCodes[lastCodeCount] != input) {
         if (input.length == 1) {
           editIndex = 0;
-          print('HERE I AM == $editIndex');
         } else {
           final lastCode = lastCodes[lastCodeCount];
           if ((lastCode.length - input.length).abs() < 5) {
@@ -1284,7 +1284,6 @@ class CodeProcessor {
             object = variable;
             variable = '';
             if (editIndex == currentIndex && onSuggestions != null) {
-              print('HANDLING 3 FOR ${input[editIndex]}');
               _handleVariableAndFunctionSuggestions(
                   variable, object, valueStack);
             }
@@ -2314,7 +2313,7 @@ class CodeProcessor {
       if (obj is FVBInstance) {
         suggestion.addAll(
           SuggestionProcessor.processFunctions(
-              obj.functions, variable, object, obj.fvbClass.name, false),
+              obj.functions.values, variable, object, obj.fvbClass.name, false),
         );
         suggestion.addAll(SuggestionProcessor.processVariables(
             obj.variables, variable, object, false));
@@ -2322,10 +2321,16 @@ class CodeProcessor {
         if (obj.fvbStaticFunctions != null) {
           suggestion.addAll(
             SuggestionProcessor.processFunctions(
-                obj.fvbStaticFunctions!, variable, object, '', false,
+                obj.fvbStaticFunctions!.values, variable, object, '', false,
                 static: true),
           );
         }
+        suggestion.addAll(
+          SuggestionProcessor.processNamedConstructor(
+              obj.getNamedConstructor, variable, object, '', false,
+              static: true),
+        );
+
         if (obj.fvbStaticVariables != null) {
           suggestion.addAll(SuggestionProcessor.processVariables(
               obj.fvbStaticVariables!, variable, object, false,
@@ -2333,48 +2338,57 @@ class CodeProcessor {
         }
       }
     } else {
-      final list = variable.split(space);
-      list.remove('final');
-      list.remove('var');
-      final keyword = list.last;
-      suggestion = CodeSuggestion(keyword);
-      if (list.length == 1) {
-        CodeProcessor? processor = this;
-        final globalName = ComponentOperationCubit.currentProject!.name;
-        suggestion.addAll(keywords
-            .where(
-                (element) => element != keyword && element.startsWith(keyword))
-            .map((e) => SuggestionTile(
-                e, globalName, SuggestionType.keyword, e, 0,
-                global: true)));
-        suggestion.addAll(
-          predefinedFunctions.entries.where((e) => e.key.contains(keyword)).map(
-                (e) => SuggestionTile(e.value, '', SuggestionType.builtInFun,
-                    e.value.name + '()', 1),
-              ),
-        );
-        SuggestionProcessor.processClasses(
-            classes, keyword, object, valueStack,suggestion);
-        while (processor != null) {
-          final global = processor.scopeName == globalName;
-          suggestion.addAll(SuggestionProcessor.processFunctions(
-              processor.functions,
-              keyword,
-              processor.scopeName,
-              processor.scopeName,
-              global));
+
+      if (suggestionConfig.namedParameterSuggestion != null) {
+        suggestion = CodeSuggestion(variable);
+        suggestion.addAll(suggestionConfig.namedParameterSuggestion!.parameters
+            .where((element) => element.contains(variable)).map((e) => SuggestionTile(e, '', SuggestionType.keyword, e, 0)));
+      } else {
+        final list = variable.split(space);
+        list.remove('final');
+        list.remove('var');
+        final keyword = list.last;
+        suggestion = CodeSuggestion(keyword);
+        if (list.length == 1) {
+          CodeProcessor? processor = this;
+          final globalName = ComponentOperationCubit.currentProject!.name;
+          suggestion.addAll(keywords
+              .where((element) =>
+                  element != keyword && element.startsWith(keyword))
+              .map((e) => SuggestionTile(
+                  e, globalName, SuggestionType.keyword, e, 0,
+                  global: true)));
           suggestion.addAll(
-            SuggestionProcessor.processVariables(
-                processor.variables, keyword, processor.scopeName, global),
+            predefinedFunctions.entries
+                .where((e) => e.key.contains(keyword))
+                .map(
+                  (e) => SuggestionTile(e.value, '', SuggestionType.builtInFun,
+                      e.value.name + '()', 1),
+                ),
           );
-          processor = processor.parentProcessor;
-        }
-      } else if (list.length == 2) {
-        if (list.first.contains(keyword)) {
-          final suggest1 =
-              StringOperation.toCamelCase(list.first, startWithLower: true);
-          suggestion.add(SuggestionTile(
-              suggest1, '', SuggestionType.keyword, suggest1, 0));
+          SuggestionProcessor.processClasses(
+              classes, keyword, object, valueStack, suggestion);
+          while (processor != null) {
+            final global = processor.scopeName == globalName;
+            suggestion.addAll(SuggestionProcessor.processFunctions(
+                processor.functions.values,
+                keyword,
+                processor.scopeName,
+                processor.scopeName,
+                global));
+            suggestion.addAll(
+              SuggestionProcessor.processVariables(
+                  processor.variables, keyword, processor.scopeName, global),
+            );
+            processor = processor.parentProcessor;
+          }
+        } else if (list.length == 2) {
+          if (list.first.contains(keyword)) {
+            final suggest1 =
+                StringOperation.toCamelCase(list.first, startWithLower: true);
+            suggestion.add(SuggestionTile(
+                suggest1, '', SuggestionType.keyword, suggest1, 0));
+          }
         }
       }
     }
@@ -2484,17 +2498,9 @@ class CodeSuggestion {
         !suggestion.global) {
       priority += 1;
     }
-    int start = 0;
     final name = suggestion.title;
     if (name != code) {
-      while (name.isNotEmpty &&
-          code.isNotEmpty &&
-          start + 1 < name.length - code.length &&
-          (start = name.indexOf(code, start + 1)) >= 0) {
-        priority += (name.length - start) ~/ name.length;
-      }
-    } else {
-      priority += 10;
+      priority += ((name.length-name.indexOf(code))~/name.length);
     }
 
     int i = suggestions.length - 1;

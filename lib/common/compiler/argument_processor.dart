@@ -1,4 +1,7 @@
+import 'package:get/get.dart';
+
 import '../../code_to_component.dart';
+import '../ide/suggestion_processor.dart';
 import 'code_processor.dart';
 import 'datatype_processor.dart';
 
@@ -8,13 +11,46 @@ class ArgumentProcessor {
   static List<dynamic> process(final CodeProcessor processor,
       List<String> argumentData, List<FVBArgument> arguments) {
     List<dynamic> processedArguments = List.filled(arguments.length, null);
-    Map<String, dynamic> optionArgs = {};
-    for (final argument in argumentData) {
-      final split = CodeOperations.splitBy(argument, splitBy: ':');
-      if (split.length == 2) {
-        optionArgs[split[0]] = split[1];
+    final Map<String, dynamic> optionArgs = {};
+
+    int placedIndex = arguments.length;
+    if (processor.isSuggestionEnable) {
+      for (int i = 0; i < arguments.length; i++) {
+        if (arguments[i].type == FVBArgumentType.optionalNamed) {
+          placedIndex = i;
+          break;
+        }
       }
     }
+    final List<String> notProcessedArguments = [];
+    for (int i = 0; i < argumentData.length; i++) {
+      final argument = argumentData[i];
+      final split = CodeOperations.splitBy(argument, splitBy: ':');
+      if (split.length == 2 &&
+          arguments
+                  .firstWhereOrNull((element) => element.argName == split.first) !=
+              null) {
+        optionArgs[split[0]] = split[1];
+      } else if(placedIndex<=i){
+        notProcessedArguments.add(argument);
+      }
+    }
+
+
+    if (processor.isSuggestionEnable) {
+      final exceptArguments = arguments.where((element) =>
+          element.type == FVBArgumentType.optionalNamed &&
+          !optionArgs.containsKey(element.argName));
+      processor.suggestionConfig.namedParameterSuggestion =
+          NamedParameterSuggestion(
+              exceptArguments.map((e) => '${e.argName}:').toList(growable: false),
+              CodeProcessor.lastCodeCount);
+      for(final argument in notProcessedArguments){
+        processor.process(argument);
+      }
+      processor.suggestionConfig.namedParameterSuggestion = null;
+    }
+
     for (int i = 0; i < arguments.length; i++) {
       final name = arguments[i].name.startsWith('this.')
           ? arguments[i].name.substring(5)
@@ -44,6 +80,7 @@ class ArgumentProcessor {
         }
       }
     }
+
     return processedArguments;
   }
 
@@ -116,7 +153,9 @@ class ArgumentProcessor {
           arguments.add(FVBArgument(
               value != null ? value.variableName! : argumentList[i],
               type: type,
-              dataType: compatibleVar?.dataType ??value?.dataType ?? DataType.dynamic,
+              dataType: compatibleVar?.dataType ??
+                  value?.dataType ??
+                  DataType.dynamic,
               nullable: compatibleVar?.nullable ?? value?.nullable ?? false));
         }
       }

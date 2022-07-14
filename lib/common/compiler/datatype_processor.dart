@@ -59,7 +59,7 @@ class DataTypeProcessor {
       return true;
     } else {
       throw Exception(invalidDataTypeError ??
-          'Cannot assign ${DataType.dataTypeToCode(valueDataType)} to ${DataType.dataTypeToCode(dataType)} : $variable=${value.runtimeType}');
+          'Cannot assign ${DataType.dataTypeToCode(valueDataType)} to ${DataType.dataTypeToCode(dataType)} : $variable = ${value.runtimeType}');
     }
   }
 

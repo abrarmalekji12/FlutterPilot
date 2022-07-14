@@ -63,10 +63,38 @@ class FVBModuleClasses {
       'text': () => FVBVariable('text', DataType.string),
     }),
     'Future': FVBClass('Future', {
-      'Future.delayed': FVBFunction('Future.delayed', '', [], dartCall: (args) {}),
-      'then': FVBFunction('then', 'onValue=value;', [FVBArgument('value')]),
-      'onError':
-          FVBFunction('onError', 'onError=error;', [FVBArgument('error')]),
+      'Future.delayed': FVBFunction('Future.delayed', '', [
+        FVBArgument('duration', dataType: DataType.fvbInstance),
+        FVBArgument('computation',
+            type: FVBArgumentType.optionalPlaced,
+            dataType: DataType.fvbFunction,
+            nullable: true)
+      ], dartCall: (args) {
+        final processor = args[2] as CodeProcessor;
+        final fvbFuture = fvbClasses['Future']!.createInstance(processor, []);
+        if (CodeProcessor.operationType == OperationType.checkOnly) {
+          (args[1] as FVBFunction).execute(processor, []);
+        } else {
+          Future.delayed(
+              (args[0] as FVBInstance).toDart(),
+              args[1] != null
+                  ? () {
+                      if (CodeProcessor.error || processor.finished) {
+                        return;
+                      }
+                      final result =
+                          (args[1] as FVBFunction).execute(processor, []);
+                      (fvbFuture.variables['onValue']?.value as FVBFunction?)
+                          ?.execute(processor, [result]);
+                    }
+                  : null);
+        }
+        return fvbFuture;
+      }),
+      'then': FVBFunction('then', 'onValue=value;',
+          [FVBArgument('value', type: FVBArgumentType.optionalPlaced)]),
+      'onError': FVBFunction('onError', 'onError=error;',
+          [FVBArgument('error', type: FVBArgumentType.optionalPlaced)]),
     }, {
       'value': () => FVBVariable('value', DataType.dynamic),
       'onValue': () => FVBVariable('onValue', DataType.fvbFunction),
@@ -93,13 +121,30 @@ class FVBModuleClasses {
       'parse': FVBFunction('parse', null, [FVBArgument('text')])
         ..dartCall = (arguments) => double.parse(arguments[0])
     }),
-    'Duration': FVBClass('Duration', {
-      'Duration': FVBFunction('Duration', '', [
-        FVBArgument('this.milliseconds', type: FVBArgumentType.optionalNamed),
-      ]),
-    }, {
-      'milliseconds': () => VariableModel('milliseconds', DataType.int),
-    }),
+    'Duration': FVBClass(
+        'Duration',
+        {
+          'Duration': FVBFunction('Duration', '', [
+            FVBArgument('this.milliseconds',
+                type: FVBArgumentType.optionalNamed, defaultVal: 0),
+            FVBArgument('this.seconds',
+                type: FVBArgumentType.optionalNamed, defaultVal: 0),
+            FVBArgument('this.minutes',
+                type: FVBArgumentType.optionalNamed, defaultVal: 0),
+            FVBArgument('this.hours',
+                type: FVBArgumentType.optionalNamed, defaultVal: 0),
+            FVBArgument('this.days',
+                type: FVBArgumentType.optionalNamed, defaultVal: 0),
+          ]),
+        },
+        {
+          'milliseconds': () => VariableModel('milliseconds', DataType.int),
+          'seconds': () => VariableModel('seconds', DataType.int),
+          'minutes': () => VariableModel('minutes', DataType.int),
+          'hours': () => VariableModel('hours', DataType.int),
+          'days': () => VariableModel('days', DataType.int),
+        },
+        converter: DurationConverter()),
     'Paint': FVBClass.create('Paint', vars: {
       'color': () => FVBVariable('color', DataType.fvbInstance),
       'strokeWidth': () => FVBVariable('strokeWidth', DataType.double),
@@ -209,6 +254,24 @@ class FVBModuleClasses {
   FVBModuleClasses() {
     SharedPreferences.getInstance();
     // Rect offset = Rect.fromPoints(a, b);
+  }
+}
+
+class DurationConverter extends FVBConverter<Duration> {
+  @override
+  void fromDart(String name, List<dynamic> instances) {
+    // TODO: implement fromDart
+  }
+
+  @override
+  Duration toDart(FVBInstance instance) {
+    return Duration(
+      milliseconds: instance.variables['milliseconds']!.value,
+      seconds: instance.variables['seconds']!.value,
+      minutes: instance.variables['minutes']!.value,
+      hours: instance.variables['hours']!.value,
+      days: instance.variables['days']!.value,
+    );
   }
 }
 

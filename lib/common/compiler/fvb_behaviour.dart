@@ -291,9 +291,8 @@ class FVBBreak {}
 
 class FVBContinue {}
 class FVBFuture {
-  final FVBInstance futureInstance;
-
-  FVBFuture(this.futureInstance);
+  final Stack2<FVBValue> values;
+  FVBFuture(this.values);
 }
 class FVBReturn {
   final dynamic value;

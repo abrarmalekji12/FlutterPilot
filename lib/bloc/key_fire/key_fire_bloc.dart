@@ -11,11 +11,11 @@ class KeyFireBloc extends Bloc<KeyFireEvent, KeyFireState> {
     on<KeyFireEvent>((event, emit) {
     });
     on<FireKeyDownEvent>((event, emit) {
-      print('== KEY DOWN == ${event.key}');
+      // print('== KEY DOWN == ${event.key}');
       emit(DownKeyEventFired(event.key));
     });
     on<FireKeyUpEvent>((event, emit) {
-      print('== KEY UP == ${event.key}');
+      // print('== KEY UP == ${event.key}');
       emit(UpKeyEventFired(event.key));
     });
   }
