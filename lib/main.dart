@@ -92,11 +92,12 @@ void main() async {
 
 void main(){
 print('hello');
-var future=Future.delayed(Duration(milliseconds:1000),(){
+var future=await Future.delayed(Duration(milliseconds:1000),(){
 print('HERE');
+return 100;
 });
 
-print('hello 2');
+print('hello 2 {{future}}');
 }
  ''';
 

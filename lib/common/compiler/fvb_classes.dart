@@ -75,17 +75,19 @@ class FVBModuleClasses {
         if (CodeProcessor.operationType == OperationType.checkOnly) {
           (args[1] as FVBFunction).execute(processor, []);
         } else {
-          Future.delayed(
+          fvbFuture.variables['future']!.value=Future.delayed(
               (args[0] as FVBInstance).toDart(),
               args[1] != null
-                  ? () {
+                  ? () async {
                       if (CodeProcessor.error || processor.finished) {
                         return;
                       }
                       final result =
-                          (args[1] as FVBFunction).execute(processor, []);
+                          await (args[1] as FVBFunction).execute(processor, []);
                       (fvbFuture.variables['onValue']?.value as FVBFunction?)
                           ?.execute(processor, [result]);
+                      print('RESULT :: $result ${(args[1] as FVBFunction).code}');
+                      return result;
                     }
                   : null);
         }
@@ -97,6 +99,7 @@ class FVBModuleClasses {
           [FVBArgument('error', type: FVBArgumentType.optionalPlaced)]),
     }, {
       'value': () => FVBVariable('value', DataType.dynamic),
+      'future': () => FVBVariable('future', DataType.dynamic),
       'onValue': () => FVBVariable('onValue', DataType.fvbFunction),
       'onError': () => FVBVariable('onError', DataType.fvbFunction),
     }),

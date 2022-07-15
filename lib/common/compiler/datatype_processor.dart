@@ -58,6 +58,7 @@ class DataTypeProcessor {
         ||dataType == DataType.dynamic) {
       return true;
     } else {
+
       throw Exception(invalidDataTypeError ??
           'Cannot assign ${DataType.dataTypeToCode(valueDataType)} to ${DataType.dataTypeToCode(dataType)} : $variable = ${value.runtimeType}');
     }
@@ -84,7 +85,9 @@ class DataTypeProcessor {
       dataType = DataType.fvbInstance;
     } else if (value is FVBFunction) {
       dataType = DataType.fvbFunction;
-    } else {
+    } else if(value is Future){
+      dataType = DataType.future;
+    }else {
       dataType = DataType.unknown;
       throw Exception('Unknown type of value $value');
     }

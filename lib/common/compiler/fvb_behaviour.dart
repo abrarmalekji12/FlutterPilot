@@ -16,6 +16,7 @@ class DataType {
   static const DataType unknown = DataType('unknown');
   static const DataType fvbInstance = DataType('fvbInstance');
   static const DataType fvbFunction = DataType('fvbFunction');
+  static const DataType future = DataType('Future');
 
   // static DataType fvbInstance(final String name) => DataType('fvbInstance',fvbName: name);
   // static DataType fvbFunction(final String name) => DataType('fvbFunction',fvbName: name);
@@ -46,6 +47,8 @@ class DataType {
         return DataType.fvbInstance;
       case 'Function':
         return DataType.fvbFunction;
+      case 'Future':
+        return DataType.future;
       case 'Iterable':
         return DataType.iterable;
       case 'dynamic':
@@ -72,6 +75,8 @@ class DataType {
         return 'String';
       case DataType.dynamic:
         return 'dynamic';
+      case DataType.future:
+        return 'Future';
       case DataType.bool:
         return 'bool';
       case DataType.list:
@@ -152,19 +157,27 @@ class FVBClass {
   FVBFunction? get getDefaultConstructor {
     return fvbFunctions[name];
   }
+
   Iterable<FVBFunction> get getNamedConstructor {
-    return fvbFunctions.values.where((element) => element.name.startsWith('$name.'));
+    return fvbFunctions.values
+        .where((element) => element.name.startsWith('$name.'));
   }
 
   FVBInstance createInstance(
-      final CodeProcessor? parent, final List<dynamic> arguments,
+      final CodeProcessor parent, final List<dynamic> arguments,
       {final String? constructorName}) {
-    final instance = FVBInstance(this, parent: parent);
-    if (fvbFunctions.containsKey(constructorName ?? name)) {
-      instance.executeFunction(constructorName ?? name, arguments);
-    }
+    final constructor = constructorName ?? name;
+    if (fvbFunctions[constructor]?.dartCall != null) {
+      final instance = fvbFunctions[constructor]!.execute(parent, arguments);
+      return instance;
+    } else {
+      final instance = FVBInstance(this, parent: parent);
+      if (fvbFunctions.containsKey(constructor)) {
+        instance.executeFunction(constructor, arguments);
+      }
 
-    return instance;
+      return instance;
+    }
   }
 
   dynamic getValue(final String variable) {
@@ -290,10 +303,15 @@ enum FVBArgumentType {
 class FVBBreak {}
 
 class FVBContinue {}
+
 class FVBFuture {
   final Stack2<FVBValue> values;
-  FVBFuture(this.values);
+  final Stack2<String> operators;
+  final String asynCode;
+
+  FVBFuture(this.values, this.operators, this.asynCode);
 }
+
 class FVBReturn {
   final dynamic value;
 
@@ -403,10 +421,10 @@ class FVBFunction {
         processor.localVariables[arguments[i].name] = argumentValues[i];
       }
     }
-    final returnedOutput = processor.execute(code!);
+    dynamic returnedOutput = processor.execute(code!);
     final output = isLambda
         ? returnedOutput
-        : (returnedOutput is FVBReturn ? returnedOutput.value : null);
+        : (returnedOutput is FVBReturn ? returnedOutput.value : (returnedOutput is Future?returnedOutput:null));
     if (DataTypeProcessor.checkIfValidDataTypeOfValue(
       output,
       returnType,

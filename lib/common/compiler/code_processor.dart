@@ -940,7 +940,7 @@ class CodeProcessor {
   dynamic executeCode<T>(final String input,
       {OperationType type = OperationType.regular,
       bool declarativeOnly = true,
-      List<String>? arguments}) {
+      List<String>? arguments}) async {
     error = false;
     operationType = type;
     finished = false;
@@ -1002,7 +1002,7 @@ class CodeProcessor {
     return output;
   }
 
-  dynamic execute<T>(final String trimCode, {bool declarativeOnly = false}) {
+  dynamic execute<T>(final String trimCode, {bool declarativeOnly = false}) async {
     final oldDeclarativeMode = this.declarativeOnly;
     this.declarativeOnly = declarativeOnly;
     int count = 0;
@@ -1020,9 +1020,18 @@ class CodeProcessor {
       if (count == 0 && (trimCode[i] == ';' || trimCode.length == i + 1)) {
         final endIndex = trimCode[i] == ';' ? i : i + 1;
         final code = trimCode.substring(lastPoint, endIndex);
-        final output = process<T>(
+        dynamic output = process<T>(
           code,
         );
+        if(output is FVBFuture){
+            final asyncOutput=process(output.asynCode);
+            if(asyncOutput is FVBInstance&&asyncOutput.fvbClass.name=='Future'){
+              final future=await (asyncOutput.variables['future']!.value as Future);
+              output.values.push(FVBValue(value: future));
+              process('',oldValueStack: output.values,oldOperatorStack: output.operators);
+            }
+        }
+
         lastPoint = i + 1;
         if (error) {
           break;
@@ -1045,7 +1054,7 @@ class CodeProcessor {
     return globalOutput;
   }
 
-  dynamic process<T>(final String input, {bool resolve = false}) {
+  dynamic process<T>(final String input, {bool resolve = false,Stack2<FVBValue>? oldValueStack,Stack2<String>? oldOperatorStack}) {
     int editIndex = -1;
     if (isSuggestionEnable) {
       if (lastCodeCount >= lastCodes.length) {
@@ -1083,8 +1092,8 @@ class CodeProcessor {
       } else if (T == Color && input.startsWith('#')) {
         return input;
       }
-      final Stack2<FVBValue> valueStack = Stack2<FVBValue>();
-      final Stack2<String> operatorStack = Stack2<String>();
+      final Stack2<FVBValue> valueStack = oldValueStack??Stack2<FVBValue>();
+      final Stack2<String> operatorStack =oldOperatorStack?? Stack2<String>();
       bool stringOpen = false;
       int stringCount = 0;
       String variable = '';
@@ -1256,6 +1265,11 @@ class CodeProcessor {
           } else {
             isNumber = false;
           }
+          if(ch==spaceCodeUnit) {
+            if(variable=='await'){
+              return FVBFuture(valueStack,operatorStack,input.substring(currentIndex+1));
+            }
+          }
           variable += nextToken;
           if (editIndex == currentIndex && isSuggestionEnable) {
             _handleVariableAndFunctionSuggestions(variable, object, valueStack);
@@ -1412,7 +1426,7 @@ class CodeProcessor {
               valueStack.push(
                 FVBValue(
                   value: fvbClass.createInstance(
-                      parentProcessor,
+                      parentProcessor!,
                       processArgList(argumentList,
                           fvbClass.fvbFunctions[constructorName]!.arguments),
                       constructorName: '$object.$variable'),
@@ -1426,7 +1440,7 @@ class CodeProcessor {
               final fvbClass = classes[variable]!;
               valueStack.push(FVBValue(
                 value: fvbClass.createInstance(
-                  parentProcessor,
+                  parentProcessor!,
                   fvbClass.fvbFunctions.containsKey(variable)
                       ? processArgList(argumentList,
                           fvbClass.fvbFunctions[variable]!.arguments)
