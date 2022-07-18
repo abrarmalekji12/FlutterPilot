@@ -18,6 +18,7 @@ import '../constant/app_dim.dart';
 import '../constant/font_style.dart';
 import '../models/variable_model.dart';
 import 'build_view/build_view.dart';
+import 'common/action_code_dialog.dart';
 import 'ide/suggestion.dart';
 import 'project_selection_page.dart';
 
@@ -104,6 +105,7 @@ class ActionCodeEditor extends StatefulWidget {
   final Iterable<FVBFunction> functions;
   final Iterable<FVBVariable> Function()? variables;
   final Iterable<FVBClass>? classes;
+  final ActionCodeEditorConfig config;
 
   const ActionCodeEditor(
       {Key? key,
@@ -114,7 +116,8 @@ class ActionCodeEditor extends StatefulWidget {
       required this.onError,
       required this.scopeName,
       required this.functions,
-      this.classes})
+      this.classes,
+      required this.config})
       : super(key: key);
 
   @override
@@ -128,13 +131,23 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
   final SuggestionCodeBloc _suggestionCodeBloc = SuggestionCodeBloc();
   final ValueNotifier<int> _consoleChangeNotifier = ValueNotifier<int>(0);
   String? code;
-  final DartFormatter formatter = DartFormatter();
+  final DartFormatter _formatter = DartFormatter();
   final FocusNode _focusNode = FocusNode();
   final GlobalKey _textFieldKey = GlobalKey();
   late double _topBox, _bottomBox;
   OverlayEntry? suggestionOverlayEntry;
   BoxConstraints? _boxConstraints;
   final ScrollController _scrollController = ScrollController();
+  final upStaticCodeController = CodeController(
+    language: fvbDart,
+    theme: monokaiSublimeTheme
+        .map((key, value) => MapEntry(key, value.copyWith(fontSize: 14))),
+  );
+  final downStaticCodeController = CodeController(
+    language: fvbDart,
+    theme: monokaiSublimeTheme
+        .map((key, value) => MapEntry(key, value.copyWith(fontSize: 14))),
+  );
 
   @override
   void dispose() {
@@ -233,8 +246,7 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
     if (widget.variables != null) {
       processor.variables.addAll(widget.variables!
           .call()
-          .where((element) => element is VariableModel && element.uiAttached)
-          .where((element) => element is VariableModel && element.uiAttached)
+          .where((element) => element.runtimeType == FVBVariable||(element is VariableModel && element.uiAttached))
           .toList(growable: false)
           .asMap()
           .map((key, value) => MapEntry(value.name, value.clone())));
@@ -331,16 +343,44 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
             Stack(
               alignment: Alignment.topRight,
               children: [
-                SingleChildScrollView(
-                  controller: _scrollController,
-                  child: CodeField(
-                    minLines: 50,
-                    enabled: true,
-                    focusNode: _focusNode,
-                    key: _textFieldKey,
-                    wrap: true,
-                    controller: _codeController,
-                  ),
+                Column(
+                  children: [
+                    if (widget.config.upCode != null)
+                      Tooltip(
+                        message: 'unmodifiable code',
+                        child: CodeField(
+                          lineNumberBuilder: (context, lineNumber) =>
+                              const TextSpan(text: ''),
+                          controller: upStaticCodeController
+                            ..text = widget.config.upCode!,
+                          enabled: false,
+                        ),
+                      ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        child: CodeField(
+                          minLines: 50,
+                          enabled: true,
+                          focusNode: _focusNode,
+                          key: _textFieldKey,
+                          wrap: true,
+                          controller: _codeController,
+                        ),
+                      ),
+                    ),
+                    if (widget.config.downCode != null)
+                       Tooltip(
+                         message: 'unmodifiable code',
+                         child: CodeField(
+                           lineNumberBuilder: (context, lineNumber) =>
+                           const TextSpan(text: ''),
+                          controller: downStaticCodeController
+                            ..text = widget.config.downCode!,
+                          enabled: false,
+                      ),
+                       ),
+                  ],
                 ),
                 Align(
                   alignment: Alignment.topRight,
@@ -353,8 +393,12 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
                             icon: Icons.format_align_center,
                             onPressed: () {
                               try {
-                                final code =
-                                    formatter.format(_codeController.text);
+                                final code = _formatter
+                                    .format(_codeController.text
+                                        .replaceAll('{{', '__\${')
+                                        .replaceAll('}}', '}__'))
+                                    .replaceAll('__\${', '{{')
+                                    .replaceAll('}__', '}}');
                                 final cursor =
                                     _codeController.selection.extentOffset;
                                 _codeController.value = TextEditingValue(

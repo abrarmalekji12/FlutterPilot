@@ -7,6 +7,7 @@ import '../common/compiler/code_processor.dart';
 import '../common/io_lib.dart';
 import '../common/material_alert.dart';
 import '../injector.dart';
+import '../models/builder_component.dart';
 import '../models/operation_model.dart';
 import '../models/other_model.dart';
 import '../common/custom_drop_down.dart';
@@ -74,21 +75,19 @@ class _ComponentTreeState extends State<ComponentTree> {
                       IconButton(
                           onPressed: () {
                             ComponentOperationCubit.currentProject = null;
-
                             Navigator.pop(context);
                           },
+                          visualDensity: const VisualDensity(horizontal: -4,vertical: -4),
                           icon: const Icon(
                             Icons.arrow_back_ios,
                             size: 18,
                           )),
                       const SizedBox(
-                        width: 20,
+                        width: 10,
                       ),
                       Expanded(
                         child: Text(
-                          BlocProvider.of<ComponentOperationCubit>(context,
-                                  listen: false)
-                              .project!
+                          ComponentOperationCubit.currentProject!
                               .name,
                           style: AppFontStyle.roboto(16,
                               fontWeight: FontWeight.bold),
@@ -324,12 +323,15 @@ class _ComponentTreeState extends State<ComponentTree> {
                                 CodeBase(
                                     () => ComponentOperationCubit
                                         .currentProject!.actionCode,
-                                    ()=> ComponentOperationCubit.currentProject!.variables.values,
+                                    () => ComponentOperationCubit
+                                        .currentProject!.variables.values,
                                     ComponentOperationCubit
                                         .currentProject!.processor.scopeName)
                               ],
                               onDismiss: () {
-                                context.read<ComponentCreationCubit>().changedComponent();
+                                context
+                                    .read<ComponentCreationCubit>()
+                                    .changedComponent();
                               },
                               variables: null,
                               functions: [setStateFunction],
@@ -358,8 +360,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                                     title: screen.name,
                                     onAdded: (model) {
                                       componentOperationCubit
-                                          .addVariableForScreen(
-                                              model);
+                                          .addVariableForScreen(model);
                                       componentCreationCubit.changedComponent();
                                       componentSelectionCubit
                                           .emit(ComponentSelectionChange());
@@ -516,6 +517,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                                           .project!.rootComponent!,
                                       ancestor: _componentOperationCubit
                                           .project!.rootComponent!,
+                                      parent: null,
                                       componentSelectionCubit:
                                           _componentSelectionCubit,
                                       componentOperationCubit:
@@ -573,9 +575,6 @@ class _ComponentTreeState extends State<ComponentTree> {
                                     _componentCreationCubit,
                                   ),
                                 ],
-                                const SizedBox(
-                                  height: 100,
-                                ),
                               ],
                             ),
                           );
@@ -660,6 +659,7 @@ class CustomActionCodeButton extends StatefulWidget {
   final void Function(String) onChanged;
   final List<CodeBase>? prerequisites;
   final void Function() onDismiss;
+  final ActionCodeEditorConfig? config;
 
   const CustomActionCodeButton(
       {Key? key,
@@ -669,6 +669,7 @@ class CustomActionCodeButton extends StatefulWidget {
       required this.variables,
       required this.onChanged,
       this.prerequisites,
+      this.config,
       required this.onDismiss})
       : super(key: key);
 
@@ -693,6 +694,7 @@ class _CustomActionCodeButtonState extends State<CustomActionCodeButton> {
       },
       onDismiss: widget.onDismiss,
       context: context,
+      config: widget.config,
       title: widget.title,
       functions: widget.functions,
     );
@@ -752,15 +754,16 @@ class CustomComponentWidget extends StatelessWidget {
                 },
                 prerequisites: [
                   CodeBase(
-                      ()=>ComponentOperationCubit.currentProject!.actionCode,
-                      ()=>ComponentOperationCubit.currentProject!.variables.values,
+                      () => ComponentOperationCubit.currentProject!.actionCode,
+                      () => ComponentOperationCubit
+                          .currentProject!.variables.values,
                       ComponentOperationCubit
                           .currentProject!.processor.scopeName)
                 ],
                 onDismiss: () {
                   context.read<ComponentCreationCubit>().changedComponent();
                 },
-                variables: ()=>comp.variables.values.toList(),
+                variables: () => comp.variables.values.toList(),
                 functions: [setStateFunction],
               ),
               const SizedBox(
@@ -836,6 +839,7 @@ class CustomComponentWidget extends StatelessWidget {
             child: SublistWidget(
                 component: comp.root!,
                 ancestor: comp,
+                parent: comp,
                 componentSelectionCubit: _componentSelectionCubit,
                 componentOperationCubit: _componentOperationCubit,
                 componentCreationCubit: _componentCreationCubit),
@@ -987,6 +991,7 @@ class SingleChildWidget extends StatelessWidget {
       padding: const EdgeInsets.only(left: 5, top: 0),
       child: SublistWidget(
           component: child,
+          parent: component,
           componentParameter: componentParameter,
           ancestor: ancestor,
           componentSelectionCubit: componentSelectionCubit,
@@ -1107,6 +1112,7 @@ class MultipleChildWidget extends StatelessWidget {
       ),
       child: ListView.builder(
         shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (BuildContext _, int index) {
           return Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -1118,6 +1124,7 @@ class MultipleChildWidget extends StatelessWidget {
                 child: SublistWidget(
                   component: children[index],
                   ancestor: ancestor,
+                  parent: component,
                   componentParameter: componentParameter,
                   componentOperationCubit: componentOperationCubit,
                   componentCreationCubit: componentCreationCubit,
@@ -1261,6 +1268,7 @@ class UpDownButtons extends StatelessWidget {
 
 class SublistWidget extends StatefulWidget {
   final Component component, ancestor;
+  final Component? parent;
   final ComponentSelectionCubit componentSelectionCubit;
   final ComponentOperationCubit componentOperationCubit;
   final ComponentCreationCubit componentCreationCubit;
@@ -1270,6 +1278,7 @@ class SublistWidget extends StatefulWidget {
       {Key? key,
       this.componentParameter,
       required this.component,
+      required this.parent,
       required this.ancestor,
       required this.componentSelectionCubit,
       required this.componentOperationCubit,
@@ -1286,7 +1295,7 @@ class _SublistWidgetState extends State<SublistWidget> {
     print('CLONES >>> ${clones.length} ');
     widget.componentSelectionCubit.changeComponentSelection(
         ComponentSelectionModel([widget.component],
-            [widget.component, ...clones], widget.component,widget.component),
+            [widget.component, ...clones], widget.component, widget.component),
         root: widget.ancestor,
         scroll: false);
     if (GlobalObjectKey(widget.component).currentContext != null) {
@@ -1530,28 +1539,114 @@ class _SublistWidgetState extends State<SublistWidget> {
                               onTap: () {
                                 _onClick();
                               },
-                              child: Row(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    child,
-                                    style: AppFontStyle.roboto(12,
-                                        color: const Color(0xff494949),
-                                        fontWeight: FontWeight.w500),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        child,
+                                        style: AppFontStyle.roboto(12,
+                                            color: const Color(0xff494949),
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      if (showMenu) ...[
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        ComponentModificationMenu(
+                                            component: widget.component,
+                                            customNamed: child,
+                                            ancestor: widget.ancestor,
+                                            componentSelectionCubit:
+                                                widget.componentSelectionCubit,
+                                            componentOperationCubit:
+                                                widget.componentOperationCubit,
+                                            componentCreationCubit:
+                                                widget.componentCreationCubit),
+                                      ]
+                                    ],
                                   ),
-                                  if (showMenu) ...[
-                                    const SizedBox(
-                                      width: 10,
+                                  if (widget.component is BuilderComponent) ...[
+                                    Row(
+                                      children: [
+                                        Text(
+                                          (widget.component as BuilderComponent)
+                                                  .functionMap[child]
+                                                  ?.samplePreviewCode ??
+                                              '',
+                                          style: AppFontStyle.roboto(13,
+                                              color: AppColors.theme,
+                                              fontWeight: FontWeight.w700),
+                                        ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        if ((widget.component
+                                                as BuilderComponent)
+                                            .functionMap
+                                            .containsKey(child))
+                                          CustomActionCodeButton(
+                                              code: () =>
+                                                  (widget.component
+                                                          as BuilderComponent)
+                                                      .functionMap[child]
+                                                      ?.code ??
+                                                  '',
+                                              config: ActionCodeEditorConfig(
+                                                  upCode: (widget.component
+                                                          as BuilderComponent)
+                                                      .functionMap[child]!
+                                                      .cleanUpCode,
+                                                  downCode: '}  '),
+                                              functions: [
+                                              ],
+                                              title: child,
+                                              prerequisites: [
+                                                CodeBase(
+                                                        () => ComponentOperationCubit.currentProject!.actionCode,
+                                                        () => ComponentOperationCubit
+                                                        .currentProject!.variables.values,
+                                                    ComponentOperationCubit
+                                                        .currentProject!.processor.scopeName),
+                                                if(widget.ancestor is CustomComponent)
+                                                CodeBase(
+                                                        () => (widget.ancestor as CustomComponent).actionCode,
+                                                        () =>(widget.ancestor as CustomComponent).variables.values,
+                                                    (widget.ancestor as CustomComponent).name)
+                                                else
+                                                  CodeBase(
+                                                          () => ComponentOperationCubit.currentProject!.currentScreen.actionCode,
+                                                          () =>ComponentOperationCubit.currentProject!.currentScreen.variables.values,
+                                                      ComponentOperationCubit.currentProject!.currentScreen.name)
+
+                                              ],
+                                              variables: () => (widget.component
+                                                      as BuilderComponent)
+                                                  .functionMap[child]!
+                                                  .arguments
+                                                  .map((e) => e.toVar..value=FVBTest(e.dataType,e.nullable))
+                                                  .toList(growable: false),
+                                              onChanged: (code) {
+                                                (widget.component
+                                                        as BuilderComponent)
+                                                    .functionMap[child]
+                                                    ?.code = code;
+                                              },
+                                              onDismiss: () {
+                                                if(widget.ancestor is CustomComponent) {
+                                                  widget.componentOperationCubit.refreshCustomComponents(widget.ancestor as CustomComponent);
+                                                  widget.componentCreationCubit
+                                                      .changedComponent(ancestor: widget.ancestor as CustomComponent);
+                                                }
+                                                else{
+                                                  widget.componentCreationCubit
+                                                      .changedComponent();
+                                                }
+
+                                              })
+                                      ],
                                     ),
-                                    ComponentModificationMenu(
-                                        component: widget.component,
-                                        customNamed: child,
-                                        ancestor: widget.ancestor,
-                                        componentSelectionCubit:
-                                            widget.componentSelectionCubit,
-                                        componentOperationCubit:
-                                            widget.componentOperationCubit,
-                                        componentCreationCubit:
-                                            widget.componentCreationCubit),
                                   ]
                                 ],
                               ),
@@ -1563,6 +1658,7 @@ class _SublistWidgetState extends State<SublistWidget> {
                         ancestor: widget.ancestor,
                         component: (widget.component as CustomNamedHolder)
                             .childMap[child]!,
+                        parent: widget.component,
                         componentParameter: widget.componentParameter,
                         componentSelectionCubit: widget.componentSelectionCubit,
                         componentOperationCubit: widget.componentOperationCubit,
@@ -1858,14 +1954,7 @@ class ComponentModificationMenu extends StatelessWidget {
                         ComponentSelectionModel.unique(comp),
                         root: ancestor);
                   });
-                },
-                    possibleItems: (customNamed != null &&
-                            (component as CustomNamedHolder)
-                                    .selectable[customNamed!] !=
-                                null)
-                        ? (component as CustomNamedHolder)
-                            .selectable[customNamed!]!
-                        : null);
+                }, possibleItems: null);
               },
               child: const Icon(
                 Icons.add,
@@ -2324,7 +2413,7 @@ class ComponentModificationMenu extends StatelessWidget {
 
   void copyValueSourceToDest(Parameter source, Parameter dest) {
     if (source is SimpleParameter) {
-      (dest as SimpleParameter).val = source.val;
+      (dest as SimpleParameter).compiler.code = source.compiler.code;
     } else if (source is ChoiceValueParameter) {
       (dest as ChoiceValueParameter).val = source.val;
     } else if (source is ChoiceParameter && source.val != null) {

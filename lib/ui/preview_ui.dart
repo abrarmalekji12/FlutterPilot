@@ -100,170 +100,172 @@ class _PreviewPageState extends State<PreviewPage> {
             ? 10
             : widget._componentOperationCubit.project!.uiScreens.length) *
         ((widget._screenConfigCubit.screenConfig.width + 50) * (height + 100));
-    return Material(
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () {
-                    // ComponentOperationCubit.changeVariables(
-                    //     widget._componentOperationCubit.project!.currentScreen);
-                    Navigator.pop(context);
-                  },
-                  child: const Icon(Icons.arrow_back),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Text(
-                  widget._componentOperationCubit.project!.name,
-                  style: AppFontStyle.roboto(15, fontWeight: FontWeight.w500),
-                ),
-              ),
-              const Spacer(),
-              InkWell(
-                highlightColor: Colors.blueAccent.shade200,
-                borderRadius: BorderRadius.circular(8),
-                onTap: () {
-                  takeScreenShot();
-                },
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+    return SafeArea(
+      child: Material(
+        color: Colors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () {
+                      // ComponentOperationCubit.changeVariables(
+                      //     widget._componentOperationCubit.project!.currentScreen);
+                      Navigator.pop(context);
+                    },
+                    child: const Icon(Icons.arrow_back),
                   ),
-                  color: Colors.blueAccent,
-                  child: Container(
-                    width: 200,
-                    padding: const EdgeInsets.all(7),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.download_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        const Spacer(),
-                        Text(
-                          'Download as Image',
-                          style: AppFontStyle.roboto(13, color: Colors.white),
-                        ),
-                        const Spacer(),
-                      ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Text(
+                    widget._componentOperationCubit.project!.name,
+                    style: AppFontStyle.roboto(15, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                const Spacer(),
+                InkWell(
+                  highlightColor: Colors.blueAccent.shade200,
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    takeScreenShot();
+                  },
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    color: Colors.blueAccent,
+                    child: Container(
+                      width: 200,
+                      padding: const EdgeInsets.all(7),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.download_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          const Spacer(),
+                          Text(
+                            'Download as Image',
+                            style: AppFontStyle.roboto(13, color: Colors.white),
+                          ),
+                          const Spacer(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Expanded(
-            child: RuntimeProvider(
-              runtimeMode: RuntimeMode.preview,
-              child: Builder(builder: (context) {
-                return CustomInteractiveViewer(
-                    minScale: 0.2,
-                    // minScale: dw(context, 100) / width,
-                    maxScale: 5.0,
-                    constrained: false,
-                    child: RepaintBoundary(
-                      key: _interactiveViewerKey,
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: const BoxDecoration(
-                            gradient: RadialGradient(
-                          colors: [
-                            Color(0xd0ffffff),
-                            Color(0xd5e8e8e8),
-                            Color(0xffb9b9b9),
-                          ],
-                          radius: 1,
-                          center: Alignment.center,
-                          tileMode: TileMode.clamp,
-                        )),
-                        width: width,
-                        height: 1.5 * area / width,
-                        alignment: Alignment.center,
-                        child: Stack(
-                          key: const GlobalObjectKey('STACK'),
-                          children: [
-                            Wrap(
-                              runAlignment: WrapAlignment.center,
-                              alignment: WrapAlignment.center,
-                              children: screens.map((screen) {
-                                // ComponentOperationCubit.changeVariables(screen);
-                                return Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(15),
-                                        child: Text(
-                                          screen.name,
-                                          style: AppFontStyle.roboto(17,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                              width: 1.5,
-                                              color: screen ==
-                                                      widget
-                                                          ._componentOperationCubit
-                                                          .project!
-                                                          .mainScreen
-                                                  ? AppColors.theme
-                                                  : const Color(0xfff3f3f3),
-                                            ),
-                                            color: Colors.white,
-                                            boxShadow: kElevationToShadow[2]),
-                                        width: widget._screenConfigCubit
-                                            .screenConfig.width,
-                                        // height: height,
-                                        child: IgnorePointer(
-                                          child: EmulationView(
-                                              widget: screen.build(context) ??
-                                                  Container(),
-                                              screenConfig: widget
-                                                  ._screenConfigCubit
-                                                  .screenConfig),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(growable: false),
-                            ),
-                            if (lines.isNotEmpty)
-                              FutureBuilder(
-                                  future: Future.delayed(
-                                      const Duration(milliseconds: 300)),
-                                  builder: (context, data) {
-                                    return CustomPaint(
-                                      painter: ConnectionPainter(
-                                          lines,
-                                          widget
-                                              ._screenConfigCubit.screenConfig),
-                                    );
-                                  })
-                          ],
-                        ),
-                      ),
-                    ));
-              }),
+              ],
             ),
-          ),
-        ],
+            Expanded(
+              child: RuntimeProvider(
+                runtimeMode: RuntimeMode.preview,
+                child: Builder(builder: (context) {
+                  return InteractiveViewer(
+                      minScale: 0.2,
+                      // minScale: dw(context, 100) / width,
+                      maxScale: 5.0,
+                      constrained: false,
+                      child: RepaintBoundary(
+                        key: _interactiveViewerKey,
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: const BoxDecoration(
+                              gradient: RadialGradient(
+                            colors: [
+                              Color(0xd0ffffff),
+                              Color(0xd5e8e8e8),
+                              Color(0xffb9b9b9),
+                            ],
+                            radius: 1,
+                            center: Alignment.center,
+                            tileMode: TileMode.clamp,
+                          )),
+                          width: width,
+                          height: 1.5 * area / width,
+                          alignment: Alignment.center,
+                          child: Stack(
+                            key: const GlobalObjectKey('STACK'),
+                            children: [
+                              Wrap(
+                                runAlignment: WrapAlignment.center,
+                                alignment: WrapAlignment.center,
+                                children: screens.map((screen) {
+                                  // ComponentOperationCubit.changeVariables(screen);
+                                  return Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(15),
+                                          child: Text(
+                                            screen.name,
+                                            style: AppFontStyle.roboto(17,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                              border: Border.all(
+                                                width: 1.5,
+                                                color: screen ==
+                                                        widget
+                                                            ._componentOperationCubit
+                                                            .project!
+                                                            .mainScreen
+                                                    ? AppColors.theme
+                                                    : const Color(0xfff3f3f3),
+                                              ),
+                                              color: Colors.white,
+                                              boxShadow: kElevationToShadow[2]),
+                                          width: widget._screenConfigCubit
+                                              .screenConfig.width,
+                                          // height: height,
+                                          child: IgnorePointer(
+                                            child: EmulationView(
+                                                widget: screen.build(context) ??
+                                                    Container(),
+                                                screenConfig: widget
+                                                    ._screenConfigCubit
+                                                    .screenConfig),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(growable: false),
+                              ),
+                              if (lines.isNotEmpty)
+                                FutureBuilder(
+                                    future: Future.delayed(
+                                        const Duration(milliseconds: 300)),
+                                    builder: (context, data) {
+                                      return CustomPaint(
+                                        painter: ConnectionPainter(
+                                            lines,
+                                            widget
+                                                ._screenConfigCubit.screenConfig),
+                                      );
+                                    })
+                            ],
+                          ),
+                        ),
+                      ));
+                }),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -215,37 +215,17 @@ abstract class Component {
         componentCode.substring(0, componentCode.length - 1));
     switch (comp.type) {
       case 3:
-        if (comp is BuilderComponent) {
-          int index = -1;
-          for (int i = 0; i < parameterCodes.length; i++) {
-            if (parameterCodes[i].startsWith('${comp.builderName}:')) {
-              index = i;
-              break;
-            }
+        int index = -1;
+        for (int i = 0; i < parameterCodes.length; i++) {
+          if (parameterCodes[i].startsWith('child:')) {
+            index = i;
+            break;
           }
-          if (index != -1) {
-            final childCode = parameterCodes.removeAt(index);
-            final builderCode =
-                childCode.replaceFirst('${comp.builderName}:', '');
-            comp.updateChild(Component.fromCode(
-                builderCode.substring(builderCode.indexOf('return') + 6,
-                    builderCode.lastIndexOf(';')),
-                flutterProject));
-          }
-          break;
-        } else {
-          int index = -1;
-          for (int i = 0; i < parameterCodes.length; i++) {
-            if (parameterCodes[i].startsWith('child:')) {
-              index = i;
-              break;
-            }
-          }
-          if (index != -1) {
-            final childCode = parameterCodes.removeAt(index);
-            (comp as Holder).updateChild(Component.fromCode(
-                childCode.replaceFirst('child:', ''), flutterProject));
-          }
+        }
+        if (index != -1) {
+          final childCode = parameterCodes.removeAt(index);
+          (comp as Holder).updateChild(Component.fromCode(
+              childCode.replaceFirst('child:', ''), flutterProject));
         }
         break;
       case 2:
@@ -270,34 +250,81 @@ abstract class Component {
         }
         break;
       case 4:
-        final List<String> nameList =
-            (comp as CustomNamedHolder).childMap.keys.toList();
-        final List<String> childrenNameList = comp.childrenMap.keys.toList();
+        if (comp is BuilderComponent) {
+          final List<String> nameList = comp.childMap.keys.toList();
+          final List<String> childrenNameList = comp.childrenMap.keys.toList();
 
-        final removeList = [];
-        for (int i = 0; i < parameterCodes.length; i++) {
-          final colonIndex = parameterCodes[i].indexOf(':');
-          logger(parameterCodes[i]);
-          final name = parameterCodes[i].substring(0, colonIndex);
-          if (nameList.contains(name)) {
-            comp.childMap[name] = Component.fromCode(
-                parameterCodes[i].substring(colonIndex + 1), flutterProject)!
-              ..setParent(comp);
-            nameList.remove(name);
-            removeList.add(parameterCodes[i]);
-          } else if (childrenNameList.contains(name)) {
-            final childrenCode = CodeOperations.splitBy(parameterCodes[i]
-                .substring(colonIndex + 2, parameterCodes[i].length - 1));
-            comp.childrenMap[name]!.addAll(
-              childrenCode.map(
-                (e) => Component.fromCode(e, flutterProject)!..setParent(comp),
-              ),
-            );
-            removeList.add(parameterCodes[i]);
+          final List<String> removeList = [];
+          for (int i = 0; i < parameterCodes.length; i++) {
+            final colonIndex = parameterCodes[i].indexOf(':');
+            logger(parameterCodes[i]);
+            final name = parameterCodes[i].substring(0, colonIndex);
+            if (nameList.contains(name)) {
+              final builderCode = parameterCodes[i].substring(colonIndex + 1);
+              final returnIndex = builderCode.lastIndexOf('return');
+              comp.childMap[name] = Component.fromCode(
+                  builderCode.substring(
+                      returnIndex + 6, builderCode.lastIndexOf(';')),
+                  flutterProject);
+              final startIndex = builderCode.indexOf('`');
+              final endIndex = builderCode.lastIndexOf('`', returnIndex);
+              if (startIndex >= 0 &&
+                  startIndex < returnIndex &&
+                  endIndex >= 0) {
+                comp.functionMap[name]!.code =
+                    builderCode.substring(startIndex + 1, endIndex);
+              } else {
+                comp.functionMap[name]!.code = '';
+              }
+              nameList.remove(name);
+              removeList.add(parameterCodes[i]);
+            } else if (childrenNameList.contains(name)) {
+              final childrenCode = CodeOperations.splitBy(parameterCodes[i]
+                  .substring(colonIndex + 2, parameterCodes[i].length - 1));
+              comp.childrenMap[name]!.addAll(
+                childrenCode.map(
+                  (e) =>
+                      Component.fromCode(e, flutterProject)!..setParent(comp),
+                ),
+              );
+              removeList.add(parameterCodes[i]);
+            }
           }
-        }
-        for (int i = 0; i < removeList.length; i++) {
-          parameterCodes.remove(removeList[i]);
+          for (int i = 0; i < removeList.length; i++) {
+            parameterCodes.remove(removeList[i]);
+          }
+          break;
+        } else {
+          final List<String> nameList =
+              (comp as CustomNamedHolder).childMap.keys.toList();
+          final List<String> childrenNameList = comp.childrenMap.keys.toList();
+
+          final removeList = [];
+          for (int i = 0; i < parameterCodes.length; i++) {
+            final colonIndex = parameterCodes[i].indexOf(':');
+            logger(parameterCodes[i]);
+            final name = parameterCodes[i].substring(0, colonIndex);
+            if (nameList.contains(name)) {
+              comp.childMap[name] = Component.fromCode(
+                  parameterCodes[i].substring(colonIndex + 1), flutterProject)!
+                ..setParent(comp);
+              nameList.remove(name);
+              removeList.add(parameterCodes[i]);
+            } else if (childrenNameList.contains(name)) {
+              final childrenCode = CodeOperations.splitBy(parameterCodes[i]
+                  .substring(colonIndex + 2, parameterCodes[i].length - 1));
+              comp.childrenMap[name]!.addAll(
+                childrenCode.map(
+                  (e) =>
+                      Component.fromCode(e, flutterProject)!..setParent(comp),
+                ),
+              );
+              removeList.add(parameterCodes[i]);
+            }
+          }
+          for (int i = 0; i < removeList.length; i++) {
+            parameterCodes.remove(removeList[i]);
+          }
         }
         break;
       case 1:
@@ -1018,14 +1045,12 @@ abstract class CustomNamedHolder extends Component {
   Map<String, Component?> childMap = {};
   Map<String, List<Component>> childrenMap = {};
 
-  late Map<String, List<String>?> selectable;
-
-  CustomNamedHolder(String name, List<Parameter> parameters, this.selectable,
-      List<String> childrenMap,
+  CustomNamedHolder(String name, List<Parameter> parameters,
+      List<String> childMap, List<String> childrenMap,
       {List<ParameterRuleModel>? rules})
       : super(name, parameters, rules: rules) {
-    for (final child in selectable.keys) {
-      childMap[child] = null;
+    for (final child in childMap) {
+      this.childMap[child] = null;
     }
     for (final children in childrenMap) {
       this.childrenMap[children] = [];

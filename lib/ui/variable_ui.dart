@@ -243,8 +243,7 @@ class _VariableBoxState extends State<VariableBox> {
                           break;
                         case DataType.map:
                           break;
-                        case DataType.fvbInstance:
-                          break;
+
                         case DataType.fvbFunction:
                           break;
                         case DataType.unknown:
@@ -418,8 +417,6 @@ class _EditVariableState extends State<EditVariable> {
                   case DataType.iterable:
                     break;
                   case DataType.map:
-                    break;
-                  case DataType.fvbInstance:
                     break;
                   case DataType.fvbFunction:
                     break;

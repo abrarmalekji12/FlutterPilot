@@ -2,8 +2,8 @@
 
 // import 'dart:html' as html;
 //
-// dynamic window = html.window;
-// dynamic document= html.document;
+// html.Window window = html.window;
+// html.HtmlDocument document= html.document;
 //
 // getAnchorElement({required String href}) {
 //   return html.AnchorElement(href: href);

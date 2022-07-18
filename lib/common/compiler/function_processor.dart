@@ -8,7 +8,7 @@ import 'constants.dart';
 class FunctionProcessor {
   static FVBFunction parse(
       CodeProcessor processor, String name, String argument, String body,
-      {bool lambda = false}) {
+      {bool lambda = false,bool async=false}) {
     final argumentList = CodeOperations.splitBy(argument);
     if (name.isNotEmpty) {
       final split = name.split(space);
@@ -24,7 +24,7 @@ class FunctionProcessor {
               ? DataType.codeToDatatype(dataTypeCode, CodeProcessor.classes)
               : DataType.dynamic,
           canReturnNull: nullable,
-          isLambda: lambda);
+          isLambda: lambda,isAsync: async);
       if (CodeProcessor.operationType == OperationType.checkOnly) {
         function.execute(processor,
             function.arguments.map((e) => FVBTest(e.dataType,e.nullable)).toList(growable: false));
@@ -33,7 +33,7 @@ class FunctionProcessor {
     }
     final function = FVBFunction('', body,
         ArgumentProcessor.processArgumentDefinition(processor, argumentList),
-        returnType: DataType.dynamic, canReturnNull: true);
+        returnType: DataType.dynamic, canReturnNull: true,isAsync: async);
 
     if (CodeProcessor.operationType == OperationType.checkOnly) {
       function.execute(processor,

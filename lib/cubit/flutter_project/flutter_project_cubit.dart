@@ -39,7 +39,7 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
 
   Future<void> deleteProject(final FlutterProject project) async {
     emit(FlutterProjectLoadingState());
-    await FireBridge.deleteProject(userId, project);
+    await FireBridge.deleteProject(userId, project,projects);
     projects.remove(project);
     emit(FlutterProjectsLoadedState(projects));
   }

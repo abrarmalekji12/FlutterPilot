@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
+
 /// For non-windows, Uncomment the following 3 imports:
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
@@ -78,7 +80,7 @@ abstract class FireBridge {
         'type': type,
         'action_code': customComponent.actionCode,
         'variables': customComponent.variables.values
-            .where((element) => element is VariableModel&&element.uiAttached)
+            .where((element) => element is VariableModel && element.uiAttached)
             .map((e) => e.toJson())
             .toList(),
       });
@@ -95,7 +97,7 @@ abstract class FireBridge {
         'name': customComponent.name,
         'action_code': customComponent.actionCode,
         'variables': customComponent.variables.values
-            .where((element) => element is VariableModel&&element.uiAttached)
+            .where((element) => element is VariableModel && element.uiAttached)
             .map((e) => e.toJson())
             .toList(),
       });
@@ -117,7 +119,7 @@ abstract class FireBridge {
       'action_code': customComponent.actionCode,
       'code': CodeOperations.trim(customComponent.root?.code(clean: false)),
       'variables': customComponent.variables.values
-          .where((element) => element is VariableModel&&element.uiAttached)
+          .where((element) => element is VariableModel && element.uiAttached)
           .map((e) => e.toJson())
           .toList(),
       'type': type
@@ -134,7 +136,8 @@ abstract class FireBridge {
     logger('=== FIRE-BRIDGE == deleteGlobalCustomComponent ==');
   }
 
-  static Future<void> deleteProject(int userId, FlutterProject project) async {
+  static Future<void> deleteProject(int userId, FlutterProject project,
+      final List<FlutterProject> projects) async {
     final response = await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -143,12 +146,24 @@ abstract class FireBridge {
     for (final doc in response.docs) {
       await doc.reference.delete();
     }
-    await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProjectInfo)
-        .update({
-      'projects': FieldValue.arrayRemove([project.name])
-    });
+    if (Platform.isWindows) {
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProjectInfo)
+          .update({
+        'projects': projects
+            .where((element) => element != project)
+            .map((e) => e.name)
+            .toList(growable: false)
+      });
+    } else {
+      await FirebaseFirestore.instance
+          .collection('us$userId')
+          .doc(Strings.kFlutterProjectInfo)
+          .update({
+        'projects': FieldValue.arrayRemove([project.name])
+      });
+    }
   }
 
   static Future<List<FavouriteModel>> loadFavourites(final int userId) async {
@@ -261,13 +276,16 @@ abstract class FireBridge {
     final projectInfo = <String, dynamic>{
       'project_name': project.name,
       'root': CodeOperations.trim(project.rootComponent?.code(clean: false)),
-      'variables': [],
+      'variables': project.variables.values
+          .where((element) => (element is VariableModel) && element.uiAttached)
+          .map((element) => element.toJson())
+          .toList(growable: false),
       // 'models': project.models.map((e) => e.toJson()).toList(growable: false),
       'device': 'iPhone X',
       'settings': project.settings.toJson(),
-      'current_screen': 'HomePage',
-      'main_screen': 'HomePage',
-      'action_code': '',
+      'current_screen': project.uiScreens.first.name,
+      'main_screen': project.uiScreens.first.name,
+      'action_code': project.actionCode,
     };
     final response = await FirebaseFirestore.instance
         .collection('us$userId')
@@ -315,7 +333,7 @@ abstract class FireBridge {
           .collection('us$userId')
           .doc(Strings.kFlutterProjectInfo)
           .update({
-        'projects': List.from(oldResponse.data()!['projects'])
+        'projects': List.from(oldResponse.data()['projects'])
           ..add(project.name)
       });
     } else {
@@ -326,6 +344,7 @@ abstract class FireBridge {
         'projects': FieldValue.arrayUnion([project.name])
       });
     }
+
   }
 
   static Future<Optional<FlutterProject, ProjectLoadErrorModel>>
@@ -637,8 +656,8 @@ abstract class FireBridge {
     logger('=== FIRE-BRIDGE == addVariable ==');
   }
 
-  static Future<void> updateVariable(final int userId,
-      final FlutterProject project) async {
+  static Future<void> updateVariable(
+      final int userId, final FlutterProject project) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -646,15 +665,15 @@ abstract class FireBridge {
         .doc(project.docId)
         .update({
       'variables': project.currentScreen.variables.values
-          .where((element) => element is VariableModel&&element.uiAttached)
+          .where((element) => element is VariableModel && element.uiAttached)
           .map((e) => e.toJson())
           .toList(growable: false)
     });
     logger('=== FIRE-BRIDGE == update variable ==');
   }
 
-  static Future<void> updateUIScreenVariable(final int userId,
-      final FlutterProject project) async {
+  static Future<void> updateUIScreenVariable(
+      final int userId, final FlutterProject project) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -662,7 +681,7 @@ abstract class FireBridge {
         .doc(project.currentScreen.name)
         .update({
       'variables': project.currentScreen.variables.values
-          .where((element) => element is VariableModel&&element.uiAttached)
+          .where((element) => element is VariableModel && element.uiAttached)
           .map((e) => e.toJson())
           .toList(growable: false)
     });
@@ -678,7 +697,7 @@ abstract class FireBridge {
             project.userId, project.docId!, component.name)
         .update({
       'variables': component.variables.values
-          .where((element) => element is VariableModel&&element.uiAttached)
+          .where((element) => element is VariableModel && element.uiAttached)
           .map((e) => e.toJson())
           .toList(growable: false)
     });

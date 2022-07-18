@@ -12,6 +12,7 @@ import '../common/undo/revert_work.dart';
 import '../component_list.dart';
 import '../constant/string_constant.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
+import '../cubit/component_selection/component_selection_cubit.dart';
 import '../cubit/stack_action/stack_action_cubit.dart';
 import '../injector.dart';
 import '../main.dart';
@@ -19,6 +20,7 @@ import '../runtime_provider.dart';
 import '../ui/action_ui.dart';
 import '../ui/project_setting_page.dart';
 import 'component_model.dart';
+import 'component_selection.dart';
 import 'local_model.dart';
 import 'other_model.dart';
 import 'variable_model.dart';
@@ -71,15 +73,17 @@ class FlutterProject {
   factory FlutterProject.createNewProject(String name, int userId) {
     final FlutterProject flutterProject =
         FlutterProject(name, userId, null, actionCode: defaultActionCode);
+    ComponentOperationCubit.currentProject=flutterProject;
     final ui = UIScreen.mainUI();
     flutterProject.uiScreens.add(ui);
     final custom = StatelessComponent(name: 'MainPage')..root = CScaffold();
     flutterProject.customComponents.add(custom);
+    flutterProject.currentScreen = ui;
+    flutterProject.mainScreen = ui;
     (ui.rootComponent as CMaterialApp)
         .addOrUpdateChildWithKey('home', custom.createInstance(null));
+    get<ComponentSelectionCubit>().init(ComponentSelectionModel.unique(ui.rootComponent!),ui.rootComponent!);
 
-    flutterProject.currentScreen = flutterProject.uiScreens.first;
-    flutterProject.mainScreen = flutterProject.uiScreens.first;
     return flutterProject;
   }
 
@@ -109,6 +113,7 @@ class FlutterProject {
     processor.destroyProcess(deep: true);
     processor.variables['dw']!.value = constraints.maxWidth;
     processor.variables['dh']!.value = constraints.maxHeight;
+    ComponentOperationCubit.processor=processor;
     processor.executeCode(ComponentOperationCubit.currentProject!.actionCode);
     if (!navigator) {
       processor.finished = true;

@@ -6,7 +6,11 @@ import '../../constant/font_style.dart';
 import '../../cubit/component_creation/component_creation_cubit.dart';
 import '../../models/variable_model.dart';
 import '../action_code_editor.dart';
+class ActionCodeEditorConfig{
+  final String? upCode,downCode;
 
+  ActionCodeEditorConfig({this.upCode, this.downCode});
+}
 class ActionCodeDialog {
   final BuildContext context;
   final List<FVBFunction> functions;
@@ -15,7 +19,7 @@ class ActionCodeDialog {
   final void Function(bool) onError;
   final void Function() onDismiss;
   final String title;
-
+  final ActionCodeEditorConfig? config;
   ActionCodeDialog({
     required this.onError,
     required this.title,
@@ -23,6 +27,7 @@ class ActionCodeDialog {
     required this.context,
     required this.onChanged,
     required this.onDismiss,
+    this.config
   });
 
   void show(final BuildContext context,
@@ -74,14 +79,20 @@ class ActionCodeDialog {
                       height: 20,
                     ),
                     Expanded(
-                      child: ActionCodeEditor(
-                        prerequisites: prerequisites ?? [],
-                        onCodeChange: onChanged,
-                        onError: onError,
-                        code: code,
-                        variables: variables,
-                        scopeName: title,
-                        functions: functions,
+                      child: GestureDetector(
+                        onTap: (){
+
+                        },
+                        child: ActionCodeEditor(
+                          prerequisites: prerequisites ?? [],
+                          onCodeChange: onChanged,
+                          onError: onError,
+                          code: code,
+                          variables: variables,
+                          scopeName: title,
+                          functions: functions,
+                          config: config??ActionCodeEditorConfig(),
+                        ),
                       ),
                     )
                   ],

@@ -64,7 +64,7 @@ class FVBModuleClasses {
     }),
     'Future': FVBClass('Future', {
       'Future.delayed': FVBFunction('Future.delayed', '', [
-        FVBArgument('duration', dataType: DataType.fvbInstance),
+        FVBArgument('duration', dataType: DataType.fvbInstance('Duration')),
         FVBArgument('computation',
             type: FVBArgumentType.optionalPlaced,
             dataType: DataType.fvbFunction,
@@ -72,10 +72,11 @@ class FVBModuleClasses {
       ], dartCall: (args) {
         final processor = args[2] as CodeProcessor;
         final fvbFuture = fvbClasses['Future']!.createInstance(processor, []);
-        if (CodeProcessor.operationType == OperationType.checkOnly) {
-          (args[1] as FVBFunction).execute(processor, []);
+        if (CodeProcessor.operationType == OperationType.checkOnly &&
+            args.length > 1) {
+          (args[1] as FVBFunction?)?.execute(processor, []);
         } else {
-          fvbFuture.variables['future']!.value=Future.delayed(
+          fvbFuture.variables['future']!.value = Future.delayed(
               (args[0] as FVBInstance).toDart(),
               args[1] != null
                   ? () async {
@@ -86,7 +87,6 @@ class FVBModuleClasses {
                           await (args[1] as FVBFunction).execute(processor, []);
                       (fvbFuture.variables['onValue']?.value as FVBFunction?)
                           ?.execute(processor, [result]);
-                      print('RESULT :: $result ${(args[1] as FVBFunction).code}');
                       return result;
                     }
                   : null);
@@ -100,16 +100,132 @@ class FVBModuleClasses {
     }, {
       'value': () => FVBVariable('value', DataType.dynamic),
       'future': () => FVBVariable('future', DataType.dynamic),
-      'onValue': () => FVBVariable('onValue', DataType.fvbFunction),
-      'onError': () => FVBVariable('onError', DataType.fvbFunction),
+      'onValue': () => FVBVariable('onValue', DataType.fvbFunction,nullable: true),
+      'onError': () => FVBVariable('onError', DataType.fvbFunction,nullable: true),
     }),
     'SharedPreferences': FVBClass.create('SharedPreferences', funs: [
       FVBFunction('SharedPreferences.getInstance', null, [],
           dartCall: (arguments) {
-        return SharedPreferences.getInstance();
+        final preferences = fvbClasses['SharedPreferences']!
+            .createInstance(arguments[0] as CodeProcessor, []);
+
+        final fvbFuture =
+            fvbClasses['Future']!.createInstance(arguments[0], []);
+        fvbFuture.variables['future']!.value = Future<FVBInstance>(() async {
+          final pref = await SharedPreferences.getInstance();
+          preferences.variables['_pref']!.value = pref;
+          fvbFuture.variables['value']!.value = preferences;
+          (fvbFuture.variables['onValue']?.value as FVBFunction?)
+              ?.execute(arguments[0] as CodeProcessor, [preferences]);
+          return preferences;
+        });
+
+        return fvbFuture;
       }),
-      FVBFunction('setInt', null, []),
-    ]),
+      FVBFunction('setInt', null, [
+        FVBArgument('key', dataType: DataType.string),
+        FVBArgument('value', dataType: DataType.int),
+      ], dartCall: (arguments) {
+        final processor = arguments[2] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          pref?.setInt(arguments[0] as String, arguments[1] as int);
+        }
+      }),
+      FVBFunction('setString', null, [
+        FVBArgument('key', dataType: DataType.string),
+        FVBArgument('value', dataType: DataType.string),
+      ], dartCall: (arguments) {
+        final processor = arguments[2] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          pref?.setString(arguments[0] as String, arguments[1] as String);
+        }
+      }),
+      FVBFunction('setBool', null, [
+        FVBArgument('key', dataType: DataType.string),
+        FVBArgument('value', dataType: DataType.bool),
+      ], dartCall: (arguments) {
+        final processor = arguments[2] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          pref?.setBool(arguments[0] as String, arguments[1] as bool);
+        }
+      }),
+      FVBFunction('setDouble', null, [
+        FVBArgument('key', dataType: DataType.string),
+        FVBArgument('value', dataType: DataType.double),
+      ], dartCall: (arguments) {
+        final processor = arguments[2] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          pref?.setDouble(arguments[0] as String, arguments[1] as double);
+        }
+      }),
+      FVBFunction('setStringList', null, [
+        FVBArgument('key', dataType: DataType.string),
+        FVBArgument('value', dataType: DataType.list),
+      ], dartCall: (arguments) {
+        final processor = arguments[2] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          pref?.setStringList(
+              arguments[0] as String, arguments[1] as List<String>);
+        }
+      }),
+      FVBFunction('getInt', null, [
+        FVBArgument('key', dataType: DataType.string),
+      ], dartCall: (arguments) {
+        final processor = arguments[1] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          return pref?.getInt(arguments[0] as String);
+        }
+        return null;
+      }),
+      FVBFunction('getString', null, [
+        FVBArgument('key', dataType: DataType.string),
+      ], dartCall: (arguments) {
+        final processor = arguments[1] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          return pref?.getString(arguments[0] as String);
+        }
+        return FVBTest(DataType.string, false);
+      }),
+      FVBFunction('getBool', null, [
+        FVBArgument('key', dataType: DataType.string),
+      ], dartCall: (arguments) {
+        final processor = arguments[1] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          return pref?.getBool(arguments[0] as String);
+        }
+        return FVBTest(DataType.bool, false);
+      }),
+      FVBFunction('getDouble', null, [
+        FVBArgument('key', dataType: DataType.string),
+      ], dartCall: (arguments) {
+        final processor = arguments[1] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          return pref?.getDouble(arguments[0] as String);
+        }
+        return FVBTest(DataType.double, false);
+      }),
+      FVBFunction('getStringList', null, [
+        FVBArgument('key', dataType: DataType.string),
+      ], dartCall: (arguments) {
+        final processor = arguments[1] as CodeProcessor;
+        final pref = processor.variables['_pref']?.value as SharedPreferences?;
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
+          return pref?.getStringList(arguments[0] as String);
+        }
+        return FVBTest(DataType.list,  false);
+      }),
+    ], vars: {
+      '_pref': () => FVBVariable('_pref', DataType.dynamic)
+    }),
     'Api': FVBClass('Api', {
       'get': FVBFunction('get', null, [FVBArgument('url')])
         ..dartCall = (arguments) async {
@@ -149,7 +265,7 @@ class FVBModuleClasses {
         },
         converter: DurationConverter()),
     'Paint': FVBClass.create('Paint', vars: {
-      'color': () => FVBVariable('color', DataType.fvbInstance),
+      'color': () => FVBVariable('color', DataType.fvbInstance('Color')),
       'strokeWidth': () => FVBVariable('strokeWidth', DataType.double),
       'strokeCap': () => FVBVariable('strokeCap', DataType.string),
       'strokeJoin': () => FVBVariable('strokeJoin', DataType.string),
@@ -166,8 +282,8 @@ class FVBModuleClasses {
     'Canvas': FVBClass.create('Canvas', funs: [
       FVBFunction('drawPoint', null, []),
       FVBFunction('drawRect', null, [
-        FVBArgument('rect', dataType: DataType.fvbInstance),
-        FVBArgument('paint', dataType: DataType.fvbInstance)
+        FVBArgument('rect', dataType: DataType.fvbInstance('Rect')),
+        FVBArgument('paint', dataType: DataType.fvbInstance('Paint')),
       ]),
     ]),
     'Timer': FVBClass(
@@ -255,8 +371,21 @@ class FVBModuleClasses {
   };
 
   FVBModuleClasses() {
-    SharedPreferences.getInstance();
     // Rect offset = Rect.fromPoints(a, b);
+  }
+  static FVBInstance  createFVBFuture(Future future,FVBInstance instance,CodeProcessor processor){
+    final fvbFuture=fvbClasses['Future']!.createInstance(processor, []);
+    fvbFuture.variables['future']!.value=Future(() async {
+      instance.variables['_dart']=await future;
+      return instance;
+    });
+    future.then((value) {
+      fvbFuture.variables['value']!.value=value;
+      (fvbFuture.variables['onValue']?.value as FVBFunction).execute(processor, [value]);
+    }).onError((error, stackTrace) {
+      (fvbFuture.variables['onError']?.value as FVBFunction).execute(processor, [error, stackTrace]);
+    });
+    return fvbFuture;
   }
 }
 

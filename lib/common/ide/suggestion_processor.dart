@@ -10,7 +10,7 @@ class SuggestionProcessor {
       bool global,
       {bool static = false}) {
     return variables.entries
-        .where((element) => element.key.contains(keyword))
+        .where((element) => element.key.contains(keyword)&&(object.isEmpty||element.key[0]!='_'))
         .map((e) => SuggestionTile(
             e.value,
             object,

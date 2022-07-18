@@ -8,14 +8,20 @@ abstract class CodeOperations {
       return null;
     }
     final List<int> outputString = [];
-    bool openString = false;
+    bool openSingleQuote = false;
+    bool openDoubleQuote = false;
+    bool openBackQuote = false;
     bool openStringFormat=false;
     code = code.replaceAll(' in ', ':');
     for (int i = 0; i < code.length; i++) {
-      if (code[i] == '\'' ||
-          code[i] == '"' ||
-          code[i] == '`' ) {
-        openString = !openString;
+      if (code[i] == '\'') {
+        openSingleQuote = !openSingleQuote;
+      }
+      else if( code[i] == '"' ){
+        openDoubleQuote=!openDoubleQuote;
+      }
+      else if( code[i] == '`'){
+        openBackQuote=!openBackQuote;
       }
       else if((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
           (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')){
@@ -26,7 +32,7 @@ abstract class CodeOperations {
           openStringFormat=false;
         }
       }
-      else if ((!openString ||openStringFormat)&&
+      else if (((!openSingleQuote&&!openBackQuote&&!openDoubleQuote)||openStringFormat)&&
           (code[i] == ' ' || (removeBackSlash && code[i] == '\n'))) {
         continue;
       }
@@ -40,7 +46,9 @@ abstract class CodeOperations {
       return null;
     }
     final List<int> outputString = [];
-    bool openString = false;
+    bool openSingleQuote = false;
+    bool openDoubleQuote = false;
+    bool openBackQuote = false;
     int spaceCount = 0;
     bool openStringFormat=false;
     for (int i = 0; i < code.length; i++) {
@@ -56,11 +64,17 @@ abstract class CodeOperations {
         }
         spaceCount = 0;
       }
-      if (code[i] == '\'' ||
-          code[i] == '"' ||
-          code[i] == '`') {
-        openString = !openString;
-      } else if((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
+
+      if (code[i] == '\'') {
+        openSingleQuote = !openSingleQuote;
+      }
+      else if( code[i] == '"' ){
+        openDoubleQuote=!openDoubleQuote;
+      }
+      else if( code[i] == '`'){
+        openBackQuote=!openBackQuote;
+      }
+      else if((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
           (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')){
         if(code[i]=='{'){
           openStringFormat=true;
@@ -68,7 +82,7 @@ abstract class CodeOperations {
         else{
           openStringFormat=false;
         }
-      }else if (!openString||openStringFormat) {
+      }else if ((!openSingleQuote&&!openBackQuote&&!openDoubleQuote)||openStringFormat) {
         if (code[i] == ' ') {
           spaceCount++;
           continue;
@@ -90,8 +104,7 @@ abstract class CodeOperations {
             codeUnit <= CodeProcessor.smallZCodeUnit) ||
         (codeUnit >= CodeProcessor.zeroCodeUnit &&
             codeUnit <= CodeProcessor.nineCodeUnit) ||
-        codeUnit == CodeProcessor.underScoreCodeUnit ||
-        codeUnit == CodeProcessor.questionMarkCodeUnit;
+        codeUnit == CodeProcessor.underScoreCodeUnit ;
   }
 
   static String? checkSyntaxInCode(String code) {
@@ -159,7 +172,8 @@ abstract class CodeOperations {
     return null;
   }
 
-  static getDatatypeToDartType(DataType dataType) {
+  static getDatatypeToDartType(final DataType dataType) {
+    if(dataType.name=='fvbInstance')
     switch (dataType) {
       case DataType.int:
         return int;
@@ -178,8 +192,6 @@ abstract class CodeOperations {
 
       case DataType.iterable:
         return Iterable;
-      case DataType.fvbInstance:
-        return FVBInstance;
       case DataType.fvbFunction:
         return FVBFunction;
       case DataType.unknown:

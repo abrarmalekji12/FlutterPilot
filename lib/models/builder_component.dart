@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../common/compiler/code_processor.dart';
+import '../common/compiler/processor_component.dart';
 import 'parameter_info_model.dart';
 import '../common/logger.dart';
 import '../component_list.dart';
@@ -8,41 +10,61 @@ import 'component_model.dart';
 import 'local_model.dart';
 import 'parameter_model.dart';
 
-abstract class BuilderComponent extends Holder {
+abstract class BuilderComponent extends CustomNamedHolder {
   LocalModel? model;
   final List<Component> builtList = [];
-  SimpleParameter<int> itemLengthParameter =
-      SimpleParameter<int>(name: 'count', defaultValue: 5, required: true);
-  final String builderName;
+  final Map<String, FVBFunction> functionMap;
+  late SimpleParameter<int> itemLengthParameter;
+  final String countName;
 
   BuilderComponent(String name, List<Parameter> parameters,
-      {this.builderName = 'itemBuilder'})
-      : super(name, parameters) {
-    itemLengthParameter;
+      {required List<String> childBuilder,
+      required List<String> childrenBuilder,
+      required this.functionMap,
+      this.countName = 'itemCount'})
+      : super(name, parameters, childBuilder, childrenBuilder) {
+    itemLengthParameter =
+        SimpleParameter<int>(name: countName, defaultValue: 5, required: true);
   }
 
   @override
   Component clone(Component? parent, {bool deepClone = false}) {
-    return (super.clone(parent, deepClone: deepClone) as BuilderComponent)
-      ..model = model
-      ..itemLengthParameter = itemLengthParameter;
+    final clone =
+        (super.clone(parent, deepClone: deepClone) as BuilderComponent);
+    clone.model = model;
+    clone.itemLengthParameter = itemLengthParameter;
+    clone.childMap =
+        childMap.map((key, value) => MapEntry(key, value?.clone(clone)));
+    clone.childrenMap = childrenMap.map((key, value) => MapEntry(
+        key, value.map((e) => e.clone(clone)).toList(growable: false)));
+    if (deepClone) {
+      clone.functionMap.clear();
+      clone.functionMap.addAll(
+          functionMap.map((key, value) => MapEntry(key, value.clone())));
+    } else {
+      clone.functionMap.clear();
+      clone.functionMap.addAll(functionMap);
+    }
+    return clone;
   }
 
-  Widget builder(BuildContext context, int index) {
-    if (child == null) {
-      return Container();
-    }
+  Widget builder(BuildContext context, String name, int index,
+      {Component? Function()? defaultComp}) {
+    final Component child = childMap[name] ??
+        childrenMap[name]?[0] ??
+        defaultComp?.call() ??
+        CContainer();
     if (model != null) {
       for (int i = 0; i < (model?.variables.length ?? 0); i++) {
         ComponentOperationCubit.processor
             .localVariables[model!.variables[i].name] = model!.values[index][i];
       }
     }
-    ComponentOperationCubit.processor.localVariables['index'] = index;
-    ComponentOperationCubit.processor.localVariables['count'] =
-        model?.values.length ?? itemLengthParameter.value;
-    final component = child!.clone(this);
-    final widget = (component.build(context));
+    final parent=ProcessorProvider.maybeOf(context)!;
+    final CodeProcessor processor = CodeProcessor.build(
+        name: name, processor: parent);
+    final function=functionMap[name];
+    final component = child.clone(this);
     if (index < builtList.length) {
       builtList.removeAt(index);
       builtList.insert(index, component);
@@ -50,13 +72,25 @@ abstract class BuilderComponent extends Holder {
       builtList.add(component);
     }
 
-    return widget;
+    return ProcessorProvider(
+      processor,
+      Builder(
+        builder: (context) {
+          if(function!=null) {
+            function.execute(parent, [index],
+                defaultProcessor: processor,
+                filtered: CodeProcessor.cleanCode(function.code??'', processor));
+          }
+          return component.build(context);
+        }
+      ),
+    );
   }
 
   void init() {
     builtList.clear();
-    child?.forEach((p0) {
-      p0.cloneElements.clear();
+    childMap.forEach((key, value) {
+      value?.cloneElements.clear();
     });
     // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
     //   for (int i = 0; i < (model?.variables.length ?? 0); i++) {
@@ -71,8 +105,9 @@ abstract class BuilderComponent extends Holder {
   @override
   String code({bool clean = true}) {
     final middle = parametersCode(clean);
-    String itemCode =
-        child?.code(clean: clean) ?? CContainer().code(clean: clean);
+    final String defaultCode = CContainer().code(clean: clean);
+    final Map<String, String> itemsCode = childMap.map((key, value) =>
+        MapEntry(key, (value?.code(clean: clean) ?? defaultCode)));
     String name = this.name;
     if (!clean) {
       name +=
@@ -83,44 +118,45 @@ abstract class BuilderComponent extends Holder {
     String itemCount = '';
     if (clean && model != null) {
       itemCount = ', itemCount:${model?.listVariableName}.length,';
-      int start = 0;
-      int gotIndex = -1;
-      logger('ITEM CODE $itemCode');
-      while (start != -1 && start < itemCode.length) {
-        if (gotIndex == -1) {
-          start = itemCode.indexOf('\${', start);
-          logger('START ++ $start');
-          if (start == -1) {
-            break;
-          }
-          start += 2;
-          gotIndex = start;
-        } else {
-          start = itemCode.indexOf('}', start);
-          logger('START 2 ++ $start');
-          if (start == -1) {
-            break;
-          }
-          String innerArea = itemCode.substring(gotIndex, start);
-          if (model != null && model!.variables.isNotEmpty) {
-            for (final variable in model!.variables) {
-              innerArea = innerArea.replaceAll(variable.name,
-                  '${model!.listVariableName}[index].${variable.name}');
-              // if (!usedVariables.contains(variable)) {
-              //   usedVariables.add(variable);
-              // }
+      for (String itemCode in itemsCode.values) {
+        int start = 0;
+        int gotIndex = -1;
+        logger('ITEM CODE $itemCode');
+        while (start != -1 && start < itemCode.length) {
+          if (gotIndex == -1) {
+            start = itemCode.indexOf('\${', start);
+            logger('START ++ $start');
+            if (start == -1) {
+              break;
             }
-            logger('MODEL + ++ ++ $innerArea');
-            itemCode = itemCode.replaceRange(
-                gotIndex - 2, start + 1, '\${$innerArea}');
-            gotIndex = -1;
             start += 2;
-            continue;
+            gotIndex = start;
+          } else {
+            start = itemCode.indexOf('}', start);
+            if (start == -1) {
+              break;
+            }
+            String innerArea = itemCode.substring(gotIndex, start);
+            if (model != null && model!.variables.isNotEmpty) {
+              for (final variable in model!.variables) {
+                innerArea = innerArea.replaceAll(variable.name,
+                    '${model!.listVariableName}[index].${variable.name}');
+                // if (!usedVariables.contains(variable)) {
+                //   usedVariables.add(variable);
+                // }
+              }
+              itemCode = itemCode.replaceRange(
+                  gotIndex - 2, start + 1, '\${$innerArea}');
+              gotIndex = -1;
+              start += 2;
+              continue;
+            }
           }
         }
       }
     }
-    return '''$name($middle $builderName:(_,index){ return $itemCode; }''' +
+    return '''$name($middle 
+        ${itemsCode.entries.map((entry) => '${entry.key}:(){`${functionMap[entry.key]?.code ?? ''}`return${entry.value};}').join(',')}''' +
         itemCount +
         '),';
     // return '$name(\n${middle}child:${child!.code(clean: clean)}\n)';
@@ -135,12 +171,36 @@ abstract class BuilderComponent extends Holder {
   }
 }
 
+get itemBuilderFunction => FVBFunction(
+      'itemBuilder',
+      '',
+      [
+        FVBArgument('index', dataType: DataType.int, nullable: false),
+      ],
+      returnType: DataType.fvbVoid,
+      canReturnNull: false,
+    );
+
+get separatorBuilderFunction => FVBFunction(
+      'separatorBuilder',
+      '',
+      [
+        FVBArgument('index', dataType: DataType.int, nullable: false),
+      ],
+      returnType: DataType.fvbVoid,
+      canReturnNull: false,
+    );
+
 class CListViewBuilder extends BuilderComponent {
   CListViewBuilder()
       : super('ListView.builder', [
           Parameters.axisParameter()
             ..withInfo(NamedParameterInfo('scrollDirection'))
-        ]);
+        ], childBuilder: [
+          'itemBuilder',
+        ], childrenBuilder: [], functionMap: {
+          'itemBuilder': itemBuilderFunction,
+        });
 
   @override
   Widget create(BuildContext context) {
@@ -148,7 +208,7 @@ class CListViewBuilder extends BuilderComponent {
     return ListView.builder(
       scrollDirection: parameters[0].value,
       itemBuilder: (context, index) {
-        return builder(context, index);
+        return builder(context, 'itemBuilder', index);
       },
       itemCount: count,
     );
@@ -160,7 +220,13 @@ class CListViewSeparated extends BuilderComponent {
       : super('ListView.separated', [
           Parameters.axisParameter()
             ..withInfo(NamedParameterInfo('scrollDirection'))
-        ]);
+        ], childBuilder: [
+          'itemBuilder',
+          'separatorBuilder'
+        ], childrenBuilder: [], functionMap: {
+          'itemBuilder': itemBuilderFunction,
+          'separatorBuilder': separatorBuilderFunction
+        });
 
   @override
   Widget create(BuildContext context) {
@@ -168,11 +234,12 @@ class CListViewSeparated extends BuilderComponent {
     return ListView.separated(
       scrollDirection: parameters[0].value,
       itemBuilder: (context, index) {
-        return builder(context, index);
+        return builder(context, 'itemBuilder', index);
       },
       itemCount: count,
       separatorBuilder: (BuildContext context, int index) {
-        return const Divider();
+        return builder(context, 'separatorBuilder', index,
+            defaultComp: () => CDivider());
       },
     );
   }
@@ -182,14 +249,18 @@ class CGridViewBuilder extends BuilderComponent {
   CGridViewBuilder()
       : super('GridView.builder', [
           Parameters.sliverDelegate(),
-        ]);
+        ], childBuilder: [
+          'itemBuilder',
+        ], childrenBuilder: [], functionMap: {
+          'itemBuilder': itemBuilderFunction,
+        });
 
   @override
   Widget create(BuildContext context) {
     init();
     return GridView.builder(
       itemBuilder: (context, index) {
-        return builder(context, index);
+        return builder(context, 'itemBuilder', index);
       },
       itemCount: count,
       gridDelegate: parameters[0].value,

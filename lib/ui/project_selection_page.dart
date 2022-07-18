@@ -24,6 +24,7 @@ class ProjectSelectionPage extends StatefulWidget {
 class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
   late final FlutterProjectCubit _flutterProjectCubit;
   final _formKey = GlobalKey<FormState>();
+  final List<String> projectNameList = [];
   final TextEditingController _textEditingController = TextEditingController();
 
   @override
@@ -66,6 +67,9 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                     break;
                   case FlutterProjectsLoadedState:
                     AppLoader.hide();
+                    projectNameList.clear();
+                    projectNameList.addAll(_flutterProjectCubit.projects
+                        .map((project) => project.name));
                     setState(() {});
                     break;
                   case FlutterProjectLoadedState:
@@ -114,11 +118,13 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                   ),
                   Form(
                     key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: SizedBox(
                       width: 400,
                       child: RoundBorderedTextField(
                         controller: _textEditingController,
                         hint: 'Enter Project Name',
+                        projects: projectNameList,
                       ),
                     ),
                   ),
@@ -151,6 +157,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                     });
                                   }
                                 },
+                                borderRadius: BorderRadius.circular(20),
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: AppColors.theme,
@@ -253,8 +260,11 @@ class ProjectTile extends StatelessWidget {
             Expanded(
               child: InkWell(
                 onTap: () {
-                  Navigator.pushNamed(context, '/projects',
-                      arguments: [id, name]);
+                  Navigator.pushNamed(
+                    context,
+                    '/projects',
+                    arguments: [id, name],
+                  );
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -330,8 +340,7 @@ class AppIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(buttonSize/2)
-      ,
+      borderRadius: BorderRadius.circular(buttonSize / 2),
       child: Container(
         width: buttonSize,
         height: buttonSize,
@@ -352,16 +361,35 @@ class AppIconButton extends StatelessWidget {
 
 class RoundBorderedTextField extends StatelessWidget {
   final TextEditingController controller;
+  final List<String> projects;
   final String hint;
 
   const RoundBorderedTextField(
-      {Key? key, required this.controller, required this.hint})
+      {Key? key,
+      required this.controller,
+      required this.hint,
+      required this.projects})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
+      validator: (value) {
+        if (value?.isEmpty ?? true) {
+          return 'Enter project name';
+        }
+        if (value!.length > 20) {
+          return 'project name should be less than 20 characters';
+        }
+        if (value.length < 3) {
+          return 'project name should be more than 3 characters';
+        }
+        if (projects.contains(value)) {
+          return 'project name already exists';
+        }
+        return null;
+      },
       style: GoogleFonts.getFont(
         'Roboto',
         textStyle: const TextStyle(
@@ -371,12 +399,6 @@ class RoundBorderedTextField extends StatelessWidget {
           fontStyle: FontStyle.normal,
         ),
       ),
-      validator: (value) {
-        if (value == null || value.length < 3) {
-          return 'Project name should be greater than 3 characters';
-        }
-        return null;
-      },
       readOnly: false,
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.all(10),
@@ -388,6 +410,7 @@ class RoundBorderedTextField extends StatelessWidget {
         hintStyle: AppFontStyle.roboto(14, color: Colors.black),
         prefixText: '',
         suffixText: '',
+        errorStyle: AppFontStyle.roboto(14, color: Colors.red),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(
@@ -417,8 +440,7 @@ class LogoutButton extends StatelessWidget {
                 positiveButtonText: 'Yes',
                 negativeButtonText: 'No',
                 onPositiveTap: () {
-                  BlocProvider.of<AuthenticationCubit>(context)
-                      .logout();
+                  BlocProvider.of<AuthenticationCubit>(context).logout();
                 },
               );
             });

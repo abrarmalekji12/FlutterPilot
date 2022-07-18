@@ -1,5 +1,6 @@
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import 'package:resizable_widget/resizable_widget.dart';
@@ -29,6 +30,8 @@ class BuildView extends StatefulWidget {
 }
 
 class _BuildViewState extends State<BuildView> {
+  DeviceInfo? _defaultDeviceInfo;
+
   @override
   void initState() {
     super.initState();
@@ -78,8 +81,17 @@ class _BuildViewState extends State<BuildView> {
                 ),
                 child: DevicePreview(
                   tools: const [DeviceSection()],
+                  storage: DevicePreviewStorage.none(),
+                  defaultDevice: _defaultDeviceInfo,
                   builder: (_) {
-                    return LayoutBuilder(builder: (_, constraints) {
+                    return LayoutBuilder(
+                        builder: (devicePreviewContext, constraints) {
+                      if (_defaultDeviceInfo == null) {
+                        _defaultDeviceInfo = devicePreviewContext
+                            .read<DevicePreviewStore>()
+                            .defaultDevice;
+                        return const CircularProgressIndicator();
+                      }
                       return Container(
                         color: Colors.white,
                         child: widget.componentOperationCubit.project!

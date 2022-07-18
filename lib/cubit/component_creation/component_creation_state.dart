@@ -8,7 +8,8 @@ class ComponentCreationInitial extends ComponentCreationState {}
 class ComponentCreationLoadingState extends ComponentCreationState {}
 
 class ComponentCreationChangeState extends ComponentCreationState {
-  ComponentCreationChangeState();
+  ComponentCreationChangeState({this.ancestor});
+  final CustomComponent? ancestor;
 }
 
 // class ComponentSavedState extends ComponentCreationState {

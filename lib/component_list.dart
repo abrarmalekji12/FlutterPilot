@@ -105,9 +105,9 @@ class CMaterialApp extends CustomNamedHolder {
             ..withChangeNamed('darkTheme')
             ..withDisplayName('Dark Theme'),
           Parameters.themeModeParameter(),
-        ], {
-          'home': null
-        }, []);
+        ], [
+          'home'
+        ], []);
 
   @override
   Widget create(BuildContext context) {
@@ -697,10 +697,10 @@ class CAppBar extends CustomNamedHolder {
             ..withDisplayName('background-color')
             ..withInfo(NamedParameterInfo('backgroundColor')),
           Parameters.toolbarHeight
-        ], {
-          'title': null,
-          'leading': null,
-        }, [
+        ], [
+          'title',
+          'leading',
+        ], [
           'actions'
         ]);
 
@@ -728,14 +728,14 @@ class CScaffold extends CustomNamedHolder {
             displayName: 'resize to avoid bottom inset',
             info: NamedParameterInfo('resizeToAvoidBottomInset'),
           ),
-        ], {
-          'appBar': ['AppBar'],
-          'body': null,
-          'drawer': null,
-          'floatingActionButton': null,
-          'bottomNavigationBar': null,
-          'bottomSheet': null,
-        }, []);
+        ], [
+          'appBar',
+          'body',
+          'drawer',
+          'floatingActionButton',
+          'bottomNavigationBar',
+          'bottomSheet',
+        ], []);
 
   @override
   Widget create(BuildContext context) {
@@ -758,9 +758,9 @@ class CScaffold extends CustomNamedHolder {
 
 class CDropDownButton extends CustomNamedHolder {
   CDropDownButton()
-      : super('DropdownButton', [], {
-          'icon': null,
-        }, [
+      : super('DropdownButton', [], [
+          'icon'
+        ], [
           'items'
         ]);
 

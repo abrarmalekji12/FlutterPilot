@@ -397,8 +397,9 @@ class Parameters {
         'bottomLeft': Alignment.bottomLeft,
         'bottomRight': Alignment.bottomRight,
       },
-      defaultValue: 'center',
-      info: NamedParameterInfo('alignment'));
+      defaultValue: null,
+      required: false,
+      info: NamedParameterInfo('alignment')..isOptional=true);
 
   static Parameter tileModeParameter() => ChoiceValueParameter(
       name: 'tile-mode',

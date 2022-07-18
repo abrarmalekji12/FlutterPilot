@@ -98,13 +98,13 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                         hint: 'Search ..',
                                         onSubmitted: () {
                                           if (filteredItems.isNotEmpty) {
+                                              expanded = false;
                                             widget.onSelected(
                                                 filteredItems.first.value as T);
-                                            overlayEntry?.remove();
-
-                                            setState(() {
-                                              expanded = false;
+                                            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                                              overlayEntry?.remove();
                                             });
+
                                           }
                                         },
                                         focusColor: AppColors.theme,

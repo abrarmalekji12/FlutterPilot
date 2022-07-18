@@ -8,6 +8,7 @@ import '../common/dynamic_value_filed.dart';
 import '../cubit/component_selection/component_selection_cubit.dart';
 import '../models/component_model.dart';
 import 'action_code_editor.dart';
+import 'common/action_code_dialog.dart';
 import 'image_selection.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../common/custom_drop_down.dart';
@@ -221,7 +222,7 @@ class CodeParameterWidget extends StatelessWidget {
                 onError: (error) {},
                 scopeName: 'test:${parameter.displayName}',
                 functions: parameter.processor.functions.values,
-                variables: () => [],
+                variables: () => [], config: ActionCodeEditorConfig(),
               ),
             )
           ],

@@ -1,3 +1,4 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_it/get_it.dart';
 import 'package:keyboard_event/keyboard_event.dart';
@@ -13,12 +14,13 @@ import 'common/io_lib.dart';
 import 'cubit/authentication/authentication_cubit.dart';
 import 'cubit/component_creation/component_creation_cubit.dart';
 import 'cubit/component_operation/component_operation_cubit.dart';
+import 'cubit/component_selection/component_selection_cubit.dart';
 import 'cubit/flutter_project/flutter_project_cubit.dart';
 import 'cubit/stack_action/stack_action_cubit.dart';
 
 final get = GetIt.instance;
 
-void initInjector() {
+void initInjector() async {
   if (Platform.isWindows) {
     WinToast.instance().initialize(
         appName: 'Flutter Visual Builder',
@@ -39,5 +41,8 @@ void initInjector() {
   get.registerSingleton<FlutterProjectCubit>(FlutterProjectCubit());
   get.registerSingleton<ComponentOperationCubit>(ComponentOperationCubit());
   get.registerSingleton<ComponentCreationCubit>(ComponentCreationCubit());
+  get.registerSingleton<ComponentSelectionCubit>(ComponentSelectionCubit());
+  final _preference=DevicePreviewStorage.preferences();
+  get.registerSingleton<DevicePreviewStorage>(_preference);
   CodeProcessor.init();
 }

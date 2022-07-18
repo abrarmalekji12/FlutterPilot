@@ -7,16 +7,18 @@ class DataTypeProcessor {
 
   static FVBValue? getFVBValueFromCode(
       String variable, Map<String, FVBClass> classes, Function showError) {
-    if (variable.contains(space)) {
+    if (variable.contains(space)||variable.contains('?')) {
       final split = variable.split(space);
-      bool nullable = false;
+      bool nullable = split.last.contains('?');
+      if(nullable){
+        split.addAll(split.removeLast().split('?'));
+      }
       final bool static=split.remove('static');
       final bool isFinal=split.remove('final');
       DataType? dataType;
       if (split.length==2) {
-        nullable = split.first.endsWith('?');
         dataType = DataType.codeToDatatype(
-            nullable ?split.first.substring(0, split.first.length - 1) : split.first,
+             split.first,
             classes);
         if (dataType == DataType.unknown) {
           showError('Unknown data type or class name "${split.first}"');
@@ -46,13 +48,16 @@ class DataTypeProcessor {
     } else {
       valueDataType = dataType;
     }
+
+    if(value is FVBTest){
+      return true;
+    }
     if (value == null && dataType == DataType.fvbVoid) {
       return true;
     }
     if (value == null && !nullable && dataType != DataType.dynamic) {
       throw Exception(canNotNullError ?? 'value of $variable can not null');
     }
-
     if (dataType == valueDataType ||
         (dataType == DataType.double && valueDataType == DataType.int) ||(dataType == DataType.num && (valueDataType == DataType.int||valueDataType == DataType.double))
         ||dataType == DataType.dynamic) {
@@ -82,14 +87,13 @@ class DataTypeProcessor {
     } else if (value is Map) {
       dataType = DataType.map;
     } else if (value is FVBInstance) {
-      dataType = DataType.fvbInstance;
+      dataType = DataType.fvbInstance(value.fvbClass.name);
     } else if (value is FVBFunction) {
       dataType = DataType.fvbFunction;
     } else if(value is Future){
       dataType = DataType.future;
     }else {
-      dataType = DataType.unknown;
-      throw Exception('Unknown type of value $value');
+      dataType = DataType.dynamic;
     }
     return dataType;
   }

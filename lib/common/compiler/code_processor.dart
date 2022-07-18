@@ -72,6 +72,7 @@ class CodeProcessor {
   final Map<String, FVBVariable> _staticVariables = {};
   final Map<String, FVBFunction> _staticFunctions = {};
   static final Map<String, FunctionModel> predefinedFunctions = {};
+  final Map<String, FunctionModel> predefinedSpecificFunctions = {};
   final Map<String, FVBFunction> functions = {};
   static final Map<String, FVBClass> classes = {};
   final Map<String, dynamic> localVariables = {};
@@ -162,7 +163,8 @@ class CodeProcessor {
       variables['pi'] = _piVariable;
     }
 
-    predefinedFunctions['res'] = FunctionModel<dynamic>('res', (arguments) {
+    predefinedSpecificFunctions['res'] = FunctionModel<dynamic>('res',
+        (arguments) {
       if (variables['dw']!.value > variables['tabletWidthLimit']!.value) {
         return arguments[0];
       } else if (variables['dw']!.value > variables['phoneWidthLimit']!.value ||
@@ -186,7 +188,8 @@ class CodeProcessor {
   }
     ''',
         description: 'return one of the argument according to the screen size');
-    predefinedFunctions['print'] = FunctionModel<void>('print', (arguments) {
+    predefinedSpecificFunctions['print'] =
+        FunctionModel<void>('print', (arguments) {
       if (arguments.isEmpty) {
         enableError('print function requires at least one argument');
         return;
@@ -195,7 +198,7 @@ class CodeProcessor {
           .call('print:${arguments.map((e) => e.toString()).join('')}');
     }, description: 'print the given arguments');
 
-    predefinedFunctions['showSnackbar'] =
+    predefinedSpecificFunctions['showSnackbar'] =
         FunctionModel<void>('showSnackbar', (arguments) {
       if (arguments.length < 2) {
         enableError('showSnackbar requires 2 arguments!!');
@@ -203,7 +206,7 @@ class CodeProcessor {
       }
       consoleCallback.call('api:snackbar|${arguments[0]}|${arguments[1]}');
     }, description: 'show a snackbar');
-    predefinedFunctions['newPage'] =
+    predefinedSpecificFunctions['newPage'] =
         FunctionModel<void>('newPage', (arguments) {
       if (arguments.isEmpty) {
         enableError('newPage requires 1 argument!!');
@@ -211,10 +214,11 @@ class CodeProcessor {
       }
       consoleCallback.call('api:newpage|${arguments[0]}');
     }, description: 'open a new page');
-    predefinedFunctions['goBack'] = FunctionModel<void>('goBack', (arguments) {
+    predefinedSpecificFunctions['goBack'] =
+        FunctionModel<void>('goBack', (arguments) {
       consoleCallback.call('api:goback|');
     }, description: 'go back to previous page');
-    predefinedFunctions['lookUp'] =
+    predefinedSpecificFunctions['lookUp'] =
         FunctionModel<dynamic>('lookUp', (arguments) {
       final id = arguments[0];
       FVBInstance? out;
@@ -233,7 +237,7 @@ class CodeProcessor {
       return out;
     }, description: 'look up a component by id');
 
-    predefinedFunctions['refresh'] =
+    predefinedSpecificFunctions['refresh'] =
         FunctionModel<void>('refresh', (arguments) {
       consoleCallback
           .call('api:refresh|${arguments.isNotEmpty ? arguments[0] : ''}');
@@ -513,6 +517,62 @@ class CodeProcessor {
     throw Exception('variable $variable does not exist!!');
   }
 
+  DataType getVarType(final String variable, {String object = ''}) {
+    if (object.isNotEmpty) {
+      final value = getValue(object);
+      if (variable == 'runtimeType') {
+        // valueStack.push(FVBValue(value: value.runtimeType.toString()));
+        return DataType.string;
+      }
+      if (value is FVBInstance) {
+        return DataType.fvbInstance(value.fvbClass.name);
+      } else if (value is FVBClass) {
+        return DataType.fvbInstance(value.name);
+      } else {
+        return DataType.unknown;
+      }
+    }
+    if (variable.contains('[')) {
+      return getOrSetListMapBracketValue(variable);
+    } else if (variable == 'true') {
+      return DataType.bool;
+    } else if (variable == 'false') {
+      return DataType.bool;
+    }
+    // else if (fvbClass != null) {
+    //   if (fvbClass.fvbStaticVariables?.containsKey(variable) ?? false) {
+    //     return fvbClass.fvbStaticVariables![variable]!.value;
+    //   } else if (fvbClass.fvbFunctions.containsKey(variable)) {
+    //     return fvbClass.fvbFunctions[variable]!;
+    //   } else if (fvbClass.fvbStaticFunctions?.containsKey(variable) ?? false) {
+    //     return fvbClass.fvbStaticFunctions![variable]!;
+    //   }
+    // }
+    else if (classes.containsKey(variable)) {
+      return DataType.fvbInstance(classes[variable]!.name);
+    }
+    CodeProcessor? pointer = this;
+    while (pointer != null) {
+      if (pointer.variables.containsKey(variable)) {
+        return pointer.variables[variable]!.dataType;
+      } else if (pointer.localVariables.containsKey(variable)) {
+        return DataType.dynamic;
+      } else if (pointer.functions.containsKey(variable)) {
+        return DataType.fvbFunction;
+      }
+      pointer = pointer.parentProcessor;
+    }
+    if (operationType == OperationType.checkOnly &&
+        ignoreVariables.containsKey(variable)) {
+      return ignoreVariables[variable];
+    }
+    // else if (operationType == OperationType.checkOnly) {
+    //   showError('Variable $variable not found!!');
+    //   return null;
+    // }
+    throw Exception('variable $variable does not exist!!');
+  }
+
   bool setValue(final String variable, dynamic value,
       {bool isFinal = false,
       bool isStatic = false,
@@ -655,6 +715,7 @@ class CodeProcessor {
 
   void processOperator(final String operator, final String object,
       final Stack2<FVBValue> valueStack, final Stack2<String> operatorStack) {
+    print('PROCCESSING OPERATOR $operator | $valueStack = $operatorStack');
     dynamic a, b;
     late FVBValue aVar, bVar;
     if (valueStack.isEmpty) {
@@ -674,20 +735,17 @@ class CodeProcessor {
     } else if ((operator != '-' || valueStack.length > operatorStack.length) &&
         valueStack.isNotEmpty) {
       aVar = valueStack.pop()!;
-      a = aVar.evaluateValue(this, ignoreIfNotExist: bVar.createVar);
+      if (operator != '=') {
+        a = aVar.evaluateValue(this, ignoreIfNotExist: bVar.createVar);
+      } else {
+        a = null;
+      }
       // else if(a!=null&&b!=null&&(a is! int&& a is! double) || (b is! int&& b is! double) ){
       //   if(arithmeticOperators.contains(operator)){
       //     showError('can not use $operator with ${aVar.variableName ?? aVar.value} and ${bVar.variableName ?? bVar.value}');
       //     return;
       //   }
       // }
-    }
-    if (b is FVBTest) {
-      valueStack.push(bVar);
-      return;
-    } else if (a is FVBTest) {
-      valueStack.push(aVar);
-      return;
     }
 
     late dynamic r;
@@ -944,12 +1002,30 @@ class CodeProcessor {
     error = false;
     operationType = type;
     finished = false;
-    String trimCode = '';
-    bool commentOpen = false;
     if (isSuggestionEnable) {
       lastCodeCount = 0;
       onSuggestions!.call(null);
     }
+
+    cacheMemory = CacheMemory(this);
+    final code = cleanCode(input, this);
+    if (code == null) {
+      return null;
+    }
+    final output = execute<T>(code, declarativeOnly: declarativeOnly);
+    // if(functions.containsKey(scopeName)){
+    //   if(arguments==null){
+    //     enableError('Invalid arguments for constructor $scopeName ');
+    //     return null;
+    //   }
+    //   functions[scopeName]!.execute(this, ArgumentProcessor.process(this, arguments, functions[scopeName]!.arguments));
+    // }
+    return output;
+  }
+
+  static String? cleanCode(String input, CodeProcessor processor) {
+    String trimCode = '';
+    bool commentOpen = false;
     for (final line in input.split('\n')) {
       int index = -1;
       bool openString = false;
@@ -985,24 +1061,14 @@ class CodeProcessor {
     final singleSpaceCode = CodeOperations.trimAvoidSingleSpace(trimCode)!;
     final checkForError = CodeOperations.checkSyntaxInCode(trimCode);
     if (checkForError != null) {
-      enableError(checkForError);
+      processor.enableError(checkForError);
       return null;
     }
-    cacheMemory = CacheMemory(this);
-    final code = CodeOperations.trim(singleSpaceCode)!;
-
-    final output = execute<T>(code, declarativeOnly: declarativeOnly);
-    // if(functions.containsKey(scopeName)){
-    //   if(arguments==null){
-    //     enableError('Invalid arguments for constructor $scopeName ');
-    //     return null;
-    //   }
-    //   functions[scopeName]!.execute(this, ArgumentProcessor.process(this, arguments, functions[scopeName]!.arguments));
-    // }
-    return output;
+    return CodeOperations.trim(singleSpaceCode)!;
   }
 
-  dynamic execute<T>(final String trimCode, {bool declarativeOnly = false}) async {
+  dynamic executeAsync<T>(final String trimCode,
+      {bool declarativeOnly = false}) async {
     final oldDeclarativeMode = this.declarativeOnly;
     this.declarativeOnly = declarativeOnly;
     int count = 0;
@@ -1023,13 +1089,21 @@ class CodeProcessor {
         dynamic output = process<T>(
           code,
         );
-        if(output is FVBFuture){
-            final asyncOutput=process(output.asynCode);
-            if(asyncOutput is FVBInstance&&asyncOutput.fvbClass.name=='Future'){
-              final future=await (asyncOutput.variables['future']!.value as Future);
+        if (output is FVBFuture) {
+          final asyncOutput = process(output.asynCode);
+          if (operationType == OperationType.regular) {
+            if (asyncOutput is FVBInstance &&
+                asyncOutput.fvbClass.name == 'Future') {
+              final future =
+                  await (asyncOutput.variables['future']!.value as Future);
               output.values.push(FVBValue(value: future));
-              process('',oldValueStack: output.values,oldOperatorStack: output.operators);
             }
+          } else {
+            output.values
+                .push(FVBValue(value: FVBTest(DataType.dynamic, false)));
+          }
+          process('',
+              oldValueStack: output.values, oldOperatorStack: output.operators);
         }
 
         lastPoint = i + 1;
@@ -1054,7 +1128,56 @@ class CodeProcessor {
     return globalOutput;
   }
 
-  dynamic process<T>(final String input, {bool resolve = false,Stack2<FVBValue>? oldValueStack,Stack2<String>? oldOperatorStack}) {
+  dynamic execute<T>(final String trimCode, {bool declarativeOnly = false}) {
+    final oldDeclarativeMode = this.declarativeOnly;
+    this.declarativeOnly = declarativeOnly;
+    int count = 0;
+    int lastPoint = 0;
+
+    dynamic globalOutput;
+    for (int i = 0; i < trimCode.length; i++) {
+      if (trimCode[i] == '{' || trimCode[i] == '[' || trimCode[i] == '(') {
+        count++;
+      } else if (trimCode[i] == '}' ||
+          trimCode[i] == ']' ||
+          trimCode[i] == ')') {
+        count--;
+      }
+      if (count == 0 && (trimCode[i] == ';' || trimCode.length == i + 1)) {
+        final endIndex = trimCode[i] == ';' ? i : i + 1;
+        final code = trimCode.substring(lastPoint, endIndex);
+        final output = process<T>(
+          code,
+        );
+        if (output is FVBFuture) {
+          enableError('can not use await in sync code "${output.asynCode}"');
+        }
+        lastPoint = i + 1;
+        if (error) {
+          break;
+        }
+        globalOutput = output;
+
+        if (output is FVBContinue ||
+            output is FVBBreak ||
+            output is FVBReturn) {
+          this.declarativeOnly = oldDeclarativeMode;
+          return globalOutput;
+        }
+        if (finished) {
+          break;
+        }
+      }
+    }
+
+    this.declarativeOnly = oldDeclarativeMode;
+    return globalOutput;
+  }
+
+  dynamic process<T>(final String input,
+      {bool resolve = false,
+      Stack2<FVBValue>? oldValueStack,
+      Stack2<String>? oldOperatorStack}) {
     int editIndex = -1;
     if (isSuggestionEnable) {
       if (lastCodeCount >= lastCodes.length) {
@@ -1092,8 +1215,8 @@ class CodeProcessor {
       } else if (T == Color && input.startsWith('#')) {
         return input;
       }
-      final Stack2<FVBValue> valueStack = oldValueStack??Stack2<FVBValue>();
-      final Stack2<String> operatorStack =oldOperatorStack?? Stack2<String>();
+      final Stack2<FVBValue> valueStack = oldValueStack ?? Stack2<FVBValue>();
+      final Stack2<String> operatorStack = oldOperatorStack ?? Stack2<String>();
       bool stringOpen = false;
       int stringCount = 0;
       String variable = '';
@@ -1265,9 +1388,10 @@ class CodeProcessor {
           } else {
             isNumber = false;
           }
-          if(ch==spaceCodeUnit) {
-            if(variable=='await'){
-              return FVBFuture(valueStack,operatorStack,input.substring(currentIndex+1));
+          if (ch == spaceCodeUnit) {
+            if (variable == 'await') {
+              return FVBFuture(
+                  valueStack, operatorStack, input.substring(currentIndex + 1));
             }
           }
           variable += nextToken;
@@ -1308,7 +1432,6 @@ class CodeProcessor {
             object = variable;
             variable = '';
             if (editIndex == currentIndex && onSuggestions != null) {
-              print('HANDLING 4 FOR ${input[editIndex]}');
               _handleVariableAndFunctionSuggestions(
                   variable, object, valueStack);
             }
@@ -1426,7 +1549,7 @@ class CodeProcessor {
               valueStack.push(
                 FVBValue(
                   value: fvbClass.createInstance(
-                      parentProcessor!,
+                      this,
                       processArgList(argumentList,
                           fvbClass.fvbFunctions[constructorName]!.arguments),
                       constructorName: '$object.$variable'),
@@ -1440,7 +1563,7 @@ class CodeProcessor {
               final fvbClass = classes[variable]!;
               valueStack.push(FVBValue(
                 value: fvbClass.createInstance(
-                  parentProcessor!,
+                  this,
                   fvbClass.fvbFunctions.containsKey(variable)
                       ? processArgList(argumentList,
                           fvbClass.fvbFunctions[variable]!.arguments)
@@ -1455,7 +1578,8 @@ class CodeProcessor {
                     (processorMap.containsKey(object) &&
                         processorMap[object]!
                             .functions
-                            .containsKey('$object.$variable')))) {
+                            .containsKey('$object.$variable'))) &&
+                (input[closeRoundBracket + 1] != '{')) {
               final FVBFunction? function;
               if (processorMap.containsKey(object)) {
                 function =
@@ -1475,7 +1599,10 @@ class CodeProcessor {
               }
             } else if (object.isNotEmpty) {
               /// Object dot function is called.
-              final objectInstance = getValue(object);
+              var objectInstance = getValue(object);
+              if(objectInstance is FVBTest){
+              objectInstance=objectInstance.testValue(this);
+              }
               if (objectInstance is FVBInstance || objectInstance is FVBClass) {
                 final fvbArguments = objectInstance is FVBInstance
                     ? objectInstance.getFunction(this, variable)?.arguments
@@ -1486,6 +1613,7 @@ class CodeProcessor {
                   throw Exception(
                       'Function "$variable" not found in class $object');
                 }
+
                 final processedArgs =
                     processArgList(argumentList, fvbArguments);
                 final dynamic output;
@@ -1496,9 +1624,7 @@ class CodeProcessor {
                   output = (objectInstance as FVBClass)
                       .executeFunction(this, variable, processedArgs);
                 }
-                if (output != null) {
-                  valueStack.push(FVBValue(value: output));
-                }
+                valueStack.push(FVBValue(value: output));
               } else {
                 _handleObjectMethods(
                     objectInstance, variable, argumentList, valueStack);
@@ -1672,10 +1798,16 @@ class CodeProcessor {
               currentIndex = endBracket;
               continue;
             } else if (input.length > closeRoundBracket + 1 &&
-                input[closeRoundBracket + 1] == '{') {
+                (input[closeRoundBracket + 1] == '{' ||
+                    input[closeRoundBracket + 6] == '{')) {
+              final isAsync = input.length > closeRoundBracket + 6
+                  ? input.substring(
+                          closeRoundBracket + 1, closeRoundBracket + 6) ==
+                      'async'
+                  : false;
               final int closeBracketIndex = CodeOperations.findCloseBracket(
                   input,
-                  closeRoundBracket + 1,
+                  isAsync ? closeRoundBracket + 6 : closeRoundBracket + 1,
                   '{'.codeUnits.first,
                   '}'.codeUnits.first);
               // final argumentList = CodeOperations.splitBy(input.substring(currentIndex + 1, m));
@@ -1691,7 +1823,12 @@ class CodeProcessor {
                   this,
                   variable,
                   input.substring(currentIndex + 1, closeRoundBracket),
-                  input.substring(closeRoundBracket + 2, closeBracketIndex));
+                  isAsync
+                      ? input.substring(
+                          closeRoundBracket + 7, closeBracketIndex)
+                      : input.substring(
+                          closeRoundBracket + 2, closeBracketIndex),
+                  async: isAsync);
               if (static) {
                 _staticFunctions[function.name] = function;
               } else {
@@ -1741,14 +1878,18 @@ class CodeProcessor {
               if (variable.isEmpty) {
                 continue;
               }
-              if (!predefinedFunctions.containsKey(variable)) {
+              if (!predefinedFunctions.containsKey(variable) &&
+                  !predefinedSpecificFunctions.containsKey(variable)) {
                 enableError('No predefined function named $variable found');
                 return;
               }
               final processedArgs =
                   argumentList.map((e) => process(e)).toList();
-              final output =
-                  predefinedFunctions[variable]!.perform.call(processedArgs);
+              final output = (predefinedFunctions[variable] ??
+                      predefinedSpecificFunctions[variable])!
+                  .perform
+                  .call(processedArgs);
+
               valueStack.push(FVBValue(value: output));
               variable = '';
               currentIndex = closeRoundBracket;
@@ -1827,13 +1968,8 @@ class CodeProcessor {
             final innerProcess = process<T>(
                 input.substring(currentIndex + 1, index),
                 resolve: true);
-            if (innerProcess != null) {
-              valueStack.push(FVBValue(value: innerProcess));
-              currentIndex = index;
-              continue;
-            } else {
-              return null;
-            }
+            valueStack.push(FVBValue(value: innerProcess));
+            currentIndex = index;
           }
         }
       }
@@ -1979,7 +2115,8 @@ class CodeProcessor {
         return false;
       }
     }
-    valueStack.push(FVBValue(variableName: variable, object: object));
+    valueStack.push(FVBValue(
+        variableName: variable, object: object.isNotEmpty ? object : null));
     return true;
   }
 
@@ -2025,9 +2162,8 @@ class CodeProcessor {
         input.substring(currentIndex + 1, closeRoundBracket));
     final output = function.execute(
         this, processArgList(argumentList, function.arguments));
-    if (output != null) {
-      valueStack.push(FVBValue(value: output));
-    }
+    valueStack.push(FVBValue(value: output));
+
     return closeRoundBracket;
   }
 
@@ -2323,44 +2459,56 @@ class CodeProcessor {
     final CodeSuggestion suggestion;
     if (object.isNotEmpty) {
       suggestion = CodeSuggestion(variable);
-      final obj = getValue(object);
-      if (obj is FVBInstance) {
-        suggestion.addAll(
-          SuggestionProcessor.processFunctions(
-              obj.functions.values, variable, object, obj.fvbClass.name, false),
-        );
-        suggestion.addAll(SuggestionProcessor.processVariables(
-            obj.variables, variable, object, false));
-      } else if (obj is FVBClass) {
-        if (obj.fvbStaticFunctions != null) {
+      final obj = getVarType(object);
+      if (classes.containsKey(object)) {
+        final fvbClass = classes[object]!;
+        if (fvbClass.fvbStaticFunctions != null) {
           suggestion.addAll(
             SuggestionProcessor.processFunctions(
-                obj.fvbStaticFunctions!.values, variable, object, '', false,
+                fvbClass.fvbStaticFunctions!.values,
+                variable,
+                object,
+                '',
+                false,
                 static: true),
           );
         }
         suggestion.addAll(
           SuggestionProcessor.processNamedConstructor(
-              obj.getNamedConstructor, variable, object, '', false,
+              fvbClass.getNamedConstructor, variable, object, '', false,
               static: true),
         );
 
-        if (obj.fvbStaticVariables != null) {
+        if (fvbClass.fvbStaticVariables != null) {
           suggestion.addAll(SuggestionProcessor.processVariables(
-              obj.fvbStaticVariables!, variable, object, false,
+              fvbClass.fvbStaticVariables!, variable, object, false,
               static: true));
         }
+      } else if (obj.name == 'fvbInstance') {
+        final fvbClass = classes[obj.fvbName!]!;
+        suggestion.addAll(
+          SuggestionProcessor.processFunctions(fvbClass.fvbFunctions.values,
+              variable, object, fvbClass.name, false),
+        );
+        suggestion.addAll(SuggestionProcessor.processVariables(
+            fvbClass.fvbVariables.map((key, value) => MapEntry(key, value())),
+            variable,
+            object,
+            false));
       }
     } else {
-
       if (suggestionConfig.namedParameterSuggestion != null) {
         suggestion = CodeSuggestion(variable);
         suggestion.addAll(suggestionConfig.namedParameterSuggestion!.parameters
-            .where((element) => element.contains(variable)).map((e) => SuggestionTile(e, '', SuggestionType.keyword, e, 0)));
+            .where((element) => element.contains(variable))
+            .map((e) => SuggestionTile(e, '', SuggestionType.keyword, e, 0)));
       } else {
         final list = variable.split(space);
         list.remove('final');
         list.remove('var');
+        if (list.isEmpty) {
+          return;
+        }
         final keyword = list.last;
         suggestion = CodeSuggestion(keyword);
         if (list.length == 1) {
@@ -2382,6 +2530,10 @@ class CodeProcessor {
           );
           SuggestionProcessor.processClasses(
               classes, keyword, object, valueStack, suggestion);
+          suggestion.addAll(localVariables.keys
+              .where((element) => element.contains(keyword))
+              .map((element) => SuggestionTile(element, processor!.scopeName,
+                  SuggestionType.localVariable, element, 0)));
           while (processor != null) {
             final global = processor.scopeName == globalName;
             suggestion.addAll(SuggestionProcessor.processFunctions(
@@ -2390,6 +2542,7 @@ class CodeProcessor {
                 processor.scopeName,
                 processor.scopeName,
                 global));
+
             suggestion.addAll(
               SuggestionProcessor.processVariables(
                   processor.variables, keyword, processor.scopeName, global),
@@ -2481,7 +2634,8 @@ class SuggestionTile {
   int priority = 0;
 
   String get title {
-    if (type == SuggestionType.keyword) {
+    if (type == SuggestionType.keyword ||
+        type == SuggestionType.localVariable) {
       return value;
     }
     return value.name;
@@ -2514,7 +2668,7 @@ class CodeSuggestion {
     }
     final name = suggestion.title;
     if (name != code) {
-      priority += ((name.length-name.indexOf(code))~/name.length);
+      priority += ((name.length - name.indexOf(code)) ~/ name.length);
     }
 
     int i = suggestions.length - 1;

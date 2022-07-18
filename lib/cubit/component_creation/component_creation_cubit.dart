@@ -10,7 +10,7 @@ part 'component_creation_state.dart';
 class ComponentCreationCubit extends Cubit<ComponentCreationState> {
   ComponentCreationCubit() : super(ComponentCreationInitial());
 
-  void changedComponent() {
-    emit(ComponentCreationChangeState());
+  void changedComponent({CustomComponent? ancestor}) {
+    emit(ComponentCreationChangeState(ancestor: ancestor));
   }
 }

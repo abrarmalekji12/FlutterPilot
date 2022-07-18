@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -20,6 +19,7 @@ import 'constant/app_colors.dart';
 import 'cubit/authentication/authentication_cubit.dart';
 import 'cubit/component_creation/component_creation_cubit.dart';
 import 'cubit/component_operation/component_operation_cubit.dart';
+import 'cubit/component_selection/component_selection_cubit.dart';
 import 'cubit/flutter_project/flutter_project_cubit.dart';
 import 'cubit/stack_action/stack_action_cubit.dart';
 import 'injector.dart';
@@ -52,18 +52,27 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setPathUrlStrategy();
   initInjector();
-  if(Platform.isWindows) {
+  if (Platform.isWindows) {
     await KeyboardEvent.init();
     get<KeyboardEvent>().startListening((keyEvent) {
-      if(keyEvent.isKeyDown) {
+      if (keyEvent.isKeyDown) {
         get<KeyFireBloc>().add(FireKeyDownEvent(keyEvent.vkName!));
       }
-      if(keyEvent.isKeyUP) {
+      if (keyEvent.isKeyUP) {
         get<KeyFireBloc>().add(FireKeyUpEvent(keyEvent.vkName!));
       }
     });
+  } else if (kIsWeb) {
+    initWebKeyEvent();
   }
   await Preferences.load();
+
+  // doCodeTesting();
+
+  runApp(const MyApp());
+}
+
+void doCodeTesting() {
   final CodeProcessor processor = CodeProcessor(
       consoleCallback: (message, {List? arguments}) {
         if (message.startsWith('print:')) {
@@ -75,7 +84,6 @@ void main() async {
         print('XX => $error, LINE :: "$line"');
       },
       scopeName: 'test');
-
   const code = '''
   class Message{
   String text;
@@ -89,18 +97,15 @@ void main() async {
     print("playing");
     }
 }
+void waitFor(int milliseconds) async {
 
-void main(){
+}
+void main() {
 print('hello');
-var future=await Future.delayed(Duration(milliseconds:1000),(){
-print('HERE');
-return 100;
-});
-
-print('hello 2 {{future}}');
 }
  ''';
-
+  processor.executeCode(code, declarativeOnly: true);
+  processor.functions['main']?.execute(processor, []);
   /*
   class Student{
   var roll;
@@ -147,10 +152,6 @@ print("hello {{}}");
 
 addStudent();
 
-  */
-  processor.executeCode(code, declarativeOnly: true);
-  processor.functions['main']?.execute(processor, []);
-  /*
   get("https://api.goal-geek.com/api/v1/fixtures/18220155",(data){
   js=json.decode(data);
   print("{{js["id"]}}");
@@ -165,7 +166,15 @@ addStudent();
   // 4. Stream type variable
   // final FVBEngine engine=FVBEngine();
   // print('DART CODE \n${engine.fvbToDart(code)}');
-  runApp(const MyApp());
+}
+
+void initWebKeyEvent() {
+  html.window.onKeyDown.listen((event) {
+    get<KeyFireBloc>().add(FireKeyDownEvent(event.key!));
+  });
+  html.window.onKeyUp.listen((event) {
+    get<KeyFireBloc>().add(FireKeyUpEvent(event.key!));
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -218,6 +227,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => get<ComponentCreationCubit>(),
+        ),
+        BlocProvider(
+          create: (context) => get<ComponentSelectionCubit>(),
         ),
         BlocProvider(
           create: (context) => get<ErrorBloc>(),

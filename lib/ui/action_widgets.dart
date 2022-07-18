@@ -16,6 +16,7 @@ import '../models/actions/action_model.dart';
 import '../models/component_model.dart';
 import '../models/project_model.dart';
 import 'action_code_editor.dart';
+import 'common/action_code_dialog.dart';
 import 'parameter_ui.dart';
 
 class ActionModelWidget extends StatefulWidget {
@@ -379,23 +380,26 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
             child: BlocBuilder<ActionCodeBloc, ActionCodeState>(
               builder: (context, state) {
                 final extraCodeBase = (root is CustomComponent)
-                    ? CodeBase(() => (root as CustomComponent).actionCode,
+                    ? CodeBase(
+                        () => (root as CustomComponent).actionCode,
                         () => (root as CustomComponent).variables.values,
                         (root as CustomComponent).processor.scopeName)
                     : CodeBase(
                         () => ComponentOperationCubit
                             .currentProject!.currentScreen.actionCode,
                         () => ComponentOperationCubit
-                        .currentProject!.currentScreen.variables.values,
+                            .currentProject!.currentScreen.variables.values,
                         ComponentOperationCubit
                             .currentProject!.currentScreen.processor.scopeName);
                 return ActionCodeEditor(
-                  functions: (root is! StatelessComponent)?[setStateFunction]:[],
+                  functions:
+                      (root is! StatelessComponent) ? [setStateFunction] : [],
                   prerequisites: [
                     CodeBase(
-                            () => ComponentOperationCubit.currentProject!.actionCode,
-
-                            () => ComponentOperationCubit.currentProject!.variables.values,
+                        () =>
+                            ComponentOperationCubit.currentProject!.actionCode,
+                        () => ComponentOperationCubit
+                            .currentProject!.variables.values,
                         ComponentOperationCubit
                             .currentProject!.processor.scopeName),
                     extraCodeBase
@@ -413,6 +417,7 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
                   variables: null,
                   onError: (bool error) {},
                   scopeName: extraCodeBase.scopeName,
+                  config: ActionCodeEditorConfig(),
                 );
               },
             ),
