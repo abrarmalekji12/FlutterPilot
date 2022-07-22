@@ -131,12 +131,16 @@ class FVBClass {
   final Map<String, FVBVariable>? fvbStaticVariables;
   final Object Function()? toKindObject;
   final FVBConverter? converter;
+  final List<String> generics;
+  List<FVBClass> superclasses=[];
+
 
   FVBClass(this.name, this.fvbFunctions, this.fvbVariables,
       {this.fvbStaticVariables,
       this.converter,
       this.fvbStaticFunctions,
       this.toKindObject,
+      this.generics=const [],
       CodeProcessor? parent});
 
   @override
@@ -173,13 +177,13 @@ class FVBClass {
 
   FVBInstance createInstance(
       final CodeProcessor parent, final List<dynamic> arguments,
-      {final String? constructorName}) {
+      {final String? constructorName,final List<DataType>? generics}) {
     final constructor = constructorName ?? name;
     if (fvbFunctions[constructor]?.dartCall != null) {
       return fvbFunctions[constructor]!.execute(parent, arguments) ??
           (throw Exception('Failed to create instance of $name'));
     } else {
-      final instance = FVBInstance(this, parent: parent);
+      final instance = FVBInstance(this, parent: parent,generics: generics??[]);
       if (fvbFunctions.containsKey(constructor)) {
         instance.executeFunction(constructor, arguments);
       } else if (constructorName != null) {
@@ -231,11 +235,12 @@ class FVBClass {
   }
 }
 
-class FVBInstance {
+class FVBInstance{
   final FVBClass fvbClass;
   late final CodeProcessor processor;
+  final List<DataType> generics;
 
-  FVBInstance(this.fvbClass, {CodeProcessor? parent}) {
+  FVBInstance(this.fvbClass, {CodeProcessor? parent,this.generics=const []}) {
     processor = CodeProcessor.build(name: fvbClass.name, processor: parent)
       ..functions.addAll(fvbClass.fvbFunctions)
       ..variables.addAll(fvbClass.fvbVariables.map(
@@ -409,7 +414,7 @@ class FVBFunction {
 
   dynamic execute(
       final CodeProcessor parent, final List<dynamic> argumentValues,
-      {CodeProcessor? defaultProcessor,String? filtered}) {
+      {CodeProcessor? defaultProcessor,String? filtered,dynamic self}) {
     if (arguments.length != argumentValues.length) {
       parent.enableError(
           'Not enough arguments in function $name , expected ${arguments.length} but got ${argumentValues.length}');
@@ -418,7 +423,7 @@ class FVBFunction {
       return null;
     }
     if (dartCall != null) {
-      return dartCall?.call(argumentValues + [parent]);
+      return dartCall?.call(argumentValues + [parent]+(self!=null?[self]:[]));
     }
     final processor = defaultProcessor??CodeProcessor.build(name: 'fun:$name', processor: parent);
     for (int i = 0; i < arguments.length; i++) {
@@ -575,9 +580,11 @@ class FVBVariable {
   final DataType dataType;
   final bool isFinal;
   final bool nullable;
+  final dynamic Function(dynamic)? getCall;
+  final void Function(dynamic,dynamic)? setCall;
 
   FVBVariable(this.name, this.dataType,
-      {this.value, this.isFinal = false, this.nullable = false});
+      {this.value, this.isFinal = false, this.nullable = false,this.getCall,this.setCall});
 
   FVBVariable clone() {
     return FVBVariable(

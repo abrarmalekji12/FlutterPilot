@@ -1,13 +1,11 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/variable_model.dart';
 import 'code_processor.dart';
-import 'package:http/http.dart' as http;
-
 import 'fvb_converter.dart';
 
 class FVBModuleClasses {
@@ -45,10 +43,7 @@ class FVBModuleClasses {
           FVBFunction(
             'Offset',
             null,
-            [
-              FVBArgument('this.dx', dataType: DataType.double),
-              FVBArgument('this.dy', dataType: DataType.double)
-            ],
+            [FVBArgument('this.dx', dataType: DataType.double), FVBArgument('this.dy', dataType: DataType.double)],
           ),
         ],
         vars: {
@@ -65,15 +60,11 @@ class FVBModuleClasses {
     'Future': FVBClass('Future', {
       'Future.delayed': FVBFunction('Future.delayed', '', [
         FVBArgument('duration', dataType: DataType.fvbInstance('Duration')),
-        FVBArgument('computation',
-            type: FVBArgumentType.optionalPlaced,
-            dataType: DataType.fvbFunction,
-            nullable: true)
+        FVBArgument('computation', type: FVBArgumentType.optionalPlaced, dataType: DataType.fvbFunction, nullable: true)
       ], dartCall: (args) {
         final processor = args[2] as CodeProcessor;
         final fvbFuture = fvbClasses['Future']!.createInstance(processor, []);
-        if (CodeProcessor.operationType == OperationType.checkOnly &&
-            args.length > 1) {
+        if (CodeProcessor.operationType == OperationType.checkOnly && args.length > 1) {
           (args[1] as FVBFunction?)?.execute(processor, []);
         } else {
           fvbFuture.variables['future']!.value = Future.delayed(
@@ -83,34 +74,27 @@ class FVBModuleClasses {
                       if (CodeProcessor.error || processor.finished) {
                         return;
                       }
-                      final result =
-                          await (args[1] as FVBFunction).execute(processor, []);
-                      (fvbFuture.variables['onValue']?.value as FVBFunction?)
-                          ?.execute(processor, [result]);
+                      final result = await (args[1] as FVBFunction).execute(processor, []);
+                      (fvbFuture.variables['onValue']?.value as FVBFunction?)?.execute(processor, [result]);
                       return result;
                     }
                   : null);
         }
         return fvbFuture;
       }),
-      'then': FVBFunction('then', 'onValue=value;',
-          [FVBArgument('value', type: FVBArgumentType.optionalPlaced)]),
-      'onError': FVBFunction('onError', 'onError=error;',
-          [FVBArgument('error', type: FVBArgumentType.optionalPlaced)]),
+      'then': FVBFunction('then', 'onValue=value;', [FVBArgument('value', type: FVBArgumentType.optionalPlaced)]),
+      'onError': FVBFunction('onError', 'onError=error;', [FVBArgument('error', type: FVBArgumentType.optionalPlaced)]),
     }, {
       'value': () => FVBVariable('value', DataType.dynamic),
       'future': () => FVBVariable('future', DataType.dynamic),
-      'onValue': () => FVBVariable('onValue', DataType.fvbFunction,nullable: true),
-      'onError': () => FVBVariable('onError', DataType.fvbFunction,nullable: true),
+      'onValue': () => FVBVariable('onValue', DataType.fvbFunction, nullable: true),
+      'onError': () => FVBVariable('onError', DataType.fvbFunction, nullable: true),
     }),
     'SharedPreferences': FVBClass.create('SharedPreferences', funs: [
-      FVBFunction('SharedPreferences.getInstance', null, [],
-          dartCall: (arguments) {
-        final preferences = fvbClasses['SharedPreferences']!
-            .createInstance(arguments[0] as CodeProcessor, []);
+      FVBFunction('SharedPreferences.getInstance', null, [], dartCall: (arguments) {
+        final preferences = fvbClasses['SharedPreferences']!.createInstance(arguments[0] as CodeProcessor, []);
 
-        final fvbFuture =
-            fvbClasses['Future']!.createInstance(arguments[0], []);
+        final fvbFuture = fvbClasses['Future']!.createInstance(arguments[0], []);
         fvbFuture.variables['future']!.value = Future<FVBInstance>(() async {
           final pref = await SharedPreferences.getInstance();
           preferences.variables['_pref']!.value = pref;
@@ -169,8 +153,7 @@ class FVBModuleClasses {
         final processor = arguments[2] as CodeProcessor;
         final pref = processor.variables['_pref']?.value as SharedPreferences?;
         if (CodeProcessor.operationType != OperationType.checkOnly) {
-          pref?.setStringList(
-              arguments[0] as String, arguments[1] as List<String>);
+          pref?.setStringList(arguments[0] as String, arguments[1] as List<String>);
         }
       }),
       FVBFunction('getInt', null, [
@@ -221,7 +204,7 @@ class FVBModuleClasses {
         if (CodeProcessor.operationType != OperationType.checkOnly) {
           return pref?.getStringList(arguments[0] as String);
         }
-        return FVBTest(DataType.list,  false);
+        return FVBTest(DataType.list, false);
       }),
     ], vars: {
       '_pref': () => FVBVariable('_pref', DataType.dynamic)
@@ -233,27 +216,20 @@ class FVBModuleClasses {
         },
     }, {}),
     'int': FVBClass('int', {}, {}, fvbStaticFunctions: {
-      'parse': FVBFunction('parse', null, [FVBArgument('text')])
-        ..dartCall = (arguments) => int.parse(arguments[0])
+      'parse': FVBFunction('parse', null, [FVBArgument('text')])..dartCall = (arguments) => int.parse(arguments[0])
     }),
     'double': FVBClass('double', {}, {}, fvbStaticFunctions: {
-      'parse': FVBFunction('parse', null, [FVBArgument('text')])
-        ..dartCall = (arguments) => double.parse(arguments[0])
+      'parse': FVBFunction('parse', null, [FVBArgument('text')])..dartCall = (arguments) => double.parse(arguments[0])
     }),
     'Duration': FVBClass(
         'Duration',
         {
           'Duration': FVBFunction('Duration', '', [
-            FVBArgument('this.milliseconds',
-                type: FVBArgumentType.optionalNamed, defaultVal: 0),
-            FVBArgument('this.seconds',
-                type: FVBArgumentType.optionalNamed, defaultVal: 0),
-            FVBArgument('this.minutes',
-                type: FVBArgumentType.optionalNamed, defaultVal: 0),
-            FVBArgument('this.hours',
-                type: FVBArgumentType.optionalNamed, defaultVal: 0),
-            FVBArgument('this.days',
-                type: FVBArgumentType.optionalNamed, defaultVal: 0),
+            FVBArgument('this.milliseconds', type: FVBArgumentType.optionalNamed, defaultVal: 0),
+            FVBArgument('this.seconds', type: FVBArgumentType.optionalNamed, defaultVal: 0),
+            FVBArgument('this.minutes', type: FVBArgumentType.optionalNamed, defaultVal: 0),
+            FVBArgument('this.hours', type: FVBArgumentType.optionalNamed, defaultVal: 0),
+            FVBArgument('this.days', type: FVBArgumentType.optionalNamed, defaultVal: 0),
           ]),
         },
         {
@@ -275,8 +251,7 @@ class FVBModuleClasses {
           'value': () => FVBVariable('value', DataType.int),
         },
         funs: [
-          FVBFunction('Color', '',
-              [FVBArgument('this.value', type: FVBArgumentType.placed)])
+          FVBFunction('Color', '', [FVBArgument('this.value', type: FVBArgumentType.placed)])
         ],
         converter: ColorConverter()),
     'Canvas': FVBClass.create('Canvas', funs: [
@@ -289,40 +264,29 @@ class FVBModuleClasses {
     'Timer': FVBClass(
         'Timer',
         {
-          'Timer': FVBFunction(
-              'Timer', '', [FVBArgument('duration'), FVBArgument('callback')]),
+          'Timer': FVBFunction('Timer', '', [FVBArgument('duration'), FVBArgument('callback')]),
           'cancel': FVBFunction('cancel', '', []),
         },
         {},
         fvbStaticFunctions: {
-          'periodic': FVBFunction('periodic', null,
-              [FVBArgument('duration'), FVBArgument('callback')])
+          'periodic': FVBFunction('periodic', null, [FVBArgument('duration'), FVBArgument('callback')])
             ..dartCall = (arguments) {
-              final timerInstance = fvbClasses['Timer']!
-                  .createInstance(arguments[2], arguments.sublist(0, 2));
+              final timerInstance = fvbClasses['Timer']!.createInstance(arguments[2], arguments.sublist(0, 2));
 
               if (CodeProcessor.operationType == OperationType.checkOnly) {
-                (arguments[1] as FVBFunction)
-                    .execute(arguments[2], [timerInstance]);
-                timerInstance.fvbClass.fvbFunctions['cancel']!.dartCall =
-                    (args) {};
+                (arguments[1] as FVBFunction).execute(arguments[2], [timerInstance]);
+                timerInstance.fvbClass.fvbFunctions['cancel']!.dartCall = (args) {};
               } else {
                 final timer = Timer.periodic(
-                    Duration(
-                        milliseconds: (arguments[0] as FVBInstance)
-                            .variables['milliseconds']!
-                            .value), (timer) {
-                  if ((arguments[2] as CodeProcessor).finished ||
-                      CodeProcessor.error) {
+                    Duration(milliseconds: (arguments[0] as FVBInstance).variables['milliseconds']!.value), (timer) {
+                  if ((arguments[2] as CodeProcessor).finished || CodeProcessor.error) {
                     timer.cancel();
                     return;
                   }
-                  (arguments[1] as FVBFunction)
-                      .execute(arguments[2], [timerInstance]);
+                  (arguments[1] as FVBFunction).execute(arguments[2], [timerInstance]);
                 });
                 CodeProcessor.timers.add(timer);
-                timerInstance.fvbClass.fvbFunctions['cancel']!.dartCall =
-                    (args) {
+                timerInstance.fvbClass.fvbFunctions['cancel']!.dartCall = (args) {
                   timer.cancel();
                   CodeProcessor.timers.remove(timer);
                 };
@@ -340,18 +304,12 @@ class FVBModuleClasses {
             'this.year',
             type: FVBArgumentType.placed,
           ),
-          FVBArgument('this.month',
-              type: FVBArgumentType.optionalPlaced, defaultVal: 1),
-          FVBArgument('this.day',
-              type: FVBArgumentType.optionalPlaced, defaultVal: 1),
-          FVBArgument('this.hour',
-              type: FVBArgumentType.optionalPlaced, defaultVal: 0),
-          FVBArgument('this.minute',
-              type: FVBArgumentType.optionalPlaced, defaultVal: 0),
-          FVBArgument('this.second',
-              type: FVBArgumentType.optionalPlaced, defaultVal: 0),
-          FVBArgument('this.millisecond',
-              type: FVBArgumentType.optionalPlaced, defaultVal: 0),
+          FVBArgument('this.month', type: FVBArgumentType.optionalPlaced, defaultVal: 1),
+          FVBArgument('this.day', type: FVBArgumentType.optionalPlaced, defaultVal: 1),
+          FVBArgument('this.hour', type: FVBArgumentType.optionalPlaced, defaultVal: 0),
+          FVBArgument('this.minute', type: FVBArgumentType.optionalPlaced, defaultVal: 0),
+          FVBArgument('this.second', type: FVBArgumentType.optionalPlaced, defaultVal: 0),
+          FVBArgument('this.millisecond', type: FVBArgumentType.optionalPlaced, defaultVal: 0),
         ]),
       },
       {
@@ -368,19 +326,58 @@ class FVBModuleClasses {
       //     ..dartCall = (arguments) => fvbClasses['DateTime'].createInstance(processor, arguments),
       // }
     ),
+    'String': FVBClass.create('String', vars: {
+      'length': () => FVBVariable(
+            'length',
+            DataType.string,
+            getCall: (object) => (object as String).length,
+          ),
+    }, funs: [
+      FVBFunction('substring', null, [
+        FVBArgument('start', type: FVBArgumentType.placed, dataType: DataType.int),
+        FVBArgument('end', type: FVBArgumentType.optionalPlaced, dataType: DataType.int, nullable: true)
+      ], dartCall: (args) {
+        return (args[3] as String).substring(args[0] as int, args[1] as int?);
+      }),
+      FVBFunction('toUpperCase', null, [], dartCall: (args) {
+        return (args[0] as String).toUpperCase();
+      }),
+      FVBFunction('toLowerCase', null, [], dartCall: (args) {
+        return (args[0] as String).toLowerCase();
+      }),
+      FVBFunction('indexOf', null, [
+        FVBArgument('search', type: FVBArgumentType.placed, dataType: DataType.string),
+        FVBArgument('start', type: FVBArgumentType.optionalPlaced, dataType: DataType.int, defaultVal: 0),
+      ], dartCall: (args) {
+        return (args[0] as String).indexOf(args[1] as String, args[2] as int);
+      }),
+      FVBFunction('lastIndexOf', null, [
+        FVBArgument('search', type: FVBArgumentType.placed, dataType: DataType.string),
+        FVBArgument('start', type: FVBArgumentType.optionalPlaced, dataType: DataType.int, defaultVal: 0),
+      ], dartCall: (args) {
+        return (args[0] as String).lastIndexOf(args[1] as String, args[2] as int);
+      }),
+      FVBFunction('replace', null, [
+        FVBArgument('search', type: FVBArgumentType.placed, dataType: DataType.string),
+        FVBArgument('replace', type: FVBArgumentType.placed, dataType: DataType.string),
+      ], dartCall: (args) {
+        return (args[0] as String).replaceAll(args[1] as String, args[2] as String);
+      }),
+    ]),
   };
 
   FVBModuleClasses() {
     // Rect offset = Rect.fromPoints(a, b);
   }
-  static FVBInstance  createFVBFuture(Future future,FVBInstance instance,CodeProcessor processor){
-    final fvbFuture=fvbClasses['Future']!.createInstance(processor, []);
-    fvbFuture.variables['future']!.value=Future(() async {
-      instance.variables['_dart']=await future;
+
+  static FVBInstance createFVBFuture(Future future, FVBInstance instance, CodeProcessor processor) {
+    final fvbFuture = fvbClasses['Future']!.createInstance(processor, []);
+    fvbFuture.variables['future']!.value = Future(() async {
+      instance.variables['_dart'] = await future;
       return instance;
     });
     future.then((value) {
-      fvbFuture.variables['value']!.value=value;
+      fvbFuture.variables['value']!.value = value;
       (fvbFuture.variables['onValue']?.value as FVBFunction).execute(processor, [value]);
     }).onError((error, stackTrace) {
       (fvbFuture.variables['onError']?.value as FVBFunction).execute(processor, [error, stackTrace]);
@@ -434,8 +431,7 @@ class PaintConverter extends FVBConverter<Paint> {
 class OffsetConverter extends FVBConverter<Offset> {
   @override
   Offset toDart(FVBInstance instance) {
-    return Offset(
-        convert(instance.variables['dx']), convert(instance.variables['dy']));
+    return Offset(convert(instance.variables['dx']), convert(instance.variables['dy']));
   }
 
   @override
@@ -447,11 +443,8 @@ class OffsetConverter extends FVBConverter<Offset> {
 class RectConverter extends FVBConverter<Rect> {
   @override
   Rect toDart(FVBInstance instance) {
-    return Rect.fromLTRB(
-        instance.variables['left']!.value.toDouble(),
-        instance.variables['top']!.value.toDouble(),
-        instance.variables['right']!.value.toDouble(),
-        instance.variables['bottom']!.value.toDouble());
+    return Rect.fromLTRB(instance.variables['left']!.value.toDouble(), instance.variables['top']!.value.toDouble(),
+        instance.variables['right']!.value.toDouble(), instance.variables['bottom']!.value.toDouble());
   }
 
   @override

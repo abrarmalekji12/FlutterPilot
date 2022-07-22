@@ -67,9 +67,9 @@ void main() async {
   }
   await Preferences.load();
 
-  // doCodeTesting();
+  doCodeTesting();
 
-  runApp(const MyApp());
+  // runApp(const MyApp());
 }
 
 void doCodeTesting() {
@@ -101,7 +101,9 @@ void waitFor(int milliseconds) async {
 
 }
 void main() {
-print('hello');
+final ab='hello';
+ab.substring(2);
+print(ab);
 }
  ''';
   processor.executeCode(code, declarativeOnly: true);

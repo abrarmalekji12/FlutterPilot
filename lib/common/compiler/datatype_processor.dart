@@ -17,9 +17,13 @@ class DataTypeProcessor {
       final bool isFinal=split.remove('final');
       DataType? dataType;
       if (split.length==2) {
-        dataType = DataType.codeToDatatype(
-             split.first,
-            classes);
+        String className=split.first;
+        if(className.endsWith('>')){
+          DataType.codeToDatatype(
+              className,
+              classes)
+        }
+        dataType = ;
         if (dataType == DataType.unknown) {
           showError('Unknown data type or class name "${split.first}"');
           return null;
