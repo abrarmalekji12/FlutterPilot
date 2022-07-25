@@ -46,7 +46,7 @@ class VariableBox extends StatefulWidget {
 class _VariableBoxState extends State<VariableBox> {
   final TextEditingController _controller1 = TextEditingController(),
       _controller2 = TextEditingController();
-  DataType dataType = DataType.double;
+  DataType dataType = DataType.fvbDouble;
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -114,7 +114,7 @@ class _VariableBoxState extends State<VariableBox> {
                       style: AppFontStyle.roboto(14),
                       value: dataType,
                       hint: null,
-                      items: DataType.values
+                      items: [DataType.fvbInt,DataType.string,DataType.fvbDouble,DataType.fvbBool]
                           .map<CustomDropdownMenuItem<DataType>>(
                             (e) => CustomDropdownMenuItem<DataType>(
                               value: e,
@@ -213,16 +213,16 @@ class _VariableBoxState extends State<VariableBox> {
                       }
                       late final dynamic value;
                       switch (dataType) {
-                        case DataType.int:
+                        case DataType.fvbInt:
                           value = int.tryParse(_controller2.text);
                           break;
-                        case DataType.double:
+                        case DataType.fvbDouble:
                           value = double.tryParse(_controller2.text);
                           break;
                         case DataType.string:
                           value = _controller2.text;
                           break;
-                        case DataType.bool:
+                        case DataType.fvbBool:
                           value = _controller2.text == 'true';
                           break;
                         case DataType.dynamic:
@@ -237,13 +237,6 @@ class _VariableBoxState extends State<VariableBox> {
                             value = _controller2.text;
                           }
                           break;
-                        case DataType.list:
-                          break;
-                        case DataType.iterable:
-                          break;
-                        case DataType.map:
-                          break;
-
                         case DataType.fvbFunction:
                           break;
                         case DataType.unknown:
@@ -383,22 +376,22 @@ class _EditVariableState extends State<EditVariable> {
           Expanded(
             child: CustomTextField(
               enabled: !variable.isFinal&&(variable is VariableModel&&variable.uiAttached) &&
-                  ([DataType.int, DataType.double, DataType.string, DataType.bool]
+                  ([DataType.fvbInt, DataType.fvbDouble, DataType.string, DataType.fvbBool]
                       .contains(variable.dataType)),
               controller: _textEditingController,
               onChange: (val) {
                 late final dynamic value;
                 switch (widget.variable.value.dataType) {
-                  case DataType.int:
+                  case DataType.fvbInt:
                     value = int.tryParse(val);
                     break;
-                  case DataType.double:
+                  case DataType.fvbDouble:
                     value = double.tryParse(val);
                     break;
                   case DataType.string:
                     value = val;
                     break;
-                  case DataType.bool:
+                  case DataType.fvbBool:
                     value = val == 'true';
                     break;
                   case DataType.dynamic:
@@ -411,17 +404,6 @@ class _EditVariableState extends State<EditVariable> {
                     } else {
                       value = val;
                     }
-                    break;
-                  case DataType.list:
-                    break;
-                  case DataType.iterable:
-                    break;
-                  case DataType.map:
-                    break;
-                  case DataType.fvbFunction:
-                    break;
-                  case DataType.unknown:
-                    // TODO: Handle this case.
                     break;
                 }
                 if (value != null) {

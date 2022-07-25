@@ -1,59 +1,105 @@
 part of 'code_processor.dart';
 
+class FVBCacheValue {
+  final dynamic value;
+  final DataType dataType;
+  static final fvbNull = FVBCacheValue(null, DataType.fvbNull);
+
+  FVBCacheValue(this.value, this.dataType);
+}
+
 class DataType {
   final String name;
   final String? fvbName;
+  final List<DataType>? generics;
   static const DataType fvbVoid = DataType('fvbVoid');
-  static const DataType int = DataType('int');
-  static const DataType double = DataType('double');
-  static const DataType num = DataType('num');
+  static const DataType fvbInt = DataType('int');
+  static const DataType fvbDouble = DataType('double');
+  static const DataType fvbNum = DataType('num');
   static const DataType string = DataType('string');
-  static const DataType bool = DataType('bool');
+  static const DataType fvbBool = DataType('bool');
   static const DataType dynamic = DataType('dynamic');
-  static const DataType list = DataType('list');
-  static const DataType iterable = DataType('iterable');
-  static const DataType map = DataType('map');
+  static const DataType fvbNull = DataType('Null');
+  static const DataType fvbType = DataType('Type');
+
+  //enum
+  static DataType fvbEnum(String name) => DataType('enum', fvbName: name);
+
+  static DataType iterable(DataType? elementType) =>
+      DataType('Iterable', generics: elementType != null ? [elementType] : []);
+
+  static DataType list(List<DataType>? generics) =>
+      fvbInstance('List', generics: generics);
+
+  static DataType map(List<DataType>? generics) =>
+      fvbInstance('Map', generics: generics);
+
+  static DataType fvbEnumValue(String name) => DataType('enum', fvbName: name);
+
   static const DataType unknown = DataType('unknown');
-  static DataType fvbInstance(String className) => DataType('fvbInstance',fvbName: className);
+
+  static DataType fvbInstance(String className, {List<DataType>? generics}) =>
+      DataType('fvbInstance', fvbName: className, generics: generics);
   static const DataType fvbFunction = DataType('fvbFunction');
   static const DataType future = DataType('Future');
   static const DataType stream = DataType('Stream');
   static const DataType widget = DataType('Widget');
+  static const DataType undetermined = DataType('undetermined');
 
-  // static DataType fvbInstance(final String name) => DataType('fvbInstance',fvbName: name);
-  // static DataType fvbFunction(final String name) => DataType('fvbFunction',fvbName: name);
+  factory DataType.fromDataType(DataType dataType, List<DataType> generics) {
+    return DataType(dataType.name,
+        fvbName: dataType.fvbName, generics: generics);
+  }
 
-  const DataType(this.name, {this.fvbName});
+  bool canAssignedTo(DataType other) {
+    if (name == 'dynamic' || name == 'undetermined'||other.name=='dynamic') {
+      return true;
+    }
+    if (other.name != name || other.fvbName != fvbName) {
+      return false;
+    }
+    for (int i = 0;
+        i < (generics?.length ?? 0) && i < (other.generics?.length ?? 0);
+        i++) {
+      if (!generics![i].canAssignedTo(other.generics![i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  const DataType(this.name, {this.fvbName, this.generics});
 
   @override
-  toString() => name;
+  toString() => name + (generics?.map((e) => e.toString()).join(',') ?? '');
 
-  static DataType codeToDatatype(
-      final String dataType, Map<String, FVBClass> classes) {
-    if(classes.containsKey(dataType)){
-      return DataType.fvbInstance(dataType);
+  static DataType codeToDatatype(final String dataType,
+      final Map<String, FVBClass> classes, final Map<String, FVBEnum> enums) {
+    if (dataType[dataType.length - 1] == '>') {
+      final openIndex = dataType.indexOf('<');
+      return DataType.fromDataType(
+          codeToDatatype(dataType.substring(0, openIndex), classes, enums),
+          CodeOperations.splitBy(
+                  dataType.substring(openIndex + 1, dataType.length - 1))
+              .map((e) => codeToDatatype(e, classes, enums))
+              .toList(growable: false));
     }
+
     switch (dataType) {
       case 'int':
-        return DataType.int;
+        return DataType.fvbInt;
       case 'double':
-        return DataType.double;
+        return DataType.fvbDouble;
       case 'num':
-        return DataType.num;
+        return DataType.fvbNum;
       case 'String':
         return DataType.string;
       case 'bool':
-        return DataType.bool;
-      case 'List':
-        return DataType.list;
-      case 'Map':
-        return DataType.map;
+        return DataType.fvbBool;
       case 'Function':
         return DataType.fvbFunction;
       case 'Future':
         return DataType.future;
-      case 'Iterable':
-        return DataType.iterable;
       case 'dynamic':
         return DataType.dynamic;
       case 'void':
@@ -62,39 +108,46 @@ class DataType {
         return DataType.widget;
       default:
         if (classes.containsKey(dataType)) {
-          return DataType.fvbInstance(classes[dataType]!.name);
+          return DataType.fvbInstance(dataType);
+        }
+        if (enums.containsKey(dataType)) {
+          return DataType.fvbEnum(dataType);
         }
         return DataType.unknown;
     }
   }
 
   static String dataTypeToCode(final DataType dataType) {
-    if(dataType.name=='fvbInstance'){
+    if (dataType.generics != null && dataType.generics!.isNotEmpty) {
+      return '${getStaticDatatypeToName(dataType)}<${dataType.generics!.map((e) => dataTypeToCode(e)).join(',')}>';
+    }
+    return getStaticDatatypeToName(dataType);
+  }
+
+  static String getStaticDatatypeToName(final DataType dataType) {
+    if (dataType.name == 'fvbInstance') {
+      return dataType.fvbName!;
+    } else if (dataType.name == 'enum') {
       return dataType.fvbName!;
     }
     switch (dataType) {
-      case DataType.int:
+      case DataType.fvbInt:
         return 'int';
-      case DataType.double:
+      case DataType.fvbDouble:
         return 'double';
-      case DataType.num:
+      case DataType.fvbNum:
         return 'num';
       case DataType.string:
         return 'String';
+      case DataType.undetermined:
       case DataType.dynamic:
         return 'dynamic';
       case DataType.future:
         return 'Future';
-      case DataType.bool:
+      case DataType.fvbBool:
         return 'bool';
-      case DataType.list:
-        return 'List';
-      case DataType.map:
-        return 'Map';
       case DataType.fvbFunction:
         return 'Function';
-      case DataType.iterable:
-        return 'Iterable';
       case DataType.unknown:
         return 'UNKNOWN';
       case DataType.fvbVoid:
@@ -109,19 +162,52 @@ class DataType {
   // operator ==(other) => other is DataType && other.name == name;
   static get values => [
         fvbVoid,
-        int,
-        double,
+        fvbInt,
+        fvbDouble,
         string,
-        bool,
+        fvbBool,
         dynamic,
         list,
         iterable,
         map,
+        fvbEnum,
         fvbInstance,
         fvbFunction,
         unknown
       ];
 }
+
+abstract class FVBObject {
+  String get type;
+}
+
+class FVBEnum extends FVBObject {
+  final String name;
+  final Map<String, FVBEnumValue> values;
+
+  FVBEnum(this.name, this.values);
+
+  @override
+  String get type => 'enum';
+}
+
+class FVBEnumValue extends FVBObject {
+  final String name;
+  final int index;
+  final String enumName;
+
+  FVBEnumValue(this.name, this.index, this.enumName);
+
+  @override
+  String get type => 'enum';
+
+  @override
+  String toString() {
+    return '$enumName.$name';
+  }
+}
+
+enum ABC { a1, b1, c2 }
 
 class FVBClass {
   final String name;
@@ -132,15 +218,14 @@ class FVBClass {
   final Object Function()? toKindObject;
   final FVBConverter? converter;
   final List<String> generics;
-  List<FVBClass> superclasses=[];
-
+  List<FVBClass> superclasses = [];
 
   FVBClass(this.name, this.fvbFunctions, this.fvbVariables,
       {this.fvbStaticVariables,
       this.converter,
       this.fvbStaticFunctions,
       this.toKindObject,
-      this.generics=const [],
+      this.generics = const [],
       CodeProcessor? parent});
 
   @override
@@ -177,13 +262,14 @@ class FVBClass {
 
   FVBInstance createInstance(
       final CodeProcessor parent, final List<dynamic> arguments,
-      {final String? constructorName,final List<DataType>? generics}) {
+      {final String? constructorName, final List<DataType>? generics}) {
     final constructor = constructorName ?? name;
     if (fvbFunctions[constructor]?.dartCall != null) {
       return fvbFunctions[constructor]!.execute(parent, arguments) ??
           (throw Exception('Failed to create instance of $name'));
     } else {
-      final instance = FVBInstance(this, parent: parent,generics: generics??[]);
+      final instance =
+          FVBInstance(this, parent: parent, generics: generics ?? []);
       if (fvbFunctions.containsKey(constructor)) {
         instance.executeFunction(constructor, arguments);
       } else if (constructorName != null) {
@@ -235,12 +321,13 @@ class FVBClass {
   }
 }
 
-class FVBInstance{
+class FVBInstance {
   final FVBClass fvbClass;
   late final CodeProcessor processor;
   final List<DataType> generics;
 
-  FVBInstance(this.fvbClass, {CodeProcessor? parent,this.generics=const []}) {
+  FVBInstance(this.fvbClass,
+      {CodeProcessor? parent, this.generics = const []}) {
     processor = CodeProcessor.build(name: fvbClass.name, processor: parent)
       ..functions.addAll(fvbClass.fvbFunctions)
       ..variables.addAll(fvbClass.fvbVariables.map(
@@ -298,7 +385,7 @@ class CustomType extends Type {
 
   @override
   String toString() {
-    return name;
+    return 'fvb$name';
   }
 
   @override
@@ -345,7 +432,8 @@ class FVBArgument {
       this.dataType = DataType.dynamic,
       this.nullable = false});
 
-  FVBVariable get toVar => FVBVariable(name, dataType,nullable: nullable);
+  FVBVariable get toVar => FVBVariable(name, dataType, nullable: nullable);
+
   String get argName {
     if (name.startsWith('this.')) {
       return name.substring(5);
@@ -395,10 +483,17 @@ class FVBFunction {
           : e.argName;
     }).join(', ')});''', name.length + 2, 2);
   }
+
   String get cleanUpCode {
-   return '''${DataType.dataTypeToCode(returnType)}${canReturnNull?'?':''} $name(${arguments.map((e) {
-      return '${DataType.dataTypeToCode(e.dataType)}${e.nullable?'?':''} ${e.argName}';
+    return '''${DataType.dataTypeToCode(returnType)}${canReturnNull ? '?' : ''} $name(${arguments.map((e) {
+      return '${DataType.dataTypeToCode(e.dataType)}${e.nullable ? '?' : ''} ${e.argName}';
     }).join(', ')}){''';
+  }
+
+  String get cleanInstanceCode {
+    return '''(${arguments.map((e) {
+      return '${DataType.dataTypeToCode(e.dataType)}${e.nullable ? '?' : ''} ${e.argName}';
+    }).join(', ')}){${code ?? ''}}''';
   }
 
   String get samplePreviewCode {
@@ -414,7 +509,7 @@ class FVBFunction {
 
   dynamic execute(
       final CodeProcessor parent, final List<dynamic> argumentValues,
-      {CodeProcessor? defaultProcessor,String? filtered,dynamic self}) {
+      {CodeProcessor? defaultProcessor, String? filtered, dynamic self}) {
     if (arguments.length != argumentValues.length) {
       parent.enableError(
           'Not enough arguments in function $name , expected ${arguments.length} but got ${argumentValues.length}');
@@ -423,9 +518,11 @@ class FVBFunction {
       return null;
     }
     if (dartCall != null) {
-      return dartCall?.call(argumentValues + [parent]+(self!=null?[self]:[]));
+      return dartCall
+          ?.call((self != null ? [self] : []) + argumentValues + [parent]);
     }
-    final processor = defaultProcessor??CodeProcessor.build(name: 'fun:$name', processor: parent);
+    final processor = defaultProcessor ??
+        CodeProcessor.build(name: 'fun:$name', processor: parent);
     for (int i = 0; i < arguments.length; i++) {
       if (arguments[i].name.startsWith('this.')) {
         final name = arguments[i].name.substring(5);
@@ -446,11 +543,11 @@ class FVBFunction {
     }
     dynamic returnedOutput;
     if (isAsync) {
-      processor.executeAsync(filtered??code!).then((value) {
+      processor.executeAsync(filtered ?? code!).then((value) {
         returnedOutput = value;
       });
     } else {
-      returnedOutput = processor.execute(filtered??code!);
+      returnedOutput = processor.execute(filtered ?? code!);
     }
 
     final output = isLambda
@@ -511,14 +608,17 @@ class FVBValue {
 
   evaluateValue(CodeProcessor processor, {bool ignoreIfNotExist = false}) {
     if (variableName == null) {
+      if (value is FVBTest) {
+        return (value as FVBTest).testValue(processor);
+      }
       return value;
     }
     if (createVar) {
       return null;
     }
-    value = processor.getValue(variableName!, object: object ?? '');
+    value = processor.getValue(variableName!, object: object ?? '').value;
     if (value is FVBTest) {
-      return value.testValue();
+      return (value as FVBTest).testValue(processor);
     }
     return value;
   }
@@ -544,30 +644,44 @@ class FVBTest {
   final DataType dataType;
   final bool nullable;
   final FVBClass? fvbClass;
+  dynamic value;
 
-  FVBTest(this.dataType, this.nullable,{this.fvbClass});
+  FVBTest(this.dataType, this.nullable, {this.fvbClass});
+
+  // @override
+  // toString()=> testValue(ComponentOperationCubit.currentProject!.processor);
 
   dynamic testValue(CodeProcessor processor) {
-    if(dataType.name=='fvbInstance'){
-      return CodeProcessor.classes[dataType.fvbName]!.createInstance(processor, []);
+    if (dataType.name == 'fvbInstance') {
+      if (dataType.fvbName == 'List') {
+        return [];
+      } else if (dataType.fvbName == 'Map') {
+        return {};
+      }
+      if(value!=null){
+        return value;
+      }
+      return value=CodeProcessor.classes[dataType.fvbName]!.createInstance(
+          processor,
+          CodeProcessor
+                  .classes[dataType.fvbName]!.getDefaultConstructor?.arguments
+                  .map((e) => FVBTest(e.dataType, e.nullable))
+                  .toList(growable: false) ??
+              []);
     }
     switch (dataType) {
-      case DataType.bool:
+      case DataType.fvbBool:
         return false;
-      case DataType.int:
+      case DataType.fvbInt:
         return 0;
-      case DataType.double:
+      case DataType.fvbDouble:
         return 0.0;
       case DataType.string:
         return '';
-      case DataType.list:
-        return [];
-      case DataType.map:
-        return {};
       case DataType.fvbVoid:
         return null;
       case DataType.dynamic:
-        return null;
+        return FVBTest(dataType, nullable);
       default:
         return null;
     }
@@ -576,22 +690,38 @@ class FVBTest {
 
 class FVBVariable {
   final String name;
-  dynamic value;
-  final DataType dataType;
+  dynamic fvbValue;
+  DataType dataType;
   final bool isFinal;
   final bool nullable;
   final dynamic Function(dynamic)? getCall;
-  final void Function(dynamic,dynamic)? setCall;
+  final void Function(dynamic, dynamic)? setCall;
 
   FVBVariable(this.name, this.dataType,
-      {this.value, this.isFinal = false, this.nullable = false,this.getCall,this.setCall});
+      {dynamic value,
+      this.isFinal = false,
+      this.nullable = false,
+      this.getCall,
+      this.setCall}) {
+    fvbValue = value;
+  }
+
+  get value => fvbValue;
+
+  set value(dynamic value) {
+    if (setCall != null) {
+      setCall!(this, value);
+    } else {
+      fvbValue = value;
+    }
+  }
 
   FVBVariable clone() {
     return FVBVariable(
       name,
       dataType,
       isFinal: isFinal,
-      value: value,
+      value: fvbValue,
       nullable: nullable,
     );
   }
@@ -599,7 +729,7 @@ class FVBVariable {
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      'value': value,
+      'value': fvbValue,
       'dataType': dataType.name,
       'isFinal': isFinal,
       'nullable': nullable,

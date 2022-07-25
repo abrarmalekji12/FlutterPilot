@@ -384,7 +384,7 @@ class Parameters {
         ],
       );
 
-  static Parameter alignmentParameter() => ChoiceValueParameter(
+  static ChoiceValueParameter alignmentParameter() => ChoiceValueParameter(
       name: 'alignment',
       options: {
         'centerLeft': Alignment.centerLeft,
@@ -397,8 +397,8 @@ class Parameters {
         'bottomLeft': Alignment.bottomLeft,
         'bottomRight': Alignment.bottomRight,
       },
-      defaultValue: null,
-      required: false,
+      defaultValue: 'center',
+      required: true,
       info: NamedParameterInfo('alignment')..isOptional=true);
 
   static Parameter tileModeParameter() => ChoiceValueParameter(
@@ -1033,8 +1033,7 @@ class Parameters {
   static CodeParameter<CustomPainter> painterParameter() =>
       CodeParameter<CustomPainter>(
           'painter', NamedParameterInfo('painter'), true,
-          actionCode: '''
-  void paint(Canvas canvas,Size size){
+          actionCode: '''\n void paint(Canvas canvas,Size size){
   // TODO: implement your logic here
   
   }

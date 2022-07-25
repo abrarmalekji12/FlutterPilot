@@ -40,8 +40,9 @@ void initInjector() async {
   get.registerSingleton<AuthenticationCubit>(AuthenticationCubit());
   get.registerSingleton<FlutterProjectCubit>(FlutterProjectCubit());
   get.registerSingleton<ComponentOperationCubit>(ComponentOperationCubit());
-  get.registerSingleton<ComponentCreationCubit>(ComponentCreationCubit());
+
   get.registerSingleton<ComponentSelectionCubit>(ComponentSelectionCubit());
+  get.registerSingleton<ComponentCreationCubit>(ComponentCreationCubit(get()));
   final _preference=DevicePreviewStorage.preferences();
   get.registerSingleton<DevicePreviewStorage>(_preference);
   CodeProcessor.init();

@@ -169,10 +169,8 @@ class _PreviewPageState extends State<PreviewPage> {
                 runtimeMode: RuntimeMode.preview,
                 child: Builder(builder: (context) {
                   return InteractiveViewer(
-                      minScale: 0.2,
+                    maxScale: 10,
                       // minScale: dw(context, 100) / width,
-                      maxScale: 5.0,
-                      constrained: false,
                       child: RepaintBoundary(
                         key: _interactiveViewerKey,
                         child: Container(
@@ -188,8 +186,6 @@ class _PreviewPageState extends State<PreviewPage> {
                             center: Alignment.center,
                             tileMode: TileMode.clamp,
                           )),
-                          width: width,
-                          height: 1.5 * area / width,
                           alignment: Alignment.center,
                           child: Stack(
                             key: const GlobalObjectKey('STACK'),
@@ -210,8 +206,8 @@ class _PreviewPageState extends State<PreviewPage> {
                                           padding: const EdgeInsets.all(15),
                                           child: Text(
                                             screen.name,
-                                            style: AppFontStyle.roboto(17,
-                                                fontWeight: FontWeight.bold),
+                                            style: AppFontStyle.roboto(14,
+                                                fontWeight: FontWeight.w500),
                                           ),
                                         ),
                                         Container(
@@ -228,8 +224,10 @@ class _PreviewPageState extends State<PreviewPage> {
                                               ),
                                               color: Colors.white,
                                               boxShadow: kElevationToShadow[2]),
-                                          width: widget._screenConfigCubit
-                                              .screenConfig.width,
+                                          constraints:BoxConstraints(
+                                            maxWidth:  0.9*MediaQuery.of(context).size.width/(screens.length),
+
+                                          ),
                                           // height: height,
                                           child: IgnorePointer(
                                             child: EmulationView(

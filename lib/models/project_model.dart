@@ -115,6 +115,7 @@ class FlutterProject {
     processor.variables['dh']!.value = constraints.maxHeight;
     ComponentOperationCubit.processor=processor;
     processor.executeCode(ComponentOperationCubit.currentProject!.actionCode);
+    processor.functions['main']?.execute(processor, []);
     if (!navigator) {
       processor.finished = true;
       return ProcessorProvider(
@@ -124,7 +125,6 @@ class FlutterProject {
         }),
       );
     }
-    processor.functions['main']?.execute(processor, []);
     final _actionCubit = get<StackActionCubit>();
     return ProcessorProvider(
       get<CodeProcessor>(),
@@ -313,7 +313,7 @@ class UIScreen {
     String dynamicVariableAssignmentCode = '';
     for (final variable
         in ComponentOperationCubit.processor.variables.entries) {
-      if ([DataType.string, DataType.int, DataType.double, DataType.double]
+      if ([DataType.string, DataType.fvbInt, DataType.fvbDouble, DataType.fvbDouble]
           .contains(variable.value.dataType)) {
         if (!variable.value.isFinal) {
           staticVariablesCode +=

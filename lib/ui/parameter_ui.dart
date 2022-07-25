@@ -208,7 +208,7 @@ class CodeParameterWidget extends StatelessWidget {
               child: ActionCodeEditor(
                 code: parameter.actionCode,
                 onCodeChange: (code) {
-                  parameter.actionCode=code;
+                  parameter.actionCode = code;
                   context.read<ComponentCreationCubit>().changedComponent();
                 },
                 prerequisites: [
@@ -221,8 +221,9 @@ class CodeParameterWidget extends StatelessWidget {
                 ],
                 onError: (error) {},
                 scopeName: 'test:${parameter.displayName}',
-                functions: parameter.processor.functions.values,
-                variables: () => [], config: ActionCodeEditorConfig(),
+                variables: () => [],
+                config: ActionCodeEditorConfig(),
+                functions: [],
               ),
             )
           ],
@@ -296,12 +297,12 @@ class _SimpleParameterWidgetState extends State<SimpleParameterWidget> {
     switch (widget.parameter.inputType) {
       case ParamInputType.longText:
       case ParamInputType.text:
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          _textEditingController.text =
-              widget.parameter.compiler.code.isNotEmpty
-                  ? widget.parameter.compiler.code
-                  : '${widget.parameter.getValue() ?? ''}';
-        });
+        if (_textEditingController.text.isEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+            _textEditingController.text = widget.parameter.compiler.code;
+          });
+        }
+
         return Form(
           key: _formKey,
           child: SizedBox(
@@ -755,11 +756,12 @@ class _ColorInputWidgetState extends State<ColorInputWidget> {
                     ),
                   if (value != null)
                     SizedBox(
-                      width: 15,
+                      width: 18,
+                      height: 18,
                       child: ColorButton(
                         color: value,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
+                          shape: BoxShape.rectangle,
                           color: widget.parameter.value ?? Colors.transparent,
                           border: Border.all(color: Colors.black, width: 1),
                         ),
@@ -1008,3 +1010,25 @@ class _BooleanParameterWidgetState extends State<BooleanParameterWidget> {
     );
   }
 }
+/*
+  return SizedBox(
+          width:
+          widget.parameter.inputType == ParamInputType.text ? 110 : 200,
+          height:
+          widget.parameter.inputType != ParamInputType.text ? 60 : 50,
+          child: ActionCodeEditor(code:widget.parameter.compiler.code , onCodeChange: (value){
+            if (value.isNotEmpty || widget.parameter.val is String) {
+              checkForResult(value);
+              return;
+            } else {
+              widget.parameter.compiler.code = '';
+              widget.parameter.val = null;
+            }
+            BlocProvider.of<ParameterBuildCubit>(context)
+                .parameterChanged(context, widget.parameter);
+            BlocProvider.of<ComponentCreationCubit>(context)
+                .changedComponent();
+          }, prerequisites: [], variables:()=>[], onError: (eror){}
+              , scopeName: widget.parameter.info?.getName()??'', functions: [], config: ActionCodeEditorConfig()),
+        );
+* */

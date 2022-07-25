@@ -333,7 +333,7 @@ abstract class FireBridge {
           .collection('us$userId')
           .doc(Strings.kFlutterProjectInfo)
           .update({
-        'projects': List.from(oldResponse.data()['projects'])
+        'projects': List.from(oldResponse.data()!['projects'])
           ..add(project.name)
       });
     } else {
@@ -344,7 +344,6 @@ abstract class FireBridge {
         'projects': FieldValue.arrayUnion([project.name])
       });
     }
-
   }
 
   static Future<Optional<FlutterProject, ProjectLoadErrorModel>>
@@ -664,7 +663,7 @@ abstract class FireBridge {
         .collection(project.name)
         .doc(project.docId)
         .update({
-      'variables': project.currentScreen.variables.values
+      'variables': project.variables.values
           .where((element) => element is VariableModel && element.uiAttached)
           .map((e) => e.toJson())
           .toList(growable: false)
@@ -831,7 +830,11 @@ abstract class FireBridge {
         .doc(Strings.kFlutterProject)
         .collection(projectName)
         .doc(uiScreen.name)
-        .update({'root': CodeOperations.trim(component.code(clean: false))});
+        .update({
+      'root': CodeOperations.trim(
+        component.code(clean: false),
+      ),
+    });
     logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
   }
 

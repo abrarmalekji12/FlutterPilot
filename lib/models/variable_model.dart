@@ -43,7 +43,7 @@ class VariableModel extends FVBVariable {
         map['dataType'] != null
             ? DataType.values
                 .firstWhere((element) => element.name == map['dataType'])
-            : DataType.double,
+            : DataType.fvbDouble,
         value: map['value'],
         deletable: map['deletable'] ?? true,
         uiAttached: map['uiAttached'] ?? false,

@@ -12,7 +12,7 @@ import 'parameter_model.dart';
 
 abstract class BuilderComponent extends CustomNamedHolder {
   LocalModel? model;
-  final List<Component> builtList = [];
+  final Map<String, List<Component>> builtList = {};
   final Map<String, FVBFunction> functionMap;
   late SimpleParameter<int> itemLengthParameter;
   final String countName;
@@ -33,6 +33,7 @@ abstract class BuilderComponent extends CustomNamedHolder {
         (super.clone(parent, deepClone: deepClone) as BuilderComponent);
     clone.model = model;
     clone.itemLengthParameter = itemLengthParameter;
+    clone.parent=parent;
     clone.childMap =
         childMap.map((key, value) => MapEntry(key, value?.clone(clone)));
     clone.childrenMap = childrenMap.map((key, value) => MapEntry(
@@ -60,35 +61,37 @@ abstract class BuilderComponent extends CustomNamedHolder {
             .localVariables[model!.variables[i].name] = model!.values[index][i];
       }
     }
-    final parent=ProcessorProvider.maybeOf(context)!;
-    final CodeProcessor processor = CodeProcessor.build(
-        name: name, processor: parent);
-    final function=functionMap[name];
+    final parent = ProcessorProvider.maybeOf(context)!;
+    final CodeProcessor processor =
+        CodeProcessor.build(name: name, processor: parent);
+    final function = functionMap[name];
     final component = child.clone(this);
-    if (index < builtList.length) {
-      builtList.removeAt(index);
-      builtList.insert(index, component);
+    if (index < builtList[name]!.length) {
+      builtList[name]!.removeAt(index);
+      builtList[name]!.insert(index, component);
     } else {
-      builtList.add(component);
+      builtList[name]!.add(component);
     }
 
     return ProcessorProvider(
       processor,
-      Builder(
-        builder: (context) {
-          if(function!=null) {
-            function.execute(parent, [index],
-                defaultProcessor: processor,
-                filtered: CodeProcessor.cleanCode(function.code??'', processor));
-          }
-          return component.build(context);
+      Builder(builder: (context) {
+        if (function != null) {
+          function.execute(parent, [index],
+              defaultProcessor: processor,
+              filtered:
+                  CodeProcessor.cleanCode(function.code ?? '', processor));
         }
-      ),
+        return component.build(context);
+      }),
     );
   }
 
   void init() {
-    builtList.clear();
+    for (final child in childMap.keys) {
+      builtList[child] = [];
+    }
+
     childMap.forEach((key, value) {
       value?.cloneElements.clear();
     });
@@ -175,7 +178,7 @@ get itemBuilderFunction => FVBFunction(
       'itemBuilder',
       '',
       [
-        FVBArgument('index', dataType: DataType.int, nullable: false),
+        FVBArgument('index', dataType: DataType.fvbInt, nullable: false),
       ],
       returnType: DataType.fvbVoid,
       canReturnNull: false,
@@ -185,13 +188,13 @@ get separatorBuilderFunction => FVBFunction(
       'separatorBuilder',
       '',
       [
-        FVBArgument('index', dataType: DataType.int, nullable: false),
+        FVBArgument('index', dataType: DataType.fvbInt, nullable: false),
       ],
       returnType: DataType.fvbVoid,
       canReturnNull: false,
     );
 
-class CListViewBuilder extends BuilderComponent {
+class CListViewBuilder extends BuilderComponent with FVBScrollable{
   CListViewBuilder()
       : super('ListView.builder', [
           Parameters.axisParameter()
@@ -206,6 +209,7 @@ class CListViewBuilder extends BuilderComponent {
   Widget create(BuildContext context) {
     init();
     return ListView.builder(
+      controller: initScrollController(context),
       scrollDirection: parameters[0].value,
       itemBuilder: (context, index) {
         return builder(context, 'itemBuilder', index);
@@ -215,7 +219,7 @@ class CListViewBuilder extends BuilderComponent {
   }
 }
 
-class CListViewSeparated extends BuilderComponent {
+class CListViewSeparated extends BuilderComponent with FVBScrollable{
   CListViewSeparated()
       : super('ListView.separated', [
           Parameters.axisParameter()
@@ -232,6 +236,7 @@ class CListViewSeparated extends BuilderComponent {
   Widget create(BuildContext context) {
     init();
     return ListView.separated(
+      controller: initScrollController(context),
       scrollDirection: parameters[0].value,
       itemBuilder: (context, index) {
         return builder(context, 'itemBuilder', index);
@@ -245,7 +250,7 @@ class CListViewSeparated extends BuilderComponent {
   }
 }
 
-class CGridViewBuilder extends BuilderComponent {
+class CGridViewBuilder extends BuilderComponent with FVBScrollable{
   CGridViewBuilder()
       : super('GridView.builder', [
           Parameters.sliverDelegate(),
@@ -259,6 +264,7 @@ class CGridViewBuilder extends BuilderComponent {
   Widget create(BuildContext context) {
     init();
     return GridView.builder(
+      controller: initScrollController(context),
       itemBuilder: (context, index) {
         return builder(context, 'itemBuilder', index);
       },

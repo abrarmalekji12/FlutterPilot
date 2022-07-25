@@ -69,6 +69,11 @@ class ArgumentProcessor {
       }
     }
 
+    for(int i = 0; i < processedArguments.length; i++){
+      if(processedArguments[i] is FVBTest){
+        processedArguments[i]=(processedArguments[i] as FVBTest).testValue(processor);
+      }
+    }
     return processedArguments;
   }
 
@@ -101,7 +106,7 @@ class ArgumentProcessor {
               type: type, dataType: compatibleVar.dataType, nullable: compatibleVar.nullable));
         } else {
           final value =
-              DataTypeProcessor.getFVBValueFromCode(argumentList[i], CodeProcessor.classes, processor.enableError);
+              DataTypeProcessor.getFVBValueFromCode(argumentList[i], CodeProcessor.classes,CodeProcessor.enums, processor.enableError);
 
           arguments.add(FVBArgument(value != null ? value.variableName! : argumentList[i],
               type: type, dataType: value?.dataType ?? DataType.dynamic, nullable: value?.nullable ?? false));
@@ -116,7 +121,7 @@ class ArgumentProcessor {
         }
 
         if (split.length == 2) {
-          final value = DataTypeProcessor.getFVBValueFromCode(split[0], CodeProcessor.classes, processor.enableError);
+          final value = DataTypeProcessor.getFVBValueFromCode(split[0], CodeProcessor.classes, CodeProcessor.enums,processor.enableError);
           arguments.add(FVBArgument(value != null ? value.variableName! : split[0],
               type: type,
               defaultVal: processor.process(split[1]),
@@ -124,7 +129,7 @@ class ArgumentProcessor {
               nullable: compatibleVar?.nullable ?? value?.nullable ?? false));
         } else {
           final value =
-              DataTypeProcessor.getFVBValueFromCode(argumentList[i], CodeProcessor.classes, processor.enableError);
+              DataTypeProcessor.getFVBValueFromCode(argumentList[i], CodeProcessor.classes,CodeProcessor.enums, processor.enableError);
           arguments.add(FVBArgument(value != null ? value.variableName! : argumentList[i],
               type: type,
               dataType: compatibleVar?.dataType ?? value?.dataType ?? DataType.dynamic,

@@ -189,10 +189,11 @@ void openAuthDialog(BuildContext context, void Function(int) onSuccess) {
             borderRadius: BorderRadius.circular(20),
           ),
           child: BlocListener<AuthenticationCubit, AuthenticationState>(
-            listener: (_, state) {
+            listener: (context, state) {
               if (state is AuthSuccessState && state.userId != -1) {
+                Navigator.of(context).pop();
                 WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                  Navigator.of(context).pop();
+
                   onSuccess(state.userId);
                 });
               }

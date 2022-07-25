@@ -203,7 +203,7 @@ class CRadio extends ClickableComponent {
             ..withNamedParamInfoAndSameDisplayName('groupValue'),
         ]) {
     init(FVBFunction(
-        'onChanged', null, [FVBArgument('value', dataType: DataType.bool)],
+        'onChanged', null, [FVBArgument('value', dataType: DataType.fvbBool)],
         returnType: DataType.fvbVoid));
   }
 
@@ -426,7 +426,7 @@ class CAlign extends Holder {
   }
 }
 
-class CSingleChildScrollView extends Holder {
+class CSingleChildScrollView extends Holder with FVBScrollable {
   CSingleChildScrollView()
       : super('SingleChildScrollView', [
           Parameters.axisParameter()
@@ -877,7 +877,7 @@ class CIndexedStack extends MultiHolder {
   }
 }
 
-class CListView extends MultiHolder {
+class CListView extends MultiHolder with FVBScrollable {
   CListView()
       : super('ListView', [
           Parameters.paddingParameter(),
@@ -910,9 +910,6 @@ class CDropdownMenuItem extends ClickableHolder {
             ..withNamedParamInfoAndSameDisplayName('value')
             ..withRequired(false)
         ]);
-
-  @override
-  String get clickableParamName => 'onTap';
 
   @override
   Widget create(BuildContext context) {
@@ -1120,9 +1117,6 @@ class CInkWell extends ClickableHolder {
       borderRadius: parameters[5].value,
     );
   }
-
-  @override
-  String get clickableParamName => 'onTap';
 }
 
 class CGestureDetector extends ClickableHolder {
@@ -1139,9 +1133,6 @@ class CGestureDetector extends ClickableHolder {
       child: child?.build(context) ?? Container(),
     );
   }
-
-  @override
-  String get clickableParamName => 'onTap';
 }
 
 class CFloatingActionButton extends ClickableHolder {
@@ -1168,7 +1159,9 @@ class CFloatingActionButton extends ClickableHolder {
           Parameters.colorParameter()
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('splashColor'),
-        ]);
+        ]){
+    init(FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid));
+  }
 
   @override
   Widget create(BuildContext context) {
@@ -1191,12 +1184,12 @@ class CFloatingActionButton extends ClickableHolder {
     );
   }
 
-  @override
-  String get clickableParamName => 'onPressed';
 }
 
 class CTextButton extends ClickableHolder {
-  CTextButton() : super('TextButton', [Parameters.buttonStyleParameter()]);
+  CTextButton() : super('TextButton', [Parameters.buttonStyleParameter()]){
+    init(FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid));
+  }
 
   @override
   Widget create(BuildContext context) {
@@ -1209,8 +1202,6 @@ class CTextButton extends ClickableHolder {
     );
   }
 
-  @override
-  String get clickableParamName => 'onPressed';
 }
 
 class CLinearProgressIndicator extends Component {
@@ -1302,7 +1293,7 @@ class CContainer extends Holder {
           Parameters.widthParameter(),
           Parameters.heightParameter(),
           Parameters.marginParameter(),
-          Parameters.alignmentParameter(),
+          Parameters.alignmentParameter()..withDefaultValue(null)..withRequired(false),
           Parameters.decorationParameter()
         ], rules: []) {
     addRule(ParameterRuleModel(

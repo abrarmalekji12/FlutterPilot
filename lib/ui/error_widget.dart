@@ -87,30 +87,38 @@ class _ConsoleWidgetState extends State<ConsoleWidget> {
                 controller: _controller,
                 itemCount: _errorBloc.consoleMessages.length,
                 itemBuilder: (_, index) {
-                  final consoleMessage = _errorBloc.consoleMessages[index];
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          consoleMessage.message,
-                          style: AppFontStyle.roboto(consoleMessage.type==ConsoleMessageType.event?10:14,
-                              color:
-                                  getConsoleMessageColor(consoleMessage.type),
-                              fontWeight: consoleMessage.type==ConsoleMessageType.event?FontWeight.w700:FontWeight.w500),
-                        ),
-                      ),
-                      Text(consoleMessage.time,
-                          style: AppFontStyle.roboto(12,
-                              color: Colors.grey, fontWeight: FontWeight.w500)),
-                    ],
-                  );
+                  return ConsoleMessageTile(consoleMessage:  _errorBloc.consoleMessages[index]);
                 },
               );
             }),
           ),
         ],
       ),
+    );
+  }
+}
+class ConsoleMessageTile extends StatelessWidget {
+  final ConsoleMessage consoleMessage;
+  const ConsoleMessageTile({Key? key, required this.consoleMessage}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            consoleMessage.message,
+            style: AppFontStyle.roboto(consoleMessage.type==ConsoleMessageType.event?10:14,
+                color:
+                getConsoleMessageColor(consoleMessage.type),
+                fontWeight: consoleMessage.type==ConsoleMessageType.event?FontWeight.w700:FontWeight.w500),
+          ),
+        ),
+        Text(consoleMessage.time,
+            style: AppFontStyle.roboto(12,
+                color: Colors.grey, fontWeight: FontWeight.w500)),
+      ],
     );
   }
 }

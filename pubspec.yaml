@@ -28,6 +28,7 @@ dependencies:
   win_toast: ^0.0.2
   intl: ^0.17.0
   resizable_widget: ^1.0.5
+  # TODO  use multi_split_view: ^2.1.0
   firebase_core: ^1.11.0
   firebase_auth: ^3.3.9
   shared_preferences: ^2.0.13
@@ -47,6 +48,8 @@ dependencies:
   http: ^0.13.4
   keyboard_event: ^0.3.2
   flutter_slider_drawer: ^2.1.1
+  sliding_up_panel: ^2.0.0+1
+
 
 dev_dependencies:
   flutter_test:

@@ -181,18 +181,7 @@ abstract class Component {
     }
   }
 
-  ScrollController initScrollController(BuildContext context) {
-    final ScrollController scrollController = ScrollController();
-    if (RuntimeProvider.of(context) == RuntimeMode.edit) {
-      scrollController.addListener(() {
-        forEach((final Component component) {
-          component.lookForUIChanges(context, checkSameCount: false);
-        });
-      });
-    }
 
-    return scrollController;
-  }
 
   static Component? fromCode(
       String? code, final FlutterProject flutterProject) {
@@ -265,7 +254,7 @@ abstract class Component {
               comp.childMap[name] = Component.fromCode(
                   builderCode.substring(
                       returnIndex + 6, builderCode.lastIndexOf(';')),
-                  flutterProject);
+                  flutterProject)?..setParent(comp);
               final startIndex = builderCode.indexOf('`');
               final endIndex = builderCode.lastIndexOf('`', returnIndex);
               if (startIndex >= 0 &&
@@ -443,10 +432,8 @@ abstract class Component {
 
   Component? getRootCustomComponent(FlutterProject flutterProject) {
     Component? _tracer = this, _root = this;
-    final List<Component> tree = [];
     while (_tracer != null && _tracer is! CustomComponent) {
       logger('======= TRACER FIND CUSTOM ROOT ${_tracer.parent?.name}');
-      tree.add(_tracer);
       _root = _tracer;
       _tracer = _tracer.parent;
     }
@@ -537,6 +524,9 @@ abstract class Component {
 
   void lookForUIChanges(BuildContext context,
       {bool checkSameCount = true}) async {
+    if (GlobalObjectKey(this).currentContext == null) {
+      return;
+    }
     final RenderBox renderBox =
         GlobalObjectKey(this).currentContext!.findRenderObject() as RenderBox;
     final ancestorRenderBox = const GlobalObjectKey('device window')
@@ -574,9 +564,9 @@ abstract class Component {
 
   String parametersCode(bool clean) {
     String middle = '';
-    if (this is Clickable && clean) {
+    if (this is Clickable && clean&&(this as Clickable).function!=null) {
       middle +=
-          '${(this as Clickable).clickableParamName}:(${(this as Clickable).eventParams.join(',')}){${(this as Clickable).eventCode}},';
+          '${(this as Clickable).function!.name}:${(this as Clickable).function!.cleanInstanceCode},';
     }
     for (final parameter in parameters) {
       final paramCode = parameter.code(clean);
@@ -819,17 +809,7 @@ abstract class Holder extends Component {
   void searchTappedComponent(
       final Offset offset, final List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
-      if (this is BuilderComponent) {
-        for (final comp in (this as BuilderComponent).builtList) {
-          final len = components.length;
-          comp.searchTappedComponent(offset, components);
-          if (len != components.length) {
-            break;
-          }
-        }
-      } else {
-        child?.searchTappedComponent(offset, components);
-      }
+      child?.searchTappedComponent(offset, components);
       for (final compParam in componentParameters) {
         for (final comp in compParam.components) {
           final len = components.length;
@@ -923,7 +903,20 @@ abstract class ClickableComponent extends Component with Clickable {
     return cloneComp;
   }
 }
+mixin FVBScrollable{
+  ScrollController initScrollController(BuildContext context) {
+    final ScrollController scrollController = ScrollController();
+    if (RuntimeProvider.of(context) == RuntimeMode.edit) {
+      scrollController.addListener(() {
+        (this as Component).forEach((final Component component) {
+          component.lookForUIChanges(context, checkSameCount: false);
+        });
+      });
+    }
 
+    return scrollController;
+  }
+}
 mixin Clickable {
   FVBFunction? function;
   List<ActionModel> actionList = [];
@@ -957,9 +950,6 @@ mixin Clickable {
     }
   }
 
-  String get clickableParamName;
-
-  List<String> get eventParams => [];
 
   String get eventCode {
     String code = '';
@@ -1099,15 +1089,28 @@ abstract class CustomNamedHolder extends Component {
   @override
   void searchTappedComponent(Offset offset, List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
-      for (final child in childMap.values) {
-        if (child == null) {
-          continue;
+      if (this is BuilderComponent) {
+        for (final child in childMap.keys) {
+          for (final comp
+              in (this as BuilderComponent).builtList[child] ?? []) {
+            final len = components.length;
+            comp.searchTappedComponent(offset, components);
+            if (len != components.length) {
+              break;
+            }
+          }
         }
-        child.searchTappedComponent(offset, components);
-      }
-      for (final children in childrenMap.values) {
-        for (final child in children) {
+      } else {
+        for (final child in childMap.values) {
+          if (child == null) {
+            continue;
+          }
           child.searchTappedComponent(offset, components);
+        }
+        for (final children in childrenMap.values) {
+          for (final child in children) {
+            child.searchTappedComponent(offset, components);
+          }
         }
       }
       components.add(this);

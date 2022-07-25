@@ -11,7 +11,6 @@ import 'bloc/action_code/action_code_bloc.dart';
 import 'bloc/error/error_bloc.dart';
 import 'bloc/key_fire/key_fire_bloc.dart';
 import 'bloc/state_management/state_management_bloc.dart';
-import 'code_to_component.dart';
 import 'common/compiler/code_processor.dart';
 import 'common/html_lib.dart' as html;
 import 'common/shared_preferences.dart';
@@ -69,7 +68,7 @@ void main() async {
 
   doCodeTesting();
 
-  // runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 void doCodeTesting() {
@@ -85,6 +84,9 @@ void doCodeTesting() {
       },
       scopeName: 'test');
   const code = '''
+  enum ABC{
+ a1,b2,c3
+  }
   class Message{
   String text;
   bool my;
@@ -98,12 +100,11 @@ void doCodeTesting() {
     }
 }
 void waitFor(int milliseconds) async {
-
 }
 void main() {
 final ab='hello';
-ab.substring(2);
-print(ab);
+final ABC abc=ABC.a1;
+print(abc);
 }
  ''';
   processor.executeCode(code, declarativeOnly: true);
@@ -247,6 +248,7 @@ class MyApp extends StatelessWidget {
         title: 'Flutter Visual Builder',
         scrollBehavior: MyCustomScrollBehavior(),
         initialRoute: '',
+        navigatorKey: const GlobalObjectKey('root-navigation'),
         routes: {
           '': (context) => const LandingPage(),
         },

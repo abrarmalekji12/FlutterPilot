@@ -371,9 +371,9 @@ class _AddModelValueState extends State<AddModelValue> {
                     return null;
                   }
                   switch (widget.model.variables[e.key].dataType) {
-                    case DataType.int:
+                    case DataType.fvbInt:
                       return int.tryParse(e.value.text);
-                    case DataType.double:
+                    case DataType.fvbDouble:
                       return double.tryParse(e.value.text);
                     case DataType.string:
                       return e.value.text;
@@ -410,7 +410,7 @@ class AddVariableTile extends StatefulWidget {
 
 class _AddVariableTileState extends State<AddVariableTile> {
   final TextEditingController _controller1 = TextEditingController();
-  DataType dataType = DataType.double;
+  DataType dataType = DataType.fvbDouble;
 
   @override
   Widget build(BuildContext context) {

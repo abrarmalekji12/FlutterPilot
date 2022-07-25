@@ -8,6 +8,7 @@ import 'package:shimmer/shimmer.dart';
 import '../common/app_text_field.dart';
 import '../common/custom_text_field.dart';
 import '../common/logger.dart';
+import '../common/responsive/responsive_widget.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
@@ -113,7 +114,9 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
             }
           },
           child: Container(
-            width: dw(context, 50),
+            width: Responsive.isLargeScreen(context)
+                ? dw(context, 50)
+                : double.infinity,
             height: dh(context, 80),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -183,8 +186,8 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                     child: TabBarView(controller: _tabController, children: [
                       GridView(
                         gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4, childAspectRatio: 3.5),
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                                mainAxisExtent: 50, maxCrossAxisExtent: 170),
                         controller: _basicComponentScrollController,
                         children: filtered
                             .asMap()
@@ -197,8 +200,8 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                       ),
                       GridView.builder(
                         gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2, childAspectRatio: 3.5),
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                                mainAxisExtent: 50, maxCrossAxisExtent: 170),
                         controller: ScrollController(),
                         itemBuilder: (context, i) {
                           return InkWell(
@@ -444,7 +447,6 @@ class BasicComponentTile extends StatelessWidget {
             final component = componentList[entry.value]!();
             componentOperationCubit.addInSameComponentList(component);
             widget.onSelection(component);
-
             Navigator.pop(context);
           },
           child: Padding(

@@ -49,12 +49,12 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
     final flutterProject = FlutterProject.createNewProject(name, userId);
     ComponentOperationCubit.currentProject = flutterProject;
     flutterProject.variables.addAll({
-      'tabletWidthLimit': VariableModel('tabletWidthLimit', DataType.double,
+      'tabletWidthLimit': VariableModel('tabletWidthLimit', DataType.fvbDouble,
           description: 'maximum width tablet can have',
           value: 1200,
           deletable: false,
           uiAttached: true),
-      'phoneWidthLimit': VariableModel('phoneWidthLimit', DataType.double,
+      'phoneWidthLimit': VariableModel('phoneWidthLimit', DataType.fvbDouble,
           deletable: false,
           value: 900,
           uiAttached: true,
@@ -175,13 +175,13 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
               .firstWhereOrNull((e) => e.key == 'tabletWidthLimit') ==
           null) {
         componentOperationCubit.addVariable(VariableModel(
-            'tabletWidthLimit', DataType.double,
+            'tabletWidthLimit', DataType.fvbDouble,
             deletable: false,
             description: 'maximum width tablet can have',
             value: 1200,uiAttached: true));
         componentOperationCubit.addVariable(VariableModel(
           'phoneWidthLimit',
-          DataType.double,
+          DataType.fvbDouble,
           deletable: false,
           description: 'maximum width tablet can have',
           value: 900,uiAttached: true

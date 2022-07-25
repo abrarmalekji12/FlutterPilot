@@ -6,6 +6,7 @@ import '../common/common_methods.dart';
 import '../common/compiler/code_processor.dart';
 import '../common/io_lib.dart';
 import '../common/material_alert.dart';
+import '../common/responsive/responsive_widget.dart';
 import '../injector.dart';
 import '../models/builder_component.dart';
 import '../models/operation_model.dart';
@@ -74,10 +75,13 @@ class _ComponentTreeState extends State<ComponentTree> {
                     children: [
                       IconButton(
                           onPressed: () {
-                            ComponentOperationCubit.currentProject = null;
+                            if(Responsive.isLargeScreen(context)) {
+                              ComponentOperationCubit.currentProject = null;
+                            }
                             Navigator.pop(context);
                           },
-                          visualDensity: const VisualDensity(horizontal: -4,vertical: -4),
+                          visualDensity:
+                              const VisualDensity(horizontal: -4, vertical: -4),
                           icon: const Icon(
                             Icons.arrow_back_ios,
                             size: 18,
@@ -87,8 +91,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                       ),
                       Expanded(
                         child: Text(
-                          ComponentOperationCubit.currentProject!
-                              .name,
+                          ComponentOperationCubit.currentProject!.name,
                           style: AppFontStyle.roboto(16,
                               fontWeight: FontWeight.bold),
                         ),
@@ -1582,8 +1585,7 @@ class _SublistWidgetState extends State<SublistWidget> {
                                         const SizedBox(
                                           width: 10,
                                         ),
-                                        if ((widget.component
-                                                as BuilderComponent)
+                                        if ((widget.component as BuilderComponent)
                                             .functionMap
                                             .containsKey(child))
                                           CustomActionCodeButton(
@@ -1599,33 +1601,61 @@ class _SublistWidgetState extends State<SublistWidget> {
                                                       .functionMap[child]!
                                                       .cleanUpCode,
                                                   downCode: '}  '),
-                                              functions: [
-                                              ],
+                                              functions: [],
                                               title: child,
                                               prerequisites: [
                                                 CodeBase(
-                                                        () => ComponentOperationCubit.currentProject!.actionCode,
-                                                        () => ComponentOperationCubit
-                                                        .currentProject!.variables.values,
+                                                    () =>
+                                                        ComponentOperationCubit
+                                                            .currentProject!
+                                                            .actionCode,
+                                                    () =>
+                                                        ComponentOperationCubit
+                                                            .currentProject!
+                                                            .variables
+                                                            .values,
                                                     ComponentOperationCubit
-                                                        .currentProject!.processor.scopeName),
-                                                if(widget.ancestor is CustomComponent)
-                                                CodeBase(
-                                                        () => (widget.ancestor as CustomComponent).actionCode,
-                                                        () =>(widget.ancestor as CustomComponent).variables.values,
-                                                    (widget.ancestor as CustomComponent).name)
+                                                        .currentProject!
+                                                        .processor
+                                                        .scopeName),
+                                                if (widget.ancestor
+                                                    is CustomComponent)
+                                                  CodeBase(
+                                                      () => (widget.ancestor
+                                                              as CustomComponent)
+                                                          .actionCode,
+                                                      () => (widget.ancestor
+                                                              as CustomComponent)
+                                                          .variables
+                                                          .values,
+                                                      (widget.ancestor
+                                                              as CustomComponent)
+                                                          .name)
                                                 else
                                                   CodeBase(
-                                                          () => ComponentOperationCubit.currentProject!.currentScreen.actionCode,
-                                                          () =>ComponentOperationCubit.currentProject!.currentScreen.variables.values,
-                                                      ComponentOperationCubit.currentProject!.currentScreen.name)
-
+                                                      () =>
+                                                          ComponentOperationCubit
+                                                              .currentProject!
+                                                              .currentScreen
+                                                              .actionCode,
+                                                      () =>
+                                                          ComponentOperationCubit
+                                                              .currentProject!
+                                                              .currentScreen
+                                                              .variables
+                                                              .values,
+                                                      ComponentOperationCubit
+                                                          .currentProject!
+                                                          .currentScreen
+                                                          .name)
                                               ],
                                               variables: () => (widget.component
                                                       as BuilderComponent)
                                                   .functionMap[child]!
                                                   .arguments
-                                                  .map((e) => e.toVar..value=FVBTest(e.dataType,e.nullable))
+                                                  .map((e) => e.toVar
+                                                    ..value =
+                                                        FVBTest(e.dataType, e.nullable))
                                                   .toList(growable: false),
                                               onChanged: (code) {
                                                 (widget.component
@@ -1634,16 +1664,21 @@ class _SublistWidgetState extends State<SublistWidget> {
                                                     ?.code = code;
                                               },
                                               onDismiss: () {
-                                                if(widget.ancestor is CustomComponent) {
-                                                  widget.componentOperationCubit.refreshCustomComponents(widget.ancestor as CustomComponent);
+                                                if (widget.ancestor
+                                                    is CustomComponent) {
+                                                  widget.componentOperationCubit
+                                                      .refreshCustomComponents(
+                                                          widget.ancestor
+                                                              as CustomComponent);
                                                   widget.componentCreationCubit
-                                                      .changedComponent(ancestor: widget.ancestor as CustomComponent);
-                                                }
-                                                else{
+                                                      .changedComponent(
+                                                          ancestor: widget
+                                                                  .ancestor
+                                                              as CustomComponent);
+                                                } else {
                                                   widget.componentCreationCubit
                                                       .changedComponent();
                                                 }
-
                                               })
                                       ],
                                     ),
@@ -1681,8 +1716,6 @@ class _SublistWidgetState extends State<SublistWidget> {
                                 _onClick();
                               },
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     child,
@@ -1690,7 +1723,10 @@ class _SublistWidgetState extends State<SublistWidget> {
                                         color: const Color(0xff494949),
                                         fontWeight: FontWeight.w500),
                                   ),
-                                  if (showMenu)
+                                  if (showMenu) ...[
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
                                     ComponentModificationMenu(
                                         component: widget.component,
                                         customNamed: child,
@@ -1701,6 +1737,7 @@ class _SublistWidgetState extends State<SublistWidget> {
                                             widget.componentOperationCubit,
                                         componentCreationCubit:
                                             widget.componentCreationCubit),
+                                  ]
                                 ],
                               ),
                             )),
@@ -1847,7 +1884,7 @@ class _OnHoverMenuChangeWidgetState extends State<OnHoverMenuChangeWidget> {
   @override
   Widget build(BuildContext context) {
     if (Platform.isAndroid || Platform.isIOS) {
-      return widget.buildWidget(showMenu);
+      return widget.buildWidget(true);
     }
     return MouseRegion(
       onEnter: (_) {
@@ -2533,17 +2570,13 @@ class ComponentTile extends StatelessWidget {
         color: Colors.transparent,
         child: Container(
           height: 30,
-          width: 200,
+          width: 100,
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 7),
           margin: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 2.5),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xffd3d3d3), width: 2),
-          ),
           child: Text(
             component.name,
+            maxLines: 1,
             style: AppFontStyle.roboto(13,
                 color: Colors.black, fontWeight: FontWeight.w500),
           ),
@@ -2566,17 +2599,12 @@ class ComponentTile extends StatelessWidget {
           return Container(
             key: GlobalObjectKey(component.uniqueId),
             height: 30,
+            width: 90,
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 7),
             margin: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 2.5),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: selected
-                  ? Border.all(color: Colors.blueAccent, width: 2)
-                  : Border.all(color: const Color(0xffd3d3d3), width: 2),
-            ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 BlocBuilder<ComponentOperationCubit, ComponentOperationState>(
                   builder: (context, state) {
@@ -2594,10 +2622,14 @@ class ComponentTile extends StatelessWidget {
                     );
                   },
                 ),
-                Text(
-                  component.name,
-                  style: AppFontStyle.roboto(13,
-                      color: Colors.black, fontWeight: FontWeight.w500),
+                Expanded(
+                  child: Text(
+                    component.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    style: AppFontStyle.roboto(13,
+                        color: selected?AppColors.theme:Colors.black, fontWeight:  selected?FontWeight.bold:FontWeight.w500),
+                  ),
                 ),
               ],
             ),

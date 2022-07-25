@@ -4,8 +4,10 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import 'package:resizable_widget/resizable_widget.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 import '../../common/compiler/code_processor.dart';
+import '../../common/responsive/responsive_widget.dart';
 import '../../constant/app_colors.dart';
 import '../../constant/app_dim.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
@@ -30,8 +32,6 @@ class BuildView extends StatefulWidget {
 }
 
 class _BuildViewState extends State<BuildView> {
-  DeviceInfo? _defaultDeviceInfo;
-
   @override
   void initState() {
     super.initState();
@@ -50,60 +50,47 @@ class _BuildViewState extends State<BuildView> {
             _onDismiss(context);
           }
         },
-        child: ResizableWidget(
-          separatorSize: Dimen.separator,
-          separatorColor: AppColors.separator,
-          percentages: const [0.2, 0.8],
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: () {
-                      _onDismiss(context);
-                    },
-                    child: const Icon(Icons.arrow_back),
+        child: Responsive(
+          largeScreen: ResizableWidget(
+            separatorSize: Dimen.separator,
+            separatorColor: AppColors.separator,
+            percentages: const [0.2, 0.8],
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () {
+                        _onDismiss(context);
+                      },
+                      child: const Icon(Icons.arrow_back),
+                    ),
                   ),
-                ),
-                const Expanded(
-                  child: ConsoleWidget(),
-                ),
-              ],
-            ),
-            RuntimeProvider(
-              runtimeMode: RuntimeMode.run,
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey, width: 1),
-                ),
-                child: DevicePreview(
-                  tools: const [DeviceSection()],
-                  storage: DevicePreviewStorage.none(),
-                  defaultDevice: _defaultDeviceInfo,
-                  builder: (_) {
-                    return LayoutBuilder(
-                        builder: (devicePreviewContext, constraints) {
-                      if (_defaultDeviceInfo == null) {
-                        _defaultDeviceInfo = devicePreviewContext
-                            .read<DevicePreviewStore>()
-                            .defaultDevice;
-                        return const CircularProgressIndicator();
-                      }
-                      return Container(
-                        color: Colors.white,
-                        child: widget.componentOperationCubit.project!
-                            .run(context, constraints, navigator: true),
-                      );
-                    });
-                  },
-                  enabled: true,
-                ),
+                  const Expanded(
+                    child: ConsoleWidget(),
+                  ),
+                ],
               ),
-            ),
-          ],
+              RunView(componentOperationCubit: widget.componentOperationCubit),
+            ],
+          ),
+          smallScreen: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 100),
+                child: RunView(
+                    componentOperationCubit: widget.componentOperationCubit),
+              ),
+              SlidingUpPanel(
+                minHeight: 100,
+                maxHeight: 500,
+                panel: const ConsoleWidget(),
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -115,6 +102,53 @@ class _BuildViewState extends State<BuildView> {
     widget.componentOperationCubit.runtimeMode = RuntimeMode.edit;
 
     Navigator.pop(context);
+  }
+}
+
+class RunView extends StatefulWidget {
+  final ComponentOperationCubit componentOperationCubit;
+
+  const RunView({Key? key, required this.componentOperationCubit})
+      : super(key: key);
+
+  @override
+  State<RunView> createState() => _RunViewState();
+}
+
+class _RunViewState extends State<RunView> {
+  DeviceInfo? _defaultDeviceInfo;
+
+  @override
+  Widget build(BuildContext context) {
+    return RuntimeProvider(
+      runtimeMode: RuntimeMode.run,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey, width: 1),
+        ),
+        child: DevicePreview(
+          tools: const [DeviceSection()],
+          storage: DevicePreviewStorage.none(),
+          defaultDevice: _defaultDeviceInfo,
+          builder: (_) {
+            return LayoutBuilder(builder: (devicePreviewContext, constraints) {
+              if (_defaultDeviceInfo == null) {
+                _defaultDeviceInfo = devicePreviewContext
+                    .read<DevicePreviewStore>()
+                    .defaultDevice;
+                return const CircularProgressIndicator();
+              }
+              return Container(
+                color: Colors.white,
+                child: widget.componentOperationCubit.project!
+                    .run(context, constraints, navigator: true),
+              );
+            });
+          },
+          enabled: true,
+        ),
+      ),
+    );
   }
 }
 

@@ -1,6 +1,5 @@
 import 'common/compiler/code_processor.dart';
 import 'common/compiler/constants.dart';
-import 'ui/models_view.dart';
 
 abstract class CodeOperations {
   static String? trim(String? code, {bool removeBackSlash = true}) {
@@ -12,27 +11,32 @@ abstract class CodeOperations {
     bool openDoubleQuote = false;
     bool openBackQuote = false;
     bool openStringFormat=false;
-    code = code.replaceAll(' in ', ':');
+    bool enable=true;
     for (int i = 0; i < code.length; i++) {
       if (code[i] == '\'') {
         openSingleQuote = !openSingleQuote;
+        enable=!openSingleQuote;
       }
       else if( code[i] == '"' ){
         openDoubleQuote=!openDoubleQuote;
+        enable=!openDoubleQuote;
       }
       else if( code[i] == '`'){
         openBackQuote=!openBackQuote;
+        enable=!openBackQuote;
       }
       else if((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
           (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')){
         if(code[i]=='{'){
           openStringFormat=true;
+          enable=true;
         }
-        else{
+        else if(openStringFormat){
           openStringFormat=false;
+          enable=false;
         }
       }
-      else if (((!openSingleQuote&&!openBackQuote&&!openDoubleQuote)||openStringFormat)&&
+      else if (enable&&
           (code[i] == ' ' || (removeBackSlash && code[i] == '\n'))) {
         continue;
       }
@@ -51,6 +55,7 @@ abstract class CodeOperations {
     bool openBackQuote = false;
     int spaceCount = 0;
     bool openStringFormat=false;
+    bool enable=true;
     for (int i = 0; i < code.length; i++) {
       if (code[i] != ' ') {
         if (spaceCount >= 1) {
@@ -67,22 +72,27 @@ abstract class CodeOperations {
 
       if (code[i] == '\'') {
         openSingleQuote = !openSingleQuote;
+        enable=!openSingleQuote;
       }
       else if( code[i] == '"' ){
         openDoubleQuote=!openDoubleQuote;
+        enable=!openDoubleQuote;
       }
       else if( code[i] == '`'){
         openBackQuote=!openBackQuote;
+        enable=!openBackQuote;
       }
       else if((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
           (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')){
         if(code[i]=='{'){
           openStringFormat=true;
+          enable=true;
         }
-        else{
+        else if(openStringFormat){
           openStringFormat=false;
+          enable=false;
         }
-      }else if ((!openSingleQuote&&!openBackQuote&&!openDoubleQuote)||openStringFormat) {
+      }else if (enable) {
         if (code[i] == ' ') {
           spaceCount++;
           continue;
@@ -172,26 +182,44 @@ abstract class CodeOperations {
     return null;
   }
 
+  static getRuntimeTypeWithoutGenerics(final dynamic value) {
+    if(value is Map){
+      return 'Map';
+    }
+    if(value is List){
+      return 'List';
+    }
+    if(value is Iterable){
+      return 'Iterable';
+    }
+    final name=value.runtimeType.toString();
+    final genericIndex=name.indexOf('<');
+    return name.substring(0, genericIndex>=0?genericIndex:name.length);
+  }
   static getDatatypeToDartType(final DataType dataType) {
-    if(dataType.name=='fvbInstance')
+    if(dataType.fvbName=='List'){
+      return List;
+    }
+    else if(dataType.fvbName=='Map'){
+      return Map;
+    }
+    else if(dataType.fvbName=='Iterable'){
+      return Iterable;
+    }
+    if(dataType.name=='fvbInstance'){
+      return dataType.fvbName;
+    }
     switch (dataType) {
-      case DataType.int:
+      case DataType.fvbInt:
         return int;
-      case DataType.double:
+      case DataType.fvbDouble:
         return double;
       case DataType.string:
         return String;
-      case DataType.bool:
+      case DataType.fvbBool:
         return bool;
       case DataType.dynamic:
         return dynamic;
-      case DataType.list:
-        return List;
-      case DataType.map:
-        return Map;
-
-      case DataType.iterable:
-        return Iterable;
       case DataType.fvbFunction:
         return FVBFunction;
       case DataType.unknown:
@@ -202,7 +230,8 @@ abstract class CodeOperations {
       String input,
       int startIndex,
       int target,
-      List<int> stopWhen
+      List<int> stopWhen,
+  {bool Function(int)? stop}
       ) {
     int count = 0;
     for (int i = startIndex + 1; i < input.length; i++) {
@@ -212,7 +241,7 @@ abstract class CodeOperations {
           return i;
         }
       }
-      if (stopWhen.contains(unit)) {
+      if (stopWhen.contains(unit)||(stop?.call(unit)??false)) {
         return -1;
       }
       if(unit == CodeProcessor.roundBracketOpen||unit == CodeProcessor.squareBracketOpen||unit == CodeProcessor.curlyBracketOpen){

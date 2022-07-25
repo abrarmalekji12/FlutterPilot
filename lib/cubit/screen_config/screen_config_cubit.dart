@@ -27,10 +27,10 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
   ScreenConfigCubit() : super(ScreenConfigInitial()) {
     screenConfig = screenConfigs[0];
     ComponentOperationCubit.processor.variables['dw'] = VariableModel(
-        'dw', DataType.double,
+        'dw', DataType.fvbDouble,
         deletable: false,isFinal: true,description:  'device width',value: screenConfig.width,);
     ComponentOperationCubit.processor.variables['dh'] = VariableModel(
-        'dh', DataType.double,
+        'dh', DataType.fvbDouble,
         deletable: false,isFinal: true,description: 'device height',value: screenConfig.height,);
   }
 

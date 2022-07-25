@@ -198,10 +198,9 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     if (!sameComponentCollection.containsKey(component.name)) {
       sameComponentCollection[component.name] = [component];
     } else if (!sameComponentCollection[component.name]!.contains(component)) {
-      final componentCode = component.code();
       for (final comp in sameComponentCollection[component.name]!) {
         if (component.id == comp.id ||
-            (component.name == comp.name && componentCode == comp.code())) {
+            (component.name == comp.name)) {
           return;
         }
       }

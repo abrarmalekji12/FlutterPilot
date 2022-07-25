@@ -11,7 +11,10 @@ import 'package:resizable_widget/resizable_widget.dart';
 import '../bloc/action_code/action_code_bloc.dart';
 import '../bloc/key_fire/key_fire_bloc.dart';
 import '../bloc/suggestion_code/suggestion_code_bloc.dart';
+import '../common/code_box/custom_code_controller.dart';
+import '../common/code_box/custom_code_field.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/responsive/responsive_widget.dart';
 import '../common/utils/dateformat_utils.dart';
 import '../constant/app_colors.dart';
 import '../constant/app_dim.dart';
@@ -56,12 +59,20 @@ final fvbDart = Mode(refs: {
       Mode(ref: '~contains~0~variants~4~contains~2')
     ])
   ]),
-}, keywords: {
-  'keyword':
-      'abstract as assert async await break case catch class const continue covariant default deferred do dynamic else enum export extends extension external factory false final finally for Function get hide if implements import in inferface is library mixin new null on operator part rethrow return set show static super switch sync this throw true try typedef var void while with yield',
-  'built_in':
-      'Comparable DateTime Duration Function Iterable Iterator List Map Match Null Object Pattern RegExp Set Stopwatch String StringBuffer StringSink Symbol Type Uri bool double dynamic int num print Element ElementList document querySelector querySelectorAll window refresh'
-}, contains: [
+},
+
+//     keywords: {
+//   'keyword':
+//       'abstract as assert async await break case catch class const continue covariant default deferred do dynamic else enum export extends extension external factory false final finally for Function get hide if implements import in inferface is library mixin new null on operator part rethrow return set show static super switch sync this throw true try typedef var void while with yield',
+//   'built_in':
+//       'Comparable DateTime Duration Function Iterable Iterator List Map Match Null Object Pattern RegExp Set Stopwatch String StringBuffer StringSink Symbol Type Uri bool double dynamic int num print Element ElementList document querySelector querySelectorAll window refresh'
+// },
+    keywords: {
+      'keyword':
+          'abstract as assert async await break case catch class const continue default do dynamic else enum export extends false final for Function get if implements import in is new null on operator part return set show static super switch this true var void while',
+      'built_in':
+          'Comparable DateTime Duration Function Iterable Iterator List Map Match Null Object Pattern RegExp Set Stopwatch String StringBuffer StringSink Symbol Type Uri bool double dynamic int num print Element ElementList document querySelector querySelectorAll window refresh'
+    }, contains: [
   Mode(ref: '~contains~0'),
   Mode(className: 'comment', begin: '/\\*\\*', end: '\\*/', contains: [
     PHRASAL_WORDS_MODE,
@@ -125,33 +136,37 @@ class ActionCodeEditor extends StatefulWidget {
 }
 
 class _ActionCodeEditorState extends State<ActionCodeEditor> {
-  late final CodeController _codeController;
+  late final CustomCodeController _codeController;
   late final CodeProcessor processor;
   final List<ConsoleMessage> consoleMessages = [];
   final SuggestionCodeBloc _suggestionCodeBloc = SuggestionCodeBloc();
   final ValueNotifier<int> _consoleChangeNotifier = ValueNotifier<int>(0);
-  String? code;
+  String? code, oldCode;
   final DartFormatter _formatter = DartFormatter();
   final FocusNode _focusNode = FocusNode();
   final GlobalKey _textFieldKey = GlobalKey();
   late double _topBox, _bottomBox;
+  int selectionIndex = 0;
   OverlayEntry? suggestionOverlayEntry;
   BoxConstraints? _boxConstraints;
   final ScrollController _scrollController = ScrollController();
   final upStaticCodeController = CodeController(
     language: fvbDart,
     theme: monokaiSublimeTheme
-        .map((key, value) => MapEntry(key, value.copyWith(fontSize: 14))),
+        .map((key, value) => MapEntry(key, value.copyWith(fontSize: 15))),
   );
   final downStaticCodeController = CodeController(
     language: fvbDart,
     theme: monokaiSublimeTheme
-        .map((key, value) => MapEntry(key, value.copyWith(fontSize: 14))),
+        .map((key, value) => MapEntry(key, value.copyWith(fontSize: 15))),
   );
 
   @override
   void dispose() {
-    suggestionOverlayEntry?.remove();
+    if (suggestionOverlayEntry?.mounted ?? false) {
+      suggestionOverlayEntry?.remove();
+    }
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -159,8 +174,8 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
   void initState() {
     super.initState();
     _scrollController.addListener(() {
-      if (_boxConstraints != null) {
-        showOverlaidTag(context, _boxConstraints!);
+      if (Responsive.isLargeScreen(context)&&_boxConstraints != null) {
+        showSuggestionBox(context, _boxConstraints!);
       }
     });
     processor = CodeProcessor(
@@ -181,72 +196,131 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
           ),
     );
 
-    _codeController = CodeController(
+    _codeController = CustomCodeController(
         language: fvbDart,
+        onComment: (start, end) {
+          if (start == end) {
+            /// Single line comment
+            final code = _codeController.text;
+            int index = -1;
+            for (int i = start - 1; i >= 0; i--) {
+              if (code[i] == '\n') {
+                index = i;
+                break;
+              }
+            }
+            if (index == -1) {
+              return;
+            }
+            if (code.length > index + 2 &&
+                code[index + 1] == '/' &&
+                code[index + 2] == '/') {
+              _codeController.value = TextEditingValue(
+                  text:
+                      code.substring(0, index + 1) + code.substring(index + 3),
+                  selection: TextSelection.collapsed(
+                      offset: _codeController.selection.baseOffset));
+            } else {
+              _codeController.value = TextEditingValue(
+                  text: code.substring(0, index + 1) +
+                      '//' +
+                      code.substring(index + 1),
+                  selection: TextSelection.collapsed(
+                      offset: _codeController.selection.baseOffset));
+            }
+          } else {
+            /// Multi line comment
+            final code = _codeController.text;
+            _codeController.text = code.substring(0, start) +
+                '/*\n' +
+                code.substring(start, end + 1) +
+                '*/' +
+                code.substring(end + 1);
+          }
+        },
         theme: monokaiSublimeTheme
-            .map((key, value) => MapEntry(key, value.copyWith(fontSize: 14))),
+            .map((key, value) => MapEntry(key, value.copyWith(fontSize: 15))),
         onChange: (value) {
           if (code != value) {
+            final oldCode = code;
             code = value;
-            widget.onCodeChange(value);
             WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-              executeAndCheck(code!);
+              widget.onCodeChange(code!);
+              executeAndCheck(code!,
+                  suggestion:
+                      (code!.length - (oldCode?.length ?? 0)).abs() == 1);
             });
+          } else {
+            if (_codeController.selection.baseOffset != selectionIndex) {
+              _suggestionCodeBloc.add(SuggestionUpdatedEvent(null));
+              selectionIndex = _codeController.selection.baseOffset;
+            }
           }
         });
     code = widget.code;
     _codeController.text = widget.code;
-    executeAndCheck(code!);
+    executeAndCheck(code!, suggestion: false);
   }
 
-  void showOverlaidTag(BuildContext context, BoxConstraints constraints) async {
-    if (mounted) {
-      suggestionOverlayEntry?.remove();
-      suggestionOverlayEntry = OverlayEntry(builder: (context) {
-        if (!mounted) {
-          suggestionOverlayEntry?.remove();
-          return const Offstage();
-        }
-        final TextPainter painter = TextPainter(
-          textScaleFactor: 1.15,
-          textDirection: TextDirection.ltr,
-          text: _codeController.buildTextSpan(context: context),
-        );
-        painter.layout(maxWidth: constraints.maxWidth - 20);
-        final Rect caretPrototype =
-            Rect.fromLTWH(0.0, 0.0, 2, painter.preferredLineHeight);
-        final offset = painter.getOffsetForCaret(
-            TextPosition(
-                offset: _codeController.selection.baseOffset -
-                    (_suggestionCodeBloc.suggestion?.code.length ?? 0)),
-            caretPrototype);
-        final top =
-            _focusNode.offset.dy + offset.dy + painter.preferredLineHeight;
-        if (top > _topBox && top < _bottomBox) {
-          return Positioned(
-            // Decides where to place the tag on the screen.
-            top: top,
-            left: _focusNode.offset.dx + offset.dx,
-            // Tag code.
-            child: SuggestionWidget(
-              suggestionCodeBloc: _suggestionCodeBloc,
-            ),
-          );
-        }
-        return const Offstage();
-      });
-
-      Overlay.of(context)!.insert(suggestionOverlayEntry!);
+  void showSuggestionBox(
+      BuildContext context, BoxConstraints constraints) async {
+    if (_suggestionCodeBloc.suggestion == null || !mounted) {
+      return;
     }
+    if (suggestionOverlayEntry?.mounted ?? false) {
+      suggestionOverlayEntry?.remove();
+    }
+    suggestionOverlayEntry = OverlayEntry(builder: (context) {
+      if (!mounted) {
+        return Container();
+      }
+      if (!Responsive.isLargeScreen(context)) {
+        return Positioned(
+          top: MediaQuery.of(context).size.height-380-(100),
+          child: SuggestionWidget(
+            suggestionCodeBloc: _suggestionCodeBloc,
+          ),
+        );
+      }
+      final TextPainter painter = TextPainter(
+        textDirection: TextDirection.ltr,
+        text: _codeController.buildTextSpan(
+            context: context, style: const TextStyle(fontSize: 16)),
+      );
+      painter.layout(maxWidth: constraints.maxWidth - 40);
+      final Rect caretPrototype =
+          Rect.fromLTWH(0.0, 0.0, 2, painter.preferredLineHeight);
+      final offset = painter.getOffsetForCaret(
+          TextPosition(
+              offset: _codeController.selection.baseOffset -
+                  (_suggestionCodeBloc.suggestion?.code.length ?? 0)),
+          caretPrototype);
+      final top = Responsive.isLargeScreen(context)
+          ? _focusNode.offset.dy + offset.dy + painter.preferredLineHeight
+          : MediaQuery.of(context).size.height - 400;
+
+      if (top > _topBox && top < _bottomBox) {
+        return Positioned(
+          top: top,
+          left: _focusNode.offset.dx + offset.dx,
+          child: SuggestionWidget(
+            suggestionCodeBloc: _suggestionCodeBloc,
+          ),
+        );
+      }
+      return const Offstage();
+    });
+
+    Overlay.of(context)!.insert(suggestionOverlayEntry!);
   }
 
-  void executeAndCheck(String code) {
-    consoleMessages.clear();
-    _consoleChangeNotifier.value = 0;
+  void executeAndCheck(String code, {bool suggestion = true}) {
     if (widget.variables != null) {
       processor.variables.addAll(widget.variables!
           .call()
-          .where((element) => element.runtimeType == FVBVariable||(element is VariableModel && element.uiAttached))
+          .where((element) =>
+              element.runtimeType == FVBVariable ||
+              (element is VariableModel && element.uiAttached))
           .toList(growable: false)
           .asMap()
           .map((key, value) => MapEntry(value.name, value.clone())));
@@ -264,25 +338,22 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
         type: OperationType.checkOnly,
       );
     }
-    processor.enableSuggestion((suggestions) {
-      _suggestionCodeBloc.add(SuggestionUpdatedEvent(suggestions));
-      if (suggestions != null && _boxConstraints != null) {
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          showOverlaidTag(context, _boxConstraints!);
-        });
-      }
-    });
-    final output = processor.executeCode(
-      code,
-      type: OperationType.checkOnly,
-    );
+    if (suggestion) {
+      processor.enableSuggestion((suggestions) {
+        _suggestionCodeBloc.add(SuggestionUpdatedEvent(suggestions));
+      });
+    }
+    oldCode = processor.executeCode(code,
+        type: OperationType.checkOnly, oldCode: oldCode, onExecutionStart: () {
+      consoleMessages.clear();
+      _consoleChangeNotifier.value = 0;
+      _suggestionCodeBloc.add(SuggestionUpdatedEvent(null));
+    }, declarativeOnly: widget.config.upCode == null);
     processor.destroyProcess(cacheMemory: cache, deep: true);
-    processor.disableSuggestion();
-    if (output is FVBUndefined) {
-      consoleMessages
-          .add(ConsoleMessage(output.toString(), ConsoleMessageType.error));
-      _consoleChangeNotifier.value++;
-    } else if (_consoleChangeNotifier.value == 0) {
+    if (suggestion) {
+      processor.disableSuggestion();
+    }
+    if (_consoleChangeNotifier.value == 0) {
       consoleMessages.add(
           ConsoleMessage('Compiled. No Errors.', ConsoleMessageType.success));
       context
@@ -305,11 +376,6 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
         _topBox = (size.height / 2) - (constraints.maxHeight / 2);
         _bottomBox = (size.height / 2) + (constraints.maxHeight / 2);
       }
-      if (suggestionOverlayEntry == null) {
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          showOverlaidTag(context, constraints);
-        });
-      }
       return BlocListener<KeyFireBloc, KeyFireState>(
         listener: (context, state) {
           if (state is DownKeyEventFired) {
@@ -317,120 +383,160 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
               if ((state.key == 'RETURN' || state.key == 'ENTER')) {
                 _handleEnter();
               } else if (state.key == 'UP') {
-                final offset = _codeController.selection.baseOffset;
                 _suggestionCodeBloc.add(SuggestionSelectionChangeEvent(-1));
-                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                  _codeController.selection =
-                      TextSelection.collapsed(offset: offset);
-                });
               } else if (state.key == 'DOWN') {
-                final offset = _codeController.selection.baseOffset;
                 _suggestionCodeBloc.add(SuggestionSelectionChangeEvent(1));
-                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                  _codeController.selection =
-                      TextSelection.collapsed(offset: offset);
-                });
               }
             }
           }
         },
-        child: ResizableWidget(
-          separatorSize: Dimen.separator,
-          separatorColor: AppColors.separator,
-          isHorizontalSeparator: true,
-          percentages: const [0.9, 0.1],
-          children: [
-            Stack(
-              alignment: Alignment.topRight,
+        child: BlocListener<SuggestionCodeBloc, SuggestionCodeState>(
+          bloc: _suggestionCodeBloc,
+          listener: (context, state) {
+            if (state is SuggestionCodeUpdated) {
+              if (state.suggestions != null) {
+                _codeController.enableSuggestion();
+                if (state.suggestions != null && _boxConstraints != null) {
+                  showSuggestionBox(context, _boxConstraints!);
+                }
+              } else {
+                if (suggestionOverlayEntry != null &&
+                    _codeController.suggestionEnable) {
+                  suggestionOverlayEntry?.remove();
+                  _codeController.disableSuggestion();
+                }
+              }
+            }
+          },
+          child: Responsive(
+            smallScreen: Column(
               children: [
-                Column(
-                  children: [
-                    if (widget.config.upCode != null)
-                      Tooltip(
-                        message: 'unmodifiable code',
-                        child: CodeField(
-                          lineNumberBuilder: (context, lineNumber) =>
-                              const TextSpan(text: ''),
-                          controller: upStaticCodeController
-                            ..text = widget.config.upCode!,
-                          enabled: false,
-                        ),
-                      ),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: _scrollController,
-                        child: CodeField(
-                          minLines: 50,
-                          enabled: true,
-                          focusNode: _focusNode,
-                          key: _textFieldKey,
-                          wrap: true,
-                          controller: _codeController,
-                        ),
-                      ),
-                    ),
-                    if (widget.config.downCode != null)
-                       Tooltip(
-                         message: 'unmodifiable code',
-                         child: CodeField(
-                           lineNumberBuilder: (context, lineNumber) =>
-                           const TextSpan(text: ''),
-                          controller: downStaticCodeController
-                            ..text = widget.config.downCode!,
-                          enabled: false,
-                      ),
-                       ),
-                  ],
+                SizedBox(
+                  height: 50,
+                  child: _buildConsole(),
                 ),
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AppIconButton(
-                            icon: Icons.format_align_center,
-                            onPressed: () {
-                              try {
-                                final code = _formatter
-                                    .format(_codeController.text
-                                        .replaceAll('{{', '__\${')
-                                        .replaceAll('}}', '}__'))
-                                    .replaceAll('__\${', '{{')
-                                    .replaceAll('}__', '}}');
-                                final cursor =
-                                    _codeController.selection.extentOffset;
-                                _codeController.value = TextEditingValue(
-                                    text: code,
-                                    selection: TextSelection.collapsed(
-                                        offset: cursor));
-                                widget.onCodeChange(code);
-                              } on FormatterException {
-                                return;
-                              }
-                            },
-                            color: Colors.blueAccent),
-                      ],
-                    ),
-                  ),
+                Expanded(
+                  child: _buildEditor(),
                 ),
               ],
             ),
-            Container(
-              color: const Color(0xff494949),
-              padding: const EdgeInsets.all(8),
-              alignment: Alignment.topLeft,
-              child: ValueListenableBuilder(
-                  valueListenable: _consoleChangeNotifier,
-                  builder: (context, value, child) {
-                    return printConsoleMessage();
-                  }),
-            )
-          ],
+            largeScreen: ResizableWidget(
+              separatorSize: Dimen.separator,
+              separatorColor: AppColors.separator,
+              isHorizontalSeparator: true,
+              percentages: const [0.9, 0.1],
+              children: [_buildEditor(), _buildConsole()],
+            ),
+          ),
         ),
       );
     });
+  }
+
+  Widget _buildConsole() {
+    return Container(
+      color: const Color(0xff494949),
+      padding: const EdgeInsets.all(8),
+      alignment: Alignment.topLeft,
+      child: ValueListenableBuilder(
+          valueListenable: _consoleChangeNotifier,
+          builder: (context, value, child) {
+            return printConsoleMessage();
+          }),
+    );
+  }
+
+  Widget _buildEditor() {
+    return Stack(
+      alignment: Alignment.topRight,
+      children: [
+        Column(
+          children: [
+            if (widget.config.upCode != null)
+              Tooltip(
+                message: 'unmodifiable code',
+                child: CodeField(
+                  lineNumberBuilder: (context, lineNumber) =>
+                      const TextSpan(text: ''),
+                  controller: upStaticCodeController
+                    ..text = widget.config.upCode!,
+                  enabled: false,
+                ),
+              ),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: CustomCodeField(
+                  minLines: 50,
+                  enabled: true,
+                  focusNode: _focusNode,
+                  key: _textFieldKey,
+                  wrap: true,
+                  controller: _codeController,
+                ),
+              ),
+            ),
+            if (widget.config.downCode != null)
+              Tooltip(
+                message: 'unmodifiable code',
+                child: CodeField(
+                  lineNumberBuilder: (context, lineNumber) =>
+                      const TextSpan(text: ''),
+                  controller: downStaticCodeController
+                    ..text = widget.config.downCode!,
+                  enabled: false,
+                ),
+              ),
+          ],
+        ),
+        Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppIconButton(
+                    icon: Icons.format_align_center,
+                    onPressed: () {
+                      try {
+                        final formatCode = _codeController.text
+                            .replaceAll('{{', '__\${')
+                            .replaceAll('}}', '}__');
+                        final code1 = (widget.config.downCode != null
+                                ? _formatter
+                                    .format('temp() {' + formatCode + '}')
+                                    .replaceFirst('temp() {', '')
+                                : _formatter.format(formatCode))
+                            .replaceAll('__\${', '{{')
+                            .replaceAll('}__', '}}');
+                        final code = widget.config.downCode != null
+                            ? code1.substring(0, code1.lastIndexOf('}'))
+                            : code1;
+                        final cursor = _codeController.selection.extentOffset;
+                        _codeController.value = TextEditingValue(
+                            text: code,
+                            selection: TextSelection.collapsed(
+                                offset: code.length > cursor
+                                    ? cursor
+                                    : code.length - 1));
+                        widget.onCodeChange(code);
+                      } on FormatterException catch (error) {
+                        for (final error in error.errors) {
+                          consoleMessages.add(ConsoleMessage(
+                              error.message, ConsoleMessageType.error));
+                          _consoleChangeNotifier.value++;
+                        }
+                        return;
+                      }
+                    },
+                    color: Colors.blueAccent),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget printConsoleMessage() {
@@ -460,7 +566,6 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
         text.substring(0, index - _suggestionCodeBloc.suggestion!.code.length) +
             suggestion.result +
             text.substring(index);
-    _suggestionCodeBloc.suggestion = null;
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _codeController.value = TextEditingValue(
           text: newText,
@@ -473,6 +578,8 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
                   extentOffset: offset - suggestion.resultCursorEnd)
               : TextSelection.collapsed(
                   offset: offset - suggestion.resultCursorEnd));
+
+      _suggestionCodeBloc.add(SuggestionUpdatedEvent(null));
     });
   }
 }

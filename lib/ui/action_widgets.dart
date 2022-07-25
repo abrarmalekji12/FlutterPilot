@@ -364,66 +364,66 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        children: [
-          Text(
-            'Custom Action',
-            style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(
-            height: 20,
-          ),
-          SizedBox(
-            height: 400,
-            child: BlocBuilder<ActionCodeBloc, ActionCodeState>(
-              builder: (context, state) {
-                final extraCodeBase = (root is CustomComponent)
-                    ? CodeBase(
-                        () => (root as CustomComponent).actionCode,
-                        () => (root as CustomComponent).variables.values,
-                        (root as CustomComponent).processor.scopeName)
-                    : CodeBase(
-                        () => ComponentOperationCubit
-                            .currentProject!.currentScreen.actionCode,
-                        () => ComponentOperationCubit
-                            .currentProject!.currentScreen.variables.values,
-                        ComponentOperationCubit
-                            .currentProject!.currentScreen.processor.scopeName);
-                return ActionCodeEditor(
-                  functions:
-                      (root is! StatelessComponent) ? [setStateFunction] : [],
-                  prerequisites: [
-                    CodeBase(
-                        () =>
-                            ComponentOperationCubit.currentProject!.actionCode,
-                        () => ComponentOperationCubit
-                            .currentProject!.variables.values,
-                        ComponentOperationCubit
-                            .currentProject!.processor.scopeName),
-                    extraCodeBase
-                  ],
-                  code: widget.action.arguments[0],
-                  onCodeChange: (String value) {
-                    widget.action.arguments[0] = value;
-                    BlocProvider.of<ClickActionCubit>(context).changedState();
+    return Column(
+      children: [
+        const SizedBox(
+          height: 10,
+        ),
+        Text(
+          'Custom Action',
+          style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(
+          height: 10,
+        ),
+        SizedBox(
+          height: 400,
+          child: BlocBuilder<ActionCodeBloc, ActionCodeState>(
+            builder: (context, state) {
+              final extraCodeBase = (root is CustomComponent)
+                  ? CodeBase(
+                      () => (root as CustomComponent).actionCode,
+                      () => (root as CustomComponent).variables.values,
+                      (root as CustomComponent).processor.scopeName)
+                  : CodeBase(
+                      () => ComponentOperationCubit
+                          .currentProject!.currentScreen.actionCode,
+                      () => ComponentOperationCubit
+                          .currentProject!.currentScreen.variables.values,
+                      ComponentOperationCubit
+                          .currentProject!.currentScreen.processor.scopeName);
+              return ActionCodeEditor(
+                functions:
+                    (root is! StatelessComponent) ? [setStateFunction] : [],
+                prerequisites: [
+                  CodeBase(
+                      () =>
+                          ComponentOperationCubit.currentProject!.actionCode,
+                      () => ComponentOperationCubit
+                          .currentProject!.variables.values,
+                      ComponentOperationCubit
+                          .currentProject!.processor.scopeName),
+                  extraCodeBase
+                ],
+                code: widget.action.arguments[0],
+                onCodeChange: (String value) {
+                  widget.action.arguments[0] = value;
+                  BlocProvider.of<ClickActionCubit>(context).changedState();
 
-                    BlocProvider.of<ActionEditCubit>(context).change();
-                  },
-                  //ComponentOperationCubit
-                  //                       .currentProject!.variables.values
-                  //                       .toList()
-                  variables: null,
-                  onError: (bool error) {},
-                  scopeName: extraCodeBase.scopeName,
-                  config: ActionCodeEditorConfig(),
-                );
-              },
-            ),
-          )
-        ],
-      ),
+                  BlocProvider.of<ActionEditCubit>(context).change();
+                },
+                //ComponentOperationCubit
+                //                       .currentProject!.variables.values
+                //                       .toList()
+                variables: null,
+                onError: (bool error) {},
+                scopeName: extraCodeBase.scopeName,
+                config: ActionCodeEditorConfig(),
+              );
+            },
+          ),
+        )
+      ],
     );
   }
 }

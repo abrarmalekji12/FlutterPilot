@@ -21,7 +21,7 @@ class FunctionProcessor {
       final function = FVBFunction(split.last, body,
           ArgumentProcessor.processArgumentDefinition(processor, argumentList),
           returnType: split.length == 2
-              ? DataType.codeToDatatype(dataTypeCode, CodeProcessor.classes)
+              ? DataType.codeToDatatype(dataTypeCode, CodeProcessor.classes,CodeProcessor.enums)
               : DataType.dynamic,
           canReturnNull: nullable,
           isLambda: lambda,isAsync: async);
@@ -33,11 +33,11 @@ class FunctionProcessor {
     }
     final function = FVBFunction('', body,
         ArgumentProcessor.processArgumentDefinition(processor, argumentList),
-        returnType: DataType.dynamic, canReturnNull: true,isAsync: async);
+        returnType: DataType.dynamic, canReturnNull: true,isAsync: async,isLambda: lambda);
 
     if (CodeProcessor.operationType == OperationType.checkOnly) {
       function.execute(processor,
-          argumentList.map((e) => FVBUndefined('')).toList(growable: false));
+          function.arguments.map((e) => FVBTest(e.dataType,e.nullable)).toList(growable: false));
     }
     return function;
   }
