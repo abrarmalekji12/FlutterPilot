@@ -4,12 +4,12 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 
 /// For non-windows, Uncomment the following 3 imports:
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 /// For Windows uncomment the following import:
-import 'firebase_connection.dart';
+// import 'firebase_connection.dart';
 import '../common/io_lib.dart';
 
 import 'package:get/get.dart';
@@ -80,7 +80,7 @@ abstract class FireBridge {
         'type': type,
         'action_code': customComponent.actionCode,
         'variables': customComponent.variables.values
-            .where((element) => element is VariableModel && element.uiAttached)
+            .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
             .map((e) => e.toJson())
             .toList(),
       });
@@ -97,7 +97,7 @@ abstract class FireBridge {
         'name': customComponent.name,
         'action_code': customComponent.actionCode,
         'variables': customComponent.variables.values
-            .where((element) => element is VariableModel && element.uiAttached)
+            .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
             .map((e) => e.toJson())
             .toList(),
       });
@@ -119,7 +119,7 @@ abstract class FireBridge {
       'action_code': customComponent.actionCode,
       'code': CodeOperations.trim(customComponent.root?.code(clean: false)),
       'variables': customComponent.variables.values
-          .where((element) => element is VariableModel && element.uiAttached)
+          .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
           .map((e) => e.toJson())
           .toList(),
       'type': type
@@ -230,11 +230,12 @@ abstract class FireBridge {
     if (doc.data() == null || !doc.exists) {
       return AuthResponse.right('No user data exist');
     }
+
+    final newUserId = doc.data()!['count'] + 1;
     await FirebaseFirestore.instance
         .collection('userInfo')
         .doc('count')
-        .update({'count': FieldValue.increment(1)});
-    final newUserId = doc.data()!['count'] + 1;
+        .update({'count': newUserId});
     await FirebaseFirestore.instance.collection('users').add({
       'username': userName,
       'password': password,
@@ -265,7 +266,7 @@ abstract class FireBridge {
     final List<FlutterProject> projectList = [];
     final data = snapshot.data()!;
     for (final projectName in data['projects'] ?? []) {
-      projectList.add(FlutterProject(projectName, userId, null));
+      projectList.add(FlutterProject(projectName, userId, null,imageList: []));
     }
     return projectList;
   }
@@ -277,7 +278,7 @@ abstract class FireBridge {
       'project_name': project.name,
       'root': CodeOperations.trim(project.rootComponent?.code(clean: false)),
       'variables': project.variables.values
-          .where((element) => (element is VariableModel) && element.uiAttached)
+          .where((element) => (element is VariableModel) && element.uiAttached&&!element.isDynamic)
           .map((element) => element.toJson())
           .toList(growable: false),
       // 'models': project.models.map((e) => e.toJson()).toList(growable: false),
@@ -373,10 +374,13 @@ abstract class FireBridge {
       final FlutterProject flutterProject = FlutterProject(
           projectInfo['project_name'], userId, projectInfoDoc.id,
           device: projectInfo['device'],
+          imageList: projectInfo['image_list'] != null
+              ? List<String>.from(projectInfo['image_list'])
+              : [],
           actionCode: projectInfo['action_code'] ?? '',
           settings: settings);
       final variables = List.from(projectInfo['variables'] ?? [])
-          .map((e) => VariableModel.fromJson(e, flutterProject.name));
+          .map((e) => VariableModel.fromJson(e..['uiAttached'] = true));
       for (final variable in variables) {
         flutterProject.variables[variable.name] = variable;
       }
@@ -538,8 +542,6 @@ abstract class FireBridge {
         .where('uid', isEqualTo: loginResponse.user!.uid)
         // .where('password', isEqualTo: password)
         .get();
-    debugPrint(
-        'LOGIN $userName $password ${response.docs.length} ${response.docs.isNotEmpty ? response.docs[0].data() : 'empty'}');
     if (response.docs.isEmpty || !response.docs[0].exists) {
       return AuthResponse.right(
           'Something went wrong, Please check your internet');
@@ -610,8 +612,12 @@ abstract class FireBridge {
       final oldResponse = await variablesRef.get();
       if (oldResponse.data()!['variables'] != null) {
         await variablesRef.update({
-          'variables': List.from(oldResponse.data()!['variables'])
+          'variables': List.from(oldResponse.data()!['variables'] ?? [])
             ..add(variableModel.toJson())
+        });
+      } else {
+        await variablesRef.update({
+          'variables': [variableModel.toJson()]
         });
       }
     } else {
@@ -664,7 +670,7 @@ abstract class FireBridge {
         .doc(project.docId)
         .update({
       'variables': project.variables.values
-          .where((element) => element is VariableModel && element.uiAttached)
+          .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
           .map((e) => e.toJson())
           .toList(growable: false)
     });
@@ -680,7 +686,7 @@ abstract class FireBridge {
         .doc(project.currentScreen.name)
         .update({
       'variables': project.currentScreen.variables.values
-          .where((element) => element is VariableModel && element.uiAttached)
+          .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
           .map((e) => e.toJson())
           .toList(growable: false)
     });
@@ -688,15 +694,15 @@ abstract class FireBridge {
   }
 
   static Future<void> updateVariableForCustomComponent(
-      final int userId,
-      final FlutterProject project,
-      final CustomComponent component,
-      final VariableModel variableModel) async {
+    final int userId,
+    final FlutterProject project,
+    final CustomComponent component,
+  ) async {
     await FirePath.customComponentReference(
             project.userId, project.docId!, component.name)
         .update({
       'variables': component.variables.values
-          .where((element) => element is VariableModel && element.uiAttached)
+          .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
           .map((e) => e.toJson())
           .toList(growable: false)
     });
@@ -835,7 +841,6 @@ abstract class FireBridge {
         component.code(clean: false),
       ),
     });
-    logger('=== FIRE-BRIDGE == updateGlobalCustomComponent ==');
   }
 
   static Future<void> logout() async {

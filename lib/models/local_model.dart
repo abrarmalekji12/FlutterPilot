@@ -12,10 +12,14 @@ class LocalModel {
   LocalModel(this.name);
 
   factory LocalModel.fromJson(Map<String, dynamic> json) {
-    final valueList = List.from(json['values'])
-        .map((e) => Map.from(e).values.toList())
-        .toList();
-    debugPrint('SEE ${json['values']} $valueList');
+    final valueList = List.from(json['values']).map((e) {
+      final entries = Map.from(e);
+      final List<dynamic> list = [];
+      for (int i = 0; i < entries.length; i++) {
+        list.add(entries[i.toString()]);
+      }
+      return list;
+    }).toList();
     return LocalModel(json['name'])
       ..variables = List.from(json['variables'])
           .map((e) => DynamicVariableModel.fromJson(e))
@@ -50,7 +54,6 @@ class LocalModel {
     }
     return '$value';
   }
-
 
   toJson() {
     final valueList = [];

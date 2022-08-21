@@ -31,7 +31,7 @@ class CustomPopupMenuButton<T> extends StatefulWidget {
   _CustomPopupMenuButtonState createState() => _CustomPopupMenuButtonState<T>();
 }
 
-class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
+class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton<T>> {
   final GlobalKey globalKey = GlobalKey();
   OverlayEntry? overlayEntry;
   bool expanded = false;
@@ -54,9 +54,6 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
     super.initState();
     overlayEntry = OverlayEntry(builder: (context) {
       allItems = widget.itemBuilder(context);
-      filteredItems = allItems
-          .where((element) => element.value.toLowerCase().contains(_searchText))
-          .toList();
 
       return GestureDetector(
         onTap: () {
@@ -81,6 +78,13 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                           offset: Offset(0, -100 * (1 - value)),
                           child: StatefulBuilder(
                               builder: (context, setStateForMenu) {
+                            filteredItems = allItems
+                                .where((element) =>
+                                    element.value is! String ||
+                                    element.value
+                                        .toLowerCase()
+                                        .contains(_searchText))
+                                .toList();
                             return SizedBox(
                               width: 220,
                               height: getCalculatedHeight(),
@@ -98,13 +102,14 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                         hint: 'Search ..',
                                         onSubmitted: () {
                                           if (filteredItems.isNotEmpty) {
-                                              expanded = false;
-                                            widget.onSelected(
-                                                filteredItems.first.value as T);
-                                            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                                            expanded = false;
+                                            WidgetsBinding.instance
+                                                .addPostFrameCallback(
+                                                    (timeStamp) {
                                               overlayEntry?.remove();
+                                              widget.onSelected(filteredItems
+                                                  .first.value as T);
                                             });
-
                                           }
                                         },
                                         focusColor: AppColors.theme,
@@ -132,6 +137,7 @@ class _CustomPopupMenuButtonState<T> extends State<CustomPopupMenuButton> {
                                                     filteredItems[i].value
                                                         as T);
                                                 overlayEntry?.remove();
+
                                                 expanded = false;
                                               },
                                               borderRadius:

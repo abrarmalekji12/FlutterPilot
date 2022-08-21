@@ -176,7 +176,8 @@ class FixChildListView extends StatelessWidget {
     return ListView.builder(
       itemCount: data.length,
       itemBuilder: (BuildContext context, int index) {
-        return ListTile(
+        return ListTile(dense: true,
+          contentPadding: EdgeInsets.zero,
           onTap: () {
             onSelection(data[index]);
             Navigator.pop(context);

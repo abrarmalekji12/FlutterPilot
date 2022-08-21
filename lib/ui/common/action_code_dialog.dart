@@ -11,13 +11,22 @@ import '../action_code_editor.dart';
 
 class ActionCodeEditorConfig {
   final String? upCode, downCode;
+  final List<FVBVariable> Function()? variables;
+  final bool singleLine;
+  final bool string;
+  final bool parentProcessorGiven;
 
-  ActionCodeEditorConfig({this.upCode, this.downCode});
+  ActionCodeEditorConfig(
+      {this.upCode,
+      this.downCode,
+      this.variables,
+      this.singleLine = false,
+      this.string = false,
+      this.parentProcessorGiven = false});
 }
 
 class ActionCodeDialog {
   final BuildContext context;
-  final List<FVBFunction> functions;
   final void Function(String) onChanged;
   late OverlayEntry _overlayEntry;
   final void Function(bool) onError;
@@ -25,20 +34,21 @@ class ActionCodeDialog {
   final String title;
   bool fullScreen = false;
   final ActionCodeEditorConfig? config;
+  final CodeProcessor processor;
 
   ActionCodeDialog(
       {required this.onError,
       required this.title,
-      required this.functions,
+      required this.processor,
       required this.context,
       required this.onChanged,
       required this.onDismiss,
       this.config});
 
-  void show(final BuildContext context,
-      {required final String code,
-      required final List<FVBVariable> Function()? variables,
-      final List<CodeBase>? prerequisites}) {
+  void show(
+    final BuildContext context, {
+    required final String code,
+  }) {
     CodeProcessor.lastCodes.clear();
     CodeProcessor.lastCodeCount = 0;
     _overlayEntry = OverlayEntry(
@@ -63,11 +73,14 @@ class ActionCodeDialog {
                         boxShadow: kElevationToShadow[10],
                       ),
                       width: fullScreen ? dw(context, 100) : 500,
-                      height: fullScreen
-                          ? null
-                          : (Responsive.isLargeScreen(context)
-                              ? 600
-                              : (MediaQuery.of(context).size.height - 400)),
+                      height: (config?.singleLine ?? false)
+                          ? 200
+                          : (fullScreen
+                              ? null
+                              : (Responsive.isLargeScreen(context)
+                                  ? 600
+                                  : (MediaQuery.of(context).size.height -
+                                      400))),
                       padding: const EdgeInsets.all(10),
                       child: Column(
                         children: [
@@ -82,6 +95,17 @@ class ActionCodeDialog {
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.refresh),
+                                    onPressed: () {
+                                      context
+                                          .read<ComponentCreationCubit>()
+                                          .changedComponent();
+                                    },
+                                  ),
+                                  const SizedBox(
+                                    width: 20,
+                                  ),
                                   if (Responsive.isLargeScreen(context)) ...[
                                     IconButton(
                                       icon: Icon(fullScreen
@@ -119,15 +143,13 @@ class ActionCodeDialog {
                           Expanded(
                             child: GestureDetector(
                               onTap: () {},
-                              child: ActionCodeEditor(
-                                prerequisites: prerequisites ?? [],
+                              child: FVBCodeEditor(
                                 onCodeChange: onChanged,
+                                scopeName: title,
                                 onError: onError,
                                 code: code,
-                                variables: variables,
-                                scopeName: title,
-                                functions: functions,
                                 config: config ?? ActionCodeEditorConfig(),
+                                processor: processor,
                               ),
                             ),
                           ),
@@ -142,6 +164,7 @@ class ActionCodeDialog {
         );
       },
     );
+
     Overlay.of(context)!.insert(_overlayEntry);
   }
 

@@ -13,7 +13,7 @@ class StringOperation {
         .split('_')
         .asMap()
         .entries
-        .map((value) => (value.key == 0&&startWithLower
+        .map((value) => (value.key == 0 && startWithLower
             ? value.value.toLowerCase()
             : capitalize(value.value)))
         .join();
@@ -46,7 +46,9 @@ class StringOperation {
         final unit = str[i].codeUnits.first;
         if (unit >= CodeProcessor.capitalACodeUnit &&
             unit <= CodeProcessor.capitalZCodeUnit) {
-          output.write('_');
+          if (i != 0) {
+            output.write('_');
+          }
           output.write(str[i].toLowerCase());
         } else {
           output.write(str[i]);

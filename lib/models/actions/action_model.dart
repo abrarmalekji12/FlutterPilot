@@ -34,7 +34,7 @@ class CustomAction extends ActionModel {
 
   @override
   String code() {
-    return FVBEngine().fvbToDart(arguments[0]);
+    return FVBEngine.instance.fvbToDart(arguments[0]);
   }
 
   @override
@@ -43,9 +43,7 @@ class CustomAction extends ActionModel {
   }
 
   @override
-  void perform(BuildContext context) {
-
-  }
+  void perform(BuildContext context) {}
 
   @override
   ActionModel clone() => CustomAction(code: arguments[0].toString());
@@ -156,8 +154,7 @@ class ShowDialogInStackAction extends ActionModel {
 
   @override
   void perform(BuildContext context) {
-    BlocProvider.of<StackActionCubit>(context)
-        .showSimpleDialog(this);
+    BlocProvider.of<StackActionCubit>(context).showSimpleDialog(this);
     // (const GlobalObjectKey(navigationKey).currentState as NavigatorState).context;
   }
 
@@ -188,8 +185,7 @@ class ShowCustomDialogInStackAction extends ActionModel {
           StackOperation.addOverlay,
           uiScreen: (arguments[0] as UIScreen));
     }
-    BlocProvider.of<StackActionCubit>(context)
-        .showCustomSimpleDialog(this);
+    BlocProvider.of<StackActionCubit>(context).showCustomSimpleDialog(this);
   }
 
   @override

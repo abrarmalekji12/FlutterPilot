@@ -78,6 +78,7 @@ class CustomCodeController extends TextEditingController {
   void enableSuggestion() {
     _suggestionEnable = true;
   }
+
   bool get suggestionEnable => _suggestionEnable;
 
   void disableSuggestion() {
@@ -184,7 +185,7 @@ class CustomCodeController extends TextEditingController {
   @override
   set value(TextEditingValue newValue) {
     final loc = _insertedLoc(text, newValue.text);
-    if (loc != null) {
+    if (loc != null && loc != -1) {
       final char = newValue.text[loc];
       final modifier = modifierMap[char];
       final val = modifier?.updateString(rawText, selection, params);

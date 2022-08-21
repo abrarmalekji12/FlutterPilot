@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get.dart';
 import '../../common/compiler/code_processor.dart';
 import '../../common/undo/revert_work.dart';
 import '../../injector.dart';
@@ -14,6 +16,7 @@ import '../../models/other_model.dart';
 import '../../models/project_model.dart';
 import '../../firestore/firestore_bridge.dart';
 import '../../models/component_model.dart';
+import '../../network/connectivity.dart';
 import '../../runtime_provider.dart';
 import '../component_creation/component_creation_cubit.dart';
 import '../component_selection/component_selection_cubit.dart';
@@ -25,12 +28,14 @@ enum CustomWidgetType { stateless, stateful }
 
 class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   static FlutterProject? currentProject;
+  List<ImageData>? imageDataList;
   final Map<Component, bool> expandedTree = {};
   final Map<String, List<Component>> sameComponentCollection = {};
   RuntimeMode runtimeMode = RuntimeMode.edit;
   final List<FavouriteModel> favouriteList = [];
   static Map<String, Uint8List> bytesCache = {};
   static late CodeProcessor processor;
+  static late String componentId = '';
 
   ComponentOperationCubit() : super(ComponentOperationInitial()) {
     processor = get<CodeProcessor>();
@@ -51,6 +56,20 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       updateGlobalCustomComponent(root);
     }
     emit(ComponentUpdatedState());
+  }
+
+  Future<void> waitForConnectivity() async {
+    if (!await AppConnectivity.available()) {
+      if (state is! ComponentOperationErrorState) {
+        emit(ComponentOperationErrorState('No Connection'));
+      }
+      final stream = AppConnectivity.listen();
+      await for (final check in stream) {
+        if (check != ConnectivityResult.none) {
+          break;
+        }
+      }
+    }
   }
 
   // static void changeVariables(final UIScreen screen) {
@@ -80,43 +99,91 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   void updateActionCode(final String value) async {
-    emit(ComponentOperationLoadingState());
-    project?.actionCode = value;
-    await FireBridge.updateActionCode(project!.userId, project!);
-    emit(ComponentOperationInitial());
+    await waitForConnectivity();
+    try {
+      emit(ComponentOperationLoadingState());
+      project?.actionCode = value;
+      await FireBridge.updateActionCode(project!.userId, project!);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   void updateCustomComponentActionCode(
       final CustomComponent component, final String value) async {
-    emit(ComponentOperationLoadingState());
-    component.actionCode = value;
-    await FireBridge.updateCustomComponentActionCode(
-        project!.userId, project!, component);
-    refreshCustomComponents(component);
-    emit(ComponentOperationInitial());
+    await waitForConnectivity();
+
+    try {
+      emit(ComponentOperationLoadingState());
+      component.actionCode = value;
+      component.objects.forEach((element) {
+        element.actionCode = value;
+        element.processor.destroyProcess(deep: false);
+        element.processor.executeCode(value, type: OperationType.checkOnly);
+      });
+      await FireBridge.updateCustomComponentActionCode(
+          project!.userId, project!, component);
+      refreshCustomComponents(component);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   void updateScreenActionCode(final UIScreen screen, final String value) async {
-    emit(ComponentOperationLoadingState());
-    screen.actionCode = value;
-    await FireBridge.updateScreenActionCode(project!.userId, project!);
-    emit(ComponentOperationInitial());
+    await waitForConnectivity();
+
+    try {
+      emit(ComponentOperationLoadingState());
+      screen.actionCode = value;
+
+      await FireBridge.updateScreenActionCode(project!.userId, project!);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
+  }
+
+  void updateProjectConfig(final String key, final dynamic value) async {
+    await waitForConnectivity();
+    try {
+      emit(ComponentOperationLoadingState());
+      await FireBridge.updateProjectValue(project!, key, value);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> changeProjectScreenInDB() async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.updateCurrentScreen(project!.userId, project!);
-    emit(ComponentOperationInitial());
+    await waitForConnectivity();
+
+    try {
+      emit(ComponentOperationLoadingState());
+      await FireBridge.updateCurrentScreen(project!.userId, project!);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> updateMainScreen() async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.updateMainScreen(project!.userId, project!);
+    await waitForConnectivity();
+
+    try {
+      emit(ComponentOperationLoadingState());
+      await FireBridge.updateMainScreen(project!.userId, project!);
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
     emit(ComponentOperationInitial());
   }
 
   Future<void> updateGlobalCustomComponent(CustomComponent customComponent,
       {String? newName}) async {
+    await waitForConnectivity();
+
     emit(ComponentOperationLoadingState());
     try {
       await FireBridge.saveComponent(project!, customComponent,
@@ -199,8 +266,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       sameComponentCollection[component.name] = [component];
     } else if (!sameComponentCollection[component.name]!.contains(component)) {
       for (final comp in sameComponentCollection[component.name]!) {
-        if (component.id == comp.id ||
-            (component.name == comp.name)) {
+        if (component.id == comp.id) {
           return;
         }
       }
@@ -215,36 +281,62 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   Future<List<ImageData>?> loadAllImages() async {
-    emit(ComponentOperationLoadingState());
-    final imageList = await FireBridge.loadAllImages(project!.userId);
-    for (final ImageData image in imageList ?? []) {
-      if (image.imageName != null) {
-        byteCache[image.imageName!] = image.bytes!;
+    await waitForConnectivity();
+
+    try {
+      emit(ComponentOperationLoadingState());
+      final imageList = await FireBridge.loadAllImages(project!.userId);
+      for (final ImageData image in imageList ?? []) {
+        if (image.imageName != null) {
+          byteCache[image.imageName!] = image.bytes!;
+        }
       }
+      imageDataList = imageList;
+      emit(ComponentOperationInitial());
+      return imageList;
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
     }
-    emit(ComponentOperationInitial());
-    return imageList;
+    return null;
   }
 
   void uploadImage(ImageData imageData) async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.uploadImage(project!.userId, project!.name, imageData);
-    emit(ComponentOperationInitial());
+    await waitForConnectivity();
+
+    try {
+      emit(ComponentOperationLoadingState());
+      await FireBridge.uploadImage(project!.userId, project!.name, imageData);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> deleteImage(String imgName) async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.removeImage(project!.userId, imgName);
-    emit(ComponentOperationInitial());
+    await waitForConnectivity();
+    try {
+      emit(ComponentOperationLoadingState());
+      await FireBridge.removeImage(project!.userId, imgName);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> deleteCurrentUIScreen(final UIScreen uiScreen) async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.removeUIScreen(project!.userId, project!, uiScreen);
-    emit(ComponentOperationInitial());
+    await waitForConnectivity();
+    try {
+      emit(ComponentOperationLoadingState());
+      await FireBridge.removeUIScreen(project!.userId, project!, uiScreen);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> updateRootComponent() async {
+    await waitForConnectivity();
+
     emit(ComponentOperationLoadingState());
     try {
       await FireBridge.updateScreenRootComponent(project!.userId, project!.name,
@@ -258,6 +350,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> addUIScreen(final UIScreen uiScreen) async {
     project!.uiScreens.add(uiScreen);
     changeProjectScreen(uiScreen);
+    await waitForConnectivity();
     emit(ComponentUpdatedState());
     emit(ComponentOperationLoadingState());
     try {
@@ -291,7 +384,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   void addCustomComponent(String name, CustomWidgetType type,
-      {Component? root}) {
+      {Component? root}) async {
     final CustomComponent component;
     if (type == CustomWidgetType.stateless) {
       component = StatelessComponent(
@@ -309,8 +402,13 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       refreshCustomComponents(component);
     }
 
-    FireBridge.addNewGlobalCustomComponent(
-        project!.userId, project!, component);
+    try {
+      await waitForConnectivity();
+      await FireBridge.addNewGlobalCustomComponent(
+          project!.userId, project!, component);
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
     emit(ComponentUpdatedState());
   }
 
@@ -346,12 +444,16 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   Future<void> deleteCustomComponentOnCloud(CustomComponent component) async {
     emit(ComponentOperationLoadingState());
-    await FireBridge.deleteGlobalCustomComponent(
-        project!.userId, project!, component);
-    for (final customComp in currentProject!.customComponents) {
-      await FireBridge.saveComponent(project!, customComp);
+    try {
+      await FireBridge.deleteGlobalCustomComponent(
+          project!.userId, project!, component);
+      for (final customComp in currentProject!.customComponents) {
+        await FireBridge.saveComponent(project!, customComp);
+      }
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
     }
-    emit(ComponentOperationInitial());
   }
 
   void removeRootComponentFromComponentParameter(
@@ -397,7 +499,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
           case 1:
             break;
           case 2:
-            parent.addChildren((component as MultiHolder).children);
+            parent.addChildren((component as MultiHolder).children,
+                index: index);
             component.children.clear();
             break;
           case 3:
@@ -487,12 +590,13 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  void refreshPropertyChanges(ComponentSelectionCubit cubit){
+  void refreshPropertyChanges(ComponentSelectionCubit cubit) {
     if (cubit.currentSelectedRoot is CustomComponent) {
       refreshCustomComponents(cubit.currentSelectedRoot as CustomComponent);
     }
     emit(ComponentUpdatedState());
   }
+
   bool isFavourite(final Component component) {
     if (project == null) {
       print('Method::isFavourite flutterProject is null');
@@ -568,8 +672,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     final Rect? boundary;
     if (component.boundary == null) {
       boundary = component.cloneElements
-          .firstWhere((element) => element.boundary != null)
-          .boundary!;
+          .firstWhereOrNull((element) => element.boundary != null)
+          ?.boundary;
     } else {
       boundary = null;
     }
@@ -578,8 +682,14 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     height = component.boundary?.height ?? boundary?.height ?? 1;
     project!.favouriteList
         .add(model..component.boundary = Rect.fromLTWH(0, 0, width, height));
-    await FireBridge.addToFavourites(
-        project!.userId, component, project!.name, width, height);
+    try {
+      await waitForConnectivity();
+
+      await FireBridge.addToFavourites(
+          project!.userId, component, project!.name, width, height);
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
     emit(ComponentUpdatedState());
   }
 
@@ -592,8 +702,14 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         break;
       }
     }
-    await FireBridge.removeFromFavourites(project!.userId, model.component);
-    emit(ComponentUpdatedState());
+    try {
+      await waitForConnectivity();
+
+      await FireBridge.removeFromFavourites(project!.userId, model.component);
+      emit(ComponentUpdatedState());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   void removeFromFavourites(final Component component) async {
@@ -612,7 +728,12 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       }
     }
 
-    await FireBridge.removeFromFavourites(project!.userId, component);
+    try {
+      await waitForConnectivity();
+      await FireBridge.removeFromFavourites(project!.userId, component);
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
     emit(ComponentUpdatedState());
   }
 
@@ -669,53 +790,105 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   Future<void> updateDeviceSelection(String name) async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.updateDeviceSelection(project!.userId, project!, name);
-    emit(ComponentOperationInitial());
+    try {
+      emit(ComponentOperationLoadingState());
+      await waitForConnectivity();
+      await FireBridge.updateDeviceSelection(project!.userId, project!, name);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> addVariable(VariableModel variableModel) async {
-    emit(ComponentOperationLoadingState());
-    project!.variables[variableModel.name] = variableModel;
-    await FireBridge.addVariable(project!.userId, project!, variableModel);
-    emit(ComponentOperationInitial());
+    try {
+      emit(ComponentOperationLoadingState());
+      await waitForConnectivity();
+      project!.variables[variableModel.name] = variableModel;
+      await FireBridge.addVariable(project!.userId, project!, variableModel);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> addVariableForScreen(VariableModel variableModel) async {
-    emit(ComponentOperationLoadingState());
-    project!.currentScreen.variables[variableModel.name] = variableModel;
-    await FireBridge.addVariableForScreen(
-        project!.userId, project!, variableModel);
-    emit(ComponentOperationInitial());
+    try {
+      emit(ComponentOperationLoadingState());
+      await waitForConnectivity();
+      project!.currentScreen.variables[variableModel.name] = variableModel;
+      await FireBridge.addVariableForScreen(
+          project!.userId, project!, variableModel);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> updateProjectSettings() async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.updateSettings(project!.userId, project!);
-    emit(ComponentOperationInitial());
+    try {
+      emit(ComponentOperationLoadingState());
+      await waitForConnectivity();
+      await FireBridge.updateSettings(project!.userId, project!);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> addModel(final LocalModel model) async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.addModel(project!.userId, project!, model);
-    emit(ComponentOperationInitial());
+    try {
+      emit(ComponentOperationLoadingState());
+      await waitForConnectivity();
+      await FireBridge.addModel(project!.userId, project!, model);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> updateModel(final LocalModel model) async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.updateModel(project!.userId, project!, model);
-    emit(ComponentOperationInitial());
+    try {
+      emit(ComponentOperationLoadingState());
+      await waitForConnectivity();
+      await FireBridge.updateModel(project!.userId, project!, model);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
-  Future<void> updateVariable(VariableModel variableModel) async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.updateVariable(project!.userId, project!);
-    emit(ComponentOperationInitial());
+  Future<void> updateVariable() async {
+    try {
+      emit(ComponentOperationLoadingState());
+      await waitForConnectivity();
+      await FireBridge.updateVariable(project!.userId, project!);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 
   Future<void> updateScreenVariable() async {
-    emit(ComponentOperationLoadingState());
-    await FireBridge.updateUIScreenVariable(project!.userId, project!);
-    emit(ComponentOperationInitial());
+    try {
+      emit(ComponentOperationLoadingState());
+      await waitForConnectivity();
+      await FireBridge.updateUIScreenVariable(project!.userId, project!);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
+  }
+
+  Future<void> updateCustomVariable(final CustomComponent component) async {
+    try {
+      emit(ComponentOperationLoadingState());
+      await waitForConnectivity();
+      await FireBridge.updateVariableForCustomComponent(
+          project!.userId, project!, component);
+      emit(ComponentOperationInitial());
+    } on Exception catch (e) {
+      emit(ComponentOperationErrorState(e.toString()));
+    }
   }
 }

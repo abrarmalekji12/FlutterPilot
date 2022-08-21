@@ -6,8 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/compiler/code_processor.dart';
 import '../common/compiler/processor_component.dart';
 import '../common/converter/code_converter.dart';
-import '../ui/build_view/build_view.dart';
-import 'local_model.dart';
 import 'variable_model.dart';
 import 'package:get/get.dart';
 import '../bloc/state_management/state_management_bloc.dart';
@@ -42,7 +40,7 @@ mixin operations {
 
 final setStateFunction = FVBFunction(
     'setState', null, [FVBArgument('callback', dataType: DataType.fvbFunction)],
-    dartCall: (_) {});
+    dartCall: (_, instance) {});
 
 final Map<String, Component> componentMap = {};
 
@@ -51,6 +49,10 @@ class ComponentController extends ChangeNotifier {
     notifyListeners();
   }
 }
+
+final Map<String, CodeProcessor> processorWithComp = {};
+final List<String> refresherUsed = [];
+final Map<String,bool> importFiles={};
 
 abstract class Component {
   static final Random random = Random.secure();
@@ -88,9 +90,16 @@ abstract class Component {
     if (_id != null) {
       return _id!;
     }
-
     setId = '$uniqueId${Random().nextDouble().toStringAsFixed(3)}';
     return _id!;
+  }
+
+  void onFreshAdded() {
+    if (this is Clickable) {
+      (this as Clickable)
+          .actionList
+          .add(CustomAction(code: (this as Clickable).defaultCode));
+    }
   }
 
   void addComponentParameters(
@@ -100,6 +109,13 @@ abstract class Component {
 
   void addRule(ParameterRuleModel ruleModel) {
     paramRules.add(ruleModel);
+  }
+
+  String withState(String code, bool clean) {
+    if (clean && refresherUsed.contains(id)) {
+      return 'Refresher("$id",()=>$code)';
+    }
+    return code;
   }
 
   void initComponentParameters(final BuildContext context) {
@@ -127,6 +143,10 @@ abstract class Component {
 
   String metaCode(String string) {
     string += '[id=$id';
+    if (this is BuilderComponent) {
+      string +=
+          '|model=${(this as BuilderComponent).model?.name}|len=${(this as BuilderComponent).itemLengthParameter.code(false)}';
+    }
     if (this is Clickable) {
       string +=
           '|action={${(this as Clickable).actionList.map((e) => e.metaCode()).join(':')}}';
@@ -180,8 +200,6 @@ abstract class Component {
       }
     }
   }
-
-
 
   static Component? fromCode(
       String? code, final FlutterProject flutterProject) {
@@ -254,7 +272,8 @@ abstract class Component {
               comp.childMap[name] = Component.fromCode(
                   builderCode.substring(
                       returnIndex + 6, builderCode.lastIndexOf(';')),
-                  flutterProject)?..setParent(comp);
+                  flutterProject)
+                ?..setParent(comp);
               final startIndex = builderCode.indexOf('`');
               final endIndex = builderCode.lastIndexOf('`', returnIndex);
               if (startIndex >= 0 &&
@@ -316,6 +335,16 @@ abstract class Component {
           }
         }
         break;
+
+      case 5:
+        for (int i = 0; i < parameterCodes.length; i++) {
+          final colonIndex = parameterCodes[i].indexOf(':');
+          (comp as CustomComponent)
+                  .arguments[parameterCodes[i].substring(0, colonIndex)] =
+              parameterCodes[i]
+                  .substring(colonIndex + 2, parameterCodes[i].length - 1);
+        }
+        break;
       case 1:
         break;
     }
@@ -331,7 +360,6 @@ abstract class Component {
           if (paramCode.startsWith(paramPrefix)) {
             parameter.fromCode(paramCode);
             parameterCodes.remove(paramCode);
-
             break;
           }
         }
@@ -351,9 +379,6 @@ abstract class Component {
       if (custom != null) {
         return custom.createInstance(null);
       } else {
-        showToast(
-            'No widget with name $compName found in code $code, please clear cookies and reload App.',
-            error: true);
         return CNotRecognizedWidget()..name = compName;
       }
     }
@@ -361,7 +386,13 @@ abstract class Component {
   }
 
   Widget build(BuildContext context) {
-    if (RuntimeProvider.of(context) == RuntimeMode.edit) {
+    final mode = RuntimeProvider.of(context);
+    if (mode == RuntimeMode.favorite) {
+      return ComponentWidget(
+        child: create(context),
+      );
+    } else if (mode == RuntimeMode.edit) {
+      processorWithComp[id] = ProcessorProvider.maybeOf(context)!;
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
       });
@@ -372,6 +403,10 @@ abstract class Component {
         builder: (context, state) {
           ComponentOperationCubit.processor =
               ProcessorProvider.maybeOf(context)!;
+          ComponentOperationCubit.componentId=id;
+          if (this is Clickable) {
+            (this as Clickable).test();
+          }
           return ComponentWidget(
             child: create(context),
           );
@@ -379,6 +414,10 @@ abstract class Component {
       );
     }
     ComponentOperationCubit.processor = ProcessorProvider.maybeOf(context)!;
+    ComponentOperationCubit.componentId=id;
+    if (this is Clickable) {
+      (this as Clickable).test();
+    }
     return ComponentWidget(
       key: key(context),
       child: create(context),
@@ -564,9 +603,38 @@ abstract class Component {
 
   String parametersCode(bool clean) {
     String middle = '';
-    if (this is Clickable && clean&&(this as Clickable).function!=null) {
-      middle +=
-          '${(this as Clickable).function!.name}:${(this as Clickable).function!.cleanInstanceCode},';
+    if (clean && (this is Controller)) {
+      middle = 'key:GlobalObjectKey("$id"),';
+    }
+    if (this is Clickable && clean) {
+      final code1 = (this as Clickable)
+              .actionList
+              .firstWhereOrNull((element) => element is CustomAction)
+              ?.arguments[0]
+              ?.toString() ??
+          '';
+      if (code1.isNotEmpty) {
+        int start = 0;
+        for (final function in (this as Clickable).functions) {
+          if (start > code1.length - 1) {
+            break;
+          }
+          final openIndex = code1.indexOf('{', start);
+          if (openIndex == -1) {
+            break;
+          }
+          final closeIndex = CodeOperations.findCloseBracket(code1, openIndex,
+              CodeProcessor.curlyBracketOpen, CodeProcessor.curlyBracketClose);
+          start += closeIndex + 1;
+          final functionBody = code1.substring(openIndex + 1, closeIndex);
+          middle +=
+              '${function.name}:${function.getCleanInstanceCode(functionBody)},';
+        }
+      } else if ((this as Clickable).functions.isNotEmpty) {
+        final function = (this as Clickable).functions.first;
+        middle +=
+            '${function.name}:${function.getCleanInstanceCode((this as Clickable).actionList.map((e) => '${e.code()};').join(' '))},';
+      }
     }
     for (final parameter in parameters) {
       final paramCode = parameter.code(clean);
@@ -614,10 +682,7 @@ abstract class Component {
     if (!clean) {
       name = metaCode(name);
     }
-    if (middle.trim().isEmpty) {
-      return '$name()';
-    }
-    return '$name(\n$middle)';
+    return withState('$name(\n$middle)', clean);
   }
 
   void searchTappedComponent(Offset offset, List<Component> components) {
@@ -638,6 +703,14 @@ abstract class Component {
 
   Component clone(Component? parent, {bool deepClone = false}) {
     final comp = componentList[name]!();
+    if (comp is Clickable) {
+      if (deepClone) {
+        (comp as Clickable).actionList =
+            (this as Clickable).actionList.map((e) => e.clone()).toList();
+      } else {
+        (comp as Clickable).actionList = (this as Clickable).actionList;
+      }
+    }
     if (deepClone) {
       for (int i = 0; i < parameters.length; i++) {
         comp.parameters[i].cloneOf(parameters[i]);
@@ -696,7 +769,7 @@ abstract class MultiHolder extends Component {
     for (final Component comp in children) {
       childrenCode += '${comp.code(clean: clean)},'.replaceAll(',,', ',');
     }
-    return '$name(${middle}children:[\n$childrenCode],)';
+    return withState('$name(${middle}children:[\n$childrenCode],)', clean);
   }
 
   @override
@@ -752,8 +825,12 @@ abstract class MultiHolder extends Component {
     }
   }
 
-  void addChildren(List<Component> components) {
-    children.addAll(components);
+  void addChildren(List<Component> components, {int? index}) {
+    if (index != null) {
+      children.insertAll(index, components);
+    } else {
+      children.addAll(components);
+    }
     for (final comp in components) {
       comp.setParent(this);
     }
@@ -832,12 +909,13 @@ abstract class Holder extends Component {
     }
     if (child == null) {
       if (!required) {
-        return '$name($middle)';
+        return withState('$name($middle)', clean);
       } else {
-        return '$name(${middle}child:Container(),)';
+        return withState('$name(${middle}child:Container(),)', clean);
       }
     }
-    return '$name(${middle}child:${child!.code(clean: clean)})';
+    return withState(
+        '$name(${middle}child:${child!.code(clean: clean)})', clean);
   }
 
   @override
@@ -865,18 +943,6 @@ abstract class ClickableHolder extends Holder with Clickable {
       child: super.build(context),
     );
   }
-
-  @override
-  Component clone(Component? parent, {bool deepClone = false}) {
-    final cloneComp = super.clone(parent, deepClone: deepClone);
-    if (deepClone) {
-      (cloneComp as Clickable).actionList =
-          actionList.map((e) => e.clone()).toList();
-    } else {
-      (cloneComp as Clickable).actionList = actionList;
-    }
-    return cloneComp;
-  }
 }
 
 abstract class ClickableComponent extends Component with Clickable {
@@ -890,20 +956,9 @@ abstract class ClickableComponent extends Component with Clickable {
       child: super.build(context),
     );
   }
-
-  @override
-  Component clone(Component? parent, {bool deepClone = false}) {
-    final cloneComp = super.clone(parent, deepClone: deepClone);
-    if (deepClone) {
-      (cloneComp as Clickable).actionList =
-          actionList.map((e) => e.clone()).toList();
-    } else {
-      (cloneComp as Clickable).actionList = actionList;
-    }
-    return cloneComp;
-  }
 }
-mixin FVBScrollable{
+
+mixin FVBScrollable {
   ScrollController initScrollController(BuildContext context) {
     final ScrollController scrollController = ScrollController();
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
@@ -918,38 +973,69 @@ mixin FVBScrollable{
   }
 }
 mixin Clickable {
-  FVBFunction? function;
+  List<FVBFunction> functions = [];
   List<ActionModel> actionList = [];
+  late CodeProcessor _processor;
 
-  void init(FVBFunction function) {
-    this.function = function;
+  void methods(List<FVBFunction> function) {
+    functions.addAll(function);
+    _processor=CodeProcessor.build(name: (this as Component).name);
   }
 
-  String getDefaultCode() {
-    return function != null
-        ? '''
-           ${DataType.dataTypeToCode(function!.returnType)} ${function!.name}(${function!.arguments.map((e) => '${DataType.dataTypeToCode(e.dataType)} ${e.name}').join(',')}){
+  void test() {
+    _processor.parentProcessor=ComponentOperationCubit.processor;
+    final processor = CodeProcessor(
+        scopeName: (this as Component).name,
+        parentProcessor:    _processor.parentProcessor!.clone(
+            CodeProcessor.testConsoleCallback, CodeProcessor.testOnError),
+        consoleCallback: CodeProcessor.testConsoleCallback,
+        onError: CodeProcessor.testOnError);
+    for(final fun1 in functions) {
+      processor.functions.remove(fun1.name);
+    }
+    for (final ActionModel action in actionList) {
+      if (action is CustomAction) {
+        processor.executeCode(action.arguments[0],
+            declarativeOnly: true, type: OperationType.checkOnly);
+        _processor.executeCode(action.arguments[0], declarativeOnly: true);
+      }
+    }
+
+
+  }
+
+  String get defaultCode {
+    return functions.map((function) => '''
+           ${DataType.dataTypeToCode(function.returnType)} ${function.name}(${function.arguments.map((e) => '${DataType.dataTypeToCode(e.dataType)} ${e.name}').join(',')}){
            // TODO: Implement Logic Here
            }
-          '''
-        : '';
+          ''').join('\n');
   }
 
-  void perform(BuildContext context, {List? arguments}) {
+  performCustomAction(
+      BuildContext context, ActionModel action, List<dynamic>? arguments,
+      {CodeProcessor? processor2, String? name}) {
+    final function = name != null
+        ? functions.firstWhereOrNull((e) => e.name == name)
+        : (functions.isNotEmpty ? functions.first : null);
+    if (function == null) {
+      return;
+    }
+    return _processor.functions[function.name]
+        ?.execute(_processor, null, arguments ?? []);
+  }
+
+  perform(BuildContext context, {List? arguments, String? name}) {
     if (RuntimeProvider.of(context) == RuntimeMode.run) {
       for (final action in actionList) {
         if (action is CustomAction) {
-          final processor = ProcessorProvider.maybeOf(context)!;
-          processor.executeCode(action.arguments[0], declarativeOnly: true);
-          processor.functions[function!.name]
-              ?.execute(processor, arguments ?? []);
+          return performCustomAction(context, action, arguments, name: name);
         } else {
           action.perform(context);
         }
       }
     }
   }
-
 
   String get eventCode {
     String code = '';
@@ -1140,7 +1226,7 @@ abstract class CustomNamedHolder extends Component {
                 .replaceAll(',,', ',');
       }
     }
-    return '$name($middle$childrenCode)';
+    return withState('$name($middle$childrenCode)', clean);
   }
 
   @override
@@ -1157,16 +1243,37 @@ abstract class CustomNamedHolder extends Component {
   int get type => 4;
 
   String? replaceChild(Component oldComp, Component? comp) {
-    late final String? compKey;
+    String? compKey;
+    bool fromChildMap = true;
     for (final String key in childMap.keys) {
       if (childMap[key] == oldComp) {
         compKey = key;
+        fromChildMap = true;
+        break;
+      }
+    }
+    for (final String key in childrenMap.keys) {
+      if (childrenMap[key]!.contains(oldComp)) {
+        compKey = key;
+        fromChildMap = false;
         break;
       }
     }
     if (compKey != null) {
-      childMap[compKey] = comp;
-      comp?.setParent(this);
+      if (fromChildMap) {
+        childMap[compKey] = comp;
+        comp?.setParent(this);
+      } else {
+        final int index = childrenMap[compKey]!.indexOf(oldComp);
+        childrenMap[compKey]!.removeAt(index);
+        if (comp != null) {
+          if (index < childrenMap[compKey]!.length) {
+            childrenMap[compKey]!.insert(index, comp);
+          } else {
+            childrenMap[compKey]!.add(comp);
+          }
+        }
+      }
       return compKey;
     }
     return null;
@@ -1193,7 +1300,7 @@ abstract class CustomComponent extends Component {
   String actionCode;
   Component? root;
   List<CustomComponent> objects = [];
-  List<String>? arguments;
+  Map<String, String> arguments = {};
 
   CustomComponent(
       {required this.extensionName,
@@ -1208,9 +1315,9 @@ abstract class CustomComponent extends Component {
     if (this is StatefulComponent) {
       processor.functions['setState'] = FVBFunction('setState', null, [
         FVBArgument('callback', dataType: DataType.fvbFunction)
-      ], dartCall: (arguments) {
-        (arguments[0] as FVBFunction).execute(processor, []);
-        processor.consoleCallback.call('api:refresh|$id');
+      ], dartCall: (arguments, instance) {
+        (arguments[0] as FVBFunction).execute(processor, null, []);
+        (arguments[1] as CodeProcessor).consoleCallback.call('api:refresh|$id');
       });
     }
     processor.variables.addAll((variables ?? [])
@@ -1223,6 +1330,24 @@ abstract class CustomComponent extends Component {
   set variables(Map<String, FVBVariable> value) {
     processor.variables.clear();
     processor.variables.addAll(value);
+  }
+
+  @override
+  String code({bool clean = true}) {
+    String middle = '';
+    String name = this.name;
+    if (!clean) {
+      name = metaCode(name);
+    }
+    for (final argument in arguments.entries) {
+      if (clean) {
+        middle +=
+            '${argument.key.contains('this.') ? argument.key.substring(5) : argument.key}:${argument.value},';
+      } else {
+        middle += '${argument.key}:`${argument.value}`,';
+      }
+    }
+    return withState('$name($middle)', clean);
   }
 
   CustomComponent get getRootClone {
@@ -1261,19 +1386,40 @@ abstract class CustomComponent extends Component {
 
   @override
   Widget build(BuildContext context) {
+
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
       });
     }
+
     processor.destroyProcess(deep: false);
-    processor.executeCode(actionCode, arguments: arguments);
-    (cloneOf as CustomComponent?)?.variables = processor.variables;
-    if (this is StatefulComponent) {
-      if (RuntimeProvider.of(context) == RuntimeMode.run) {
-        processor.functions['initState']?.execute(processor, []);
+    processor.executeCode(actionCode);
+    final constructor = processor.functions[processor.scopeName];
+    if (constructor != null) {
+      if (arguments.isNotEmpty) {
+        arguments.removeWhere((key, value) =>
+            constructor.arguments
+                .firstWhereOrNull((arg) => arg.argName == key) ==
+            null);
+      }
+      for (final arg in constructor.arguments) {
+        final name = arg.argName;
+        if (!arguments.containsKey(name)) {
+          arguments[name] = '';
+        }
       }
     }
+    if (RuntimeProvider.of(context) != RuntimeMode.favorite) {
+      processor.callConstructor(arguments, ProcessorProvider.maybeOf(context)!);
+      (cloneOf as CustomComponent?)?.variables = processor.variables;
+    }
+    if (this is StatefulComponent) {
+      if (RuntimeProvider.of(context) == RuntimeMode.run) {
+        processor.functions['initState']?.execute(processor, null, []);
+      }
+    }
+
     return ProcessorProvider(
       processor,
       BlocBuilder<StateManagementBloc, StateManagementState>(
@@ -1281,8 +1427,10 @@ abstract class CustomComponent extends Component {
           buildWhen: (previous, current) => current.id == id,
           builder: (context, state) {
             if (RuntimeProvider.of(context) == RuntimeMode.run) {
-              processor.functions['build']?.execute(processor, []);
+              processor.functions['build']?.execute(processor, null, [context]);
             }
+            variables['context'] =
+                FVBVariable('context', DataType.dynamic, value: context);
             return ComponentWidget(
               child: create(context),
             );
@@ -1300,9 +1448,10 @@ abstract class CustomComponent extends Component {
 
   void notifyChanged() {
     for (int i = 0; i < objects.length; i++) {
-      logger('object $i');
       final oldObject = objects[i];
       objects[i] = clone(objects[i].parent) as CustomComponent;
+      objects[i].arguments = oldObject.arguments;
+      objects[i].actionCode = oldObject.actionCode;
       replaceChildOfParent(oldObject, objects[i]);
     }
   }
@@ -1349,6 +1498,7 @@ abstract class CustomComponent extends Component {
     }
 
     customComponent.arguments = arguments;
+    customComponent.actionCode = actionCode;
     customComponent.variables =
         variables.map((key, value) => MapEntry(key, value.clone()));
     customComponent.root = root?.clone(parent, deepClone: deepClone);
@@ -1361,6 +1511,7 @@ abstract class CustomComponent extends Component {
 
   CustomComponent createInstance(Component? root) {
     final compCopy = clone(root) as CustomComponent;
+    compCopy.arguments = (arguments.map((key, value) => MapEntry(key, '')));
     objects.add(compCopy);
     return compCopy;
   }
@@ -1418,14 +1569,14 @@ class _ABCState extends State<ABC> {
 
 class StatelessComponent extends CustomComponent {
   static const defaultActionCode = ''' 
-   void build(){
+   void build(context){
       // this will be called when the component is built
    }
       ''';
 
   StatelessComponent(
       {required String name,
-      super.actionCode,
+      super.actionCode = defaultActionCode,
       super.variables,
       Component? root})
       : super(extensionName: 'StatelessWidget', name: name, root: root) {
@@ -1440,7 +1591,7 @@ class StatelessComponent extends CustomComponent {
       actionCode: data['action_code'] ?? defaultActionCode,
       variables: data['variables'] != null
           ? List<VariableModel>.from(data['variables']!
-              .map((e) => VariableModel.fromJson(e, data['name'])))
+              .map((e) => VariableModel.fromJson(e..['uiAttached'] = true)))
           : null,
     );
   }
@@ -1455,17 +1606,21 @@ class StatelessComponent extends CustomComponent {
         return null;
       },
       onError: (error, line) {},
-      scopeName: 'test',
+      scopeName: this.processor.scopeName,
     );
+
     processor.executeCode(actionCode, type: OperationType.checkOnly);
+    final vars = processor.functions[processor.scopeName]?.arguments ?? [];
     return '''class $name extends StatelessWidget {
-          const $name({Key? key}) : super(key: key);
+          ${vars.map((e) => 'final ${e.varDeclarationCode}').join(' ')}
+          ${processor.variables.isNotEmpty ? '' : 'const'} $name({${vars.map((e) => 'required ${e.name}').join(',')}${vars.isNotEmpty ? ',' : ''}Key? key}) : super(key: key);
         
-          @override
-          Widget build(BuildContext context) {
-          ${FVBEngine().fvbToDart(processor.functions['build']?.code ?? '')}
-          return ${root!.code()};
-          }
+           ${FVBEngine.instance.getDartCode(processor, actionCode, (p0) {
+      if (p0 == 'build') {
+        return 'return ${root!.code()};';
+      }
+      return null;
+    })}
          }
     ''';
   }
@@ -1476,14 +1631,14 @@ class StatefulComponent extends CustomComponent {
      void initState(){
       // this will be called when the component is created
       }
-      void build(){
+      void build(context){
       // this will be called when the component is built
       }
       ''';
 
   StatefulComponent(
       {required String name,
-      super.actionCode,
+      super.actionCode = defaultActionCode,
       super.variables,
       Component? root})
       : super(extensionName: 'StatefulWidget', name: name, root: root) {
@@ -1497,8 +1652,8 @@ class StatefulComponent extends CustomComponent {
       name: data['name'],
       actionCode: data['action_code'] ?? defaultActionCode,
       variables: data['variables'] != null
-          ? List<VariableModel>.from(data['variables']!
-              .map((e) => VariableModel.fromJson(e, data['name'])))
+          ? List<VariableModel>.from(
+              data['variables']!.map((e) => VariableModel.fromJson(e)))
           : null,
     );
   }
@@ -1508,6 +1663,14 @@ class StatefulComponent extends CustomComponent {
     if (root == null) {
       return '';
     }
+    final CodeProcessor processor = CodeProcessor(
+      consoleCallback: (value, {List<dynamic>? arguments}) {
+        return null;
+      },
+      onError: (error, line) {},
+      scopeName: this.processor.scopeName,
+    );
+    processor.executeCode(actionCode, type: OperationType.checkOnly);
     return '''
   class $name extends StatefulWidget {
   const $name({Key? key}) : super(key: key);
@@ -1517,10 +1680,14 @@ class StatefulComponent extends CustomComponent {
 }
 
 class _${name}State extends State<$name> {
-  @override
-  Widget build(BuildContext context) {
-    return ${root!.code()};
-  }
+  ${FVBEngine.instance.getDartCode(processor, actionCode, (p0) {
+      if (p0 == 'build') {
+        return 'return ${root!.code()};';
+      } else if (p0 == 'initState') {
+        return 'super.initState();';
+      }
+      return null;
+    })}
 }
     ''';
   }

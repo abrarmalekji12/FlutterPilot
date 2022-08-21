@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'common/compiler/code_processor.dart';
+import 'common/converter/string_operation.dart';
+import 'common/ui/custom_app_bar.dart';
 import 'constant/app_colors.dart';
 import 'constant/font_style.dart';
+import 'main.dart';
 import 'models/builder_component.dart';
 import 'models/component_model.dart';
 import 'models/other_model.dart';
@@ -28,6 +33,9 @@ final componentList = <String, Component Function()>{
   'Padding': () => CPadding(),
   'ClipRRect': () => CClipRRect(),
   'Container': () => CContainer(),
+  'AnimatedContainer': () => CAnimatedContainer(),
+  'AnimatedSwitcher': () => CAnimatedSwitcher(),
+  'AnimatedDefaultTextStyle': () => CAnimatedDefaultTextStyle(),
   'ColoredBox': () => CColoredBox(),
   'Visibility': () => CVisibility(),
   'Material': () => CMaterial(),
@@ -44,6 +52,7 @@ final componentList = <String, Component Function()>{
   'Flexible': () => CFlexible(),
   'Card': () => CCard(),
   'SizedBox': () => CSizedBox(),
+  'Shimmer.fromColors': () => CShimmerFromColors(),
   'SizedBox.expand': () => CSizedBoxExpand(),
   'SizedBox.shrink': () => CSizedBoxShrink(),
   'SizedBox.fromSize': () => CSizedBoxFromSize(),
@@ -59,16 +68,20 @@ final componentList = <String, Component Function()>{
   'Radio': () => CRadio(),
   'Image.asset': () => CImage(),
   'Image.network': () => CImageNetwork(),
+  'SvgPicture.network': () => CSvgPictureNetwork(),
+  'SvgPicture.asset': () => CSvgImage(),
   'CircleAvatar': () => CCircleAvatar(),
   'Divider': () => CDivider(),
   'Opacity': () => COpacity(),
+  'AnimatedOpacity': () => CAnimatedOpacity(),
   'Transform.rotate': () => CTransformRotate(),
   'Transform.scale': () => CTransformScale(),
   'Transform.translate': () => CTransformTranslate(),
   'VerticalDivider': () => CVerticalDivider(),
   'RichText': () => CRichText(),
-  'CustomPaint':() => CCustomPaint(),
+  'CustomPaint': () => CCustomPaint(),
   'TextField': () => CTextField(),
+  'TextFormField': () => CTextFormField(),
   'InputDecorator': () => CInputDecorator(),
   'InkWell': () => CInkWell(),
   'GestureDetector': () => CGestureDetector(),
@@ -81,12 +94,11 @@ final componentList = <String, Component Function()>{
   'Placeholder': () => CPlaceholder(),
   'ListView.builder': () => CListViewBuilder(),
   'GridView.builder': () => CGridViewBuilder(),
-  'ListView.Builder': () => CListViewBuilder(),
+  'PageView.builder': () => CPageViewBuilder(),
+  // 'ListView.Builder': () => CListViewBuilder(),
   'ListView.separated': () => CListViewSeparated(),
   'GridView.Builder': () => CGridViewBuilder(),
   'NotRecognizedWidget': () => CNotRecognizedWidget(),
-  'DropDownButton': () => CDropDownButton(),
-  'DropDownMenuItem': () => CDropdownMenuItem(),
   'DropdownButton': () => CDropDownButton(),
   'DropdownMenuItem': () => CDropdownMenuItem(),
 };
@@ -94,7 +106,7 @@ final componentList = <String, Component Function()>{
 class CMaterialApp extends CustomNamedHolder {
   CMaterialApp()
       : super('MaterialApp', [
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..inputCalculateAs =
                 ((color, forward) => (color as Color).withAlpha(255))
             ..withRequired(false),
@@ -118,6 +130,8 @@ class CMaterialApp extends CustomNamedHolder {
       theme: parameters[2].value,
       darkTheme: parameters[3].value,
       themeMode: parameters[4].value,
+      debugShowCheckedModeBanner: false,
+      scrollBehavior: MyCustomScrollBehavior(),
     );
   }
 }
@@ -125,25 +139,45 @@ class CMaterialApp extends CustomNamedHolder {
 class CRichText extends Component {
   CRichText()
       : super('RichText', [
+          Parameters.textAlignParameter,
           Parameters.textSpanParameter()
             ..withInfo(InnerObjectParameterInfo(
-                innerObjectName: 'TextSpan', namedIfHaveAny: 'text'))
+                innerObjectName: 'TextSpan', namedIfHaveAny: 'text')),
+          Parameters.overflowParameter
+            ..withRequired(true)
+            ..withDefaultValue('clip')
         ]);
 
   @override
   Widget create(BuildContext context) {
-    return RichText(text: parameters[0].value);
+    return RichText(
+      textAlign: parameters[0].value,
+      text: parameters[1].value,
+      overflow: parameters[2].value,
+    );
   }
 }
 
 class CCustomPaint extends Component {
-  CCustomPaint() : super('CustomPaint', [Parameters.painterParameter()]);
+  CCustomPaint()
+      : super('CustomPaint', [
+          Parameters.painterParameter(),
+          Parameters.sizeParameter()..withChangeNamed('size'),
+        ]);
 
   @override
   Widget create(BuildContext context) {
     return CustomPaint(
       painter: parameters[0].value,
+      size: parameters[1].value,
     );
+  }
+
+  String get implCode {
+    return '''class ${StringOperation.toCamelCase(parameters[0].displayName!)}${(parameters[0] as CodeParameter).actionCode.hashCode} extends CustomPainter {
+    ${(parameters[0] as CodeParameter).actionCode}
+    }
+    ''';
   }
 }
 
@@ -162,17 +196,25 @@ class CNotRecognizedWidget extends Component {
   }
 }
 
-class CCheckbox extends Component {
+class CCheckbox extends ClickableComponent {
   CCheckbox()
       : super('Checkbox', [
           Parameters.enableParameter()
             ..withNamedParamInfoAndSameDisplayName('value'),
-        ]);
+        ]) {
+    methods([
+      FVBFunction('onChanged', null,
+          [FVBArgument('value', dataType: DataType.fvbBool, nullable: true)],
+          returnType: DataType.fvbVoid)
+    ]);
+  }
 
   @override
   Widget create(BuildContext context) {
     return Checkbox(
-      onChanged: (bool) {},
+      onChanged: (bool? b) {
+        perform(context, arguments: [b]);
+      },
       value: parameters[0].value,
     );
   }
@@ -181,7 +223,7 @@ class CCheckbox extends Component {
 class CPlaceholder extends Component {
   CPlaceholder()
       : super('Placeholder', [
-          Parameters.colorParameter(),
+          Parameters.colorParameter,
         ]);
 
   @override
@@ -195,21 +237,23 @@ class CPlaceholder extends Component {
 class CRadio extends ClickableComponent {
   CRadio()
       : super('Radio', [
-          Parameters.shortStringParameter()
-            ..withDefaultValue('1')
+          Parameters.dynamicValueParameter()
+            ..withDefaultValue(1)
             ..withNamedParamInfoAndSameDisplayName('value'),
-          Parameters.shortStringParameter()
-            ..withDefaultValue('1')
+          Parameters.dynamicValueParameter()
+            ..withDefaultValue(1)
             ..withNamedParamInfoAndSameDisplayName('groupValue'),
         ]) {
-    init(FVBFunction(
-        'onChanged', null, [FVBArgument('value', dataType: DataType.fvbBool)],
-        returnType: DataType.fvbVoid));
+    methods([
+      FVBFunction(
+          'onChanged', null, [FVBArgument('value', dataType: DataType.dynamic)],
+          returnType: DataType.fvbVoid)
+    ]);
   }
 
   @override
   Widget create(BuildContext context) {
-    return Radio<String>(
+    return Radio<dynamic>(
       onChanged: (value) {
         perform(context, arguments: [value]);
       },
@@ -217,12 +261,6 @@ class CRadio extends ClickableComponent {
       groupValue: parameters[1].value,
     );
   }
-
-  @override
-  String get clickableParamName => 'onChanged';
-
-  @override
-  List<String> get eventParams => ['value'];
 }
 
 class CSwitch extends Component {
@@ -511,6 +549,36 @@ class CVisibility extends Holder {
   }
 }
 
+class CAnimatedOpacity extends COpacity {
+  CAnimatedOpacity() : super() {
+    parameters.add(Parameters.durationParameter);
+  }
+
+  @override
+  Widget create(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: parameters[0].value,
+      duration: parameters[1].value,
+      child: child?.build(context),
+    );
+  }
+}
+
+class CAnimatedSwitcher extends Holder {
+  CAnimatedSwitcher()
+      : super('AnimatedSwitcher', [
+          Parameters.durationParameter,
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: parameters[0].value,
+      child: child?.build(context),
+    );
+  }
+}
+
 class COpacity extends Holder {
   COpacity()
       : super('Opacity', [
@@ -602,7 +670,7 @@ class CDivider extends Component {
       : super(
           'Divider',
           [
-            Parameters.colorParameter()..withDefaultValue(AppColors.grey),
+            Parameters.colorParameter..withDefaultValue(AppColors.grey),
             Parameters.heightParameter()..withDefaultValue(20.0),
             Parameters.thicknessParameter(),
             Parameters.heightParameter()
@@ -635,7 +703,7 @@ class CVerticalDivider extends Component {
       : super(
           'VerticalDivider',
           [
-            Parameters.colorParameter()..withDefaultValue(AppColors.grey),
+            Parameters.colorParameter..withDefaultValue(AppColors.grey),
             Parameters.widthParameter()..withDefaultValue(20.0),
             Parameters.thicknessParameter(),
             Parameters.heightParameter()
@@ -666,11 +734,11 @@ class CVerticalDivider extends Component {
 class CCard extends Holder {
   CCard()
       : super('Card', [
-          Parameters.colorParameter()..withDefaultValue(AppColors.white),
+          Parameters.colorParameter..withDefaultValue(AppColors.white),
           Parameters.shapeBorderParameter(),
           Parameters.elevationParameter(),
           Parameters.marginParameter(),
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..withDisplayName('shadowColor')
             ..withInfo(
               NamedParameterInfo('shadowColor'),
@@ -692,11 +760,19 @@ class CCard extends Holder {
 class CAppBar extends CustomNamedHolder {
   CAppBar()
       : super('AppBar', [
-          Parameters.colorParameter()
-            ..withDefaultValue(const Color(0xff0000ff))
+          Parameters.colorParameter
+            ..withDefaultValue(null)
+            ..withRequired(false)
             ..withDisplayName('background-color')
             ..withInfo(NamedParameterInfo('backgroundColor')),
-          Parameters.toolbarHeight
+          Parameters.toolbarHeight,
+          Parameters.elevationParameter()
+            ..withDefaultValue(null)
+            ..withRequired(false),
+          Parameters.enableParameter()
+            ..withNamedParamInfoAndSameDisplayName('centerTitle')
+            ..val = null
+            ..withRequired(false)
         ], [
           'title',
           'leading',
@@ -706,14 +782,17 @@ class CAppBar extends CustomNamedHolder {
 
   @override
   Widget create(BuildContext context) {
-    return AppBar(
+    return CustomAppBar(
       backgroundColor: parameters[0].value,
       title: childMap['title']?.build(context),
       leading: childMap['leading']?.build(context),
+      toolbarHeight: parameters[1].value,
       actions: childrenMap['actions']
           ?.map((e) => e.build(context))
           .toList(growable: false),
       automaticallyImplyLeading: false,
+      elevation: parameters[2].value,
+      centerTitle: parameters[3].value,
     );
   }
 }
@@ -743,7 +822,9 @@ class CScaffold extends CustomNamedHolder {
       appBar: childMap['appBar'] != null
           ? PreferredSize(
               child: childMap['appBar']!.build(context),
-              preferredSize: Size(-1, childMap['appBar']!.parameters[1].value))
+              preferredSize:
+                  Size.fromHeight(childMap['appBar']!.parameters[1].value),
+            )
           : null,
       drawer: childMap['drawer']?.build(context),
       body: childMap['body']?.build(context),
@@ -756,23 +837,71 @@ class CScaffold extends CustomNamedHolder {
   }
 }
 
-class CDropDownButton extends CustomNamedHolder {
+class CDropDownButton extends CustomNamedHolder with Clickable {
   CDropDownButton()
-      : super('DropdownButton', [], [
-          'icon'
+      : super('DropdownButton', [
+          Parameters.dynamicValueParameter()
+            ..withNamedParamInfoAndSameDisplayName('value')
+            ..withRequired(false),
+          Parameters.intElevationParameter
+            ..withDefaultValue(8)
+            ..withRequired(true),
+          Parameters.googleFontTextStyleParameter,
+          Parameters.borderRadiusParameter(),
+          Parameters.enableFeedbackParameter()
+        ], [
+          'icon',
+          'hint',
+          'underline'
         ], [
           'items'
-        ]);
+        ]) {
+    methods([
+      FVBFunction(
+          'onChanged',
+          null,
+          [
+            FVBArgument('value', dataType: DataType.dynamic),
+          ],
+          returnType: DataType.fvbVoid),
+      FVBFunction('onTap', null, [], returnType: DataType.fvbVoid)
+    ]);
+  }
 
   @override
   Widget create(BuildContext context) {
-    return DropdownButton<String>(
-        icon: childMap['icon']?.build(context),
-        items: (childrenMap['items'] ?? [])
-            .map<DropdownMenuItem<String>>(
-                (e) => e.buildWithoutKey(context) as DropdownMenuItem<String>)
-            .toList(),
-        onChanged: (data) {});
+    return DropdownButton<dynamic>(
+      icon: childMap['icon']?.build(context),
+      hint: childMap['hint']?.build(context),
+      underline: childMap['underline']?.build(context),
+      value: parameters[0].value,
+      elevation: parameters[1].value,
+      style: parameters[2].value,
+      borderRadius: parameters[3].value,
+      enableFeedback: parameters[4].value,
+      items: (childrenMap['items'] ?? [])
+          .map<DropdownMenuItem>(
+              (e) => e.buildWithoutKey(context) as DropdownMenuItem)
+          .toList(),
+      onChanged: (data) {
+        perform(context, arguments: [data]);
+      },
+      onTap: () {
+        perform(context, name: 'onTap');
+      },
+    );
+  }
+
+  @override
+  Component clone(Component? parent, {bool deepClone = false}) {
+    final cloneComp = super.clone(parent, deepClone: deepClone);
+    if (deepClone) {
+      (cloneComp as Clickable).actionList =
+          actionList.map((e) => e.clone()).toList();
+    } else {
+      (cloneComp as Clickable).actionList = actionList;
+    }
+    return cloneComp;
   }
 }
 
@@ -877,6 +1006,37 @@ class CIndexedStack extends MultiHolder {
   }
 }
 
+class CPageView extends MultiHolder with Controller {
+  CPageView()
+      : super('PageView', [
+          Parameters.axisParameter()
+            ..withInfo(NamedParameterInfo('scrollDirection')),
+          BooleanParameter(
+              displayName: 'reverse',
+              required: true,
+              val: false,
+              info: NamedParameterInfo('reverse')),
+          BooleanParameter(
+            displayName: 'page-snapping',
+            required: true,
+            val: true,
+            info: NamedParameterInfo('pageSnapping'),
+          ),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    assign('pageController', PageController(), 'PageController()');
+    return PageView(
+      children: children.map((e) => e.build(context)).toList(),
+      scrollDirection: parameters[0].value,
+      reverse: parameters[1].value,
+      pageSnapping: parameters[2].value,
+      controller: controlMap['pageController']!.value,
+    );
+  }
+}
+
 class CListView extends MultiHolder with FVBScrollable {
   CListView()
       : super('ListView', [
@@ -887,7 +1047,11 @@ class CListView extends MultiHolder with FVBScrollable {
               displayName: 'reverse',
               required: true,
               val: false,
-              info: NamedParameterInfo('reverse'))
+              info: NamedParameterInfo('reverse')),
+          Parameters.enableParameter()
+            ..val = false
+            ..withRequired(true)
+            ..withNamedParamInfoAndSameDisplayName('shrinkWrap'),
         ]);
 
   @override
@@ -897,6 +1061,7 @@ class CListView extends MultiHolder with FVBScrollable {
       padding: parameters[0].value,
       scrollDirection: parameters[1].value,
       reverse: parameters[2].value,
+      shrinkWrap: parameters[3].value,
       controller: initScrollController(context),
     );
   }
@@ -906,14 +1071,15 @@ class CDropdownMenuItem extends ClickableHolder {
   CDropdownMenuItem()
       : super('DropdownMenuItem', [
           Parameters.enableParameter()..withChangeNamed('enabled'),
-          Parameters.textParameter()
+          Parameters.dynamicValueParameter()
             ..withNamedParamInfoAndSameDisplayName('value')
-            ..withRequired(false)
+            ..withDefaultValue(DateTime.now().toIso8601String())
+            ..withRequired(true)
         ]);
 
   @override
   Widget create(BuildContext context) {
-    return DropdownMenuItem<String>(
+    return DropdownMenuItem(
       key: key(context),
       child: child?.build(context) ?? Container(),
       onTap: () {
@@ -964,7 +1130,7 @@ class CTooltip extends Holder {
       : super('Tooltip', [
           Parameters.textParameter()
             ..withNamedParamInfoAndSameDisplayName('message'),
-          Parameters.googleFontTextStyleParameter()
+          Parameters.googleFontTextStyleParameter
             ..withChangeNamed('textStyle')
             ..withDisplayName('textStyle'),
           Parameters.paddingParameter(),
@@ -1032,7 +1198,9 @@ class CCircleAvatar extends Holder {
 
 class COutlinedButton extends ClickableHolder {
   COutlinedButton()
-      : super('OutlinedButton', [Parameters.buttonStyleParameter()]);
+      : super('OutlinedButton', [Parameters.buttonStyleParameter()]) {
+    methods([FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid)]);
+  }
 
   @override
   Widget create(BuildContext context) {
@@ -1044,16 +1212,21 @@ class COutlinedButton extends ClickableHolder {
       style: parameters[0].value,
     );
   }
-
-  @override
-  String get clickableParamName => 'onPressed';
 }
 
 class CElevatedButton extends ClickableHolder {
   CElevatedButton()
       : super('ElevatedButton', [
           Parameters.buttonStyleParameter(),
-        ]);
+        ]) {
+    methods([
+      FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onLongPress', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onHover', null,
+          [FVBArgument('value', dataType: DataType.fvbBool, nullable: false)],
+          returnType: DataType.fvbVoid),
+    ]);
+  }
 
   @override
   Widget create(BuildContext context) {
@@ -1061,13 +1234,16 @@ class CElevatedButton extends ClickableHolder {
       onPressed: () {
         perform(context);
       },
+      onLongPress: () {
+        perform(context, name: 'onLongPress');
+      },
+      onHover: (value) {
+        perform(context, name: 'onHover', arguments: [value]);
+      },
       child: child?.build(context) ?? Container(),
       style: parameters[0].value,
     );
   }
-
-  @override
-  String get clickableParamName => 'onPressed';
 }
 
 // class CBottomNavigationBar extends Cu {
@@ -1085,21 +1261,46 @@ class CInkWell extends ClickableHolder {
       : super('InkWell', [
           Parameters.enableParameter()
             ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('hoverColor'),
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('focusColor'),
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('splashColor'),
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('highlightColor'),
           Parameters.borderRadiusParameter(),
         ]) {
-    init(FVBFunction('onTap', null, [], returnType: DataType.fvbVoid));
+    methods([
+      FVBFunction('onTap', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onDoubleTap', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onLongPress', null, [], returnType: DataType.fvbVoid),
+      FVBFunction(
+          'onHover',
+          null,
+          [
+            FVBArgument('value', dataType: DataType.fvbBool),
+          ],
+          returnType: DataType.fvbVoid),
+      FVBFunction(
+          'onFocusChange',
+          null,
+          [
+            FVBArgument('value', dataType: DataType.fvbBool),
+          ],
+          returnType: DataType.fvbVoid),
+      FVBFunction(
+          'onHighlightChanged',
+          null,
+          [
+            FVBArgument('value', dataType: DataType.fvbBool),
+          ],
+          returnType: DataType.fvbVoid),
+    ]);
   }
 
   @override
@@ -1107,6 +1308,21 @@ class CInkWell extends ClickableHolder {
     return InkWell(
       onTap: () {
         perform(context);
+      },
+      onDoubleTap: () {
+        perform(context, name: 'onDoubleTap');
+      },
+      onLongPress: () {
+        perform(context, name: 'onLongPress');
+      },
+      onHover: (value) {
+        perform(context, name: 'onHover', arguments: [value]);
+      },
+      onFocusChange: (value) {
+        perform(context, name: 'onFocusChange', arguments: [value]);
+      },
+      onHighlightChanged: (value) {
+        perform(context, name: 'onHighlightChanged', arguments: [value]);
       },
       child: child?.build(context) ?? Container(),
       enableFeedback: parameters[0].value,
@@ -1119,9 +1335,77 @@ class CInkWell extends ClickableHolder {
   }
 }
 
+class CIconButton extends ClickableComponent {
+  CIconButton()
+      : super('IconButton', [
+          ComponentParameter(
+            multiple: false,
+            info: NamedParameterInfo('icon'),
+          ),
+          Parameters.widthParameter()
+            ..withDefaultValue(24.0)
+            ..withRequired(true)
+            ..withNamedParamInfoAndSameDisplayName('iconSize'),
+          Parameters.colorParameter..withDefaultValue(AppColors.black),
+          Parameters.colorParameter
+            ..withRequired(false)
+            ..withNamedParamInfoAndSameDisplayName('splashColor'),
+          Parameters.colorParameter
+            ..withRequired(false)
+            ..withNamedParamInfoAndSameDisplayName('hoverColor'),
+          Parameters.colorParameter
+            ..withRequired(false)
+            ..withNamedParamInfoAndSameDisplayName('highlightColor'),
+          Parameters.colorParameter
+            ..withRequired(false)
+            ..withNamedParamInfoAndSameDisplayName('focusColor'),
+          Parameters.enableParameter()
+            ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
+          Parameters.alignmentParameter(),
+          Parameters.paddingParameter()..withRequired(true),
+          Parameters.textParameter()
+            ..withNamedParamInfoAndSameDisplayName('tooltip')
+        ]) {
+    addComponentParameters([parameters[0] as ComponentParameter]);
+    methods([FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid)]);
+  }
+
+  @override
+  Widget create(BuildContext context) {
+    initComponentParameters(context);
+    return IconButton(
+      icon: (parameters[0] as ComponentParameter).build() ?? Container(),
+      iconSize: parameters[1].value,
+      color: parameters[2].value,
+      splashColor: parameters[3].value,
+      hoverColor: parameters[4].value,
+      highlightColor: parameters[5].value,
+      focusColor: parameters[6].value,
+      enableFeedback: parameters[7].value,
+      alignment: parameters[8].value,
+      padding: parameters[9].value,
+      tooltip: parameters[10].value,
+      onPressed: () {
+        perform(context);
+      },
+    );
+  }
+}
+
 class CGestureDetector extends ClickableHolder {
   CGestureDetector() : super('GestureDetector', []) {
-    init(FVBFunction('onTap', null, [], returnType: DataType.fvbVoid));
+    methods([
+      FVBFunction('onTap', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onDoubleTap', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onLongPress', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onSecondaryTap', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onSecondaryLongPress', null, [],
+          returnType: DataType.fvbVoid),
+      FVBFunction('onDoubleTapCancel', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onTapCancel', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onLongPressUp', null, [], returnType: DataType.fvbVoid),
+      FVBFunction('onPanCancel', null, [], returnType: DataType.fvbVoid),
+    ]);
   }
 
   @override
@@ -1129,6 +1413,30 @@ class CGestureDetector extends ClickableHolder {
     return GestureDetector(
       onTap: () {
         perform(context);
+      },
+      onDoubleTap: () {
+        perform(context, name: 'onDoubleTap');
+      },
+      onLongPress: () {
+        perform(context, name: 'onLongPress');
+      },
+      onSecondaryTap: () {
+        perform(context, name: 'onSecondaryTap');
+      },
+      onSecondaryLongPress: () {
+        perform(context, name: 'onSecondaryLongPress');
+      },
+      onDoubleTapCancel: () {
+        perform(context, name: 'onDoubleTapCancel');
+      },
+      onTapCancel: () {
+        perform(context, name: 'onTapCancel');
+      },
+      onLongPressUp: () {
+        perform(context, name: 'onLongPressUp');
+      },
+      onPanCancel: () {
+        perform(context, name: 'onPanCancel');
       },
       child: child?.build(context) ?? Container(),
     );
@@ -1150,17 +1458,17 @@ class CFloatingActionButton extends ClickableHolder {
             ..withNamedParamInfoAndSameDisplayName('hoverElevation'),
           Parameters.elevationParameter()
             ..withNamedParamInfoAndSameDisplayName('focusElevation'),
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('hoverColor'),
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('focusColor'),
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('splashColor'),
-        ]){
-    init(FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid));
+        ]) {
+    methods([FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid)]);
   }
 
   @override
@@ -1183,12 +1491,11 @@ class CFloatingActionButton extends ClickableHolder {
       splashColor: parameters[9].value,
     );
   }
-
 }
 
 class CTextButton extends ClickableHolder {
-  CTextButton() : super('TextButton', [Parameters.buttonStyleParameter()]){
-    init(FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid));
+  CTextButton() : super('TextButton', [Parameters.buttonStyleParameter()]) {
+    methods([FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid)]);
   }
 
   @override
@@ -1201,7 +1508,6 @@ class CTextButton extends ClickableHolder {
       style: parameters[0].value,
     );
   }
-
 }
 
 class CLinearProgressIndicator extends Component {
@@ -1217,7 +1523,7 @@ class CLinearProgressIndicator extends Component {
             ..withNamedParamInfoAndSameDisplayName('value'),
           ComplexParameter(
             params: [
-              Parameters.colorParameter()
+              Parameters.colorParameter
                 ..withDefaultValue(AppColors.black)
                 ..withChangeNamed(null)
                 ..withDisplayName('loading color')
@@ -1229,7 +1535,7 @@ class CLinearProgressIndicator extends Component {
                 innerObjectName: 'AlwaysStoppedAnimation',
                 namedIfHaveAny: 'valueColor'),
           ),
-          Parameters.colorParameter(),
+          Parameters.colorParameter,
           Parameters.backgroundColorParameter(),
         ]);
 
@@ -1258,7 +1564,7 @@ class CCircularProgressIndicator extends Component {
             ..withNamedParamInfoAndSameDisplayName('value'),
           ComplexParameter(
             params: [
-              Parameters.colorParameter()
+              Parameters.colorParameter
                 ..withDefaultValue(AppColors.black)
                 ..withChangeNamed(null)
                 ..withDisplayName('loading color')
@@ -1270,7 +1576,7 @@ class CCircularProgressIndicator extends Component {
                 innerObjectName: 'AlwaysStoppedAnimation',
                 namedIfHaveAny: 'valueColor'),
           ),
-          Parameters.colorParameter(),
+          Parameters.colorParameter,
           Parameters.backgroundColorParameter(),
         ]);
 
@@ -1293,7 +1599,9 @@ class CContainer extends Holder {
           Parameters.widthParameter(),
           Parameters.heightParameter(),
           Parameters.marginParameter(),
-          Parameters.alignmentParameter()..withDefaultValue(null)..withRequired(false),
+          Parameters.alignmentParameter()
+            ..withDefaultValue(null)
+            ..withRequired(false),
           Parameters.decorationParameter()
         ], rules: []) {
     addRule(ParameterRuleModel(
@@ -1304,6 +1612,7 @@ class CContainer extends Holder {
             (param2 as ChoiceParameter).resetParameter();
             return 'Circle box-shape can not have Border-Radius';
           }
+          return null;
         }));
     addRule(ParameterRuleModel(
         changedParameter: (parameters[5] as ComplexParameter).params[2],
@@ -1331,10 +1640,87 @@ class CContainer extends Holder {
   }
 }
 
+class CAnimatedDefaultTextStyle extends Holder {
+  CAnimatedDefaultTextStyle()
+      : super('AnimatedDefaultTextStyle', [
+          Parameters.durationParameter,
+          Parameters.googleFontTextStyleParameter,
+          Parameters.textAlignParameter,
+          Parameters.overflowParameter
+            ..withDefaultValue('clip')
+            ..withRequired(true),
+          Parameters.curveParameter
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return AnimatedDefaultTextStyle(
+      child: child?.build(context) ?? Container(),
+      duration: parameters[0].value,
+      style: parameters[1].value,
+      textAlign: parameters[2].value,
+      overflow: parameters[3].value,
+      curve: parameters[4].value,
+    );
+  }
+}
+
+class CAnimatedContainer extends Holder {
+  CAnimatedContainer()
+      : super('AnimatedContainer', [
+          Parameters.durationParameter,
+          Parameters.paddingParameter(),
+          Parameters.widthParameter(),
+          Parameters.heightParameter(),
+          Parameters.marginParameter(),
+          Parameters.alignmentParameter()
+            ..withDefaultValue(null)
+            ..withRequired(false),
+          Parameters.decorationParameter(),
+          Parameters.curveParameter
+        ], rules: []) {
+    addRule(ParameterRuleModel(
+        changedParameter: (parameters[6] as ComplexParameter).params[5],
+        anotherParameter: (parameters[6] as ComplexParameter).params[1],
+        onChange: (param1, param2) {
+          if (param1.value == BoxShape.circle) {
+            (param2 as ChoiceParameter).resetParameter();
+            return 'Circle box-shape can not have Border-Radius';
+          }
+          return null;
+        }));
+    addRule(ParameterRuleModel(
+        changedParameter: (parameters[6] as ComplexParameter).params[2],
+        anotherParameter: (parameters[6] as ComplexParameter).params[1],
+        onChange: (param1, param2) {
+          if ((param1 as ChoiceParameter).val == param1.options[2]) {
+            (param2 as ChoiceParameter).resetParameter();
+            return 'Only uniform border can have Border-Radius';
+          }
+          return null;
+        }));
+  }
+
+  @override
+  Widget create(BuildContext context) {
+    return AnimatedContainer(
+      child: child?.build(context),
+      duration: parameters[0].value,
+      padding: parameters[1].value,
+      width: parameters[2].value,
+      height: parameters[3].value,
+      margin: parameters[4].value,
+      alignment: parameters[5].value,
+      decoration: parameters[6].value,
+      curve: parameters[7].value,
+    );
+  }
+}
+
 class CColoredBox extends Holder {
   CColoredBox()
       : super('ColoredBox', [
-          Parameters.colorParameter()..withRequired(true),
+          Parameters.colorParameter..withRequired(true),
         ]);
 
   @override
@@ -1342,6 +1728,22 @@ class CColoredBox extends Holder {
     return ColoredBox(
       child: child?.build(context),
       color: parameters[0].value,
+    );
+  }
+}
+
+class COffstage extends Holder {
+  COffstage()
+      : super('Offstage', [
+          Parameters.enableParameter()
+            ..withNamedParamInfoAndSameDisplayName('offstage'),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Offstage(
+      child: child?.build(context),
+      offstage: parameters[0].value,
     );
   }
 }
@@ -1359,6 +1761,54 @@ class CSizedBox extends Holder {
       child: child?.build(context),
       width: parameters[0].value,
       height: parameters[1].value,
+    );
+  }
+}
+
+class CShimmerFromColors extends Holder {
+  CShimmerFromColors()
+      : super('Shimmer.fromColors', [
+          Parameters.enableParameter(),
+          Parameters.colorParameter
+            ..withNamedParamInfoAndSameDisplayName('baseColor')
+            ..withRequired(true)
+            ..withDefaultValue(AppColors.white),
+          Parameters.colorParameter
+            ..withNamedParamInfoAndSameDisplayName('highlightColor')
+            ..withRequired(true)
+            ..withDefaultValue(AppColors.shimmerColor),
+          Parameters.durationParameter
+            ..compiler.code = 'Duration(milliseconds: 500)'
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Shimmer.fromColors(
+      enabled: parameters[0].value,
+      baseColor: parameters[1].value,
+      highlightColor: parameters[2].value,
+      period: parameters[3].value,
+      child: child?.build(context) ?? Container(),
+    );
+  }
+}
+
+class CForm extends Holder with Clickable {
+  CForm()
+      : super('Form', [
+          Parameters.autoValidateMode,
+        ]) {
+    methods([FVBFunction('onChanged', null, [], returnType: DataType.fvbVoid)]);
+  }
+
+  @override
+  Widget create(BuildContext context) {
+    return Form(
+      onChanged: () {
+        perform(context);
+      },
+      autovalidateMode: parameters[0].value,
+      child: child?.build(context) ?? Container(),
     );
   }
 }
@@ -1449,7 +1899,7 @@ class CFittedBox extends Holder {
 class CMaterial extends Holder {
   CMaterial()
       : super('Material', [
-          Parameters.colorParameter()..withDefaultValue(const Color(0x00000000))
+          Parameters.colorParameter..withDefaultValue(const Color(0x00000000))
         ]);
 
   @override
@@ -1465,8 +1915,9 @@ class CText extends Component {
   CText()
       : super('Text', [
           Parameters.textParameter()..withDefaultValue('Hello World'),
-          Parameters.googleFontTextStyleParameter(),
-          Parameters.textAlignParameter(),
+          Parameters.googleFontTextStyleParameter..withRequired(false),
+          Parameters.textAlignParameter,
+          Parameters.overflowParameter,
         ]);
 
   @override
@@ -1475,6 +1926,7 @@ class CText extends Component {
       parameters[0].value,
       style: parameters[1].value,
       textAlign: parameters[2].value,
+      overflow: parameters[3].value,
     );
   }
 }
@@ -1486,14 +1938,40 @@ class CImageNetwork extends Component {
           Parameters.widthParameter(),
           Parameters.heightParameter(),
           Parameters.boxFitParameter(),
-          Parameters.colorParameter()
+          Parameters.colorParameter
+            ..withDefaultValue(null)
+            ..withRequired(false),
+      Parameters.filterQualityParameter(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return Image.network(
+      parameters[0].value,
+      width: parameters[1].value,
+      height: parameters[2].value,
+      fit: parameters[3].value,
+      color: parameters[4].value,
+      filterQuality: parameters[5].value,
+    );
+  }
+}
+
+class CSvgPictureNetwork extends Component {
+  CSvgPictureNetwork()
+      : super('SvgPicture.network', [
+          Parameters.textParameter()..withDisplayName('url'),
+          Parameters.widthParameter(),
+          Parameters.heightParameter(),
+          Parameters.boxFitParameter(),
+          Parameters.colorParameter
             ..withDefaultValue(null)
             ..withRequired(false),
         ]);
 
   @override
   Widget create(BuildContext context) {
-    return Image.network(
+    return SvgPicture.network(
       parameters[0].value,
       width: parameters[1].value,
       height: parameters[2].value,
@@ -1509,7 +1987,7 @@ class CIcon extends Component {
           Parameters.iconParameter(),
           Parameters.widthParameter()
             ..withNamedParamInfoAndSameDisplayName('size'),
-          Parameters.colorParameter()
+          Parameters.colorParameter
             ..withDefaultValue(null)
             ..withRequired(false),
           Parameters.textParameter()
@@ -1534,7 +2012,40 @@ class CImage extends Component {
           Parameters.imageParameter(),
           Parameters.widthParameter(),
           Parameters.heightParameter(),
-          Parameters.colorParameter()
+          Parameters.colorParameter
+            ..withDefaultValue(null)
+            ..withRequired(false),
+          Parameters.boxFitParameter(),
+          Parameters.filterQualityParameter(),
+        ]);
+
+  @override
+  Widget create(BuildContext context) {
+    return parameters[0].value != null &&
+            (parameters[0].value as ImageData).bytes != null
+        ? Image.memory(
+            (parameters[0].value as ImageData).bytes!,
+            width: parameters[1].value,
+            height: parameters[2].value,
+            color: parameters[3].value,
+            fit: parameters[4].value,
+            filterQuality: parameters[5].value,
+          )
+        : Icon(
+            Icons.error,
+            color: Colors.red,
+            size: parameters[1].value,
+          );
+  }
+}
+
+class CSvgImage extends Component {
+  CSvgImage()
+      : super('SvgPicture.asset', [
+          Parameters.imageParameter(),
+          Parameters.widthParameter(),
+          Parameters.heightParameter(),
+          Parameters.colorParameter
             ..withDefaultValue(null)
             ..withRequired(false),
           Parameters.boxFitParameter(),
@@ -1544,7 +2055,7 @@ class CImage extends Component {
   Widget create(BuildContext context) {
     return parameters[0].value != null &&
             (parameters[0].value as ImageData).bytes != null
-        ? Image.memory(
+        ? SvgPicture.memory(
             (parameters[0].value as ImageData).bytes!,
             width: parameters[1].value,
             height: parameters[2].value,
@@ -1559,70 +2070,10 @@ class CImage extends Component {
   }
 }
 
-class CIconButton extends ClickableComponent {
-  CIconButton()
-      : super('IconButton', [
-          ComponentParameter(
-            multiple: false,
-            info: NamedParameterInfo('icon'),
-          ),
-          Parameters.widthParameter()
-            ..withDefaultValue(24.0)
-            ..withRequired(true)
-            ..withNamedParamInfoAndSameDisplayName('iconSize'),
-          Parameters.colorParameter()..withDefaultValue(AppColors.black),
-          Parameters.colorParameter()
-            ..withRequired(false)
-            ..withNamedParamInfoAndSameDisplayName('splashColor'),
-          Parameters.colorParameter()
-            ..withRequired(false)
-            ..withNamedParamInfoAndSameDisplayName('hoverColor'),
-          Parameters.colorParameter()
-            ..withRequired(false)
-            ..withNamedParamInfoAndSameDisplayName('highlightColor'),
-          Parameters.colorParameter()
-            ..withRequired(false)
-            ..withNamedParamInfoAndSameDisplayName('focusColor'),
-          Parameters.enableParameter()
-            ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
-          Parameters.alignmentParameter(),
-          Parameters.paddingParameter()..withRequired(true),
-          Parameters.textParameter()
-            ..withNamedParamInfoAndSameDisplayName('tooltip')
-        ]) {
-    addComponentParameters([parameters[0] as ComponentParameter]);
-  }
-
-  @override
-  String get clickableParamName => 'onPressed';
-
-  @override
-  Widget create(BuildContext context) {
-    initComponentParameters(context);
-    return IconButton(
-      icon: (parameters[0] as ComponentParameter).build() ?? Container(),
-      iconSize: parameters[1].value,
-      color: parameters[2].value,
-      splashColor: parameters[3].value,
-      hoverColor: parameters[4].value,
-      highlightColor: parameters[5].value,
-      focusColor: parameters[6].value,
-      enableFeedback: parameters[7].value,
-      alignment: parameters[8].value,
-      padding: parameters[9].value,
-      tooltip: parameters[10].value,
-      onPressed: () {
-        perform(context);
-      },
-    );
-  }
-}
-
 class CInputDecorator extends Component {
   CInputDecorator()
       : super('InputDecorator', [
-          Parameters.googleFontTextStyleParameter()
-            ..withChangeNamed('baseStyle'),
+          Parameters.googleFontTextStyleParameter..withChangeNamed('baseStyle'),
           Parameters.inputDecorationParameter(),
           Parameters.enableParameter()
             ..withNamedParamInfoAndSameDisplayName('isEmpty')
@@ -1654,11 +2105,11 @@ class CInputDecorator extends Component {
   }
 }
 
-class CTextField extends Component {
+class CTextField extends Component with Clickable {
   CTextField()
       : super('TextField', [
           Parameters.textInputTypeParameter(),
-          Parameters.googleFontTextStyleParameter(),
+          Parameters.googleFontTextStyleParameter..withRequired(false),
           BooleanParameter(
               required: true,
               val: false,
@@ -1680,6 +2131,14 @@ class CTextField extends Component {
       (parameters[3] as ComplexParameter).params[11] as ComponentParameter,
       (parameters[3] as ComplexParameter).params[12] as ComponentParameter,
     ]);
+    methods([
+      FVBFunction('onChanged', null,
+          [FVBArgument('value', dataType: DataType.string, nullable: false)],
+          returnType: DataType.fvbVoid),
+      FVBFunction('onSubmitted', null,
+          [FVBArgument('value', dataType: DataType.string, nullable: false)],
+          returnType: DataType.fvbVoid),
+    ]);
   }
 
   final TextEditingController textEditingController = TextEditingController();
@@ -1692,6 +2151,74 @@ class CTextField extends Component {
       controller: RuntimeProvider.of(context) == RuntimeMode.run
           ? textEditingController
           : null,
+      onChanged: (value) {
+        perform(context, arguments: [value]);
+      },
+      onSubmitted: (value) {
+        perform(context, arguments: [value], name: 'onSubmitted');
+      },
+      style: parameters[1].value,
+      readOnly: parameters[2].value,
+      decoration: parameters[3].value,
+      maxLength: parameters[4].value,
+      obscureText: parameters[5].value,
+      textInputAction: parameters[6].value,
+    );
+  }
+}
+
+class CTextFormField extends Component with Clickable {
+  CTextFormField()
+      : super('TextFormField', [
+          Parameters.textInputTypeParameter(),
+          Parameters.googleFontTextStyleParameter,
+          BooleanParameter(
+              required: true,
+              val: false,
+              info: NamedParameterInfo('readOnly'),
+              displayName: 'readOnly'),
+          Parameters.inputDecorationParameter(),
+          Parameters.flexParameter()
+            ..withNamedParamInfoAndSameDisplayName('maxLength')
+            ..withRequired(false),
+          BooleanParameter(
+              required: false,
+              val: false,
+              info: NamedParameterInfo('obscureText'),
+              displayName: 'obscure-text'),
+          Parameters.textInputActionParameter(),
+        ]) {
+    addComponentParameters([
+      (parameters[3] as ComplexParameter).params[10] as ComponentParameter,
+      (parameters[3] as ComplexParameter).params[11] as ComponentParameter,
+      (parameters[3] as ComplexParameter).params[12] as ComponentParameter,
+    ]);
+    methods([
+      FVBFunction('onChanged', null,
+          [FVBArgument('value', dataType: DataType.string, nullable: false)],
+          returnType: DataType.fvbVoid),
+      FVBFunction('validator', null,
+          [FVBArgument('value', dataType: DataType.string, nullable: true)],
+          returnType: DataType.string, canReturnNull: true),
+    ]);
+  }
+
+  final TextEditingController textEditingController = TextEditingController();
+
+  @override
+  Widget create(BuildContext context) {
+    initComponentParameters(context);
+    return TextFormField(
+      keyboardType: parameters[0].value,
+      controller: RuntimeProvider.of(context) == RuntimeMode.run
+          ? textEditingController
+          : null,
+      onChanged: (value) {
+        perform(context, arguments: [value]);
+      },
+      validator: (value) {
+        return perform(context, arguments: [value], name: 'validator');
+      },
       style: parameters[1].value,
       readOnly: parameters[2].value,
       decoration: parameters[3].value,

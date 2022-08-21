@@ -6,13 +6,13 @@ abstract class KeyFireState {}
 class KeyFireInitial extends KeyFireState {}
 
 class DownKeyEventFired extends KeyFireState {
-  final String key;
+  final FireKeyType key;
 
   DownKeyEventFired(this.key);
 }
 
 class UpKeyEventFired extends KeyFireState {
-  final String key;
+  final FireKeyType key;
 
   UpKeyEventFired(this.key);
 }

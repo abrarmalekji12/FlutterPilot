@@ -12,7 +12,7 @@ class CustomDialog {
     // const lastPosition = Offset(0, 0);
     await showDialog(
         context: context,
-        builder: (_) => GestureDetector(
+        builder: (context) => GestureDetector(
               onTap: () {
                 if (closeOnOutsideClick) {
                   onDismiss?.call();
@@ -21,28 +21,8 @@ class CustomDialog {
               },
               child: Material(
                 color: Colors.transparent,
-                child: Stack(
-                  children: [
-                    Center(
-                      child: widget,
-                      // child: TweenAnimationBuilder(
-                      //   tween: Tween<double>(begin: 0, end: 1),
-                      //   curve: Curves.decelerate,
-                      //   duration: const Duration(milliseconds: 400),
-                      //   builder: (context, double value, child) {
-                      //     return Transform.translate(
-                      //       offset: interpolate(
-                      //           initialPositionDifference, lastPosition, value * value),
-                      //       // offset: Offset(0,0),
-                      //       child: Transform.scale(
-                      //         scale: (value * 0.8 / 1) + 0.2,
-                      //         child: widget,
-                      //       ),
-                      //     );
-                      //   },
-                      // ),
-                    ),
-                  ],
+                child: Center(
+                  child: widget,
                 ),
               ),
             ));

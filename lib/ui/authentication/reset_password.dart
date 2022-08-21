@@ -34,8 +34,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   void initState() {
     super.initState();
-    _authenticationCubit =
-        BlocProvider.of<AuthenticationCubit>(context);
+    _authenticationCubit = BlocProvider.of<AuthenticationCubit>(context);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _userNameController.text = _authenticationCubit.authViewModel.userName;
     });
@@ -69,7 +68,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         }
       },
       child: AuthenticationPage(
-        widget: () => SingleChildScrollView(
+        widget: SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,

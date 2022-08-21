@@ -1,2 +1,2 @@
-const space='@';
-final spaceCodeUnit=space.codeUnits[0];
+const space = '@';
+final spaceCodeUnit = space.codeUnits[0];

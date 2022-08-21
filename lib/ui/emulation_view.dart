@@ -14,6 +14,7 @@ class EmulationView extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       return InteractiveViewer(
+        clipBehavior: Clip.none,
         child: SizedBox(
           width: double.infinity,
           child: FittedBox(
@@ -24,7 +25,9 @@ class EmulationView extends StatelessWidget {
                 fit: BoxFit.fill,
                 child: Container(
                   decoration: BoxDecoration(
-                      border: Border.all(width: 1, color: Colors.grey.shade600)),
+                      color: Colors.white,
+                      border:
+                          Border.all(width: 1, color: Colors.grey.shade600)),
                   width: screenConfig.width,
                   height: screenConfig.height,
                   child: widget,

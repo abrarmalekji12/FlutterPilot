@@ -14,5 +14,7 @@
 
 flutter clean && flutter pub get && flutter build web --release && firebase use flutter-visual-builder && firebase deploy;
 
+flutter clean & flutter pub get & flutter build web --release & firebase use flutter-visual-builder & firebase deploy;
+
 
 flutter clean && flutter pub get && flutter build web --release && firebase use flutter-visual-builder-staging && firebase deploy;

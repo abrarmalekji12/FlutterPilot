@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get.dart';
 
 import '../common/compiler/code_processor.dart';
 import '../common/dynamic_value_filed.dart';
@@ -9,6 +10,7 @@ import '../cubit/component_creation/component_creation_cubit.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/component_selection/component_selection_cubit.dart';
 import '../models/component_model.dart';
+import 'component_tree.dart';
 
 class CustomComponentProperty extends StatefulWidget {
   final CustomComponent component;
@@ -22,18 +24,14 @@ class CustomComponentProperty extends StatefulWidget {
 }
 
 class _CustomComponentPropertyState extends State<CustomComponentProperty> {
-  final TextEditingController _controller = TextEditingController();
   late FVBFunction? constructor;
+  final formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     widget.component.processor.destroyProcess(deep: false);
     widget.component.processor.executeCode(widget.component.actionCode);
     constructor = widget.component.processor.functions[widget.component.name];
-    if (constructor != null && widget.component.arguments == null) {
-      widget.component.arguments =
-          List.filled(constructor!.arguments.length, '');
-    }
     super.initState();
   }
 
@@ -77,16 +75,49 @@ class _CustomComponentPropertyState extends State<CustomComponentProperty> {
                     const SizedBox(
                       width: 20,
                     ),
+                    CustomActionCodeButton(
+                        code: () =>
+                            widget.component.arguments[
+                                constructor!.arguments[index].argName] ??
+                            '',
+                        title: constructor!.arguments[index].argName,
+                        onChanged: (value) {
+                          widget.component.arguments[
+                              constructor!.arguments[index].argName] = value;
+                        },
+                        processor: widget.component.processor,
+                        onDismiss: () {
+                          context
+                              .read<ComponentOperationCubit>()
+                              .refreshPropertyChanges(
+                                  context.read<ComponentSelectionCubit>());
+                          context
+                              .read<ComponentCreationCubit>()
+                              .changedComponent();
+                        }),
+                    const SizedBox(
+                      width: 20,
+                    ),
                     Expanded(
                       child: DynamicValueField(
-                          onProcessedResult: (code, value) {
-                            widget.component.arguments![index] = code;
-                            context.read<ComponentOperationCubit>().refreshPropertyChanges(context.read<ComponentSelectionCubit>());
-                            context.read<ComponentCreationCubit>().changedComponent();
-                            return true;
-                          },
-                          processor: widget.component.processor,
-                          textEditingController: _controller),
+                        initialCode: widget.component.arguments[
+                                constructor!.arguments[index].argName] ??
+                            '',
+                        onProcessedResult: (code, value) {
+                          widget.component.arguments[
+                              constructor!.arguments[index].argName] = code;
+                          context
+                              .read<ComponentOperationCubit>()
+                              .refreshPropertyChanges(
+                                  context.read<ComponentSelectionCubit>());
+                          context
+                              .read<ComponentCreationCubit>()
+                              .changedComponent();
+                          return true;
+                        },
+                        processor: widget.component.processor,
+                        formKey: formKey,
+                      ),
                     )
                   ],
                 ),

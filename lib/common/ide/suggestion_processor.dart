@@ -10,7 +10,9 @@ class SuggestionProcessor {
       bool global,
       {bool static = false}) {
     return variables.entries
-        .where((element) => element.key.contains(keyword)&&(object.isEmpty||element.key[0]!='_'))
+        .where((element) =>
+            element.key.contains(keyword) &&
+            (object.isEmpty || element.key[0] != '_'))
         .map((e) => SuggestionTile(
             e.value,
             object,
@@ -23,14 +25,15 @@ class SuggestionProcessor {
 
   static void processClasses(Map<String, FVBClass> classes, String keyword,
       String object, Stack2<FVBValue> valueStack, CodeSuggestion suggestion) {
-    for (final e in classes.entries.where((element) => element.key.contains(keyword))) {
+    for (final e
+        in classes.entries.where((element) => element.key.contains(keyword))) {
       if (valueStack.isNotEmpty) {
         final sample = e.value.getDefaultConstructor?.sampleCode ??
             FVBFunctionSample(e.key + '()', 0, 0);
         suggestion.add(SuggestionTile(
             e.value, '', SuggestionType.classes, sample.code, sample.end,
             resultCursorStart: sample.start));
-        suggestion.addAll(e.value.getNamedConstructor.map((e){
+        suggestion.addAll(e.value.getNamedConstructor.map((e) {
           final sample = e.sampleCode;
           return SuggestionTile(
               e, '', SuggestionType.classes, sample.code, sample.end,
@@ -55,8 +58,10 @@ class SuggestionProcessor {
       bool global,
       {bool static = false}) {
     return functions
-        .where(
-            (element) => element.name.contains(keyword) && element.name != name && !element.name.startsWith('$name.'))
+        .where((element) =>
+            element.name.contains(keyword) &&
+            element.name != name &&
+            !element.name.startsWith('$name.'))
         .map((e) {
       final sampleCode = e.sampleCode;
       return SuggestionTile(
@@ -78,8 +83,7 @@ class SuggestionProcessor {
       bool global,
       {bool static = false}) {
     return functions
-        .where(
-            (element) => element.name.contains(keyword))
+        .where((element) => element.name.contains(keyword))
         .map((e) {
       final sampleCode = e.sampleCode;
       return SuggestionTile(
@@ -94,12 +98,12 @@ class SuggestionProcessor {
   }
 }
 
-class SuggestionConfig{
+class SuggestionConfig {
   NamedParameterSuggestion? namedParameterSuggestion;
   SuggestionConfig();
 }
 
-class NamedParameterSuggestion{
+class NamedParameterSuggestion {
   final List<String> parameters;
   final int lastCodeCount;
   NamedParameterSuggestion(this.parameters, this.lastCodeCount);

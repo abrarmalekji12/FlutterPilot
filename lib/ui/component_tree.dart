@@ -1,40 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
+import '../bloc/key_fire/key_fire_bloc.dart';
 import '../code_to_component.dart';
+import '../common/app_button.dart';
+import '../common/app_text_field.dart';
 import '../common/common_methods.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/custom_animated_dialog.dart';
+import '../common/custom_drop_down.dart';
+import '../common/custom_popup_menu_button.dart';
+import '../common/editable_textview.dart';
 import '../common/io_lib.dart';
 import '../common/material_alert.dart';
 import '../common/responsive/responsive_widget.dart';
-import '../injector.dart';
-import '../models/builder_component.dart';
-import '../models/operation_model.dart';
-import '../models/other_model.dart';
-import '../common/custom_drop_down.dart';
-import '../cubit/component_creation/component_creation_cubit.dart';
-import '../common/app_button.dart';
-import '../common/app_text_field.dart';
-import '../common/custom_animated_dialog.dart';
-import '../common/custom_popup_menu_button.dart';
-import '../models/component_model.dart';
+import '../component_list.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
+import '../cubit/component_creation/component_creation_cubit.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/component_selection/component_selection_cubit.dart';
+import '../injector.dart';
+import '../models/builder_component.dart';
+import '../models/component_model.dart';
 import '../models/component_selection.dart';
+import '../models/operation_model.dart';
+import '../models/other_model.dart';
 import '../models/parameter_model.dart';
 import '../models/project_model.dart';
 import '../models/variable_model.dart';
-import 'action_code_editor.dart';
 import 'common/action_code_dialog.dart';
 import 'common/badge_widget.dart';
 import 'common/custom_widget_dialog.dart';
 import 'common/variable_dialog.dart';
-import 'project_setting_page.dart';
 import 'component_selection_dialog.dart';
-
-import '../component_list.dart';
+import 'project_setting_page.dart';
 
 class ComponentTree extends StatefulWidget {
   const ComponentTree({Key? key}) : super(key: key);
@@ -44,7 +45,7 @@ class ComponentTree extends StatefulWidget {
 }
 
 class _ComponentTreeState extends State<ComponentTree> {
-  final ScrollController _scrollController = ScrollController();
+  late final ScrollController _scrollController;
   late final ComponentOperationCubit _componentOperationCubit;
   late final ComponentCreationCubit _componentCreationCubit;
   late final ComponentSelectionCubit _componentSelectionCubit;
@@ -57,6 +58,7 @@ class _ComponentTreeState extends State<ComponentTree> {
     _componentCreationCubit = BlocProvider.of<ComponentCreationCubit>(context);
     _componentSelectionCubit =
         BlocProvider.of<ComponentSelectionCubit>(context);
+    _scrollController = ScrollController();
   }
 
   @override
@@ -75,7 +77,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                     children: [
                       IconButton(
                           onPressed: () {
-                            if(Responsive.isLargeScreen(context)) {
+                            if (Responsive.isLargeScreen(context)) {
                               ComponentOperationCubit.currentProject = null;
                             }
                             Navigator.pop(context);
@@ -130,8 +132,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                         } else if (state is ComponentOperationErrorState) {
                           WidgetsBinding.instance
                               .addPostFrameCallback((timeStamp) {
-                            Fluttertoast.showToast(
-                                msg: state.msg, timeInSecForIosWeb: 10);
+                            showNoNetworkDialog(context);
                           });
                           return InkWell(
                             onTap: () {},
@@ -221,8 +222,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                                       _componentSelectionCubit
                                           .changeComponentSelection(
                                               ComponentSelectionModel.unique(
-                                                  value.rootComponent!),
-                                              root: value.rootComponent!);
+                                                  value.rootComponent!,
+                                                  value.rootComponent!));
                                       _componentCreationCubit
                                           .changedComponent();
                                     }
@@ -253,8 +254,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                                 _componentSelectionCubit
                                     .changeComponentSelection(
                                         ComponentSelectionModel.unique(
-                                            screen.rootComponent!),
-                                        root: screen.rootComponent!);
+                                            screen.rootComponent!,
+                                            screen.rootComponent!));
 
                                 Navigator.pop(context);
                               });
@@ -322,22 +323,13 @@ class _ComponentTreeState extends State<ComponentTree> {
                                         .project!.currentScreen,
                                     code);
                               },
-                              prerequisites: [
-                                CodeBase(
-                                    () => ComponentOperationCubit
-                                        .currentProject!.actionCode,
-                                    () => ComponentOperationCubit
-                                        .currentProject!.variables.values,
-                                    ComponentOperationCubit
-                                        .currentProject!.processor.scopeName)
-                              ],
+                              processor: _componentOperationCubit
+                                  .project!.currentScreen.processor,
                               onDismiss: () {
                                 context
                                     .read<ComponentCreationCubit>()
                                     .changedComponent();
                               },
-                              variables: null,
-                              functions: [setStateFunction],
                             ),
                             const SizedBox(
                               width: 10,
@@ -348,24 +340,29 @@ class _ComponentTreeState extends State<ComponentTree> {
                               onPress: () {
                                 final screen = ComponentOperationCubit
                                     .currentProject!.currentScreen;
-                                final componentOperationCubit =
-                                    context.read<ComponentOperationCubit>();
-                                final componentCreationCubit =
-                                    context.read<ComponentCreationCubit>();
-                                final componentSelectionCubit =
-                                    context.read<ComponentSelectionCubit>();
                                 final _variableDialog = VariableDialog(
+                                    options: [
+                                      VariableDialogOption('Move to global',
+                                          (model) {
+                                        _componentOperationCubit
+                                            .addVariable(model);
+                                        screen.variables.remove(model.name);
+                                        _componentOperationCubit
+                                            .updateScreenVariable();
+                                      })
+                                    ],
                                     variables: screen.variables,
                                     componentOperationCubit:
-                                        componentOperationCubit,
+                                        _componentOperationCubit,
                                     componentCreationCubit:
-                                        componentCreationCubit,
+                                        _componentCreationCubit,
                                     title: screen.name,
                                     onAdded: (model) {
-                                      componentOperationCubit
+                                      _componentOperationCubit
                                           .addVariableForScreen(model);
-                                      componentCreationCubit.changedComponent();
-                                      componentSelectionCubit
+                                      _componentCreationCubit
+                                          .changedComponent();
+                                      _componentSelectionCubit
                                           .emit(ComponentSelectionChange());
                                     },
                                     onEdited: (model) {
@@ -374,20 +371,23 @@ class _ComponentTreeState extends State<ComponentTree> {
                                       Future.delayed(
                                           const Duration(milliseconds: 500),
                                           () {
-                                        componentOperationCubit
+                                        _componentOperationCubit
                                             .updateScreenVariable();
-                                        componentCreationCubit
+                                        _componentCreationCubit
                                             .changedComponent();
-                                        componentSelectionCubit
+                                        _componentSelectionCubit
                                             .emit(ComponentSelectionChange());
                                       });
                                     },
                                     componentSelectionCubit:
-                                        componentSelectionCubit,
+                                        _componentSelectionCubit,
                                     onDeleted: (VariableModel model) {
                                       screen.variables.remove(model);
-                                      componentCreationCubit.changedComponent();
-                                      componentSelectionCubit
+                                      _componentOperationCubit
+                                          .updateScreenVariable();
+                                      _componentCreationCubit
+                                          .changedComponent();
+                                      _componentSelectionCubit
                                           .emit(ComponentSelectionChange());
                                     });
                                 _variableDialog.show(context);
@@ -432,8 +432,8 @@ class _ComponentTreeState extends State<ComponentTree> {
                                   _componentSelectionCubit
                                       .changeComponentSelection(
                                           ComponentSelectionModel.unique(
-                                              newScreen.rootComponent!),
-                                          root: newScreen.rootComponent!);
+                                              newScreen.rootComponent!,
+                                              newScreen.rootComponent!));
                                 },
                               ),
                             );
@@ -485,30 +485,32 @@ class _ComponentTreeState extends State<ComponentTree> {
                 Expanded(
                   child: Align(
                     alignment: Alignment.topLeft,
-                    child: BlocListener<ComponentSelectionCubit,
-                        ComponentSelectionState>(
-                      listener: (context, state) {
-                        if (state is ComponentSelectionChange && state.scroll) {
-                          scrollToSelected();
-                        }
-                      },
-                      child: BlocBuilder<ComponentOperationCubit,
-                          ComponentOperationState>(
-                        bloc: _componentOperationCubit,
-                        buildWhen: (state1, state2) {
-                          debugPrint(
-                              '=== ComponentOperationCubit == buildWhen ${state1.runtimeType} to ${state2.runtimeType}');
-                          if (state2 is ComponentUpdatedState) {
-                            return true;
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      restorationId: 'component_scroll_view',
+                      child: BlocListener<ComponentSelectionCubit,
+                          ComponentSelectionState>(
+                        listener: (context, state) {
+                          if (state is ComponentSelectionChange &&
+                              state.scroll) {
+                            scrollToSelected();
                           }
-                          return false;
                         },
-                        builder: (context, state) {
-                          debugPrint(
-                              '=== ComponentOperationCubit == state ${state.runtimeType}');
-                          return SingleChildScrollView(
-                            controller: _scrollController,
-                            child: Column(
+                        child: BlocBuilder<ComponentOperationCubit,
+                            ComponentOperationState>(
+                          bloc: _componentOperationCubit,
+                          buildWhen: (state1, state2) {
+                            debugPrint(
+                                '=== ComponentOperationCubit == buildWhen ${state1.runtimeType} to ${state2.runtimeType}');
+                            if (state2 is ComponentUpdatedState) {
+                              return true;
+                            }
+                            return false;
+                          },
+                          builder: (context, state) {
+                            debugPrint(
+                                '=== ComponentOperationCubit == state ${state.runtimeType}');
+                            return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
@@ -579,9 +581,9 @@ class _ComponentTreeState extends State<ComponentTree> {
                                   ),
                                 ],
                               ],
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -592,6 +594,12 @@ class _ComponentTreeState extends State<ComponentTree> {
         ],
       ),
     );
+  }
+
+  void showNoNetworkDialog(BuildContext context) {
+    showAlertDialog(
+        context, 'No Connection', 'Network is not available at the moment',
+        positiveButton: 'Ok', dismissible: false);
   }
 
   void scrollToSelected() {
@@ -642,36 +650,32 @@ class _ComponentTreeState extends State<ComponentTree> {
       ),
     );
   }
+}
 
-  void showCustomWidgetAdd(BuildContext context,
-      Function(CustomWidgetType type, String value) param1) {
-    CustomDialog.show(
-      context,
-      CustomWidgetDialog(
-        onSubmit: param1,
-      ),
-    );
-  }
+void showCustomWidgetAdd(BuildContext context,
+    Function(CustomWidgetType type, String value) param1) {
+  CustomDialog.show(
+    context,
+    CustomWidgetDialog(
+      onSubmit: param1,
+    ),
+  );
 }
 
 class CustomActionCodeButton extends StatefulWidget {
   final String Function() code;
   final String title;
-  final List<FVBVariable> Function()? variables;
-  final List<FVBFunction> functions;
+  final CodeProcessor processor;
   final void Function(String) onChanged;
-  final List<CodeBase>? prerequisites;
   final void Function() onDismiss;
   final ActionCodeEditorConfig? config;
 
   const CustomActionCodeButton(
       {Key? key,
       required this.code,
-      required this.functions,
       required this.title,
-      required this.variables,
       required this.onChanged,
-      this.prerequisites,
+      required this.processor,
       this.config,
       required this.onDismiss})
       : super(key: key);
@@ -681,26 +685,23 @@ class CustomActionCodeButton extends StatefulWidget {
 }
 
 class _CustomActionCodeButtonState extends State<CustomActionCodeButton> {
-  bool error = false;
+  final ValueNotifier<bool> error = ValueNotifier<bool>(false);
   late ActionCodeDialog dialog;
 
   @override
   void initState() {
     dialog = ActionCodeDialog(
-      onChanged: widget.onChanged,
-      onError: (error) {
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          setState(() {
-            this.error = error;
+        onChanged: widget.onChanged,
+        onError: (error) {
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+            this.error.value = error;
           });
-        });
-      },
-      onDismiss: widget.onDismiss,
-      context: context,
-      config: widget.config,
-      title: widget.title,
-      functions: widget.functions,
-    );
+        },
+        onDismiss: widget.onDismiss,
+        context: context,
+        config: widget.config,
+        title: widget.title,
+        processor: widget.processor);
     super.initState();
   }
 
@@ -714,9 +715,7 @@ class _CustomActionCodeButtonState extends State<CustomActionCodeButton> {
         onPress: () {
           dialog.show(
             context,
-            variables: widget.variables,
             code: widget.code.call(),
-            prerequisites: widget.prerequisites,
           );
         },
         margin: 5,
@@ -755,19 +754,10 @@ class CustomComponentWidget extends StatelessWidget {
                   _componentOperationCubit.updateCustomComponentActionCode(
                       comp, code);
                 },
-                prerequisites: [
-                  CodeBase(
-                      () => ComponentOperationCubit.currentProject!.actionCode,
-                      () => ComponentOperationCubit
-                          .currentProject!.variables.values,
-                      ComponentOperationCubit
-                          .currentProject!.processor.scopeName)
-                ],
                 onDismiss: () {
                   context.read<ComponentCreationCubit>().changedComponent();
                 },
-                variables: () => comp.variables.values.toList(),
-                functions: [setStateFunction],
+                processor: ComponentOperationCubit.currentProject!.processor,
               ),
               const SizedBox(
                 width: 10,
@@ -784,14 +774,24 @@ class CustomComponentWidget extends StatelessWidget {
                       componentSelectionCubit:
                           context.read<ComponentSelectionCubit>(),
                       title: comp.name,
+                      options: [
+                        VariableDialogOption('Move to global', (model) {
+                          _componentOperationCubit.addVariable(model);
+                          comp.variables.remove(model.name);
+                          _componentOperationCubit.updateCustomVariable(comp);
+                        })
+                      ],
                       onAdded: (model) {
                         comp.variables[model.name] = model;
+                        _componentOperationCubit.updateCustomVariable(comp);
                       },
                       onEdited: (model) {
                         comp.variables[model.name] = model;
+                        _componentOperationCubit.updateCustomVariable(comp);
                       },
                       onDeleted: (model) {
                         comp.variables.remove(model.name);
+                        _componentOperationCubit.updateCustomVariable(comp);
                       },
                       variables: comp.variables);
                   dialog.show(context);
@@ -846,7 +846,45 @@ class CustomComponentWidget extends StatelessWidget {
                 componentSelectionCubit: _componentSelectionCubit,
                 componentOperationCubit: _componentOperationCubit,
                 componentCreationCubit: _componentCreationCubit),
-          ),
+          )
+        else
+          DragTarget<Component>(
+              builder: (context, candidateData, rejectedData) {
+            if (candidateData.isNotEmpty) {
+              return Container(
+                alignment: Alignment.topLeft,
+                height: 100,
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: AppColors.theme,
+                      width: 1,
+                      style: BorderStyle.solid),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: AppColors.theme,
+                ),
+              );
+            }
+            return const SizedBox(width: double.infinity, height: 70);
+          }, onWillAccept: (data) {
+            return data is Component;
+          }, onAccept: (data) {
+            _componentOperationCubit.addOperation(comp, data, comp);
+            _componentOperationCubit.removeAllComponent(
+                data,
+                data.getCustomComponentRoot() ??
+                    ComponentOperationCubit
+                        .currentProject!.currentScreen.rootComponent!);
+            _componentCreationCubit.changedComponent();
+            _componentOperationCubit.addedComponent(comp, comp);
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+              _componentSelectionCubit.changeComponentSelection(
+                  ComponentSelectionModel.unique(data, comp));
+            });
+          })
       ],
     );
   }
@@ -1226,16 +1264,13 @@ class UpDownButtons extends StatelessWidget {
           onTap: () {
             componentOperationCubit.revertWork.add(
                 [index, index - 1 >= 0 ? index - 1 : children.length - 1], () {
+              final anotherIndex =
+                  index - 1 >= 0 ? index - 1 : children.length - 1;
               componentOperationCubit.arrangeComponent(
-                  context,
-                  component,
-                  children,
-                  index,
-                  index - 1 >= 0 ? index - 1 : children.length - 1,
-                  ancestor);
+                  context, component, children, index, anotherIndex, ancestor);
               _componentSelectionCubit.changeComponentSelection(
-                  ComponentSelectionModel.unique(component),
-                  root: ancestor);
+                  ComponentSelectionModel.unique(
+                      children[anotherIndex], ancestor));
             }, (p0) {
               componentOperationCubit.arrangeComponent(
                   context, component, children, p0[1], p0[0], ancestor);
@@ -1295,11 +1330,13 @@ class SublistWidget extends StatefulWidget {
 class _SublistWidgetState extends State<SublistWidget> {
   void _onClick() {
     final List<Component> clones = widget.component.getAllClones();
-    print('CLONES >>> ${clones.length} ');
     widget.componentSelectionCubit.changeComponentSelection(
-        ComponentSelectionModel([widget.component],
-            [widget.component, ...clones], widget.component, widget.component),
-        root: widget.ancestor,
+        ComponentSelectionModel(
+            [widget.component],
+            [widget.component, ...clones],
+            widget.component,
+            widget.component,
+            widget.ancestor),
         scroll: false);
     if (GlobalObjectKey(widget.component).currentContext != null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -1365,8 +1402,8 @@ class _SublistWidgetState extends State<SublistWidget> {
                         BlocProvider.of<ComponentSelectionCubit>(context,
                                 listen: false)
                             .changeComponentSelection(
-                                ComponentSelectionModel.unique(object),
-                                root: widget.ancestor);
+                                ComponentSelectionModel.unique(
+                                    object, widget.ancestor));
                       });
                     },
                     builder: (context, list1, list2) {
@@ -1446,8 +1483,8 @@ class _SublistWidgetState extends State<SublistWidget> {
                             BlocProvider.of<ComponentSelectionCubit>(context,
                                     listen: false)
                                 .changeComponentSelection(
-                                    ComponentSelectionModel.unique(object),
-                                    root: widget.ancestor);
+                                    ComponentSelectionModel.unique(
+                                        object, widget.ancestor));
                           });
                         }, builder: (context, list1, list2) {
                           return ComponentTile(
@@ -1590,73 +1627,26 @@ class _SublistWidgetState extends State<SublistWidget> {
                                             .containsKey(child))
                                           CustomActionCodeButton(
                                               code: () =>
-                                                  (widget.component
-                                                          as BuilderComponent)
+                                                  (widget.component as BuilderComponent)
                                                       .functionMap[child]
                                                       ?.code ??
                                                   '',
                                               config: ActionCodeEditorConfig(
+                                                  variables: () => (widget.component as BuilderComponent).functionMap[child]!.arguments.map((e) => e.toVar..value = FVBTest(e.dataType, e.nullable)).toList(
+                                                      growable: false),
                                                   upCode: (widget.component
                                                           as BuilderComponent)
                                                       .functionMap[child]!
                                                       .cleanUpCode,
                                                   downCode: '}  '),
-                                              functions: [],
+                                              processor: widget.ancestor is CustomComponent
+                                                  ? (widget.ancestor as CustomComponent)
+                                                      .processor
+                                                  : ComponentOperationCubit
+                                                      .currentProject!
+                                                      .currentScreen
+                                                      .processor,
                                               title: child,
-                                              prerequisites: [
-                                                CodeBase(
-                                                    () =>
-                                                        ComponentOperationCubit
-                                                            .currentProject!
-                                                            .actionCode,
-                                                    () =>
-                                                        ComponentOperationCubit
-                                                            .currentProject!
-                                                            .variables
-                                                            .values,
-                                                    ComponentOperationCubit
-                                                        .currentProject!
-                                                        .processor
-                                                        .scopeName),
-                                                if (widget.ancestor
-                                                    is CustomComponent)
-                                                  CodeBase(
-                                                      () => (widget.ancestor
-                                                              as CustomComponent)
-                                                          .actionCode,
-                                                      () => (widget.ancestor
-                                                              as CustomComponent)
-                                                          .variables
-                                                          .values,
-                                                      (widget.ancestor
-                                                              as CustomComponent)
-                                                          .name)
-                                                else
-                                                  CodeBase(
-                                                      () =>
-                                                          ComponentOperationCubit
-                                                              .currentProject!
-                                                              .currentScreen
-                                                              .actionCode,
-                                                      () =>
-                                                          ComponentOperationCubit
-                                                              .currentProject!
-                                                              .currentScreen
-                                                              .variables
-                                                              .values,
-                                                      ComponentOperationCubit
-                                                          .currentProject!
-                                                          .currentScreen
-                                                          .name)
-                                              ],
-                                              variables: () => (widget.component
-                                                      as BuilderComponent)
-                                                  .functionMap[child]!
-                                                  .arguments
-                                                  .map((e) => e.toVar
-                                                    ..value =
-                                                        FVBTest(e.dataType, e.nullable))
-                                                  .toList(growable: false),
                                               onChanged: (code) {
                                                 (widget.component
                                                         as BuilderComponent)
@@ -1858,8 +1848,7 @@ class _SublistWidgetState extends State<SublistWidget> {
         }
         if (comp.id == operation.selectedId) {
           widget.componentSelectionCubit.changeComponentSelection(
-              ComponentSelectionModel.unique(comp),
-              root: widget.ancestor);
+              ComponentSelectionModel.unique(comp, widget.ancestor));
         }
       });
       widget.componentCreationCubit.changedComponent();
@@ -1879,7 +1868,11 @@ class OnHoverMenuChangeWidget extends StatefulWidget {
 }
 
 class _OnHoverMenuChangeWidgetState extends State<OnHoverMenuChangeWidget> {
-  bool showMenu = false;
+  static _OnHoverMenuChangeWidgetState? _currentState;
+
+  void rebuild() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1888,19 +1881,22 @@ class _OnHoverMenuChangeWidgetState extends State<OnHoverMenuChangeWidget> {
     }
     return MouseRegion(
       onEnter: (_) {
-        setState(() {
-          showMenu = true;
-        });
-      },
-      onExit: (_) {
-        showMenu = false;
-        setState(() {});
+        if (_currentState != null) {
+          final oldState = _currentState;
+          _currentState = this;
+          if (oldState!.mounted) {
+            oldState.rebuild();
+          }
+        } else {
+          _currentState = this;
+        }
+        _currentState!.rebuild();
       },
       child: Container(
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: showMenu ? const Color(0xfff1f1f1) : null),
-        child: widget.buildWidget.call(showMenu),
+            color: _currentState == this ? const Color(0xfff1f1f1) : null),
+        child: widget.buildWidget.call(_currentState == this),
       ),
     );
   }
@@ -1987,9 +1983,10 @@ class ComponentModificationMenu extends StatelessWidget {
                         customNamed: customNamed);
                     componentCreationCubit.changedComponent();
                     componentOperationCubit.addedComponent(comp, ancestor);
-                    componentSelectionCubit.changeComponentSelection(
-                        ComponentSelectionModel.unique(comp),
-                        root: ancestor);
+                    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                      componentSelectionCubit.changeComponentSelection(
+                          ComponentSelectionModel.unique(comp, ancestor));
+                    });
                   });
                 }, possibleItems: null);
               },
@@ -2003,7 +2000,8 @@ class ComponentModificationMenu extends StatelessWidget {
               width: 3,
             ),
           ],
-          if ([1, 2, 3, 5].contains(component.type) &&
+          if (([1, 2, 3, 5].contains(component.type) ||
+                  (customNamed == null && component is BuilderComponent)) &&
               component != ancestor &&
               !disableOperations) ...[
             InkWell(
@@ -2019,8 +2017,7 @@ class ComponentModificationMenu extends StatelessWidget {
                     componentOperationCubit.addedComponent(comp, ancestor);
 
                     componentSelectionCubit.changeComponentSelection(
-                        ComponentSelectionModel.unique(comp),
-                        root: ancestor);
+                        ComponentSelectionModel.unique(comp, ancestor));
                   }, (oldValue) {
                     final ReplaceOperation operation = oldValue;
                     replaceWith(operation.component2, operation.component1);
@@ -2030,8 +2027,8 @@ class ComponentModificationMenu extends StatelessWidget {
                         operation.component1, ancestor);
 
                     componentSelectionCubit.changeComponentSelection(
-                        ComponentSelectionModel.unique(operation.component1),
-                        root: ancestor);
+                        ComponentSelectionModel.unique(
+                            operation.component1, ancestor));
                   });
                 },
                     favouritesEnable: false,
@@ -2053,7 +2050,7 @@ class ComponentModificationMenu extends StatelessWidget {
               component != componentOperationCubit.project!.rootComponent!) ...[
             CustomPopupMenuButton(
               itemHeight: 60,
-              itemBuilder: (context) {
+              itemBuilder: (_) {
                 final list = getTypeComponents(
                         components,
                         customNamed == null && component != ancestor
@@ -2152,12 +2149,12 @@ class ComponentModificationMenu extends StatelessWidget {
                         componentOperationCubit.refreshCustomComponents(
                             ancestor as CustomComponent);
                       } else {
+                        final parent = component.parent;
                         componentOperationCubit.removeComponentAndRefresh(
                             context, component, ancestor);
                         componentSelectionCubit.changeComponentSelection(
                             ComponentSelectionModel.unique(
-                                component.parent ?? ancestor),
-                            root: ancestor);
+                                parent ?? ancestor, ancestor));
                       }
                       componentCreationCubit.changedComponent();
                     });
@@ -2175,8 +2172,7 @@ class ComponentModificationMenu extends StatelessWidget {
                             context, component, ancestor);
                         if (parent != null) {
                           componentSelectionCubit.changeComponentSelection(
-                              ComponentSelectionModel.unique(parent),
-                              root: ancestor);
+                              ComponentSelectionModel.unique(parent, ancestor));
                         }
                         componentCreationCubit.changedComponent();
                       }
@@ -2212,8 +2208,7 @@ class ComponentModificationMenu extends StatelessWidget {
                           component, ancestor);
                       if (parent != null) {
                         componentSelectionCubit.changeComponentSelection(
-                            ComponentSelectionModel.unique(parent),
-                            root: ancestor);
+                            ComponentSelectionModel.unique(parent, ancestor));
                       }
                       componentOperationCubit.removedComponent();
                       componentCreationCubit.changedComponent();
@@ -2223,6 +2218,7 @@ class ComponentModificationMenu extends StatelessWidget {
                   final split = e.split(' ');
                   final compName = split[2];
                   final Component wrapperComp = componentList[compName]!();
+                  wrapperComp.onFreshAdded();
                   performReversibleOperation(() {
                     wrapWithComponent(component, wrapperComp,
                         customName: split.length == 4 ? split[3] : null);
@@ -2231,9 +2227,11 @@ class ComponentModificationMenu extends StatelessWidget {
 
                     componentCreationCubit.changedComponent();
 
-                    componentSelectionCubit.changeComponentSelection(
-                        ComponentSelectionModel.unique(wrapperComp),
-                        root: ancestor);
+                    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                      componentSelectionCubit.changeComponentSelection(
+                          ComponentSelectionModel.unique(
+                              wrapperComp, ancestor));
+                    });
                   });
                 }
               },
@@ -2318,8 +2316,7 @@ class ComponentModificationMenu extends StatelessWidget {
           }
           if (comp.id == operation.selectedId) {
             componentSelectionCubit.changeComponentSelection(
-                ComponentSelectionModel.unique(comp),
-                root: ancestor);
+                ComponentSelectionModel.unique(comp, ancestor));
           }
         });
       } else {
@@ -2337,8 +2334,7 @@ class ComponentModificationMenu extends StatelessWidget {
           }
           if (comp.id == operation.selectedId) {
             componentSelectionCubit.changeComponentSelection(
-                ComponentSelectionModel.unique(comp),
-                root: ancestor);
+                ComponentSelectionModel.unique(comp, ancestor));
           }
         });
       }
@@ -2408,7 +2404,9 @@ class ComponentModificationMenu extends StatelessWidget {
       Map<String, Component> components, Component component) {
     final List<String> sameComponents = [];
     for (final key in components.keys) {
-      if (components[key]!.childCount == component.childCount) {
+      if ((component is! BuilderComponent ||
+              components[key] is BuilderComponent) &&
+          components[key]!.childCount == component.childCount) {
         sameComponents.add(key);
       }
     }
@@ -2539,15 +2537,6 @@ class ComponentModificationMenu extends StatelessWidget {
       ),
     );
   }
-
-  void showCustomWidgetAdd(
-      BuildContext context, Function(CustomWidgetType, String) onAdd) {
-    CustomDialog.show(
-        context,
-        CustomWidgetDialog(
-          onSubmit: onAdd,
-        ));
-  }
 }
 
 class ComponentTile extends StatelessWidget {
@@ -2628,7 +2617,9 @@ class ComponentTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.fade,
                     style: AppFontStyle.roboto(13,
-                        color: selected?AppColors.theme:Colors.black, fontWeight:  selected?FontWeight.bold:FontWeight.w500),
+                        color: selected ? AppColors.theme : Colors.black,
+                        fontWeight:
+                            selected ? FontWeight.bold : FontWeight.w500),
                   ),
                 ),
               ],

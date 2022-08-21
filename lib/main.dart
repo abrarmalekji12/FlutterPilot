@@ -65,9 +65,11 @@ void main() async {
     initWebKeyEvent();
   }
   await Preferences.load();
+  // doCodeTesting();
 
-  doCodeTesting();
-
+  // runZonedGuarded(() => runApp(const MyApp()), (error, stack) {
+  //   showToast(error.toString(),error: true);
+  // });
   runApp(const MyApp());
 }
 
@@ -108,7 +110,7 @@ print(abc);
 }
  ''';
   processor.executeCode(code, declarativeOnly: true);
-  processor.functions['main']?.execute(processor, []);
+  processor.functions['main']?.execute(processor, null, []);
   /*
   class Student{
   var roll;
@@ -296,7 +298,7 @@ class MyApp extends StatelessWidget {
           return getRoute((p0) => const RouteNotFound(), link);
         },
         theme: ThemeData(
-            visualDensity: VisualDensity.adaptivePlatformDensity,
+            visualDensity: VisualDensity.standard,
             primaryColor: AppColors.theme),
       ),
     );
@@ -332,7 +334,8 @@ class RunKey {
 
   static List<dynamic>? decrypt(String input) {
     if (input.contains('_')) {
-      final split = input.split('_');
+      final pos = input.indexOf('_');
+      final split = [input.substring(0, pos), input.substring(pos + 1)];
       final id = int.tryParse(split[0]);
       if (id == null) {
         return null;

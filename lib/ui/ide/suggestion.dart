@@ -21,8 +21,8 @@ class SuggestionWidget extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: SizedBox(
-        width: !Responsive.isLargeScreen(context)?dw(context, 100):350,
-        height: Responsive.isLargeScreen(context)?null:150,
+        width: !Responsive.isLargeScreen(context) ? dw(context, 100) : 350,
+        height: Responsive.isLargeScreen(context) ? null : 150,
         child: BlocBuilder<SuggestionCodeBloc, SuggestionCodeState>(
           bloc: suggestionCodeBloc,
           buildWhen: (previous, current) =>
@@ -33,7 +33,7 @@ class SuggestionWidget extends StatelessWidget {
                 return SuggestionTileWidget(
                   onSelected: () {
                     suggestionCodeBloc.selectionIndex = index;
-                    context.read<KeyFireBloc>().add(FireKeyDownEvent('ENTER'));
+                    context.read<KeyFireBloc>().add(FireKeyDownWithTypeEvent(FireKeyType.enter));
                   },
                   suggestionTile:
                       suggestionCodeBloc.suggestion!.suggestions[index],
@@ -175,12 +175,16 @@ class SuggestionText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final index = text.indexOf(word);
+    if (index == -1) {
+      return Text(text, style: style);
+    }
     return RichText(
       text: TextSpan(children: [
         TextSpan(text: text.substring(0, index), style: style),
         TextSpan(
             text: word, style: style.copyWith(color: AppColors.theme.shade100)),
-        TextSpan(text: text.substring(index + word.length), style: style),
+        if (index + word.length < text.length)
+          TextSpan(text: text.substring(index + word.length), style: style),
       ]),
     );
   }

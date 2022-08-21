@@ -9,23 +9,22 @@ part 'component_selection_state.dart';
 
 class ComponentSelectionCubit extends Cubit<ComponentSelectionState> {
   late ComponentSelectionModel currentSelected;
-  late Component currentSelectedRoot;
   Component? lastTapped;
 
   ComponentSelectionCubit() : super(ComponentSelectionInitial());
 
+  Component get currentSelectedRoot => currentSelected.root;
+
   void init(
-      ComponentSelectionModel currentSelected, Component currentSelectedRoot) {
+    ComponentSelectionModel currentSelected,
+  ) {
     this.currentSelected = currentSelected;
-    this.currentSelectedRoot = currentSelectedRoot;
   }
 
-
   void changeComponentSelection(ComponentSelectionModel component,
-      {required Component root, bool scroll = true}) {
+      {bool scroll = true}) {
     if (currentSelected != component) {
       currentSelected = component;
-      currentSelectedRoot = root;
       // logger('==== ComponentSelectionCubit ** changeComponentSelection == ${component.name} ${root.name}');
       emit(ComponentSelectionChange(scroll: scroll));
     }

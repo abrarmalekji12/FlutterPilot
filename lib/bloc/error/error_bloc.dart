@@ -11,6 +11,7 @@ part 'error_state.dart';
 
 class ErrorBloc extends Bloc<ErrorEvent, ErrorState> {
   final List<ConsoleMessage> consoleMessages = [];
+  bool consoleVisible = true;
 
   ErrorBloc() : super(ErrorInitial()) {
     on<ConsoleUpdatedEvent>(_consoleUpdated);
@@ -18,8 +19,10 @@ class ErrorBloc extends Bloc<ErrorEvent, ErrorState> {
   }
 
   void _consoleUpdated(ConsoleUpdatedEvent event, Emitter<ErrorState> emit) {
-    consoleMessages.insert(0, event.consoleMessage);
-    emit(ErrorUpdatedState());
+    if (consoleVisible) {
+      consoleMessages.insert(0, event.consoleMessage);
+      emit(ErrorUpdatedState());
+    }
   }
 
   void _clear(ClearMessageEvent event, Emitter<ErrorState> emit) {

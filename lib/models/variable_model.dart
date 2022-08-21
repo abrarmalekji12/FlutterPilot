@@ -1,9 +1,11 @@
 import '../common/compiler/code_processor.dart';
+import 'local_model.dart';
 
 class VariableModel extends FVBVariable {
   String? description;
   final bool deletable;
   final bool uiAttached;
+  final bool isDynamic;
 
   VariableModel(super.name, super.dataType,
       {this.description,
@@ -11,6 +13,7 @@ class VariableModel extends FVBVariable {
       this.deletable = true,
       super.isFinal = false,
       this.uiAttached = false,
+      this.isDynamic = false,
       super.nullable = false});
 
   @override
@@ -20,7 +23,7 @@ class VariableModel extends FVBVariable {
         isFinal: isFinal,
         value: value,
         uiAttached: uiAttached,
-        nullable: nullable);
+        nullable: nullable,isDynamic: isDynamic);
   }
 
   @override
@@ -37,7 +40,11 @@ class VariableModel extends FVBVariable {
     };
   }
 
-  factory VariableModel.fromJson(Map<String, dynamic> map, String screen) {
+  String get code {
+    return '${DataType.dataTypeToCode(dataType)}${value == null ? '?' : ''} $name = ${value != null ? LocalModel.valueToCode(value) : 'null'};';
+  }
+
+  factory VariableModel.fromJson(Map<String, dynamic> map) {
     return VariableModel(
         map['name'],
         map['dataType'] != null
@@ -60,6 +67,8 @@ class DynamicVariableModel {
 
   DynamicVariableModel(this.name, this.dataType, {this.description = ''});
 
+  VariableModel get toVar =>
+      VariableModel(name, dataType, description: description);
   factory DynamicVariableModel.fromJson(Map<String, dynamic> json) {
     return DynamicVariableModel(
         json['name'],

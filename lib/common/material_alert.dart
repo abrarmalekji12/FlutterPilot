@@ -39,7 +39,7 @@ class MaterialAlertDialog extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: kElevationToShadow[1]),
-              width: 350,
+              width: 400,
               child: Stack(
                 children: [
                   Padding(
@@ -60,14 +60,18 @@ class MaterialAlertDialog extends StatelessWidget {
                           ),
                         ],
                         if (subtitle != null) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(right: 40),
-                            child: Text(
-                              subtitle!,
-                              style: AppFontStyle.roboto(14,
-                                      color: const Color(0xff666666))
-                                  .copyWith(fontWeight: FontWeight.normal),
-                              textAlign: TextAlign.start,
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 40),
+                              child: SingleChildScrollView(
+                                child: Text(
+                                  subtitle!,
+                                  style: AppFontStyle.roboto(14,
+                                          color: const Color(0xff666666))
+                                      .copyWith(fontWeight: FontWeight.normal),
+                                  textAlign: TextAlign.start,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(

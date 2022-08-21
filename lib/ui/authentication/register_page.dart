@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../common/common_methods.dart';
 import '../../common/extension_util.dart';
 import '../../common/app_loader.dart';
 import '../../common/password_box.dart';
@@ -37,8 +38,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    _authenticationCubit =
-        BlocProvider.of<AuthenticationCubit>(context);
+    _authenticationCubit = BlocProvider.of<AuthenticationCubit>(context);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _authenticationCubit.authViewModel.userName = '';
       _authenticationCubit.authViewModel.password = '';
@@ -59,11 +59,14 @@ class _RegisterPageState extends State<RegisterPage> {
           context.read<FlutterProjectCubit>().setUserId = state.userId;
         } else if (state is AuthFailedState) {
           AppLoader.hide();
-          Fluttertoast.showToast(msg: state.message, timeInSecForIosWeb: 3);
+          showToast(state.message, error: true);
+        } else if (state is AuthErrorState) {
+          AppLoader.hide();
+          showToast(state.message, error: true);
         }
       },
       child: AuthenticationPage(
-        widget: () => SingleChildScrollView(
+        widget: SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -352,6 +355,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   textAlign: TextAlign.left,
                 )),
+                SizedBox(
+                  height: MediaQuery.of(context).viewInsets.bottom,
+                ),
               ],
             )),
         formKey: _formKey,

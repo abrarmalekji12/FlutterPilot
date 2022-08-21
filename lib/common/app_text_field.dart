@@ -8,11 +8,13 @@ class AppTextField extends StatelessWidget {
   static String changedValue = '';
   late final FocusNode focusNode;
   final void Function(String)? onChange;
+  final String? Function(String?)? onValidate;
 
   AppTextField(
       {Key? key,
       String? value,
       this.onChange,
+      this.onValidate,
       TextEditingController? controller,
       FocusNode? node})
       : super(key: key) {
@@ -32,18 +34,16 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       onChanged: (value) {
         changedValue = value;
         onChange?.call(value);
       },
+      validator: onValidate,
       focusNode: focusNode..requestFocus(),
       autofocus: true,
       controller: textFieldController,
       style: AppFontStyle.roboto(15, fontWeight: FontWeight.normal),
-      onSubmitted: (data) {
-        logger('SUBMITTED');
-      },
       onEditingComplete: () {
         logger('EDITING COMP');
       },

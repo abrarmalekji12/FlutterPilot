@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/app_loader.dart';
+import '../common/common_methods.dart';
 import '../common/material_alert.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
@@ -76,6 +77,9 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                     break;
                   case FlutterProjectErrorState:
                     AppLoader.hide();
+                    showAlertDialog(context, 'Connection Timeout',
+                        'Please ensure network is available.',
+                        positiveButton: 'Ok');
                     break;
                 }
               },

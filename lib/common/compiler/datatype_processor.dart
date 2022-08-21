@@ -5,11 +5,8 @@ import 'constants.dart';
 class DataTypeProcessor {
   DataTypeProcessor();
 
-  static FVBValue? getFVBValueFromCode(
-      String variable,
-      final Map<String, FVBClass> classes,
-      final Map<String, FVBEnum> enums,
-      Function showError) {
+  static FVBValue? getFVBValueFromCode(String variable,
+      final Map<String, FVBClass> classes, final Map<String, FVBEnum> enums) {
     if (variable.contains(space) ||
         variable.contains('?') ||
         variable.contains('>')) {
@@ -38,8 +35,7 @@ class DataTypeProcessor {
           dataType = DataType.codeToDatatype(split.first, classes, enums);
         }
         if (dataType == DataType.unknown) {
-          showError('Unknown data type or class name "${split.first}"');
-          return null;
+          throw Exception('Unknown data type or class name "${split.first}"');
         }
       } else {
         dataType = DataType.undetermined;
@@ -71,7 +67,10 @@ class DataTypeProcessor {
     if (value == null && dataType == DataType.fvbVoid) {
       return true;
     }
-    if (value == null && !nullable && dataType != DataType.dynamic&& dataType != DataType.undetermined) {
+    if (value == null &&
+        !nullable &&
+        dataType != DataType.dynamic &&
+        dataType != DataType.undetermined) {
       throw Exception(canNotNullError ?? 'value of $variable can not null');
     }
     if (value is FVBObject) {
@@ -89,7 +88,7 @@ class DataTypeProcessor {
       return true;
     } else {
       throw Exception(invalidDataTypeError ??
-          'Cannot assign ${DataType.dataTypeToCode(valueDataType)} to ${DataType.dataTypeToCode(dataType)} : $variable = ${value.runtimeType}');
+          'Cannot assign ${DataType.dataTypeToCode(valueDataType)} to ${DataType.dataTypeToCode(dataType)} : $variable = $value');
     }
   }
 

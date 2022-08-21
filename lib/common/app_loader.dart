@@ -10,6 +10,9 @@ abstract class AppLoader {
   static bool isShowing = false;
   static void show(BuildContext context,
       {LoadingMode loadingMode = LoadingMode.defaultMode}) {
+    if (isShowing) {
+      return;
+    }
     isShowing = true;
     Loader.show(context,
         progressIndicator: loadingMode != LoadingMode.defaultMode

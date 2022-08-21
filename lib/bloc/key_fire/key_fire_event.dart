@@ -8,6 +8,12 @@ class FireKeyDownEvent extends KeyFireEvent {
 
   FireKeyDownEvent(this.key);
 }
+class FireKeyDownWithTypeEvent extends KeyFireEvent {
+  final FireKeyType key;
+
+  FireKeyDownWithTypeEvent(this.key);
+}
+
 class FireKeyUpEvent extends KeyFireEvent {
   final String key;
 

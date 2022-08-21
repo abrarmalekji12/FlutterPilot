@@ -6,8 +6,9 @@ import 'border_text_field.dart';
 class EditableTextView extends StatefulWidget {
   final String text;
   final void Function(String) onChange;
+  final TextStyle? style;
 
-  EditableTextView({Key? key, required this.text, required this.onChange})
+  EditableTextView(this.text, {Key? key, this.style, required this.onChange})
       : super(key: key);
 
   @override
@@ -18,6 +19,7 @@ class _EditableTextViewState extends State<EditableTextView> {
   bool editMode = false;
   bool touchMode = false;
   final TextEditingController _controller = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -27,12 +29,16 @@ class _EditableTextViewState extends State<EditableTextView> {
   @override
   Widget build(BuildContext context) {
     if (editMode) {
-      return Container(
+      return SizedBox(
+        height: 45,
         width: 20.0 * _controller.text.length,
-        padding: const EdgeInsets.all(5),
-        child: BorderTextField(
+        child: TextField(
           focusNode: FocusNode()..requestFocus(),
           controller: _controller,
+          style: widget.style ??
+              AppFontStyle.roboto(14,
+                  color: Colors.black, fontWeight: FontWeight.w500),
+          decoration: const InputDecoration(contentPadding: EdgeInsets.zero),
           onSubmitted: (data) {
             widget.onChange.call(data);
             setState(() {
@@ -60,23 +66,27 @@ class _EditableTextViewState extends State<EditableTextView> {
             editMode = true;
           });
         },
-        child: Container(
-          padding: const EdgeInsets.all(5),
+        child: SizedBox(
+          height: 45,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 _controller.text,
-                style: AppFontStyle.roboto(14,
-                    color: Colors.black, fontWeight: FontWeight.w500),
+                style: widget.style ??
+                    AppFontStyle.roboto(14,
+                        color: Colors.black, fontWeight: FontWeight.w500),
               ),
               const SizedBox(
                 width: 10,
               ),
-              Icon(
-                Icons.edit,
-                size: 16,
-                color: touchMode ? Colors.black : Colors.grey,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Icon(
+                  Icons.edit,
+                  size: touchMode ? 16 : 14,
+                  color: touchMode ? Colors.black : Colors.grey,
+                ),
               )
             ],
           ),

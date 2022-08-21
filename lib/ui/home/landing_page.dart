@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../common/app_button.dart';
+import '../../common/fvb_arch/fvb_refresher.dart';
+import '../../common/responsive/responsive_widget.dart';
 import '../../constant/app_colors.dart';
 import '../../constant/font_style.dart';
 import '../../cubit/authentication/authentication_cubit.dart';
@@ -175,50 +177,74 @@ class _LandingPageState extends State<LandingPage> {
 }
 
 void openAuthDialog(BuildContext context, void Function(int) onSuccess) {
-  showDialog(
-    context: context,
-    builder: (_) => Align(
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          width: 400,
-          height: 600,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: BlocListener<AuthenticationCubit, AuthenticationState>(
-            listener: (context, state) {
-              if (state is AuthSuccessState && state.userId != -1) {
-                Navigator.of(context).pop();
-                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+  if (Responsive.isSmallScreen(context)) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AuthNavigation(onSuccess: onSuccess),
+      ),
+    );
+  } else {
+    showDialog(
+      context: context,
+      builder: (_) => AuthNavigation(onSuccess: onSuccess),
+    );
+  }
+}
 
-                  onSuccess(state.userId);
-                });
-              }
-            },
-            child: Navigator(
-              onGenerateRoute: (settings) {
-                if (settings.name == '/login') {
-                  return getRoute((context) => const LoginPage(), null,
-                      anim: false);
-                } else if (settings.name == '/register') {
-                  return getRoute((_) => const RegisterPage(), null,
-                      anim: false);
-                } else if (settings.name == '/reset-password') {
-                  return getRoute((context) => const ResetPasswordPage(), null,
-                      anim: false);
+class AuthNavigation extends StatelessWidget {
+  final void Function(int) onSuccess;
+
+  const AuthNavigation({Key? key, required this.onSuccess}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Align(
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            width: Responsive.isSmallScreen(context) ? null : 400,
+            height: Responsive.isSmallScreen(context) ? null : 600,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: Responsive.isSmallScreen(context)
+                  ? null
+                  : BorderRadius.circular(20),
+            ),
+            child: BlocListener<AuthenticationCubit, AuthenticationState>(
+              listener: (context, state) {
+                if (state is AuthSuccessState && state.userId != -1) {
+                  Navigator.of(context).pop();
+                  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                    onSuccess(state.userId);
+                  });
                 }
               },
-              initialRoute: '/login',
-              restorationScopeId: 'auth',
+              child: Navigator(
+                onGenerateRoute: (settings) {
+                  if (settings.name == '/login') {
+                    return getRoute((context) => const LoginPage(), null,
+                        anim: false);
+                  } else if (settings.name == '/register') {
+                    return getRoute((_) => const RegisterPage(), null,
+                        anim: false);
+                  } else if (settings.name == '/reset-password') {
+                    return getRoute(
+                        (context) => const ResetPasswordPage(), null,
+                        anim: false);
+                  }
+                },
+                initialRoute: '/login',
+                restorationScopeId: 'auth',
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class CommonTextField extends StatelessWidget {

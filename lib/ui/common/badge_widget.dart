@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../constant/app_colors.dart';
 
 class BadgeWidget extends StatelessWidget {
-  final bool error;
+  final ValueNotifier<bool> error;
   final Widget child;
 
-  const BadgeWidget({Key? key, this.error = false, required this.child})
+  const BadgeWidget({Key? key, required this.error, required this.child})
       : super(key: key);
 
   @override
@@ -16,18 +16,24 @@ class BadgeWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Center(child: child),
-        if(error)
-        Align(
-          alignment: Alignment.topLeft,
-          child: Padding(
-            padding: const EdgeInsets.all(2),
-            child: Container(
-              width: 5,
-              height: 5,
-              decoration: const BoxDecoration(
-                  color: AppColors.red, shape: BoxShape.circle),
-            ),
-          ),
+        ValueListenableBuilder(
+          valueListenable: error,
+          builder: (BuildContext context, bool value, Widget? child) {
+            return value
+                ? Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                            color: AppColors.red, shape: BoxShape.circle),
+                      ),
+                    ),
+                  )
+                : const Offstage();
+          },
         )
       ],
     );

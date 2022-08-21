@@ -1,6 +1,8 @@
 import 'common/compiler/code_processor.dart';
 import 'common/compiler/constants.dart';
 
+enum QuoteType { single, double, back }
+
 abstract class CodeOperations {
   static String? trim(String? code, {bool removeBackSlash = true}) {
     if (code == null) {
@@ -10,33 +12,29 @@ abstract class CodeOperations {
     bool openSingleQuote = false;
     bool openDoubleQuote = false;
     bool openBackQuote = false;
-    bool openStringFormat=false;
-    bool enable=true;
+    bool openStringFormat = false;
+    bool enable = true;
     for (int i = 0; i < code.length; i++) {
-      if (code[i] == '\'') {
+      if ((!openDoubleQuote) && !openBackQuote && code[i] == '\'') {
         openSingleQuote = !openSingleQuote;
-        enable=!openSingleQuote;
-      }
-      else if( code[i] == '"' ){
-        openDoubleQuote=!openDoubleQuote;
-        enable=!openDoubleQuote;
-      }
-      else if( code[i] == '`'){
-        openBackQuote=!openBackQuote;
-        enable=!openBackQuote;
-      }
-      else if((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
-          (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')){
-        if(code[i]=='{'){
-          openStringFormat=true;
-          enable=true;
+        enable = !openSingleQuote;
+      } else if (!openSingleQuote && !openBackQuote && code[i] == '"') {
+        openDoubleQuote = !openDoubleQuote;
+        enable = !openDoubleQuote;
+      } else if (code[i] == '`') {
+        openBackQuote = !openBackQuote;
+        enable = !openBackQuote;
+      } else if (!openBackQuote &&
+          ((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
+              (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}'))) {
+        if (code[i] == '{') {
+          openStringFormat = true;
+          enable = true;
+        } else if (openStringFormat) {
+          openStringFormat = false;
+          enable = false;
         }
-        else if(openStringFormat){
-          openStringFormat=false;
-          enable=false;
-        }
-      }
-      else if (enable&&
+      } else if (enable &&
           (code[i] == ' ' || (removeBackSlash && code[i] == '\n'))) {
         continue;
       }
@@ -54,8 +52,8 @@ abstract class CodeOperations {
     bool openDoubleQuote = false;
     bool openBackQuote = false;
     int spaceCount = 0;
-    bool openStringFormat=false;
-    bool enable=true;
+    bool openStringFormat = false;
+    bool enable = true;
     for (int i = 0; i < code.length; i++) {
       if (code[i] != ' ') {
         if (spaceCount >= 1) {
@@ -70,29 +68,26 @@ abstract class CodeOperations {
         spaceCount = 0;
       }
 
-      if (code[i] == '\'') {
+      if ((!openDoubleQuote) && !openBackQuote && code[i] == '\'') {
         openSingleQuote = !openSingleQuote;
-        enable=!openSingleQuote;
-      }
-      else if( code[i] == '"' ){
-        openDoubleQuote=!openDoubleQuote;
-        enable=!openDoubleQuote;
-      }
-      else if( code[i] == '`'){
-        openBackQuote=!openBackQuote;
-        enable=!openBackQuote;
-      }
-      else if((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
-          (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}')){
-        if(code[i]=='{'){
-          openStringFormat=true;
-          enable=true;
+        enable = !openSingleQuote;
+      } else if ((!openSingleQuote) && !openBackQuote && code[i] == '"') {
+        openDoubleQuote = !openDoubleQuote;
+        enable = !openDoubleQuote;
+      } else if (code[i] == '`') {
+        openBackQuote = !openBackQuote;
+        enable = !openBackQuote;
+      } else if (!openBackQuote &&
+          ((code[i] == '{' && i < code.length - 1 && code[i + 1] == '{') ||
+              (code[i] == '}' && i < code.length - 1 && code[i + 1] == '}'))) {
+        if (code[i] == '{') {
+          openStringFormat = true;
+          enable = true;
+        } else if (openStringFormat) {
+          openStringFormat = false;
+          enable = false;
         }
-        else if(openStringFormat){
-          openStringFormat=false;
-          enable=false;
-        }
-      }else if (enable) {
+      } else if (enable) {
         if (code[i] == ' ') {
           spaceCount++;
           continue;
@@ -111,10 +106,12 @@ abstract class CodeOperations {
 
   static bool isVariableChar(final int codeUnit) {
     return (codeUnit >= CodeProcessor.capitalACodeUnit &&
+            codeUnit <= CodeProcessor.capitalZCodeUnit) ||
+        (codeUnit >= CodeProcessor.smallACodeUnit &&
             codeUnit <= CodeProcessor.smallZCodeUnit) ||
         (codeUnit >= CodeProcessor.zeroCodeUnit &&
             codeUnit <= CodeProcessor.nineCodeUnit) ||
-        codeUnit == CodeProcessor.underScoreCodeUnit ;
+        codeUnit == CodeProcessor.underScoreCodeUnit;
   }
 
   static String? checkSyntaxInCode(String code) {
@@ -127,28 +124,44 @@ abstract class CodeOperations {
       final a = code[i];
       switch (a) {
         case '"':
-          doubleQuote = !doubleQuote;
+          if (!singleQuote) {
+            doubleQuote = !doubleQuote;
+          }
           break;
         case '\'':
-          singleQuote = !singleQuote;
+          if (!doubleQuote) {
+            singleQuote = !singleQuote;
+          }
           break;
         case '(':
-          roundCount++;
+          if (!doubleQuote && !singleQuote) {
+            roundCount++;
+          }
           break;
         case ')':
-          roundCount--;
+          if (!doubleQuote && !singleQuote) {
+            roundCount--;
+          }
           break;
         case '[':
-          squareCount++;
+          if (!doubleQuote && !singleQuote) {
+            squareCount++;
+          }
           break;
         case ']':
-          squareCount--;
+          if (!doubleQuote && !singleQuote) {
+            squareCount--;
+          }
           break;
         case '{':
-          curlyCount++;
+          if (!doubleQuote && !singleQuote) {
+            curlyCount++;
+          }
           break;
         case '}':
-          curlyCount--;
+          if (!doubleQuote && !singleQuote) {
+            curlyCount--;
+          }
           break;
       }
     }
@@ -183,30 +196,29 @@ abstract class CodeOperations {
   }
 
   static getRuntimeTypeWithoutGenerics(final dynamic value) {
-    if(value is Map){
+    if (value is Map) {
       return 'Map';
     }
-    if(value is List){
+    if (value is List) {
       return 'List';
     }
-    if(value is Iterable){
+    if (value is Iterable) {
       return 'Iterable';
     }
-    final name=value.runtimeType.toString();
-    final genericIndex=name.indexOf('<');
-    return name.substring(0, genericIndex>=0?genericIndex:name.length);
+    final name = value.runtimeType.toString();
+    final genericIndex = name.indexOf('<');
+    return name.substring(0, genericIndex > 0 ? genericIndex : name.length);
   }
+
   static getDatatypeToDartType(final DataType dataType) {
-    if(dataType.fvbName=='List'){
+    if (dataType.fvbName == 'List') {
       return List;
-    }
-    else if(dataType.fvbName=='Map'){
+    } else if (dataType.fvbName == 'Map') {
       return Map;
-    }
-    else if(dataType.fvbName=='Iterable'){
+    } else if (dataType.fvbName == 'Iterable') {
       return Iterable;
     }
-    if(dataType.name=='fvbInstance'){
+    if (dataType.name == 'fvbInstance') {
       return dataType.fvbName;
     }
     switch (dataType) {
@@ -226,13 +238,10 @@ abstract class CodeOperations {
         return null;
     }
   }
+
   static int findChar(
-      String input,
-      int startIndex,
-      int target,
-      List<int> stopWhen,
-  {bool Function(int)? stop}
-      ) {
+      String input, int startIndex, int target, List<int> stopWhen,
+      {bool Function(int)? stop}) {
     int count = 0;
     for (int i = startIndex + 1; i < input.length; i++) {
       final unit = input[i].codeUnits.first;
@@ -241,18 +250,22 @@ abstract class CodeOperations {
           return i;
         }
       }
-      if (stopWhen.contains(unit)||(stop?.call(unit)??false)) {
+      if (stopWhen.contains(unit) || (stop?.call(unit) ?? false)) {
         return -1;
       }
-      if(unit == CodeProcessor.roundBracketOpen||unit == CodeProcessor.squareBracketOpen||unit == CodeProcessor.curlyBracketOpen){
+      if (unit == CodeProcessor.roundBracketOpen ||
+          unit == CodeProcessor.squareBracketOpen ||
+          unit == CodeProcessor.curlyBracketOpen) {
         count++;
-      }
-      else if (unit == CodeProcessor.roundBracketClose || unit == CodeProcessor.squareBracketClose || unit == CodeProcessor.curlyBracketClose) {
+      } else if (unit == CodeProcessor.roundBracketClose ||
+          unit == CodeProcessor.squareBracketClose ||
+          unit == CodeProcessor.curlyBracketClose) {
         count--;
       }
     }
     return -1;
   }
+
   static int findCloseBracket(
     String input,
     int openIndex,
@@ -282,9 +295,21 @@ abstract class CodeOperations {
     int parenthesisCount = 0;
     final List<int> dividers = [-1];
     bool stringQuote = false;
+    QuoteType? type;
     for (int i = 0; i < paramCode.length; i++) {
       if (paramCode[i] == '\'' || paramCode[i] == '"' || paramCode[i] == '`') {
-        stringQuote = !stringQuote;
+        if (stringQuote) {
+          if (((type == QuoteType.double && paramCode[i] == '"') ||
+              (type == QuoteType.single && paramCode[i] == '\'') ||
+              (type == QuoteType.back && paramCode[i] == '`'))) {
+            stringQuote = false;
+          }
+        } else {
+          stringQuote = true;
+          type = (paramCode[i] == '"')
+              ? QuoteType.double
+              : ((paramCode[i] == '\'') ? QuoteType.single : QuoteType.back);
+        }
       }
       if (stringQuote) {
         continue;

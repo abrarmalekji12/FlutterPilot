@@ -13,31 +13,16 @@ class PainterWrapper extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // canvas.draw
-    canvasClass.fvbFunctions['drawPoint']!.dartCall = (arguments) {
-      canvas.drawRect(Rect.fromPoints(Offset(0, 0), Offset(100, 100)),
-          Paint()..color = Colors.red);
-    };
-
-    canvasClass.fvbFunctions['drawRect']!.dartCall = (arguments) {
-      final rect = (arguments[0] as FVBInstance?)?.toDart();
-      final paint = (arguments[1] as FVBInstance?)?.toDart();
-      print('HERE ${(rect as Rect).bottom}');
-      if (CodeProcessor.operationType == OperationType.regular) {
-        canvas.drawRect(rect, paint);
-      }
-    };
-
-    processor.functions['paint']?.execute(processor, [
-      canvasClass.createInstance(processor, []),
-      sizeClass.createInstance(processor, [size.width,size.height])
+    processor.functions['paint']?.execute(processor, null, [
+      canvasClass.createInstance(processor, [canvas]),
+      sizeClass.createInstance(processor, [size.width, size.height])
     ]);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return processor.functions['shouldRepaint']
-            ?.execute(processor, [oldDelegate]) ??
+            ?.execute(processor, null, [oldDelegate]) ??
         true;
   }
 }

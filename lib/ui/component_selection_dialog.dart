@@ -51,14 +51,15 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
   late final TabController _tabController;
   final RefreshController _refreshController = RefreshController();
   final TextEditingController _controller = TextEditingController();
-
+  static const tileSize = 170.0;
+  late int horizontalCount;
   _ComponentSelectionDialogState();
 
   @override
   void initState() {
     super.initState();
     _tabController =
-        TabController(length: widget.shouldShowFavourites ? 3 : 2, vsync: this);
+        TabController(length: widget.shouldShowFavourites ? 2 : 1, vsync: this);
     _controller.text = filter;
     _controller.selection =
         TextSelection(baseOffset: 0, extentOffset: filter.length);
@@ -67,8 +68,27 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
     });
   }
 
+  void onSelected(MapEntry<int, dynamic> entry) {
+    if (entry.value is CustomComponent) {
+      final component = entry.value as CustomComponent;
+      final customComponentClone = component.createInstance(null);
+      print('objects length ${component.objects.length}');
+      widget.onSelection(customComponentClone);
+    } else {
+      final component = componentList[entry.value]!();
+      component.onFreshAdded();
+      widget.componentOperationCubit.addInSameComponentList(component);
+      widget.onSelection(component);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    horizontalCount = ((Responsive.isLargeScreen(context)
+                ? dw(context, 50)
+                : dw(context, 100)) ~/
+            tileSize) +
+        1;
     final componentOperationCubit = widget.componentOperationCubit;
     return Center(
       child: Material(
@@ -77,20 +97,26 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
           focusNode: focusNode,
           onKey: (key) {
             if (key is RawKeyDownEvent) {
-              logger('pressed ${key.physicalKey} ${key.logicalKey}');
-              if (key.physicalKey == PhysicalKeyboardKey.enter) {
-                widget.onSelection(componentList[filtered[selectedIndex]]!());
-
+              if (key.physicalKey == PhysicalKeyboardKey.enter &&
+                  selectedIndex < filtered.length) {
+                final bool custom = selectedIndex >= filtered.length;
+                onSelected(custom
+                    ? MapEntry(
+                        selectedIndex,
+                        filteredCustomComponents[
+                            selectedIndex - filtered.length])
+                    : MapEntry(selectedIndex, filtered[selectedIndex]));
                 Navigator.pop(context);
               } else if (key.physicalKey == PhysicalKeyboardKey.arrowDown) {
-                if (selectedIndex + 4 < filtered.length) {
-                  selectedIndex = (selectedIndex + 4);
+                if (selectedIndex + horizontalCount <
+                    (filtered.length + filteredCustomComponents.length)) {
+                  selectedIndex = (selectedIndex + horizontalCount);
                   setState(() {});
                 }
               } else if (key.physicalKey == PhysicalKeyboardKey.arrowUp) {
-                selectedIndex = (selectedIndex - 4 < 0)
-                    ? selectedIndex + 4
-                    : selectedIndex - 4;
+                selectedIndex = (selectedIndex - horizontalCount < 0)
+                    ? selectedIndex + horizontalCount
+                    : selectedIndex - horizontalCount;
                 setState(() {});
               } else if (key.physicalKey == PhysicalKeyboardKey.arrowLeft) {
                 selectedIndex = (selectedIndex - 1 < 0)
@@ -98,13 +124,28 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                     : selectedIndex - 1;
                 setState(() {});
               } else if (key.physicalKey == PhysicalKeyboardKey.arrowRight) {
-                if (selectedIndex + 1 < filtered.length) {
+                if (selectedIndex + 1 <
+                    (filtered.length + filteredCustomComponents.length)) {
                   selectedIndex = (selectedIndex + 1);
                   setState(() {});
                 }
               }
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                if (GlobalObjectKey(filtered[selectedIndex]).currentContext !=
+                final bool custom = selectedIndex >= filtered.length;
+                if (custom &&
+                    GlobalObjectKey(filteredCustomComponents[
+                                    selectedIndex - filtered.length]
+                                .name)
+                            .currentContext !=
+                        null) {
+                  Scrollable.ensureVisible(
+                      GlobalObjectKey(filteredCustomComponents[
+                                  selectedIndex - filtered.length]
+                              .name)
+                          .currentContext!,
+                      alignment: 0.5);
+                } else if (GlobalObjectKey(filtered[selectedIndex])
+                        .currentContext !=
                     null) {
                   Scrollable.ensureVisible(
                       GlobalObjectKey(filtered[selectedIndex]).currentContext!,
@@ -132,6 +173,7 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
               filtered = (widget.possibleItems ?? componentNames)
                   .where((element) => element.isCaseInsensitiveContains(filter))
                   .toList();
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -152,15 +194,7 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                     tabs: [
                       Tab(
                         child: Text(
-                          'Basic widgets',
-                          style: AppFontStyle.roboto(14,
-                              color: const Color(0xff494949),
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Tab(
-                        child: Text(
-                          'Custom widgets',
+                          'Widgets',
                           style: AppFontStyle.roboto(14,
                               color: const Color(0xff494949),
                               fontWeight: FontWeight.bold),
@@ -187,122 +221,88 @@ class _ComponentSelectionDialogState extends State<ComponentSelectionDialog>
                       GridView(
                         gridDelegate:
                             const SliverGridDelegateWithMaxCrossAxisExtent(
-                                mainAxisExtent: 50, maxCrossAxisExtent: 170),
+                                mainAxisExtent: 50,
+                                maxCrossAxisExtent: tileSize),
                         controller: _basicComponentScrollController,
-                        children: filtered
+                        children: [...filtered, ...filteredCustomComponents]
                             .asMap()
                             .entries
                             .map(
-                              (entry) => BasicComponentTile(selectedIndex,
-                                  entry, componentOperationCubit, widget),
+                              (entry) => BasicComponentTile(
+                                selectedIndex,
+                                entry,
+                                componentOperationCubit,
+                                widget,
+                                onSelected: onSelected,
+                              ),
                             )
                             .toList(),
                       ),
-                      GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithMaxCrossAxisExtent(
-                                mainAxisExtent: 50, maxCrossAxisExtent: 170),
-                        controller: ScrollController(),
-                        itemBuilder: (context, i) {
-                          return InkWell(
-                            onTap: () {
-                              final customComponentClone =
-                                  filteredCustomComponents[i]
-                                      .createInstance(null);
-                              print(
-                                  'objects length ${filteredCustomComponents[i].objects.length}');
-                              widget.onSelection(customComponentClone);
-
-                              Navigator.pop(context);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: Card(
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)),
-                                child: Center(
-                                  child: Text(
-                                    filteredCustomComponents[i].name,
-                                    style: AppFontStyle.roboto(12,
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w500),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                        itemCount: filteredCustomComponents.length,
-                      ),
                       if (widget.shouldShowFavourites)
-                        OverflowBox(
-                          child: RuntimeProvider(
-                            runtimeMode: RuntimeMode.viewOnly,
-                            child:
-                                LayoutBuilder(builder: (context, constraints) {
-                              return BlocBuilder<ComponentOperationCubit,
-                                  ComponentOperationState>(
-                                buildWhen: (context, state) {
-                                  return state is ComponentUpdatedState;
-                                },
-                                bloc: componentOperationCubit,
-                                builder: (context, state) {
-                                  if (state is ComponentOperationLoadingState) {
-                                    return Shimmer.fromColors(
-                                      baseColor: const Color(0xfff2f2f2),
-                                      highlightColor: Colors.white,
-                                      child: ListView.builder(
-                                        itemBuilder:
-                                            (BuildContext context, int index) {
-                                          return Container(
-                                            height: 100,
-                                            padding: const EdgeInsets.all(10),
-                                            margin: const EdgeInsets.only(
-                                                bottom: 10),
-                                            decoration: BoxDecoration(
-                                                color: const Color(0xfff2f2f2),
-                                                borderRadius:
-                                                    BorderRadius.circular(10)),
-                                          );
-                                        },
-                                        itemCount: 10,
-                                      ),
-                                    );
-                                  }
-
-                                  return SmartRefresher(
-                                    controller: _refreshController,
-                                    onRefresh: () {
-                                      componentOperationCubit
-                                          .loadFavourites()
-                                          .then((value) {
-                                        _refreshController.refreshCompleted();
-                                        setState2(() {});
-                                      });
-                                    },
-                                    child: SingleChildScrollView(
-                                      controller: _favouriteScrollController,
-                                      child: Wrap(
-                                        children: componentOperationCubit
-                                            .favouriteList
-                                            .where((element) => element
-                                                .projectName
-                                                .toLowerCase()
-                                                .contains(filter))
-                                            .map((model) => FavouriteWidget(
-                                                model, constraints, setState2,
-                                                componentOperationCubit:
-                                                    componentOperationCubit,
-                                                widget: widget))
-                                            .toList(),
-                                      ),
+                        RuntimeProvider(
+                          runtimeMode: RuntimeMode.favorite,
+                          child: LayoutBuilder(builder: (context, constraints) {
+                            return BlocBuilder<ComponentOperationCubit,
+                                ComponentOperationState>(
+                              buildWhen: (context, state) {
+                                return state is ComponentUpdatedState;
+                              },
+                              bloc: componentOperationCubit,
+                              builder: (context, state) {
+                                if (state is ComponentOperationLoadingState) {
+                                  return Shimmer.fromColors(
+                                    baseColor: const Color(0xfff2f2f2),
+                                    highlightColor: Colors.white,
+                                    child: ListView.builder(
+                                      itemBuilder:
+                                          (BuildContext context, int index) {
+                                        return Container(
+                                          height: 100,
+                                          padding: const EdgeInsets.all(10),
+                                          margin:
+                                              const EdgeInsets.only(bottom: 10),
+                                          decoration: BoxDecoration(
+                                              color: const Color(0xfff2f2f2),
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                        );
+                                      },
+                                      itemCount: 10,
                                     ),
                                   );
-                                },
-                              );
-                            }),
-                          ),
+                                }
+
+                                return SmartRefresher(
+                                  controller: _refreshController,
+                                  onRefresh: () {
+                                    componentOperationCubit
+                                        .loadFavourites()
+                                        .then((value) {
+                                      _refreshController.refreshCompleted();
+                                      setState2(() {});
+                                    });
+                                  },
+                                  child: SingleChildScrollView(
+                                    controller: _favouriteScrollController,
+                                    child: Wrap(
+                                      children: componentOperationCubit
+                                          .favouriteList
+                                          .where((element) => element
+                                              .projectName
+                                              .toLowerCase()
+                                              .contains(filter))
+                                          .map((model) => FavouriteWidget(
+                                              model, constraints, setState2,
+                                              componentOperationCubit:
+                                                  componentOperationCubit,
+                                              widget: widget))
+                                          .toList(),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }),
                         )
                     ]),
                   ),
@@ -336,9 +336,9 @@ class FavouriteWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (model.component.boundary == null) {
-      throw Exception('Boundary is null');
-    }
+    // if (model.component.boundary == null) {
+    //   throw Exception('Boundary is null');
+    // }
     return Card(
       elevation: 2,
       child: Row(
@@ -370,10 +370,12 @@ class FavouriteWidget extends StatelessWidget {
                       fit: BoxFit.contain,
                       child: Container(
                         width: constraints.maxWidth - 70 >
-                                model.component.boundary!.width
-                            ? model.component.boundary!.width
+                                (model.component.boundary?.width ??
+                                    dw(context, 100))
+                            ? model.component.boundary?.width ??
+                                dw(context, 100)
                             : constraints.maxWidth - 70,
-                        height: model.component.boundary!.height,
+                        height: model.component.boundary?.height ?? 200,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           gradient: const LinearGradient(
@@ -418,19 +420,22 @@ class FavouriteWidget extends StatelessWidget {
 
 class BasicComponentTile extends StatelessWidget {
   final int selectedIndex;
-  final MapEntry<int, String> entry;
+  final MapEntry<int, dynamic> entry;
   final ComponentOperationCubit componentOperationCubit;
   final ComponentSelectionDialog widget;
+  final void Function(MapEntry<int, dynamic>) onSelected;
 
   const BasicComponentTile(
       this.selectedIndex, this.entry, this.componentOperationCubit, this.widget,
-      {Key? key})
+      {Key? key, required this.onSelected})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      key: GlobalObjectKey(entry.value),
+      key: GlobalObjectKey(entry.value is String
+          ? entry.value
+          : (entry.value as CustomComponent).name),
       padding: const EdgeInsets.only(bottom: 5),
       child: Card(
         elevation: 2,
@@ -442,98 +447,96 @@ class BasicComponentTile extends StatelessWidget {
                   : Colors.transparent,
               width: 2),
         ),
-        child: InkWell(
-          onTap: () {
-            final component = componentList[entry.value]!();
-            componentOperationCubit.addInSameComponentList(component);
-            widget.onSelection(component);
-            Navigator.pop(context);
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      entry.value,
-                      overflow: TextOverflow.fade,
-                      style: AppFontStyle.roboto(12,
-                          color: Colors.black, fontWeight: FontWeight.w500),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    onSelected.call(entry);
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    entry.value is String
+                        ? entry.value
+                        : (entry.value as CustomComponent).name,
+                    overflow: TextOverflow.fade,
+                    textAlign: TextAlign.left,
+                    style: AppFontStyle.roboto(12,
+                        color: Colors.black, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
+              if (componentOperationCubit.sameComponentCollection
+                      .containsKey(entry.value) &&
+                  (componentOperationCubit
+                          .sameComponentCollection[entry.value]?.isNotEmpty ??
+                      false))
+                CustomPopupMenuBuilderButton(
+                  title: 'Used ${entry.value} widgets',
+                  itemBuilder: (context, index) {
+                    final int reverseIndex=componentOperationCubit.sameComponentCollection[entry.value]!.length-index-1;
+                    return CustomPopupMenuItem<Component>(
+                      value: componentOperationCubit
+                          .sameComponentCollection[entry.value]![reverseIndex],
+                      child: RuntimeProvider(
+                        runtimeMode: RuntimeMode.favorite,
+                        child: Builder(builder: (context) {
+                          final width = componentOperationCubit
+                                  .sameComponentCollection[entry.value]![reverseIndex]
+                                  .boundary
+                                  ?.width ??
+                              50;
+                          final height = componentOperationCubit
+                                  .sameComponentCollection[entry.value]![reverseIndex]
+                                  .boundary
+                                  ?.height ??
+                              50;
+                          return Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xfff2f2f2),
+                                    Color(0xffd3d3d3)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.contain,
+                              child: SizedBox(
+                                width: width > 0 ? width : 50,
+                                height: height > 0 ? height : 50,
+                                child: componentOperationCubit
+                                    .sameComponentCollection[entry.value]![
+                                reverseIndex]
+                                    .build(context),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    );
+                  },
+                  onSelected: (final Component value) {
+                    widget.onSelection(value.clone(null, deepClone: true));
+                    Navigator.pop(context);
+                  },
+                  itemCount: componentOperationCubit
+                      .sameComponentCollection[entry.value]!.length,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 10,
                     ),
                   ),
                 ),
-                if (componentOperationCubit.sameComponentCollection
-                        .containsKey(entry.value) &&
-                    (componentOperationCubit
-                            .sameComponentCollection[entry.value]?.isNotEmpty ??
-                        false))
-                  CustomPopupMenuBuilderButton(
-                    title: 'Used ${entry.value} widgets',
-                    itemBuilder: (context, index) {
-                      return CustomPopupMenuItem<Component>(
-                        value: componentOperationCubit
-                            .sameComponentCollection[entry.value]![index],
-                        child: RuntimeProvider(
-                          runtimeMode: RuntimeMode.viewOnly,
-                          child: Builder(builder: (context) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xfff2f2f2),
-                                      Color(0xffd3d3d3)
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight),
-                              ),
-                              child: FittedBox(
-                                fit: BoxFit.contain,
-                                child: SizedBox(
-                                  width: componentOperationCubit
-                                          .sameComponentCollection[
-                                              entry.value]![index]
-                                          .boundary
-                                          ?.width ??
-                                      50,
-                                  height: componentOperationCubit
-                                          .sameComponentCollection[
-                                              entry.value]![index]
-                                          .boundary
-                                          ?.height ??
-                                      50,
-                                  child: componentOperationCubit
-                                      .sameComponentCollection[entry.value]![
-                                          index]
-                                      .build(context),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      );
-                    },
-                    onSelected: (final Component value) {
-                      widget.onSelection(value.clone(null, deepClone: true));
-
-                      Navigator.pop(context);
-                    },
-                    itemCount: componentOperationCubit
-                        .sameComponentCollection[entry.value]!.length,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 10,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+            ],
           ),
         ),
       ),

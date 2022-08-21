@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/action_code/action_code_bloc.dart';
+import '../common/compiler/code_processor.dart';
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../common/custom_text_field.dart';
 import '../common/dynamic_value_editing_controller.dart';
+import '../common/responsive/responsive_widget.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';
 import '../cubit/action_edit/action_edit_cubit.dart';
@@ -17,7 +19,9 @@ import '../models/component_model.dart';
 import '../models/project_model.dart';
 import 'action_code_editor.dart';
 import 'common/action_code_dialog.dart';
+import 'component_tree.dart';
 import 'parameter_ui.dart';
+import 'project_selection_page.dart';
 
 class ActionModelWidget extends StatefulWidget {
   final Clickable clickable;
@@ -47,85 +51,85 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                   'Actions',
                   style: AppFontStyle.roboto(16, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(
-                  width: 10,
-                ),
-                CustomPopupMenuButton(
-                  itemBuilder: (context) => [
-                    'CustomAction',
-                    'NewPageInStackAction',
-                    'ReplaceCurrentPageInStackAction',
-                    'GoBackInStackAction',
-                    'ShowDialogInStackAction',
-                    'ShowCustomDialogInStackAction',
-                    'ShowBottomSheetInStackAction',
-                    // 'HideBottomSheetInStackAction',
-                    'ShowSnackBarAction'
-                  ]
-                      .map(
-                        (e) => CustomPopupMenuItem<String>(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: AppFontStyle.roboto(13,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      )
-                      .toList(growable: false),
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'CustomAction':
-                        widget.clickable.actionList.add(CustomAction(
-                            code: widget.clickable.getDefaultCode()));
-
-                        break;
-                      case 'NewPageInStackAction':
-                        widget.clickable.actionList
-                            .add(NewPageInStackAction(null));
-
-                        break;
-                      case 'ReplaceCurrentPageInStackAction':
-                        widget.clickable.actionList
-                            .add(ReplaceCurrentPageInStackAction(null));
-
-                        break;
-                      case 'GoBackInStackAction':
-                        widget.clickable.actionList.add(GoBackInStackAction());
-
-                        break;
-                      case 'ShowDialogInStackAction':
-                        widget.clickable.actionList
-                            .add(ShowDialogInStackAction());
-                        break;
-                      case 'ShowCustomDialogInStackAction':
-                        widget.clickable.actionList
-                            .add(ShowCustomDialogInStackAction());
-                        break;
-                      case 'ShowBottomSheetInStackAction':
-                        widget.clickable.actionList
-                            .add(ShowBottomSheetInStackAction(null));
-                        break;
-                      case 'ShowSnackBarAction':
-                        widget.clickable.actionList.add(ShowSnackBarAction());
-                        break;
-                      // case 'HideBottomSheetInStackAction':
-                      //   widget.component.actionList
-                      //       .add(HideBottomSheetInStackAction());
-                      //   break;
-                    }
-
-                    _clickActionCubit.changedState();
-                    BlocProvider.of<ActionEditCubit>(context).change();
-                  },
-                  child: const Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Icon(
-                      Icons.add,
-                      color: Colors.blueAccent,
-                    ),
-                  ),
-                )
+                // const SizedBox(
+                //   width: 10,
+                // ),
+                // CustomPopupMenuButton(
+                //   itemBuilder: (context) => [
+                //     'CustomAction',
+                //     'NewPageInStackAction',
+                //     'ReplaceCurrentPageInStackAction',
+                //     'GoBackInStackAction',
+                //     'ShowDialogInStackAction',
+                //     'ShowCustomDialogInStackAction',
+                //     'ShowBottomSheetInStackAction',
+                //     // 'HideBottomSheetInStackAction',
+                //     'ShowSnackBarAction'
+                //   ]
+                //       .map(
+                //         (e) => CustomPopupMenuItem<String>(
+                //           value: e,
+                //           child: Text(
+                //             e,
+                //             style: AppFontStyle.roboto(13,
+                //                 fontWeight: FontWeight.w600),
+                //           ),
+                //         ),
+                //       )
+                //       .toList(growable: false),
+                //   onSelected: (value) {
+                //     switch (value) {
+                //       case 'CustomAction':
+                //         widget.clickable.actionList.add(CustomAction(
+                //             code: widget.clickable.defaultCode));
+                //
+                //         break;
+                //       case 'NewPageInStackAction':
+                //         widget.clickable.actionList
+                //             .add(NewPageInStackAction(null));
+                //
+                //         break;
+                //       case 'ReplaceCurrentPageInStackAction':
+                //         widget.clickable.actionList
+                //             .add(ReplaceCurrentPageInStackAction(null));
+                //
+                //         break;
+                //       case 'GoBackInStackAction':
+                //         widget.clickable.actionList.add(GoBackInStackAction());
+                //
+                //         break;
+                //       case 'ShowDialogInStackAction':
+                //         widget.clickable.actionList
+                //             .add(ShowDialogInStackAction());
+                //         break;
+                //       case 'ShowCustomDialogInStackAction':
+                //         widget.clickable.actionList
+                //             .add(ShowCustomDialogInStackAction());
+                //         break;
+                //       case 'ShowBottomSheetInStackAction':
+                //         widget.clickable.actionList
+                //             .add(ShowBottomSheetInStackAction(null));
+                //         break;
+                //       case 'ShowSnackBarAction':
+                //         widget.clickable.actionList.add(ShowSnackBarAction());
+                //         break;
+                //       // case 'HideBottomSheetInStackAction':
+                //       //   widget.component.actionList
+                //       //       .add(HideBottomSheetInStackAction());
+                //       //   break;
+                //     }
+                //
+                //     _clickActionCubit.changedState();
+                //     BlocProvider.of<ActionEditCubit>(context).change();
+                //   },
+                //   child: const Padding(
+                //     padding: EdgeInsets.all(10),
+                //     child: Icon(
+                //       Icons.add,
+                //       color: Colors.blueAccent,
+                //     ),
+                //   ),
+                // )
               ],
             ),
             const SizedBox(
@@ -151,23 +155,23 @@ class _ActionModelWidgetState extends State<ActionModelWidget> {
                                   borderRadius: BorderRadius.circular(10)),
                             ),
                           ),
-                          InkWell(
-                            onTap: () {
-                              widget.clickable.actionList.remove(action);
-                              _clickActionCubit.changedState();
-
-                              BlocProvider.of<ActionEditCubit>(context,
-                                      listen: false)
-                                  .change();
-                            },
-                            child: const Padding(
-                              padding: EdgeInsets.all(7),
-                              child: Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                              ),
-                            ),
-                          )
+                          // InkWell(
+                          //   onTap: () {
+                          //     widget.clickable.actionList.remove(action);
+                          //     _clickActionCubit.changedState();
+                          //
+                          //     BlocProvider.of<ActionEditCubit>(context,
+                          //             listen: false)
+                          //         .change();
+                          //   },
+                          //   child: const Padding(
+                          //     padding: EdgeInsets.all(7),
+                          //     child: Icon(
+                          //       Icons.delete,
+                          //       color: Colors.red,
+                          //     ),
+                          //   ),
+                          // )
                         ],
                       ),
                   ],
@@ -354,76 +358,96 @@ class _CustomActionWidgetState extends State<CustomActionWidget> {
       DynamicValueEditingController();
   late Component root;
   bool error = false;
+  late CodeProcessor processor;
 
   @override
   void initState() {
     super.initState();
     _controller.text = widget.action.arguments[0];
     root = context.read<ComponentSelectionCubit>().currentSelectedRoot;
+    processor = processorWithComp[(widget.clickableHolder as Component).id] ??
+        (root is CustomComponent
+            ? (root as CustomComponent).processor
+            : ComponentOperationCubit.currentProject!.currentScreen.processor);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(
-          height: 10,
-        ),
-        Text(
-          'Custom Action',
-          style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(
-          height: 10,
-        ),
-        SizedBox(
-          height: 400,
-          child: BlocBuilder<ActionCodeBloc, ActionCodeState>(
-            builder: (context, state) {
-              final extraCodeBase = (root is CustomComponent)
-                  ? CodeBase(
-                      () => (root as CustomComponent).actionCode,
-                      () => (root as CustomComponent).variables.values,
-                      (root as CustomComponent).processor.scopeName)
-                  : CodeBase(
-                      () => ComponentOperationCubit
-                          .currentProject!.currentScreen.actionCode,
-                      () => ComponentOperationCubit
-                          .currentProject!.currentScreen.variables.values,
-                      ComponentOperationCubit
-                          .currentProject!.currentScreen.processor.scopeName);
-              return ActionCodeEditor(
-                functions:
-                    (root is! StatelessComponent) ? [setStateFunction] : [],
-                prerequisites: [
-                  CodeBase(
-                      () =>
-                          ComponentOperationCubit.currentProject!.actionCode,
-                      () => ComponentOperationCubit
-                          .currentProject!.variables.values,
-                      ComponentOperationCubit
-                          .currentProject!.processor.scopeName),
-                  extraCodeBase
-                ],
-                code: widget.action.arguments[0],
-                onCodeChange: (String value) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Flex(
+        direction:
+            Responsive.isLargeScreen(context) ? Axis.vertical : Axis.horizontal,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Custom Action',
+                style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(
+                width: 20,
+              ),
+              // AppIconButton(
+              //     icon: Icons.play_arrow_rounded,
+              //     onPressed: () {
+              //       widget.clickableHolder.performCustomAction(
+              //         context,
+              //         widget.action,
+              //         widget.clickableHolder.functions.first.arguments
+              //             .map((e) => FVBTest(e.dataType, e.nullable))
+              //             .toList(growable: false),
+              //         processor2:processorWithComp[
+              //         (widget.clickableHolder as Component).id]!
+              //       );
+              //     },
+              //     color: Colors.green)
+            ],
+          ),
+          if (Responsive.isLargeScreen(context)) ...[
+            const SizedBox(
+              height: 10,
+            ),
+            SizedBox(
+              height: 400,
+              child: BlocBuilder<ActionCodeBloc, ActionCodeState>(
+                builder: (context, state) {
+                  return FVBCodeEditor(
+                    scopeName: (widget.clickableHolder as Component).name,
+                    processor: processor,
+                    code: widget.action.arguments[0],
+                    onCodeChange: (String value) {
+                      widget.action.arguments[0] = value;
+                      BlocProvider.of<ClickActionCubit>(context).changedState();
+                      BlocProvider.of<ActionEditCubit>(context).change();
+                    },
+                    //ComponentOperationCubit
+                    //                       .currentProject!.variables.values
+                    //                       .toList()
+                    onError: (bool error) {},
+                    config: ActionCodeEditorConfig(parentProcessorGiven: true),
+                  );
+                },
+              ),
+            )
+          ] else ...[
+            const Spacer(),
+            CustomActionCodeButton(
+                code: () => widget.action.arguments[0],
+                title: (widget.clickableHolder as Component).name,
+                onChanged: (String value) {
                   widget.action.arguments[0] = value;
                   BlocProvider.of<ClickActionCubit>(context).changedState();
 
                   BlocProvider.of<ActionEditCubit>(context).change();
                 },
-                //ComponentOperationCubit
-                //                       .currentProject!.variables.values
-                //                       .toList()
-                variables: null,
-                onError: (bool error) {},
-                scopeName: extraCodeBase.scopeName,
-                config: ActionCodeEditorConfig(),
-              );
-            },
-          ),
-        )
-      ],
+                processor: processor,
+                onDismiss: () {},
+                config: ActionCodeEditorConfig(parentProcessorGiven: true))
+          ]
+        ],
+      ),
     );
   }
 }

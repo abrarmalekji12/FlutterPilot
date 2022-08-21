@@ -230,7 +230,7 @@ class CustomCodeFieldState extends State<CustomCodeField> {
     );
     TextStyle numberTextStyle = widget.lineNumberStyle.textStyle ?? TextStyle();
     final numberColor =
-    (theme?[ROOT_KEY]?.color ?? defaultText).withOpacity(0.7);
+        (theme?[ROOT_KEY]?.color ?? defaultText).withOpacity(0.7);
     // Copy important attributes
     numberTextStyle = numberTextStyle.copyWith(
       color: numberTextStyle.color ?? numberColor,

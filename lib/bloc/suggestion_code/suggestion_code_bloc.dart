@@ -25,27 +25,27 @@ class SuggestionCodeBloc
 
   void _onSuggestionUpdated(
       SuggestionUpdatedEvent event, Emitter<SuggestionCodeState> emit) {
-   suggestion=event.suggestions;
-   if(suggestion!=null){
-     selectionIndex=0;
-   }
+    suggestion = event.suggestions;
+    if (suggestion != null) {
+      selectionIndex = 0;
+    }
     emit(SuggestionCodeUpdated(suggestion));
   }
 
   void _onClearSuggestion(
       ClearSuggestionEvent event, Emitter<SuggestionCodeState> emit) {
-    suggestion=null;
+    suggestion = null;
   }
 
-  void _onSuggestionSelectionChange(SuggestionSelectionChangeEvent event, Emitter<SuggestionCodeState> emit) {
-    if(selectionIndex+event.change<0) {
-      selectionIndex=suggestion!.suggestions.length-1;
-    }
-    else if(selectionIndex+event.change>=suggestion!.suggestions.length) {
-      selectionIndex=0;
-    }
-    else {
-      selectionIndex+=event.change;
+  void _onSuggestionSelectionChange(
+      SuggestionSelectionChangeEvent event, Emitter<SuggestionCodeState> emit) {
+    if (selectionIndex + event.change < 0) {
+      selectionIndex = suggestion!.suggestions.length - 1;
+    } else if (selectionIndex + event.change >=
+        suggestion!.suggestions.length) {
+      selectionIndex = 0;
+    } else {
+      selectionIndex += event.change;
     }
     emit(SuggestionSelectionChangeState(selectionIndex));
   }

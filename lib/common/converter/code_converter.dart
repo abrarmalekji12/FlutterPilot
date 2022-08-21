@@ -4,8 +4,101 @@ import '../../code_to_component.dart';
 import '../compiler/code_processor.dart';
 import '../compiler/constants.dart';
 
+class AppendString {
+  final String string;
+  final int index;
+
+  AppendString(this.string, this.index);
+}
+
 class FVBEngine {
   final Map<String, DataType> variables = {};
+  static FVBEngine? _instance;
+
+  static FVBEngine get instance => _instance ??= FVBEngine._();
+
+  FVBEngine._();
+
+  String getDartCode(CodeProcessor processor, String code,
+      String? Function(String) appendInMethod) {
+    String cleanCode = CodeProcessor.cleanCode(code, processor) ?? '';
+    String charName = '';
+    String beforeCharName = '';
+    final List<AppendString> list = [];
+    for (int i = 0; i < cleanCode.length; i++) {
+      if (cleanCode[i] == '(') {
+        final closeIndex = CodeOperations.findCloseBracket(cleanCode, i,
+            CodeProcessor.roundBracketOpen, CodeProcessor.roundBracketClose);
+        if (charName == processor.scopeName) {
+          int endIndex;
+          if (cleanCode[closeIndex + 1] == '{') {
+            endIndex = CodeOperations.findCloseBracket(
+                cleanCode,
+                closeIndex + 1,
+                CodeProcessor.curlyBracketOpen,
+                CodeProcessor.curlyBracketClose);
+          } else {
+            endIndex = closeIndex + 1;
+          }
+          cleanCode =
+              cleanCode.replaceRange(0, endIndex + 1, ' ' * (endIndex + 1));
+          i = endIndex;
+          beforeCharName = '';
+          charName = '';
+          continue;
+        }
+        if (cleanCode[closeIndex + 1] == '{') {
+          final appendString = appendInMethod.call(charName);
+          if (appendString != null) {
+            final closeBracketIndex = CodeOperations.findCloseBracket(
+                cleanCode,
+                closeIndex + 1,
+                CodeProcessor.curlyBracketOpen,
+                CodeProcessor.curlyBracketClose);
+            if (beforeCharName.isNotEmpty &&
+                i - charName.length - beforeCharName.length - 1 >= 0) {
+              try {
+                cleanCode = cleanCode.replaceRange(
+                    i - charName.length - beforeCharName.length - 1,
+                    i - charName.length - 1,
+                    ' ' * beforeCharName.length);
+              } catch (e) {
+                print(e);
+              }
+              beforeCharName = '';
+            }
+            list.add(AppendString(appendString, closeBracketIndex));
+            i = closeBracketIndex;
+            charName = '';
+            continue;
+          }
+        }
+        i = closeIndex;
+        charName = '';
+        continue;
+      }
+      if (cleanCode[i] == space) {
+        beforeCharName = charName;
+        charName = '';
+      } else {
+        if (CodeOperations.isVariableChar(cleanCode[i].codeUnits.first)) {
+          charName += cleanCode[i];
+        } else {
+          beforeCharName = '';
+          charName = '';
+        }
+      }
+    }
+    int index = 0;
+    for (final append in list) {
+      cleanCode = cleanCode.substring(0, index + append.index) +
+          append.string +
+          cleanCode.substring(index + append.index);
+      index += append.string.length;
+    }
+    // processor.execute(cleanCode,declarativeOnly: true);
+    return fvbToDart(cleanCode.replaceAll(space, ' '));
+  }
 
   String fvbToDart(String code) {
     String dartCode = '';
@@ -68,7 +161,7 @@ class FVBEngine {
     }
     // final DartFormatter formatter = DartFormatter();
     // formatter.format(
-    return '/** \n${dartCode} \n**/';
+    return '\n$dartCode\n';
   }
 
   String fvbLineToDart(String trimCode) {

@@ -4,10 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/error/error_bloc.dart';
 import '../bloc/state_management/state_management_bloc.dart';
 import '../code_to_component.dart';
+import '../common/common_methods.dart';
 import '../common/compiler/code_processor.dart';
 import '../common/compiler/processor_component.dart';
 import '../common/converter/code_converter.dart';
-import '../common/logger.dart';
+import '../common/converter/string_operation.dart';
+import '../common/fvb_arch/fvb_refresher.dart';
 import '../common/undo/revert_work.dart';
 import '../component_list.dart';
 import '../constant/string_constant.dart';
@@ -46,10 +48,12 @@ class FlutterProject {
   final List<UIScreen> uiScreens = [];
   final List<CustomComponent> customComponents = [];
   final List<FavouriteModel> favouriteList = [];
+  final List<String> imageList;
 
   FlutterProject(this.name, this.userId, this.docId,
       {this.device,
       this.actionCode = defaultActionCode,
+      required this.imageList,
       ProjectSettingsModel? settings}) {
     if (settings != null) {
       this.settings = settings;
@@ -72,17 +76,18 @@ class FlutterProject {
 
   factory FlutterProject.createNewProject(String name, int userId) {
     final FlutterProject flutterProject =
-        FlutterProject(name, userId, null, actionCode: defaultActionCode);
-    ComponentOperationCubit.currentProject=flutterProject;
+        FlutterProject(name, userId, null, actionCode: defaultActionCode, imageList: []);
+    ComponentOperationCubit.currentProject = flutterProject;
     final ui = UIScreen.mainUI();
     flutterProject.uiScreens.add(ui);
-    final custom = StatelessComponent(name: 'MainPage')..root = CScaffold();
+    final custom = StatefulComponent(name: 'MainPage')..root = CScaffold();
     flutterProject.customComponents.add(custom);
     flutterProject.currentScreen = ui;
     flutterProject.mainScreen = ui;
     (ui.rootComponent as CMaterialApp)
         .addOrUpdateChildWithKey('home', custom.createInstance(null));
-    get<ComponentSelectionCubit>().init(ComponentSelectionModel.unique(ui.rootComponent!),ui.rootComponent!);
+    get<ComponentSelectionCubit>().init(ComponentSelectionModel.unique(
+        CNotRecognizedWidget(), ui.rootComponent!));
 
     return flutterProject;
   }
@@ -94,17 +99,18 @@ class FlutterProject {
   }
 
   List<ImageData> getAllUsedImages() {
-    final imageList = <ImageData>[];
-    for (final screen in uiScreens) {
-      screen.rootComponent?.forEach((component) {
-        if (component.name == 'Image.asset') {
-          if ((component.parameters[0].value as ImageData?) != null) {
-            imageList.add((component.parameters[0].value as ImageData));
-          }
-        }
-      });
-    }
-    return imageList;
+    // for (final screen in uiScreens) {
+    //   screen.rootComponent?.forEach((component) {
+    //     if (component.name == 'Image.asset') {
+    //       if ((component.parameters[0].value as ImageData?) != null) {
+    //         imageList.add((component.parameters[0].value as ImageData));
+    //       }
+    //     }
+    //   });
+    // }
+    return imageList
+        .map((e) => ImageData(ComponentOperationCubit.bytesCache[e], e))
+        .toList();
   }
 
   Widget run(final BuildContext context, final BoxConstraints constraints,
@@ -113,9 +119,10 @@ class FlutterProject {
     processor.destroyProcess(deep: true);
     processor.variables['dw']!.value = constraints.maxWidth;
     processor.variables['dh']!.value = constraints.maxHeight;
-    ComponentOperationCubit.processor=processor;
+    // refresherUsed.clear();
+    ComponentOperationCubit.processor = processor;
     processor.executeCode(ComponentOperationCubit.currentProject!.actionCode);
-    processor.functions['main']?.execute(processor, []);
+    processor.functions['main']?.execute(processor, null, []);
     if (!navigator) {
       processor.finished = true;
       return ProcessorProvider(
@@ -131,32 +138,33 @@ class FlutterProject {
       Builder(builder: (context) {
         return Scaffold(
           key: const GlobalObjectKey(deviceScaffoldMessenger),
-          body: SafeArea(
-            child: Stack(
-              children: [
-                Navigator(
+          body: Stack(
+            children: [
+              SafeArea(
+                bottom: false,
+                child: Navigator(
                   key: const GlobalObjectKey(navigationKey),
                   onGenerateRoute: (settings) => MaterialPageRoute(
                     builder: (_) => mainScreen.build(context) ?? Container(),
                   ),
                 ),
-                BlocBuilder<StackActionCubit, StackActionState>(
-                  bloc: _actionCubit,
-                  builder: (context, state) {
-                    return Stack(
-                      children: [
-                        for (final model in _actionCubit.models)
-                          Center(
-                            child: StackActionWidget(
-                              actionModel: model,
-                            ),
+              ),
+              BlocBuilder<StackActionCubit, StackActionState>(
+                bloc: _actionCubit,
+                builder: (context, state) {
+                  return Stack(
+                    children: [
+                      for (final model in _actionCubit.models)
+                        Center(
+                          child: StackActionWidget(
+                            actionModel: model,
                           ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
         );
       }),
@@ -176,7 +184,7 @@ class UIScreen {
     print("Hello World!");
     }
     
-    void build(){
+    void build(context){
     // will execute every time widget rebuild
     }
     ''';
@@ -196,11 +204,16 @@ class UIScreen {
         name: name);
     processor.functions['setState'] = FVBFunction('setState', null, [
       FVBArgument('callback', dataType: DataType.fvbFunction)
-    ], dartCall: (arguments) {
-      (arguments[0] as FVBFunction).execute(processor, []);
-      processor.consoleCallback.call('api:refresh|$id');
+    ], dartCall: (arguments, instance) {
+      (arguments[0] as FVBFunction).execute(processor, instance, []);
+      (arguments[1] as CodeProcessor).consoleCallback.call('api:refresh|$id');
     });
   }
+
+  String get importFile =>
+      ComponentOperationCubit.currentProject!.mainScreen == this
+          ? 'main'
+          : StringOperation.toSnakeCase(name);
 
   toJson() => {
         'name': name,
@@ -215,11 +228,6 @@ class UIScreen {
 
   Map<String, FVBVariable> get variables => processor.variables;
 
-  set variables(Map<String, FVBVariable> value) {
-    processor.variables.clear();
-    processor.variables.addAll(value);
-  }
-
   factory UIScreen.mainUI() {
     final UIScreen uiScreen =
         UIScreen('HomePage', actionCode: defaultActionCode);
@@ -233,9 +241,14 @@ class UIScreen {
     screen.actionCode = json['action_code'] ?? defaultActionCode;
     screen.models.addAll(
         List.from(json['models'] ?? []).map((e) => LocalModel.fromJson(e)));
-    screen.variables.addAll(List.from(json['variables'] ?? []).asMap().map((key,
-            value) =>
-        MapEntry(value['name'], VariableModel.fromJson(value, screen.name))));
+    screen.variables.addAll(
+      List.from(json['variables'] ?? []).asMap().map(
+            (key, value) => MapEntry(
+              value['name'],
+              VariableModel.fromJson(value..['uiAttached'] = true),
+            ),
+          ),
+    );
     return screen;
   }
 
@@ -251,7 +264,7 @@ class UIScreen {
     processor.destroyProcess(deep: false);
     processor.executeCode(actionCode);
     if (RuntimeProvider.of(context) == RuntimeMode.run) {
-      processor.functions['initState']?.execute(processor, []);
+      processor.functions['initState']?.execute(processor, null, []);
     }
 
     return ProcessorProvider(
@@ -259,10 +272,14 @@ class UIScreen {
       BlocBuilder<StateManagementBloc, StateManagementState>(
           buildWhen: (previous, current) => current.id == id,
           builder: (context, state) {
-            ComponentOperationCubit.processor=processor;
+            ComponentOperationCubit.processor = processor;
+
             if (RuntimeProvider.of(context) == RuntimeMode.run) {
-              processor.functions['build']?.execute(processor, []);
+              processor.functions['build']?.execute(processor, null, [context]);
             }
+            variables['context'] =
+                FVBVariable('context', DataType.dynamic, value: context);
+
             return rootComponent?.build(context) ?? Container();
           }),
     );
@@ -299,81 +316,106 @@ class UIScreen {
           if (e.arguments.isNotEmpty &&
               (e.arguments[0] is UIScreen?) &&
               e.arguments[0] != null) {
-            importList.add((e.arguments[0] as UIScreen).name);
+            importList.add((e.arguments[0] as UIScreen).importFile);
           }
         }
+      } else if (component is CCustomPaint) {
+        implementationCode += component.implCode;
       }
     });
     if (this != flutterProject.mainScreen && !importList.contains('main')) {
       importList.add('main');
     }
-    logger('IMPL $implementationCode');
     String staticVariablesCode = '';
     String dynamicVariablesDefinitionCode = '';
     String dynamicVariableAssignmentCode = '';
-    for (final variable
-        in ComponentOperationCubit.processor.variables.entries) {
-      if ([DataType.string, DataType.fvbInt, DataType.fvbDouble, DataType.fvbDouble]
-          .contains(variable.value.dataType)) {
-        if (!variable.value.isFinal) {
-          staticVariablesCode +=
-              'final ${DataType.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
-        } else {
-          dynamicVariablesDefinitionCode +=
-              'late ${DataType.dataTypeToCode(variable.value.dataType)} ${variable.key};';
-          // dynamicVariableAssignmentCode +=
-          //     '${variable.key} = ${variable.value.};';
+    if (this == flutterProject.mainScreen) {
+      for (final variable in ComponentOperationCubit
+          .currentProject!.processor.variables.entries) {
+        if ([
+              DataType.string,
+              DataType.fvbInt,
+              DataType.fvbDouble,
+              DataType.fvbBool
+            ].contains(variable.value.dataType) &&
+            (variable.value is VariableModel &&
+                (variable.value as VariableModel).uiAttached)) {
+          if (!(variable.value as VariableModel).isDynamic) {
+            staticVariablesCode +=
+                'final ${DataType.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
+          } else {
+            dynamicVariablesDefinitionCode +=
+                'late ${DataType.dataTypeToCode(variable.value.dataType)} ${variable.key};';
+            // dynamicVariableAssignmentCode +=
+            //     '${variable.key} = ${variable.value.};';
+          }
         }
       }
     }
 
     String functionImplementationCode = '';
     for (final function in CodeProcessor.predefinedFunctions.values) {
-      if(function.functionCode!=null) {
+      if (function.functionCode != null) {
         functionImplementationCode += function.functionCode!;
       }
     }
 
     final String className = getClassName;
     // ${rootComponent!.code()}
+    String mainCode = this == flutterProject.mainScreen
+        ? FVBEngine.instance.fvbToDart(flutterProject.actionCode)
+        : '';
+    final endBracket = mainCode.lastIndexOf('}');
+    final uiScreenModifiedCode =
+        FVBEngine.instance.getDartCode(processor, actionCode, (p0) {
+      if (p0 == 'build') {
+        return 'return ${rootComponent!.code()};';
+      } else if (p0 == 'initState') {
+        return 'super.initState();';
+      }
+    });
+    if (this == flutterProject.mainScreen) {
+      if (endBracket >= 0) {
+        mainCode = mainCode.substring(0, endBracket) +
+            '\n' +
+            (rootComponent is! MaterialApp
+                ? 'runApp(MaterialApp(home:const $className()));'
+                : 'runApp(const $className());') +
+            mainCode.substring(endBracket);
+      } else {
+        showToast('No main method Found');
+      }
+    }
+    processor.destroyProcess(deep: false);
+    processor.executeCode(actionCode, type: OperationType.checkOnly);
     return ''' 
-  
-    ${this == flutterProject.mainScreen ? '''
-     // copy all the images to assets/images/ folder
-    // 
-    // TODO Dependencies (add into pubspec.yaml)
-    // google_fonts: ^2.2.0
-    ''' : ''}
     import 'package:flutter/material.dart';
     import 'package:google_fonts/google_fonts.dart';
+    import 'package:intl/intl.dart';
     import 'dart:math';
+    
     ${importList.map((e) => '''import '$e.dart'; ''').join('\n')}
     ${models.map((e) => e.implementationCode).join(' ')}
     
     ${this == flutterProject.mainScreen ? '''
-    
+    $fvbRefresherCode
+    $fvbLookUpCode
     $staticVariablesCode
     $dynamicVariablesDefinitionCode
-     
-    void main(){
-    ${FVBEngine().fvbToDart(flutterProject.actionCode)}
-    ${rootComponent is! MaterialApp ? 'runApp(MaterialApp(home:const $className()));' : 'runApp(const $className());'}
-    } 
-     $functionImplementationCode 
+    $mainCode
+    ${(importFiles['showSnackbar'] ?? false) ? snackbarCode : ''}
+    $functionImplementationCode 
  
     $implementationCode
-    
-  Color? hexToColor(String hexString) {
+
+Color hexToColor(String hexString) {
   if (hexString.length < 7) {
-    return null;
+    return Colors.black;
   }
   final buffer = StringBuffer();
   if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
   buffer.write(hexString.replaceFirst('#', ''));
-  final colorInt = int.tryParse(buffer.toString(), radix: 16);
-  if (colorInt == null) {
-    return null;
-  }
+  final colorInt = int.parse(buffer.toString(), radix: 16);
   return Color(colorInt);
 }
     ''' : ''}
@@ -386,17 +428,16 @@ class UIScreen {
 
     class _${className}State extends State<$className> {
     ${models.map((e) => e.declarationCode).join(' ')}
+    ${variables.values.where((element) => element is VariableModel && element.uiAttached).map((e) => (e as VariableModel).code).join(' ')}
    
      @override
      void didChangeDependencies() {
       super.didChangeDependencies();
-        $dynamicVariableAssignmentCode
+      dw=MediaQuery.of(context).size.width;
+      dh=MediaQuery.of(context).size.height;
+      $dynamicVariableAssignmentCode
      }
-     
-     @override
-     Widget build(BuildContext context) {
-       return ${rootComponent!.code()};
-      }
+     $uiScreenModifiedCode
      
     }
 

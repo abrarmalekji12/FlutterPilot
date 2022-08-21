@@ -13,7 +13,7 @@ class CustomTextField extends StatelessWidget {
       {Key? key,
       required this.onChange,
       this.hint,
-        this.enabled=true,
+      this.enabled = true,
       this.controller,
       this.validator,
       this.focusNode})

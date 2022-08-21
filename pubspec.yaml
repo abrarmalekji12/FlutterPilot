@@ -21,6 +21,8 @@ dependencies:
   encrypt: ^5.0.1
   flutter_switch: ^0.3.2
   image_picker: ^0.8.4+4
+  file_picker: ^5.0.1
+  connectivity_plus: ^2.3.6+1
   device_preview: ^1.1.0
   flutter_reorderable_list: ^1.1.0
   equatable: ^2.0.3
@@ -32,6 +34,7 @@ dependencies:
   firebase_core: ^1.11.0
   firebase_auth: ^3.3.9
   shared_preferences: ^2.0.13
+  font_awesome_flutter: ^10.1.0
 #  firebase_core_desktop: ^0.1.1-dev.0
 #  firebase_auth_desktop: ^0.1.1-dev.0
   cloud_firestore: ^3.1.6
@@ -44,11 +47,12 @@ dependencies:
   dart_style: ^2.2.2
   pull_to_refresh: ^2.0.0
   url_strategy: ^0.2.0
-  flutter_svg: ^1.0.3
+  flutter_svg: ^1.1.4
   http: ^0.13.4
   keyboard_event: ^0.3.2
   flutter_slider_drawer: ^2.1.1
   sliding_up_panel: ^2.0.0+1
+  file_saver: ^0.1.1
 
 
 dev_dependencies:

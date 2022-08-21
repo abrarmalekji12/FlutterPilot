@@ -8,7 +8,7 @@ import 'constants.dart';
 class FunctionProcessor {
   static FVBFunction parse(
       CodeProcessor processor, String name, String argument, String body,
-      {bool lambda = false,bool async=false}) {
+      {bool lambda = false, bool async = false}) {
     final argumentList = CodeOperations.splitBy(argument);
     if (name.isNotEmpty) {
       final split = name.split(space);
@@ -21,23 +21,38 @@ class FunctionProcessor {
       final function = FVBFunction(split.last, body,
           ArgumentProcessor.processArgumentDefinition(processor, argumentList),
           returnType: split.length == 2
-              ? DataType.codeToDatatype(dataTypeCode, CodeProcessor.classes,CodeProcessor.enums)
+              ? DataType.codeToDatatype(
+                  dataTypeCode, CodeProcessor.classes, CodeProcessor.enums)
               : DataType.dynamic,
           canReturnNull: nullable,
-          isLambda: lambda,isAsync: async);
+          isLambda: lambda,
+          isAsync: async,
+          processor: processor);
       if (CodeProcessor.operationType == OperationType.checkOnly) {
-        function.execute(processor,
-            function.arguments.map((e) => FVBTest(e.dataType,e.nullable)).toList(growable: false));
+        function.execute(
+            processor,
+            null,
+            function.arguments
+                .map((e) => FVBTest(e.dataType, e.nullable))
+                .toList(growable: false));
       }
       return function;
     }
     final function = FVBFunction('', body,
         ArgumentProcessor.processArgumentDefinition(processor, argumentList),
-        returnType: DataType.dynamic, canReturnNull: true,isAsync: async,isLambda: lambda);
+        returnType: DataType.dynamic,
+        canReturnNull: true,
+        isAsync: async,
+        isLambda: lambda,
+        processor: processor);
 
     if (CodeProcessor.operationType == OperationType.checkOnly) {
-      function.execute(processor,
-          function.arguments.map((e) => FVBTest(e.dataType,e.nullable)).toList(growable: false));
+      function.execute(
+          processor,
+          null,
+          function.arguments
+              .map((e) => FVBTest(e.dataType, e.nullable))
+              .toList(growable: false));
     }
     return function;
   }

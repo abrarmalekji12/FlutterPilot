@@ -110,8 +110,6 @@ class _CustomPopupMenuBuilderButtonState
                                             child: IgnorePointer(child: child),
                                           ),
                                           onTap: () {
-                                            debugPrint(
-                                                'TYPE ${child.value.runtimeType} ');
                                             widget.onSelected(child.value);
                                             overlayEntry?.remove();
                                             setState(() {

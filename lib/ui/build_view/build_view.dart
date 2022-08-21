@@ -128,7 +128,6 @@ class _RunViewState extends State<RunView> {
         ),
         child: DevicePreview(
           tools: const [DeviceSection()],
-          storage: DevicePreviewStorage.none(),
           defaultDevice: _defaultDeviceInfo,
           builder: (_) {
             return LayoutBuilder(builder: (devicePreviewContext, constraints) {

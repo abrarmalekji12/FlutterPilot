@@ -8,6 +8,13 @@ import '../../cubit/component_selection/component_selection_cubit.dart';
 import '../../models/variable_model.dart';
 import '../variable_ui.dart';
 
+class VariableDialogOption {
+  final String name;
+  final void Function(VariableModel) callback;
+
+  VariableDialogOption(this.name, this.callback);
+}
+
 class VariableDialog {
   final String title;
   final ComponentOperationCubit componentOperationCubit;
@@ -18,6 +25,7 @@ class VariableDialog {
   final void Function(VariableModel) onDeleted;
   final Map<String, FVBVariable> variables;
   late final OverlayEntry _overlayEntry;
+  final List<VariableDialogOption> options;
 
   VariableDialog({
     required this.componentOperationCubit,
@@ -28,6 +36,7 @@ class VariableDialog {
     required this.onDeleted,
     required this.componentSelectionCubit,
     required this.variables,
+    this.options = const [],
   }) {
     _overlayEntry = OverlayEntry(
       builder: (_) => Material(
@@ -45,6 +54,7 @@ class VariableDialog {
               onChanged: onEdited,
               variables: variables,
               onDeleted: onDeleted,
+              options: options,
             ),
           ),
         ),

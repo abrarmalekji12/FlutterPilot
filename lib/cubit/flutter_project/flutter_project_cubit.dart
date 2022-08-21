@@ -1,11 +1,16 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/src/iterable_extensions.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import '../../bloc/error/error_bloc.dart';
+import '../../common/common_methods.dart';
 import '../../common/compiler/code_processor.dart';
+import '../../component_list.dart';
 import '../../injector.dart';
 import '../../models/component_selection.dart';
 import '../../models/variable_model.dart';
 import '../../models/other_model.dart';
+import '../../network/connectivity.dart';
 import '../authentication/authentication_cubit.dart';
 import '../component_operation/component_operation_cubit.dart';
 import '../component_selection/component_selection_cubit.dart';
@@ -26,10 +31,24 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
   }
 
   int get userId => _userId ?? -1;
+  Future<void> waitForConnectivity() async {
+    if (!await AppConnectivity.available()) {
+      if (state is! FlutterProjectErrorState) {
+        emit(FlutterProjectErrorState());
+      }
+      final stream = AppConnectivity.listen();
+      await for (final check in stream) {
+        if (check != ConnectivityResult.none) {
+          break;
+        }
+      }
+    }
+  }
 
   Future<void> loadFlutterProjectList() async {
     emit(FlutterProjectLoadingState());
     try {
+      await waitForConnectivity();
       projects = await FireBridge.loadAllFlutterProjects(userId);
       emit(FlutterProjectsLoadedState(projects));
     } on Exception {
@@ -39,14 +58,17 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
 
   Future<void> deleteProject(final FlutterProject project) async {
     emit(FlutterProjectLoadingState());
-    await FireBridge.deleteProject(userId, project,projects);
+    await waitForConnectivity();
+    await FireBridge.deleteProject(userId, project, projects);
     projects.remove(project);
     emit(FlutterProjectsLoadedState(projects));
   }
 
   Future<void> createNewProject(final String name) async {
     emit(FlutterProjectLoadingState());
+    await waitForConnectivity();
     final flutterProject = FlutterProject.createNewProject(name, userId);
+    CodeProcessor.init();
     ComponentOperationCubit.currentProject = flutterProject;
     flutterProject.variables.addAll({
       'tabletWidthLimit': VariableModel('tabletWidthLimit', DataType.fvbDouble,
@@ -81,6 +103,8 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
       {required int userId}) async {
     emit(FlutterProjectLoadingState());
     try {
+      await waitForConnectivity();
+      CodeProcessor.init();
       if (notLoggedIn) {
         final authResponse =
             await FireBridge.login('test_fvb@mailinator.com', 'test123');
@@ -94,8 +118,11 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
         print(
             'CHECKING $userId & ${get<AuthenticationCubit>().authViewModel.userId}');
       }
+      final errorBloc = get<ErrorBloc>();
+      errorBloc.consoleVisible = false;
       final response = await FireBridge.loadFlutterProject(userId, projectName,
           ifPublic: userId != get<AuthenticationCubit>().authViewModel.userId);
+
       if (response.isRight) {
         switch (response.right.projectLoadError) {
           case ProjectLoadError.notPermission:
@@ -147,6 +174,9 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
               }
             }
           });
+
+          componentOperationCubit
+              .extractSameTypeComponents(uiScreen.rootComponent!);
         }
         await componentOperationCubit.loadAllImages();
 
@@ -163,13 +193,11 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
             imageData.bytes =
                 componentOperationCubit.byteCache[imageData.imageName!];
           }
-          print('IMAGE DATA ${imageData.imageName} ${imageData.bytes?.length}');
         }
       }
       // ComponentOperationCubit.changeVariables(flutterProject.currentScreen);
-      componentSelectionCubit.init(
-          ComponentSelectionModel.unique(flutterProject.rootComponent!),
-          flutterProject.rootComponent!);
+      componentSelectionCubit.init(ComponentSelectionModel.unique(
+          CNotRecognizedWidget(), flutterProject.rootComponent!));
 
       if (flutterProject.variables.entries
               .firstWhereOrNull((e) => e.key == 'tabletWidthLimit') ==
@@ -178,20 +206,23 @@ class FlutterProjectCubit extends Cubit<FlutterProjectState> {
             'tabletWidthLimit', DataType.fvbDouble,
             deletable: false,
             description: 'maximum width tablet can have',
-            value: 1200,uiAttached: true));
+            value: 1200,
+            uiAttached: true));
+      }
+      if (flutterProject.variables.entries
+              .firstWhereOrNull((e) => e.key == 'phoneWidthLimit') ==
+          null) {
         componentOperationCubit.addVariable(VariableModel(
-          'phoneWidthLimit',
-          DataType.fvbDouble,
-          deletable: false,
-          description: 'maximum width tablet can have',
-          value: 900,uiAttached: true
-        ));
+            'phoneWidthLimit', DataType.fvbDouble,
+            deletable: false,
+            description: 'maximum width tablet can have',
+            value: 900,
+            uiAttached: true));
       }
 
-      componentOperationCubit
-          .extractSameTypeComponents(flutterProject.rootComponent!);
-
+      errorBloc.consoleVisible = true;
       emit(FlutterProjectLoadedState(flutterProject));
+      await componentOperationCubit.loadAllImages();
     } on Exception catch (error) {
       print('ERROR $error');
       emit(FlutterProjectErrorState(

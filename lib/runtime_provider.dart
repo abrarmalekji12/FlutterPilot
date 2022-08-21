@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
-enum RuntimeMode { edit, viewOnly, run, preview }
+enum RuntimeMode { edit, viewOnly, run, preview, favorite }
 
 class RuntimeProvider extends InheritedWidget {
   final RuntimeMode runtimeMode;

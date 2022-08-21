@@ -28,10 +28,20 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
     screenConfig = screenConfigs[0];
     ComponentOperationCubit.processor.variables['dw'] = VariableModel(
         'dw', DataType.fvbDouble,
-        deletable: false,isFinal: true,description:  'device width',value: screenConfig.width,);
+        deletable: false,
+        isFinal: true,
+        description: 'device width',
+        uiAttached: true,
+        value: screenConfig.width,
+        isDynamic: true);
     ComponentOperationCubit.processor.variables['dh'] = VariableModel(
         'dh', DataType.fvbDouble,
-        deletable: false,isFinal: true,description: 'device height',value: screenConfig.height,);
+        deletable: false,
+        uiAttached: true,
+        isFinal: true,
+        description: 'device height',
+        value: screenConfig.height,
+        isDynamic: true);
   }
 
   void applyCurrentSizeToVariables() {
@@ -67,6 +77,7 @@ class ScreenConfigCubit extends Cubit<ScreenConfigState> {
 
   void changeScreenConfig(ScreenConfig config) {
     screenConfig = config;
+
     ComponentOperationCubit.currentProject!.variables['dw']!.value =
         screenConfig.width;
     ComponentOperationCubit.currentProject!.variables['dh']!.value =

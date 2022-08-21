@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_builder/common/io_lib.dart';
 
 import 'package:flutter/material.dart';
@@ -14,7 +15,9 @@ import '../cubit/stack_action/stack_action_cubit.dart';
 import '../injector.dart';
 import '../models/actions/action_model.dart';
 import '../models/project_model.dart';
+import '../network/connectivity.dart';
 import '../ui/action_code_editor.dart';
+import 'material_alert.dart';
 
 void showToast(final String message, {bool error = false}) async {
   if (Platform.isWindows) {
@@ -34,9 +37,43 @@ Future<dynamic> showModelDialog(BuildContext context, Widget builder) async {
   return await showDialog(context: context, builder: (_) => builder);
 }
 
+bool _dialogVisible = false;
+Future<void> showAlertDialog(
+  BuildContext context,
+  String title,
+  String subtitle, {
+  String? positiveButton,
+  String? negativeButton,
+  VoidCallback? onPositiveButtonClick,
+  VoidCallback? onNegativeButtonClick,
+  bool dismissible = true,
+}) async {
+  if (_dialogVisible) {
+    Navigator.pop(context);
+  }
+  _dialogVisible = true;
+  await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return MaterialAlertDialog(
+          dismissible: dismissible,
+          title: title,
+          subtitle: subtitle,
+          positiveButtonText: positiveButton ?? '',
+          negativeButtonText: negativeButton ?? '',
+          onPositiveTap: onPositiveButtonClick,
+          onNegativeTap: onNegativeButtonClick,
+        );
+      });
+  _dialogVisible = false;
+}
+
+
 void doAPIOperation(String message,
     {required StackActionCubit stackActionCubit,
-    required StateManagementBloc stateManagementBloc}) {
+    required StateManagementBloc stateManagementBloc,
+    required List<dynamic>? arguments}) {
   if (message.startsWith('print:')) {
     get<ErrorBloc>().add(ConsoleUpdatedEvent(
         ConsoleMessage(message.substring(6), ConsoleMessageType.info)));
@@ -44,21 +81,22 @@ void doAPIOperation(String message,
     final value = message.replaceAll('api:', '');
     final split = value.split('|');
     final action = split[0];
-    get<ErrorBloc>().add(ConsoleUpdatedEvent(
+    if(split.length>1) {
+      get<ErrorBloc>().add(ConsoleUpdatedEvent(
         ConsoleMessage('$action ${split[1]}', ConsoleMessageType.event)));
+    }
     switch (action) {
       case 'snackbar':
-        (const GlobalObjectKey(deviceScaffoldMessenger).currentState
-                as ScaffoldState)
+        ScaffoldMessenger.maybeOf(arguments![0] as BuildContext)!
             .showSnackBar(SnackBar(
           content: Text(
-            split[1],
+            arguments[1],
             style: AppFontStyle.roboto(14, color: Colors.white),
             textAlign: TextAlign.center,
           ),
           // backgroundColor: Colors.grey,
           duration:
-              Duration(milliseconds: (1000 * double.parse(split[2])).toInt()),
+              Duration(milliseconds: (1000 * arguments[2]).toInt()),
         ));
         break;
       case 'newpage':
@@ -73,8 +111,31 @@ void doAPIOperation(String message,
             ?.push(
           MaterialPageRoute(
             builder: (context) => screen?.build(context) ?? Container(),
+            settings: RouteSettings(arguments: arguments),
           ),
         );
+        break;
+      case 'replacepage':
+        final UIScreen? screen = ComponentOperationCubit
+            .currentProject!.uiScreens
+            .firstWhereOrNull((screen) => screen.name == split[1]);
+        if (screen != null) {
+          stackActionCubit.stackOperation(StackOperation.replace,
+              uiScreen: screen);
+        }
+        (const GlobalObjectKey(navigationKey).currentState as NavigatorState?)
+            ?.pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => screen?.build(context) ?? Container(),
+            settings: RouteSettings(arguments: arguments),
+          ),
+        );
+        break;
+      case 'drawerOpen':
+        Scaffold.maybeOf(arguments![0] as BuildContext)?.openDrawer();
+        break;
+      case 'drawerClose':
+        Scaffold.maybeOf(arguments![0] as BuildContext)?.closeDrawer();
         break;
       case 'goback':
         stackActionCubit.stackOperation(StackOperation.pop);
@@ -89,23 +150,6 @@ void doAPIOperation(String message,
         }
         break;
 
-      case 'replacepage':
-        final UIScreen? screen = ComponentOperationCubit
-            .currentProject!.uiScreens
-            .firstWhereOrNull((screen) => screen.name == split[1]);
-
-        if (screen != null) {
-          stackActionCubit.stackOperation(StackOperation.replace,
-              uiScreen: screen);
-        }
-
-        (const GlobalObjectKey(navigationKey).currentState as NavigatorState)
-            .pushReplacement(
-          CustomPageRoute(
-            builder: (context) => screen?.build(context) ?? Container(),
-          ),
-        );
-        break;
       case 'lookup':
       // return out;
     }

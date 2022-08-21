@@ -18,7 +18,7 @@ class ComponentCreationCubit extends Cubit<ComponentCreationState> {
     emit(ComponentCreationChangeState(
         ancestor: ancestor ??
             (_componentSelectionCubit.currentSelectedRoot is CustomComponent
-                ?( _componentSelectionCubit.currentSelectedRoot
+                ? (_componentSelectionCubit.currentSelectedRoot
                     as CustomComponent)
                 : null)));
   }

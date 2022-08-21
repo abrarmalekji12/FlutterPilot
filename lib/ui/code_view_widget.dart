@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:code_text_field/code_text_field.dart';
 import 'package:dart_style/dart_style.dart';
-import 'package:flutter/foundation.dart';
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../common/common_methods.dart';
 import '../common/download_utils.dart';
 import '../common/responsive/responsive_widget.dart';
 import '../constant/app_colors.dart';
@@ -11,6 +15,7 @@ import '../cubit/component_operation/component_operation_cubit.dart';
 import '../models/project_model.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:highlight/languages/dart.dart';
+import 'package:http/http.dart' as http;
 
 class CodeViewerWidget extends StatefulWidget {
   final ComponentOperationCubit componentOperationCubit;
@@ -66,8 +71,9 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
               ),
               Expanded(
                 child: Padding(
-                  padding:
-                      Responsive.isLargeScreen(context)?const EdgeInsets.symmetric(vertical: 30, horizontal: 10):const EdgeInsets.all(10),
+                  padding: Responsive.isLargeScreen(context)
+                      ? const EdgeInsets.symmetric(vertical: 30, horizontal: 10)
+                      : const EdgeInsets.all(10),
                   child: Stack(
                     children: [
                       Center(
@@ -76,22 +82,33 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
                             key: GlobalKey(),
                             builder: (context, value) {
                               if (value.hasData && value.data != null) {
-                                return SingleChildScrollView(
-                                  controller: _controller,
-                                  child: CodeField(
-                                    // expands: true,
-                                    enabled: true,
-                                    lineNumberStyle: const LineNumberStyle(
-                                      margin: 5,
-                                      textStyle: TextStyle(
-                                          fontSize: 14,
-                                          height: 1.31,
-                                          color: Colors.white,
-                                          fontFamily: 'arial'),
-                                    ),
+                                return ScrollbarTheme(
+                                  data: ScrollbarTheme.of(context).copyWith(
+                                    thumbColor: MaterialStateProperty.all(Colors.white),
+                                    trackColor: MaterialStateProperty.all(Colors.white),
+                                    radius: const Radius.circular(10),
+                                    thickness: MaterialStateProperty.all(10)
+                                  ),
+                                  child: ScrollConfiguration(
+                                    behavior: const ScrollBehavior().copyWith(scrollbars: true),
+                                    child: SingleChildScrollView(
+                                      controller: _controller,
+                                      child: CodeField(
+                                        // expands: true,
+                                        enabled: true,
+                                        lineNumberStyle: const LineNumberStyle(
+                                          margin: 5,
+                                          textStyle: TextStyle(
+                                              fontSize: 14,
+                                              height: 1.31,
+                                              color: Colors.white,
+                                              fontFamily: 'arial'),
+                                        ),
 
-                                    controller: _codeController
-                                      ..text = value.data!,
+                                        controller: _codeController
+                                          ..  text = value.data!,
+                                      ),
+                                    ),
                                   ),
                                 );
                               }
@@ -137,10 +154,24 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
 
   Future<String> formatCode() async {
     try {
-      code = _dartFormatter
-          .format(code = screen.code(widget.componentOperationCubit.project!));
+      code = screen.code(widget.componentOperationCubit.project!);
     } on Exception catch (e) {
-      print('ERROR CONVERSION $e');
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        showAlertDialog(context, 'Generation Error', e.toString());
+      });
+      e.printError();
+    } on Error catch (e) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        showAlertDialog(context, 'Generation Error', e.toString());
+      });
+      e.printError();
+    }
+    try {
+      code = _dartFormatter.format(code);
+    } catch (e) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        showAlertDialog(context, 'Format Error', e.toString());
+      });
     }
     return code;
   }
@@ -213,26 +244,68 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
                 ),
               ),
             ),
+            InkWell(
+              highlightColor: Colors.green.shade200,
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                downloadApk();
+              },
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                color: Colors.green,
+                child: Container(
+                  width: 180,
+                  padding: const EdgeInsets.all(7),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.download_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Build Apk',
+                        style: AppFontStyle.roboto(13, color: Colors.white),
+                      ),
+                      const Spacer(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(10),
                 child: SizedBox(
-                  width: Responsive.isLargeScreen(context)?150:double.infinity,
-                  height:Responsive.isLargeScreen(context)?null:40 ,
+                  width:
+                      Responsive.isLargeScreen(context) ? 150 : double.infinity,
+                  height: Responsive.isLargeScreen(context) ? null : 40,
                   child: Flex(
-                    direction: Responsive.isLargeScreen(context)?Axis.vertical:Axis.horizontal,
+                    direction: Responsive.isLargeScreen(context)
+                        ? Axis.vertical
+                        : Axis.horizontal,
                     children: [
                       const FileTile(selected: true, name: 'Lib'),
                       Container(
-                        padding: Responsive.isLargeScreen(context)?const EdgeInsets.only(left: 10, top: 10):
-                        EdgeInsets.zero,
+                        padding: Responsive.isLargeScreen(context)
+                            ? const EdgeInsets.only(left: 10, top: 10)
+                            : EdgeInsets.zero,
                         child: ListView.builder(
                           padding: EdgeInsets.zero,
-                          scrollDirection: Responsive.isLargeScreen(context)?Axis.vertical:Axis.horizontal,
+                          scrollDirection: Responsive.isLargeScreen(context)
+                              ? Axis.vertical
+                              : Axis.horizontal,
                           shrinkWrap: true,
                           itemBuilder: (_, i) {
                             return Padding(
-                              padding: Responsive.isLargeScreen(context)?const EdgeInsets.only(bottom: 10):const EdgeInsets.only(left: 10),
+                              padding: Responsive.isLargeScreen(context)
+                                  ? const EdgeInsets.only(bottom: 10)
+                                  : const EdgeInsets.only(left: 10),
                               child: InkWell(
                                 onTap: () {
                                   widget.onChange(widget.componentOperationCubit
@@ -263,30 +336,94 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
     );
   }
 
-  void downloadProject(UIScreen screen, String code) {
+  Map<String, dynamic>? generateCode() {
     final images =
         widget.componentOperationCubit.project?.getAllUsedImages() ?? [];
-    Map<String, dynamic> imageToBase64Map = {};
+    final Map<String, dynamic> imageToBase64Map = {};
     for (final img in images) {
       if (img.bytes != null) {
-        imageToBase64Map['asset/images/' + img.imageName!] = img.bytes!;
+        imageToBase64Map['assets/images/' + img.imageName!] = img.bytes!;
       }
     }
     final DartFormatter formatter = DartFormatter();
     for (final UIScreen uiScreen
         in widget.componentOperationCubit.project?.uiScreens ?? []) {
-      final name =
-          uiScreen == widget.componentOperationCubit.project?.mainScreen
-              ? 'main'
-              : uiScreen.name;
-      if (uiScreen != screen) {
-        imageToBase64Map['lib/$name.dart'] = formatter
+      String formattedCode;
+      try {
+        formattedCode = formatter
             .format(uiScreen.code(widget.componentOperationCubit.project!));
-      } else {
-        imageToBase64Map['lib/$name.dart'] = code;
+      } on FormatterException catch (e) {
+        showAlertDialog(
+            context, 'Format Error in ${uiScreen.name}', e.toString());
+        return null;
       }
+      imageToBase64Map['lib/${uiScreen.importFile}.dart'] = formattedCode;
     }
+    imageToBase64Map['pubspec.yaml'] =
+        '''name: ${widget.componentOperationCubit.project!.name}
+description: A new Flutter project.
+version: 1.0.0+1
 
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  google_fonts: ^2.2.0
+  intl: ^0.17.0
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/images/''';
+    return imageToBase64Map;
+  }
+
+  void downloadApk() {
+    final imageToBase64Map = generateCode();
+    if (imageToBase64Map == null) {
+      return;
+    }
+    showAlertDialog(context, 'Building Project....',
+        'Please wait while we are building your project');
+    http
+        .post(Uri.parse('http://127.0.0.1:8000/generate'),
+            body: jsonEncode(imageToBase64Map))
+        .then((response) {
+      if (response.statusCode == 200) {
+        showAlertDialog(context, 'Build Success', 'Saving apk in Downloads');
+        FileSaver.instance
+            .saveFile('app-release', response.bodyBytes, 'apk')
+            .then((value) {
+          showAlertDialog(context, 'Saved Successfully',
+              'Release Apk is saved in Downloads',
+              positiveButton: 'Ok');
+        }).onError((error, stackTrace) {
+          showAlertDialog(context, 'Error while saving', error.toString(),
+              positiveButton: 'Ok');
+        });
+      } else {
+        showAlertDialog(context, 'Error building', response.body,
+            positiveButton: 'Ok');
+      }
+    });
+  }
+
+  void downloadProject(UIScreen screen, String code) {
+    final imageToBase64Map = generateCode();
+    if (imageToBase64Map == null) {
+      return;
+    }
     DownloadUtils.download(
         imageToBase64Map, widget.componentOperationCubit.project!.name);
   }

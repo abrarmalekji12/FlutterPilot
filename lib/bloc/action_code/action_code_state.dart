@@ -5,7 +5,7 @@ abstract class ActionCodeState {}
 
 class ActionCodeInitial extends ActionCodeState {}
 
-class ActionCodeUpdatedState extends ActionCodeState{
+class ActionCodeUpdatedState extends ActionCodeState {
   ActionCodeUpdatedState(this.scope);
   final String scope;
 }

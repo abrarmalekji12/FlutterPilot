@@ -118,14 +118,15 @@ class _ModelBoxState extends State<ModelBox> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               EditableTextView(
-                                  key: ObjectKey(model.name),
-                                  text: model.name,
-                                  onChange: (data) {
-                                    setState(() {
-                                      model.name = data;
-                                    });
-                                    _modelCubit.changed(model);
-                                  }),
+                                model.name,
+                                onChange: (data) {
+                                  setState(() {
+                                    model.name = data;
+                                  });
+                                  _modelCubit.changed(model);
+                                },
+                                key: ObjectKey(model.name),
+                              ),
                               const SizedBox(
                                 height: 10,
                               ),
@@ -171,14 +172,15 @@ class _ModelBoxState extends State<ModelBox> {
                                 //       fontWeight: FontWeight.bold),
                                 // ),
                                 EditableTextView(
-                                    key: ObjectKey(model.name),
-                                    text: model.name,
-                                    onChange: (data) {
-                                      setState(() {
-                                        model.name = data;
-                                      });
-                                      _modelCubit.changed(model);
-                                    }),
+                                  model.name,
+                                  onChange: (data) {
+                                    setState(() {
+                                      model.name = data;
+                                    });
+                                    _modelCubit.changed(model);
+                                  },
+                                  key: ObjectKey(model.name),
+                                ),
                                 const SizedBox(
                                   height: 10,
                                 ),
@@ -381,8 +383,7 @@ class _AddModelValueState extends State<AddModelValue> {
                 }).toList();
                 if (!valueList.contains(null)) {
                   widget.model.values.add(valueList);
-                  BlocProvider.of<ModelCubit>(context)
-                      .changed(widget.model);
+                  BlocProvider.of<ModelCubit>(context).changed(widget.model);
 
                   BlocProvider.of<ComponentCreationCubit>(context,
                           listen: false)
@@ -494,8 +495,7 @@ class _AddVariableTileState extends State<AddVariableTile> {
                 BlocProvider.of<ComponentSelectionCubit>(context)
                     .emit(ComponentSelectionChange());
 
-                BlocProvider.of<ModelCubit>(context)
-                    .changed(widget.model);
+                BlocProvider.of<ModelCubit>(context).changed(widget.model);
 
                 setState(() {});
                 _controller1.text = '';
@@ -554,8 +554,7 @@ class _AddModelTileState extends State<AddModelTile> {
                     .changedComponent();
                 BlocProvider.of<ComponentSelectionCubit>(context)
                     .emit(ComponentSelectionChange());
-                BlocProvider.of<ModelCubit>(context)
-                    .changed(model, add: true);
+                BlocProvider.of<ModelCubit>(context).changed(model, add: true);
                 _controller.text = '';
               }
             },

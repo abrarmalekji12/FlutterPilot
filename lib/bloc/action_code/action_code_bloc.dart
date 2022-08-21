@@ -14,7 +14,8 @@ class ActionCodeBloc extends Bloc<ActionCodeEvent, ActionCodeState> {
     on<ActionCodeUpdatedEvent>(_actionCodeUpdated);
   }
 
-  void _actionCodeUpdated(ActionCodeUpdatedEvent event, Emitter<ActionCodeState> emit) {
+  void _actionCodeUpdated(
+      ActionCodeUpdatedEvent event, Emitter<ActionCodeState> emit) {
     emit(ActionCodeUpdatedState(event.scopeName));
   }
 }

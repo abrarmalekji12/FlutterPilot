@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart' as slidingUp;
 import '../bloc/error/error_bloc.dart';
+import '../bloc/key_fire/key_fire_bloc.dart';
 import '../bloc/sliding_property/sliding_property_bloc.dart';
+import '../bloc/state_management/state_management_bloc.dart';
 import '../common/html_lib.dart' as html;
 
 import 'package:flutter/material.dart';
@@ -21,6 +23,7 @@ import '../common/dialog_selection.dart';
 import '../common/logger.dart';
 import '../common/material_alert.dart';
 import '../common/responsive/responsive_widget.dart';
+import '../component_list.dart';
 import '../constant/app_colors.dart';
 import '../constant/app_dim.dart';
 import '../constant/font_style.dart';
@@ -55,6 +58,7 @@ import 'component_tree.dart';
 import 'custom_component_property.dart';
 import 'emulation_view.dart';
 import 'error_widget.dart';
+import 'files_view.dart';
 import 'models_view.dart';
 import 'parameter_ui.dart';
 import 'preview_ui.dart';
@@ -205,12 +209,11 @@ class _HomePageState extends State<HomePage> {
                       timeInSecForIosWeb: 3);
                   break;
                 case FlutterProjectLoadedState:
-                  componentSelectionCubit.init(
-                      ComponentSelectionModel.unique(
-                          (state as FlutterProjectLoadedState)
-                              .flutterProject
-                              .rootComponent!),
-                      state.flutterProject.rootComponent!);
+                  componentSelectionCubit.init(ComponentSelectionModel.unique(
+                      CNotRecognizedWidget(),
+                      (state as FlutterProjectLoadedState)
+                          .flutterProject
+                          .rootComponent!));
                   if (componentOperationCubit.project!.device != null) {
                     final config = screenConfigCubit.screenConfigs
                         .firstWhereOrNull((element) =>
@@ -409,7 +412,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
                 ),
                 const Spacer(),
                 Text(
-                  'Code',
+                  'Output',
                   style: AppFontStyle.roboto(13, color: Colors.white),
                 ),
                 const Spacer(),
@@ -504,8 +507,50 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
         ),
         const VariableShowHideMenu(),
         const ModelShowHideMenu(),
+        const FilesShowHideMenu(),
         const ActionCodeShowHideMenu()
       ],
+    );
+  }
+}
+
+class FilesShowHideMenu extends StatelessWidget {
+  const FilesShowHideMenu({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        showDialog(
+            context: context,
+            builder: (_) {
+              return const FilesView();
+            });
+      },
+      child: Container(
+        width: 70,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: kElevationToShadow[1]),
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.folder,
+              color: Colors.black,
+              size: 18,
+            ),
+            const Spacer(),
+            Text(
+              'Files',
+              style: AppFontStyle.roboto(13,
+                  color: Colors.black, fontWeight: FontWeight.w500),
+            ),
+            const Spacer(),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -536,12 +581,11 @@ class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
             variables: ComponentOperationCubit.currentProject!.variables,
             componentOperationCubit: componentOperationCubit,
             componentCreationCubit: componentCreationCubit,
-            title: ComponentOperationCubit.currentProject!.currentScreen.name,
+            title: ComponentOperationCubit.currentProject!.name,
             onAdded: (model) {
               ComponentOperationCubit.currentProject!.variables[model.name] =
                   model;
-              componentOperationCubit.addVariable(ComponentOperationCubit
-                  .currentProject!.variables[model.name] as VariableModel);
+              componentOperationCubit.addVariable(model);
               componentCreationCubit.changedComponent();
               componentSelectionCubit.emit(ComponentSelectionChange());
             },
@@ -549,15 +593,16 @@ class _VariableShowHideMenuState extends State<VariableShowHideMenu> {
               ComponentOperationCubit
                   .currentProject!.variables[model.name]!.value = model.value;
               Future.delayed(const Duration(milliseconds: 500), () {
-                componentOperationCubit.updateVariable(ComponentOperationCubit
-                    .currentProject!.variables[model.name]! as VariableModel);
+                componentOperationCubit.updateVariable();
                 componentCreationCubit.changedComponent();
                 componentSelectionCubit.emit(ComponentSelectionChange());
               });
             },
             componentSelectionCubit: componentSelectionCubit,
             onDeleted: (VariableModel model) {
-              ComponentOperationCubit.currentProject!.variables.remove(model);
+              ComponentOperationCubit.currentProject!.variables
+                  .remove(model.name);
+              componentOperationCubit.updateVariable();
               componentCreationCubit.changedComponent();
               componentSelectionCubit.emit(ComponentSelectionChange());
             });
@@ -672,15 +717,13 @@ class ActionCodeShowHideMenu extends StatefulWidget {
 class _ActionCodeShowHideMenuState extends State<ActionCodeShowHideMenu> {
   late ActionCodeDialog dialog;
   late ComponentOperationCubit componentOperationCubit;
-  bool error = false;
+  final ValueNotifier<bool> error = ValueNotifier(false);
 
   @override
   void initState() {
     super.initState();
     componentOperationCubit = context.read<ComponentOperationCubit>();
-    final root = context.read<ComponentSelectionCubit>().currentSelectedRoot;
     dialog = ActionCodeDialog(
-      functions: (root is! StatelessComponent) ? [setStateFunction] : [],
       context: context,
       title: componentOperationCubit.project!.name,
       onChanged: (String value) {
@@ -691,11 +734,10 @@ class _ActionCodeShowHideMenuState extends State<ActionCodeShowHideMenu> {
       },
       onError: (bool error) {
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          setState(() {
-            this.error = error;
-          });
+          this.error.value = error;
         });
       },
+      processor: ComponentOperationCubit.currentProject!.processor,
     );
   }
 
@@ -706,8 +748,6 @@ class _ActionCodeShowHideMenuState extends State<ActionCodeShowHideMenu> {
         dialog.show(
           context,
           code: componentOperationCubit.project!.actionCode,
-          variables: () => componentOperationCubit.project!.variables.values
-              .toList(growable: false),
         );
       },
       child: BadgeWidget(
@@ -909,7 +949,7 @@ class _MobileVisualEditorState extends State<MobileVisualEditor> {
                       padding: const EdgeInsets.all(10),
                       child: SizedBox(
                         width: 20,
-                        height: MediaQuery.of(context).size.height-500,
+                        height: MediaQuery.of(context).size.height - 500,
                         child: RotatedBox(
                           quarterTurns: 1,
                           child: StatefulBuilder(builder: (context, setState2) {
@@ -1022,8 +1062,6 @@ class DesktopVisualEditor extends StatefulWidget {
 }
 
 class _DesktopVisualEditorState extends State<DesktopVisualEditor> {
-
-
   @override
   void initState() {
     super.initState();
@@ -1077,12 +1115,16 @@ class _ComponentPropertySectionState extends State<ComponentPropertySection> {
         children: [
           BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
             builder: (context, state) {
+              final component =
+                  _componentSelectionCubit.currentSelected.propertySelection;
+              if (component is CNotRecognizedWidget) {
+                return const Offstage();
+              }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _componentSelectionCubit
-                        .currentSelected.propertySelection.name,
+                    component.name,
                     style: AppFontStyle.roboto(18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(
@@ -1090,17 +1132,14 @@ class _ComponentPropertySectionState extends State<ComponentPropertySection> {
                   ),
                   InkWell(
                     onTap: () {
-                      Clipboard.setData(ClipboardData(
-                          text: _componentSelectionCubit
-                              .currentSelected.propertySelection.id));
+                      Clipboard.setData(ClipboardData(text: component.id));
                     },
                     borderRadius: BorderRadius.circular(10),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          _componentSelectionCubit
-                              .currentSelected.propertySelection.id,
+                          component.id,
                           style: AppFontStyle.roboto(13,
                               color: Colors.grey.shade600,
                               fontWeight: FontWeight.w500),
@@ -1119,11 +1158,9 @@ class _ComponentPropertySectionState extends State<ComponentPropertySection> {
                   const SizedBox(
                     height: 10,
                   ),
-                  if (_componentSelectionCubit.currentSelected.propertySelection
-                      is BuilderComponent)
+                  if (component is BuilderComponent)
                     BuilderComponentSettings(
-                      component: _componentSelectionCubit.currentSelected
-                          .propertySelection as BuilderComponent,
+                      component: component as BuilderComponent,
                     ),
                 ],
               );
@@ -1275,12 +1312,12 @@ class _BuilderComponentSettingsState extends State<BuilderComponentSettings> {
         ),
         InkWell(
           onTap: () {
-            Get.generalDialog(
+            showDialog(
+              context: context,
               barrierDismissible: false,
               barrierLabel: 'barrierLabel',
               barrierColor: Colors.black45,
-              transitionDuration: const Duration(milliseconds: 200),
-              pageBuilder: (context3, animation, secondary) {
+              builder: (context3) {
                 return Material(
                   color: Colors.transparent,
                   child: DialogSelection(
@@ -1421,36 +1458,67 @@ class _EditingViewState extends State<EditingView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
-        builder: (context, state) {
-      return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
+    return BlocListener<KeyFireBloc, KeyFireState>(
+      listener: (_, state) {
+        if (FocusScope.of(context).hasFocus) {
+          return;
+        }
+        if (state is DownKeyEventFired) {
+          if (state.key == FireKeyType.down) {
+            final selected =
+                _componentSelectionCubit.currentSelected.visualSelection.last;
+            if (selected.boundary == null) {
+              return;
+            }
+            onTapDown(TapDownDetails(
+              localPosition:
+                  selected.boundary!.bottomCenter + const Offset(0, 2),
+            ));
+          } else if (state.key == FireKeyType.up) {
+            final selected =
+                _componentSelectionCubit.currentSelected.visualSelection.last;
+            if (selected.boundary == null) {
+              return;
+            }
+            onTapDown(TapDownDetails(
+              localPosition: selected.boundary!.topCenter - const Offset(0, 2),
+            ));
+          }
+        }
+      },
+      child: BlocBuilder<ScreenConfigCubit, ScreenConfigState>(
           builder: (context, state) {
-        logger('======== COMPONENT CREATION ');
-        return EmulationView(
-          widget: GestureDetector(
-            onSecondaryTapDown: (event) {
-              onSecondaryTapDown(context, event);
-            },
-            onTapDown: onTapDown,
-            child: ColoredBox(
-              key: const GlobalObjectKey('device window'),
-              color: Colors.white,
-              child: Stack(
-                children: [
-                  _componentOperationCubit.project!.run(
-                      context,
-                      BoxConstraints(
-                          maxWidth: _screenConfigCubit.screenConfig.width,
-                          maxHeight: _screenConfigCubit.screenConfig.height)),
-                  const BoundaryWidget(),
-                ],
+        return BlocBuilder<ComponentCreationCubit, ComponentCreationState>(
+            builder: (context, state) {
+          if (_componentOperationCubit.project == null) {
+            return const Offstage();
+          }
+          return EmulationView(
+            widget: GestureDetector(
+              onSecondaryTapDown: (event) {
+                onSecondaryTapDown(context, event);
+              },
+              onTapDown: onTapDown,
+              child: ColoredBox(
+                key: const GlobalObjectKey('device window'),
+                color: Colors.white,
+                child: Stack(
+                  children: [
+                    _componentOperationCubit.project!.run(
+                        context,
+                        BoxConstraints(
+                            maxWidth: _screenConfigCubit.screenConfig.width,
+                            maxHeight: _screenConfigCubit.screenConfig.height)),
+                    const BoundaryWidget(),
+                  ],
+                ),
               ),
             ),
-          ),
-          screenConfig: _screenConfigCubit.screenConfig,
-        );
-      });
-    });
+            screenConfig: _screenConfigCubit.screenConfig,
+          );
+        });
+      }),
+    );
   }
 
   void onTapDown(TapDownDetails event) {
@@ -1498,13 +1566,16 @@ class _EditingViewState extends State<EditingView> {
       //tappedComp,
       final original = tappedComp.getOriginal() ?? tappedComp;
       final visuals = [tappedComp];
-      _componentSelectionCubit.changeComponentSelection(
-        ComponentSelectionModel([original], visuals, original, original),
-        root: original != tappedComp
+      _componentSelectionCubit.changeComponentSelection(ComponentSelectionModel(
+        [original],
+        visuals,
+        original,
+        original,
+        original != tappedComp
             ? original.getRootCustomComponent(
                 ComponentOperationCubit.currentProject!)!
             : _componentSelectionCubit.currentSelectedRoot,
-      );
+      ));
       // }
       // }
     }

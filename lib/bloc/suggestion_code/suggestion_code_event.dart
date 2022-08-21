@@ -7,9 +7,11 @@ class SuggestionUpdatedEvent extends SuggestionCodeEvent {
   final CodeSuggestion? suggestions;
   SuggestionUpdatedEvent(this.suggestions);
 }
+
 class ClearSuggestionEvent extends SuggestionCodeEvent {
-ClearSuggestionEvent();
+  ClearSuggestionEvent();
 }
+
 class SuggestionSelectionChangeEvent extends SuggestionCodeEvent {
   final int change;
   SuggestionSelectionChangeEvent(this.change);

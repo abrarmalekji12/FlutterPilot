@@ -28,8 +28,7 @@ class BoundaryWidget extends StatelessWidget {
                 painter: BoundaryPainter(
                     boundaries: boundaries,
                     errorBoundary:
-                        BlocProvider.of<VisualBoxCubit>(context)
-                                    .errorMessage !=
+                        BlocProvider.of<VisualBoxCubit>(context).errorMessage !=
                                 null
                             ? BlocProvider.of<ComponentOperationCubit>(context,
                                     listen: false)

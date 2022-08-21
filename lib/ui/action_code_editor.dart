@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:highlight/highlight.dart';
 import 'package:highlight/src/common_modes.dart';
-import 'package:resizable_widget/resizable_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../bloc/action_code/action_code_bloc.dart';
 import '../bloc/key_fire/key_fire_bloc.dart';
@@ -17,10 +17,9 @@ import '../common/compiler/code_processor.dart';
 import '../common/responsive/responsive_widget.dart';
 import '../common/utils/dateformat_utils.dart';
 import '../constant/app_colors.dart';
-import '../constant/app_dim.dart';
 import '../constant/font_style.dart';
+import '../injector.dart';
 import '../models/variable_model.dart';
-import 'build_view/build_view.dart';
 import 'common/action_code_dialog.dart';
 import 'ide/suggestion.dart';
 import 'project_selection_page.dart';
@@ -107,35 +106,29 @@ final fvbDart = Mode(refs: {
   Mode(begin: '=>')
 ]);
 
-class ActionCodeEditor extends StatefulWidget {
+class FVBCodeEditor extends StatefulWidget {
   final String code;
-  final String scopeName;
   final void Function(String) onCodeChange;
-  final List<CodeBase> prerequisites;
   final void Function(bool) onError;
-  final Iterable<FVBFunction> functions;
-  final Iterable<FVBVariable> Function()? variables;
-  final Iterable<FVBClass>? classes;
   final ActionCodeEditorConfig config;
+  final CodeProcessor processor;
+  final String scopeName;
 
-  const ActionCodeEditor(
+  const FVBCodeEditor(
       {Key? key,
       required this.code,
-      required this.onCodeChange,
-      required this.prerequisites,
-      required this.variables,
-      required this.onError,
       required this.scopeName,
-      required this.functions,
-      this.classes,
-      required this.config})
+      required this.onCodeChange,
+      required this.onError,
+      required this.config,
+      required this.processor})
       : super(key: key);
 
   @override
-  State<ActionCodeEditor> createState() => _ActionCodeEditorState();
+  State<FVBCodeEditor> createState() => _FVBCodeEditorState();
 }
 
-class _ActionCodeEditorState extends State<ActionCodeEditor> {
+class _FVBCodeEditorState extends State<FVBCodeEditor> {
   late final CustomCodeController _codeController;
   late final CodeProcessor processor;
   final List<ConsoleMessage> consoleMessages = [];
@@ -160,6 +153,7 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
     theme: monokaiSublimeTheme
         .map((key, value) => MapEntry(key, value.copyWith(fontSize: 15))),
   );
+  final _prefs = get<SharedPreferences>();
 
   @override
   void dispose() {
@@ -174,26 +168,29 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
   void initState() {
     super.initState();
     _scrollController.addListener(() {
-      if (Responsive.isLargeScreen(context)&&_boxConstraints != null) {
+      _prefs.setDouble(widget.processor.scopeName, _scrollController.offset);
+      if (Responsive.isLargeScreen(context) && _boxConstraints != null) {
         showSuggestionBox(context, _boxConstraints!);
       }
     });
-    processor = CodeProcessor(
-      consoleCallback: (message, {List? arguments}) {
-        return null;
-      },
-      onError: (error, line) {
-        consoleMessages.add(
-            ConsoleMessage('$error at Line $line', ConsoleMessageType.error));
-        _consoleChangeNotifier.value++;
-      },
-      scopeName: widget.scopeName,
-    );
 
-    processor.functions.addAll(
-      widget.functions.toList(growable: false).asMap().map(
-            (key, value) => MapEntry(value.name, value),
-          ),
+    final offset = _prefs.getDouble(widget.processor.scopeName);
+    if (offset != null) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _scrollController.jumpTo(offset);
+      });
+    }
+    final onError = (error, line) {
+      consoleMessages.add(
+          ConsoleMessage('$error at Line $line', ConsoleMessageType.error));
+      _consoleChangeNotifier.value++;
+    };
+    processor = CodeProcessor(
+      consoleCallback: CodeProcessor.testConsoleCallback,
+      onError: onError,
+      parentProcessor: widget.processor.parentProcessor
+          ?.clone(CodeProcessor.testConsoleCallback, onError),
+      scopeName: widget.scopeName,
     );
 
     _codeController = CustomCodeController(
@@ -245,7 +242,22 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
             final oldCode = code;
             code = value;
             WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-              widget.onCodeChange(code!);
+              if (widget.config.string) {
+                if (code!.startsWith('"') && code!.endsWith('"')) {
+                  widget.onCodeChange(code!.substring(1, code!.length - 1));
+                } else {
+                  if (code![code!.length - 1] != '"') {
+                    code = code! + '"';
+                  }
+                  if (code![0] != '"') {
+                    code = '"' + code!;
+                  }
+                  _codeController.value = TextEditingValue(text: code!,selection: _codeController.value.selection);
+                  return;
+                }
+              } else {
+                widget.onCodeChange(code!);
+              }
               executeAndCheck(code!,
                   suggestion:
                       (code!.length - (oldCode?.length ?? 0)).abs() == 1);
@@ -257,8 +269,9 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
             }
           }
         });
-    code = widget.code;
-    _codeController.text = widget.code;
+
+    code = widget.config.string ? '"${widget.code}"' : widget.code;
+    _codeController.text = code!;
     executeAndCheck(code!, suggestion: false);
   }
 
@@ -276,7 +289,7 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
       }
       if (!Responsive.isLargeScreen(context)) {
         return Positioned(
-          top: MediaQuery.of(context).size.height-380-(100),
+          top: MediaQuery.of(context).size.height - 380 - (100),
           child: SuggestionWidget(
             suggestionCodeBloc: _suggestionCodeBloc,
           ),
@@ -315,28 +328,53 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
   }
 
   void executeAndCheck(String code, {bool suggestion = true}) {
-    if (widget.variables != null) {
-      processor.variables.addAll(widget.variables!
-          .call()
+    processor.variables.clear();
+    processor.functions.clear();
+    processor.localVariables.clear();
+    if (!widget.config.parentProcessorGiven) {
+      processor.variables.addAll(widget.processor.variables.values
           .where((element) =>
               element.runtimeType == FVBVariable ||
               (element is VariableModel && element.uiAttached))
           .toList(growable: false)
           .asMap()
           .map((key, value) => MapEntry(value.name, value.clone())));
-    }
-    final cache = CacheMemory(processor);
-    for (final prerequisite in widget.prerequisites) {
-      processor.variables.addAll(prerequisite.variables
-          .call()
-          .where((element) => element is VariableModel && element.uiAttached)
+    } else {
+      processor.variables.addAll(widget.processor.variables.values
           .toList(growable: false)
           .asMap()
           .map((key, value) => MapEntry(value.name, value.clone())));
-      processor.executeCode(
-        prerequisite.code(),
-        type: OperationType.checkOnly,
-      );
+    }
+    processor.localVariables.addAll(widget.processor.localVariables);
+    if (widget.config.variables != null) {
+      if (widget.config.parentProcessorGiven) {
+        processor.variables.addAll(widget.config.variables!
+            .call()
+            .asMap()
+            .map((key, value) => MapEntry(value.name, value)));
+      } else {
+        processor.localVariables.addAll(widget.config.variables!
+            .call()
+            .asMap()
+            .map((key, value) => MapEntry(value.name, value.value)));
+      }
+    }
+    processor.functions.addAll(
+        widget.processor.functions.map((key, value) => MapEntry(key, value)));
+    CodeProcessor? parent = processor.parentProcessor;
+    CodeProcessor? originalParent = widget.processor.parentProcessor;
+    while (parent != null) {
+      parent.variables.clear();
+      parent.functions.clear();
+      parent.localVariables.clear();
+      parent.variables.addAll(originalParent!.variables
+          .map((key, value) => MapEntry(value.name, value.clone())));
+      parent.functions.addAll(
+          originalParent.functions.map((key, value) => MapEntry(key, value)));
+
+      parent.localVariables.addAll(originalParent.localVariables);
+      parent = parent.parentProcessor;
+      originalParent = originalParent.parentProcessor;
     }
     if (suggestion) {
       processor.enableSuggestion((suggestions) {
@@ -348,8 +386,10 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
       consoleMessages.clear();
       _consoleChangeNotifier.value = 0;
       _suggestionCodeBloc.add(SuggestionUpdatedEvent(null));
-    }, declarativeOnly: widget.config.upCode == null);
-    processor.destroyProcess(cacheMemory: cache, deep: true);
+    },
+        declarativeOnly:
+            widget.config.upCode == null && !widget.config.singleLine);
+    processor.destroyProcess(deep: false);
     if (suggestion) {
       processor.disableSuggestion();
     }
@@ -358,7 +398,7 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
           ConsoleMessage('Compiled. No Errors.', ConsoleMessageType.success));
       context
           .read<ActionCodeBloc>()
-          .add(ActionCodeUpdatedEvent(widget.scopeName));
+          .add(ActionCodeUpdatedEvent(widget.processor.scopeName));
 
       _consoleChangeNotifier.value++;
     }
@@ -380,11 +420,12 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
         listener: (context, state) {
           if (state is DownKeyEventFired) {
             if (_suggestionCodeBloc.suggestion != null) {
-              if ((state.key == 'RETURN' || state.key == 'ENTER')) {
+              if ((state.key == FireKeyType.enter ||
+                  state.key == FireKeyType.rtrn)) {
                 _handleEnter();
-              } else if (state.key == 'UP') {
+              } else if (state.key == FireKeyType.up) {
                 _suggestionCodeBloc.add(SuggestionSelectionChangeEvent(-1));
-              } else if (state.key == 'DOWN') {
+              } else if (state.key == FireKeyType.down) {
                 _suggestionCodeBloc.add(SuggestionSelectionChangeEvent(1));
               }
             }
@@ -420,12 +461,8 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
                 ),
               ],
             ),
-            largeScreen: ResizableWidget(
-              separatorSize: Dimen.separator,
-              separatorColor: AppColors.separator,
-              isHorizontalSeparator: true,
-              percentages: const [0.9, 0.1],
-              children: [_buildEditor(), _buildConsole()],
+            largeScreen: Column(
+              children: [Expanded(child: _buildEditor()), _buildConsole()],
             ),
           ),
         ),
@@ -555,6 +592,10 @@ class _ActionCodeEditorState extends State<ActionCodeEditor> {
   }
 
   void _handleEnter() {
+    if (_suggestionCodeBloc.suggestion!.suggestions.length <=
+        _suggestionCodeBloc.selectionIndex) {
+      return;
+    }
     final text = _codeController.text;
     final index = _codeController.selection.baseOffset;
     final suggestion = _suggestionCodeBloc
@@ -609,6 +650,11 @@ class ConsoleMessage {
 
   ConsoleMessage(this.message, this.type) {
     time = DateFormatUtils.getCurrentTimeForConsole();
+  }
+
+  @override
+  String toString() {
+    return 'ConsoleMessage{time: $time, message: $message, type: $type}';
   }
 }
 

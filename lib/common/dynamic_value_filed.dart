@@ -10,21 +10,24 @@ import 'compiler/code_processor.dart';
 enum InputOption { defaultConfig, doubleZeroToOne }
 
 class DynamicValueField<T> extends StatefulWidget {
-  final TextEditingController textEditingController;
+  late TextEditingController? textEditingController;
   final CodeProcessor processor;
   final bool Function(String, dynamic) onProcessedResult;
-  final void Function()? onErrorCode;
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> formKey;
   final InputOption inputOption;
+  final String? initialCode;
 
   DynamicValueField(
       {Key? key,
       required this.onProcessedResult,
       required this.processor,
-      required this.textEditingController,
-      this.onErrorCode,
-      this.inputOption = InputOption.defaultConfig})
-      : super(key: key);
+      this.textEditingController,
+      this.initialCode,
+      this.inputOption = InputOption.defaultConfig,
+      required this.formKey})
+      : super(key: key) {
+    textEditingController ??= TextEditingController();
+  }
 
   @override
   State<DynamicValueField<T>> createState() => _DynamicValueFieldState<T>();
@@ -32,12 +35,20 @@ class DynamicValueField<T> extends StatefulWidget {
 
 class _DynamicValueFieldState<T> extends State<DynamicValueField<T>> {
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (widget.initialCode != null) {
+      widget.textEditingController!.text = widget.initialCode!;
+    }
     return Form(
-      key: widget._formKey,
+      key: widget.formKey,
       child: TextFormField(
         onChanged: (value) {
-          widget._formKey.currentState?.validate();
+          widget.formKey.currentState?.validate();
         },
         style: AppFontStyle.roboto(13,
             color: Colors.black, fontWeight: FontWeight.w600),
@@ -74,6 +85,7 @@ class _DynamicValueFieldState<T> extends State<DynamicValueField<T>> {
             if (!widget.onProcessedResult(data ?? '', result)) {
               return '';
             }
+            return CodeProcessor.error ? '' : null;
           }
         },
       ),

@@ -169,7 +169,7 @@ class _PreviewPageState extends State<PreviewPage> {
                 runtimeMode: RuntimeMode.preview,
                 child: Builder(builder: (context) {
                   return InteractiveViewer(
-                    maxScale: 10,
+                      maxScale: 10,
                       // minScale: dw(context, 100) / width,
                       child: RepaintBoundary(
                         key: _interactiveViewerKey,
@@ -224,9 +224,12 @@ class _PreviewPageState extends State<PreviewPage> {
                                               ),
                                               color: Colors.white,
                                               boxShadow: kElevationToShadow[2]),
-                                          constraints:BoxConstraints(
-                                            maxWidth:  0.9*MediaQuery.of(context).size.width/(screens.length),
-
+                                          constraints: BoxConstraints(
+                                            maxWidth: 0.9 *
+                                                MediaQuery.of(context)
+                                                    .size
+                                                    .width /
+                                                (screens.length),
                                           ),
                                           // height: height,
                                           child: IgnorePointer(
@@ -251,8 +254,8 @@ class _PreviewPageState extends State<PreviewPage> {
                                       return CustomPaint(
                                         painter: ConnectionPainter(
                                             lines,
-                                            widget
-                                                ._screenConfigCubit.screenConfig),
+                                            widget._screenConfigCubit
+                                                .screenConfig),
                                       );
                                     })
                             ],

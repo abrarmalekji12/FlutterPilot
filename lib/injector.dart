@@ -2,6 +2,7 @@ import 'package:device_preview/device_preview.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_it/get_it.dart';
 import 'package:keyboard_event/keyboard_event.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:win_toast/win_toast.dart';
 
 import 'bloc/action_code/action_code_bloc.dart';
@@ -28,11 +29,11 @@ void initInjector() async {
         companyName: 'AMSoftwares');
   }
 
-  get.registerSingleton<CodeProcessor>(CodeProcessor.build(name: 'main'));
+  get.registerSingleton<CodeProcessor>(CodeProcessor.build(name: 'MainScope'));
   get.registerSingleton<StateManagementBloc>(StateManagementBloc());
   get.registerSingleton<StackActionCubit>(StackActionCubit());
   get.registerSingleton<ErrorBloc>(ErrorBloc());
-  if(Platform.isWindows) {
+  if (Platform.isWindows) {
     get.registerSingleton<KeyboardEvent>(KeyboardEvent());
   }
   get.registerSingleton<KeyFireBloc>(KeyFireBloc());
@@ -43,7 +44,8 @@ void initInjector() async {
 
   get.registerSingleton<ComponentSelectionCubit>(ComponentSelectionCubit());
   get.registerSingleton<ComponentCreationCubit>(ComponentCreationCubit(get()));
-  final _preference=DevicePreviewStorage.preferences();
+  final _preference = DevicePreviewStorage.preferences();
   get.registerSingleton<DevicePreviewStorage>(_preference);
-  CodeProcessor.init();
+  get.registerSingleton<SharedPreferences>(
+      await SharedPreferences.getInstance());
 }

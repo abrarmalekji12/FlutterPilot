@@ -19,6 +19,7 @@ class AppColors {
 
   static const Color DADADA = Color(0xFFDADADA);
 
+  static const Color shimmerColor = Color(0xFFF2F2F2);
   // red color
   static const Color red = Color(0xFFF44336);
 
@@ -33,5 +34,4 @@ class AppColors {
 
   // dark grey
   static const Color darkGrey2 = Color(0xFF0A0A0A);
-
 }

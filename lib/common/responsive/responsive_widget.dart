@@ -50,8 +50,7 @@ class Responsive extends StatelessWidget {
   Widget build(BuildContext context) {
     if (Responsive.isLargeScreen(context)) {
       return largeScreen;
-    }
-    else if (Responsive.isMediumScreen(context)) {
+    } else if (Responsive.isMediumScreen(context)) {
       return mediumScreen ?? largeScreen;
     } else {
       return smallScreen ?? largeScreen;
