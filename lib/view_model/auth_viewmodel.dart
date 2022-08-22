@@ -8,7 +8,7 @@ class AuthViewModel {
 
   AuthViewModel() {
     if (kDebugMode) {
-      userName = 'abrarmalekji12@gmail.com';
+      userName = 'hamdanmalekji12@gmail.com';
       password = 'password';
     }
   }

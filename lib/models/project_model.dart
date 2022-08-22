@@ -304,32 +304,41 @@ class UIScreen {
 
   String code(final FlutterProject flutterProject) {
     String implementationCode = '';
-    if (flutterProject.customComponents.isNotEmpty) {
-      for (final customComponent in flutterProject.customComponents) {
-        implementationCode += customComponent.implementationCode();
-      }
-    }
+
     final List<String> importList = [];
-    rootComponent?.forEach((component) {
-      if (component is Clickable) {
-        for (final e in (component as Clickable).actionList) {
-          if (e.arguments.isNotEmpty &&
-              (e.arguments[0] is UIScreen?) &&
-              e.arguments[0] != null) {
-            importList.add((e.arguments[0] as UIScreen).importFile);
-          }
-        }
-      } else if (component is CCustomPaint) {
-        implementationCode += component.implCode;
-      }
-    });
+    // rootComponent?.forEach((component) {
+    //   if (component is Clickable) {
+    //     for (final e in (component as Clickable).actionList) {
+    //       if (e.arguments.isNotEmpty &&
+    //           (e.arguments[0] is UIScreen?) &&
+    //           e.arguments[0] != null) {
+    //         importList.add((e.arguments[0] as UIScreen).importFile);
+    //       }
+    //     }
+    //   } else if (component is CCustomPaint) {
+    //     implementationCode += component.implCode;
+    //   }
+    // });
     if (this != flutterProject.mainScreen && !importList.contains('main')) {
       importList.add('main');
+
     }
     String staticVariablesCode = '';
     String dynamicVariablesDefinitionCode = '';
     String dynamicVariableAssignmentCode = '';
+
+    String functionImplementationCode = '';
     if (this == flutterProject.mainScreen) {
+      for (final function in CodeProcessor.predefinedFunctions.values) {
+        if (function.functionCode != null) {
+          functionImplementationCode += function.functionCode!;
+        }
+      }
+      if (flutterProject.customComponents.isNotEmpty) {
+        for (final customComponent in flutterProject.customComponents) {
+          implementationCode += customComponent.implementationCode();
+        }
+      }
       for (final variable in ComponentOperationCubit
           .currentProject!.processor.variables.entries) {
         if ([
@@ -353,12 +362,7 @@ class UIScreen {
       }
     }
 
-    String functionImplementationCode = '';
-    for (final function in CodeProcessor.predefinedFunctions.values) {
-      if (function.functionCode != null) {
-        functionImplementationCode += function.functionCode!;
-      }
-    }
+
 
     final String className = getClassName;
     // ${rootComponent!.code()}

@@ -5,6 +5,7 @@ import 'package:dart_style/dart_style.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import '../common/common_methods.dart';
 import '../common/download_utils.dart';
@@ -18,9 +19,8 @@ import 'package:highlight/languages/dart.dart';
 import 'package:http/http.dart' as http;
 
 class CodeViewerWidget extends StatefulWidget {
-  final ComponentOperationCubit componentOperationCubit;
 
-  const CodeViewerWidget({Key? key, required this.componentOperationCubit})
+  const CodeViewerWidget({Key? key,})
       : super(key: key);
 
   @override
@@ -36,11 +36,13 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
   late String code;
   final DartFormatter _dartFormatter = DartFormatter(fixes: []);
   late UIScreen screen;
+  late ComponentOperationCubit componentOperationCubit;
 
   @override
   void initState() {
     super.initState();
-    screen = widget.componentOperationCubit.project!.currentScreen;
+    componentOperationCubit=context.read<ComponentOperationCubit>();
+    screen = componentOperationCubit.project!.currentScreen;
     code = '';
   }
 
@@ -61,7 +63,7 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
                 : Axis.vertical,
             children: [
               ProjectFileWidget(
-                componentOperationCubit: widget.componentOperationCubit,
+                componentOperationCubit: componentOperationCubit,
                 screen: screen,
                 onChange: (screen) {
                   this.screen = screen;
@@ -153,22 +155,33 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
   }
 
   Future<String> formatCode() async {
+    return '';
     try {
-      code = screen.code(widget.componentOperationCubit.project!);
+      print('GENARATE');
+      code = screen.code(componentOperationCubit.project!);
+
+      print('GENARATEd');
     } on Exception catch (e) {
+
+      print('GENARATing EXECEPTION ${e.toString()}');
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         showAlertDialog(context, 'Generation Error', e.toString());
       });
       e.printError();
     } on Error catch (e) {
+
+      print('GENARATing ERROR ${e.toString()}');
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         showAlertDialog(context, 'Generation Error', e.toString());
       });
       e.printError();
     }
     try {
+      print('Formatting');
       code = _dartFormatter.format(code);
+      print('Formatting Done');
     } catch (e) {
+      print('Formatting error ${e.toString()}');
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         showAlertDialog(context, 'Format Error', e.toString());
       });
@@ -348,16 +361,19 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
     final DartFormatter formatter = DartFormatter();
     for (final UIScreen uiScreen
         in widget.componentOperationCubit.project?.uiScreens ?? []) {
-      String formattedCode;
+      String formattedCode='';
       try {
+        formattedCode=uiScreen.code(widget.componentOperationCubit.project!);
         formattedCode = formatter
-            .format(uiScreen.code(widget.componentOperationCubit.project!));
+            .format(formattedCode);
       } on FormatterException catch (e) {
+        print('ERROR IN ==== \n $formattedCode \n =====');
         showAlertDialog(
             context, 'Format Error in ${uiScreen.name}', e.toString());
         return null;
       }
       imageToBase64Map['lib/${uiScreen.importFile}.dart'] = formattedCode;
+      print('SCREEN ${uiScreen.name} ==== DONE =====');
     }
     imageToBase64Map['pubspec.yaml'] =
         '''name: ${widget.componentOperationCubit.project!.name}

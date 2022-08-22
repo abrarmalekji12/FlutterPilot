@@ -403,9 +403,9 @@ class SimpleParameter<T> extends Parameter {
         tempCode = '`$tempCode`';
       } else if (T == String) {
         if (tempCode.contains('\n')) {
-          tempCode = '\'\'\'$tempCode\'\'\''.replaceAll('\$', '\\\$');
+          tempCode = '\'\'\'${tempCode.replaceAll("'", "\\'")}\'\'\''.replaceAll('\$', '\\\$');
         } else {
-          tempCode = '\'$tempCode\''.replaceAll('\$', '\\\$');
+          tempCode = '\'${tempCode.replaceAll("'", "\\'")}\''.replaceAll('\$', '\\\$');
         }
       } else if (T == Color) {
         tempCode =

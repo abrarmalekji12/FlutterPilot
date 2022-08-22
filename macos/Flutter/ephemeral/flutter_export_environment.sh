@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=C:\Users\abrar\Flutter\flutter_windows_2.8.1-stable\flutter"
-export "FLUTTER_APPLICATION_PATH=C:\Users\abrar\StudioProjects\flutter_visual_builder"
+export "FLUTTER_ROOT=/Users/mac-0009/Flutter/flutter_2_5_3"
+export "FLUTTER_APPLICATION_PATH=/Users/mac-0009/Abrar/Projects/demo_app_1"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=1.0.0"

@@ -388,8 +388,6 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
             CustomDialog.show(
               context,
               CodeViewerWidget(
-                componentOperationCubit:
-                    BlocProvider.of<ComponentOperationCubit>(context),
               ),
             );
           },
