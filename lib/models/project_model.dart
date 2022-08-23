@@ -181,7 +181,6 @@ class UIScreen {
   static const defaultActionCode = '''
     void initState(){
     // will execute first time only
-    print("Hello World!");
     }
     
     void build(context){

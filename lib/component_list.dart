@@ -97,7 +97,6 @@ final componentList = <String, Component Function()>{
   'PageView.builder': () => CPageViewBuilder(),
   // 'ListView.Builder': () => CListViewBuilder(),
   'ListView.separated': () => CListViewSeparated(),
-  'GridView.Builder': () => CGridViewBuilder(),
   'NotRecognizedWidget': () => CNotRecognizedWidget(),
   'DropdownButton': () => CDropDownButton(),
   'DropdownMenuItem': () => CDropdownMenuItem(),
@@ -1914,7 +1913,7 @@ class CMaterial extends Holder {
 class CText extends Component {
   CText()
       : super('Text', [
-          Parameters.textParameter()..withDefaultValue('Hello World'),
+          Parameters.textParameter()..withDefaultValue('Write Text Here'),
           Parameters.googleFontTextStyleParameter..withRequired(false),
           Parameters.textAlignParameter,
           Parameters.overflowParameter,
