@@ -9,6 +9,7 @@
 #include <connectivity_plus_windows/connectivity_plus_windows_plugin.h>
 #include <file_saver/file_saver_plugin.h>
 #include <keyboard_event/keyboard_event_plugin.h>
+#include <permission_handler_windows/permission_handler_windows_plugin.h>
 #include <win_toast/win_toast_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
@@ -18,6 +19,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("FileSaverPlugin"));
   KeyboardEventPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("KeyboardEventPlugin"));
+  PermissionHandlerWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("PermissionHandlerWindowsPlugin"));
   WinToastPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("WinToastPlugin"));
 }

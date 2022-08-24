@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus_windows
   file_saver
   keyboard_event
+  permission_handler_windows
   win_toast
 )
 

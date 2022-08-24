@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter_slider_drawer/flutter_slider_drawer.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart' as slidingUp;
 import '../bloc/error/error_bloc.dart';
 import '../bloc/key_fire/key_fire_bloc.dart';
@@ -918,55 +920,59 @@ class _MobileVisualEditorState extends State<MobileVisualEditor> {
             child: Scaffold(
               key: const GlobalObjectKey('ScaffoldKey'),
               resizeToAvoidBottomInset: false,
-              drawer: drawerWidget,
-              body: Stack(
-                children: [
-                  CenterMainSide(
-                    slidingPropertyBloc: _slidingPropertyBloc,
-                  ),
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: Builder(builder: (context) {
-                      return Padding(
-                        padding: const EdgeInsets.all(5),
-                        child: AppIconButton(
-                          iconSize: 24,
-                          buttonSize: 40,
-                          onPressed: () {
-                            Scaffold.of(context).openDrawer();
-                          },
-                          icon: Icons.list,
-                          color: AppColors.theme,
-                        ),
-                      );
-                    }),
-                  ),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: SizedBox(
-                        width: 20,
-                        height: MediaQuery.of(context).size.height - 500,
-                        child: RotatedBox(
-                          quarterTurns: 1,
-                          child: StatefulBuilder(builder: (context, setState2) {
-                            return Slider(
-                              value: _slidingPropertyBloc.value,
-                              activeColor: Colors.grey.withOpacity(0.5),
-                              inactiveColor: Colors.grey.withOpacity(0.8),
-                              onChanged: (newValue) {
-                                setState2(() {});
-                                _slidingPropertyBloc.add(
-                                    SlidingPropertyChange(value: newValue));
-                              },
-                            );
-                          }),
+              body: SliderDrawer(
+                key: const GlobalObjectKey('slider_drawer'),
+                appBar: Container(),
+                slider: const ComponentTree(),
+                child: Stack(
+                  children: [
+                    CenterMainSide(
+                      slidingPropertyBloc: _slidingPropertyBloc,
+                    ),
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: Builder(builder: (context) {
+                        return Padding(
+                          padding: const EdgeInsets.all(5),
+                          child: AppIconButton(
+                            iconSize: 24,
+                            buttonSize: 40,
+                            onPressed: () {
+                              (const GlobalObjectKey('slider_drawer').currentState as SliderDrawerState).openSlider();
+                            },
+                            icon: Icons.list,
+                            color: AppColors.theme,
+                          ),
+                        );
+                      }),
+                    ),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: SizedBox(
+                          width: 20,
+                          height: MediaQuery.of(context).size.height - 500,
+                          child: RotatedBox(
+                            quarterTurns: 1,
+                            child: StatefulBuilder(builder: (context, setState2) {
+                              return Slider(
+                                value: _slidingPropertyBloc.value,
+                                activeColor: Colors.grey.withOpacity(0.5),
+                                inactiveColor: Colors.grey.withOpacity(0.8),
+                                onChanged: (newValue) {
+                                  setState2(() {});
+                                  _slidingPropertyBloc.add(
+                                      SlidingPropertyChange(value: newValue));
+                                },
+                              );
+                            }),
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                ],
+                    )
+                  ],
+                ),
               ),
             )),
         const SlidingPropertySection()

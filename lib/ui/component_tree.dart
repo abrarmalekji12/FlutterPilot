@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
-import '../bloc/key_fire/key_fire_bloc.dart';
 import '../code_to_component.dart';
 import '../common/app_button.dart';
 import '../common/app_text_field.dart';
@@ -11,7 +9,6 @@ import '../common/compiler/code_processor.dart';
 import '../common/custom_animated_dialog.dart';
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
-import '../common/editable_textview.dart';
 import '../common/io_lib.dart';
 import '../common/material_alert.dart';
 import '../common/responsive/responsive_widget.dart';
@@ -37,7 +34,9 @@ import 'common/variable_dialog.dart';
 import 'component_selection_dialog.dart';
 import 'project_setting_page.dart';
 
+
 class ComponentTree extends StatefulWidget {
+
   const ComponentTree({Key? key}) : super(key: key);
 
   @override
