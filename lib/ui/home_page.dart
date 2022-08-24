@@ -7,6 +7,7 @@ import '../bloc/error/error_bloc.dart';
 import '../bloc/key_fire/key_fire_bloc.dart';
 import '../bloc/sliding_property/sliding_property_bloc.dart';
 import '../bloc/state_management/state_management_bloc.dart';
+import '../common/custom_popup_menu_button.dart';
 import '../common/html_lib.dart' as html;
 
 import 'package:flutter/material.dart';
@@ -1003,7 +1004,9 @@ class _SlidingPropertySectionState extends State<SlidingPropertySection> {
     return slidingUp.SlidingUpPanel(
       panel: const ComponentPropertySection(),
       minHeight: 80,
-      maxHeight: 500,
+      panelSnapping: true,
+      snapPoint: 0.5,
+      maxHeight: dh(context, 80),
       controller: panelController,
       onPanelSlide: (value) {
         if (value == 0) {
