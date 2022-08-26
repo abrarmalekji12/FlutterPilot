@@ -5,17 +5,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
+
 import '../../common/compiler/code_processor.dart';
 import '../../common/undo/revert_work.dart';
-import '../../injector.dart';
-import '../../models/component_selection.dart';
-import '../../models/local_model.dart';
-import '../../models/variable_model.dart';
-import '../../models/parameter_model.dart';
-import '../../models/other_model.dart';
-import '../../models/project_model.dart';
 import '../../firestore/firestore_bridge.dart';
+import '../../injector.dart';
 import '../../models/component_model.dart';
+import '../../models/local_model.dart';
+import '../../models/other_model.dart';
+import '../../models/parameter_model.dart';
+import '../../models/project_model.dart';
+import '../../models/variable_model.dart';
 import '../../network/connectivity.dart';
 import '../../runtime_provider.dart';
 import '../component_creation/component_creation_cubit.dart';
@@ -110,8 +110,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
   }
 
-  void updateCustomComponentActionCode(
-      final CustomComponent component, final String value) async {
+  void updateCustomComponentActionCode(final CustomComponent component, final String value) async {
     await waitForConnectivity();
 
     try {
@@ -122,8 +121,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         element.processor.destroyProcess(deep: false);
         element.processor.executeCode(value, type: OperationType.checkOnly);
       });
-      await FireBridge.updateCustomComponentActionCode(
-          project!.userId, project!, component);
+      await FireBridge.updateCustomComponentActionCode(project!.userId, project!, component);
       refreshCustomComponents(component);
       emit(ComponentOperationInitial());
     } on Exception catch (e) {
@@ -180,14 +178,12 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentOperationInitial());
   }
 
-  Future<void> updateGlobalCustomComponent(CustomComponent customComponent,
-      {String? newName}) async {
+  Future<void> updateGlobalCustomComponent(CustomComponent customComponent, {String? newName}) async {
     await waitForConnectivity();
 
     emit(ComponentOperationLoadingState());
     try {
-      await FireBridge.saveComponent(project!, customComponent,
-          newName: newName);
+      await FireBridge.saveComponent(project!, customComponent, newName: newName);
       for (final Component comp in customComponent.objects) {
         comp.name = customComponent.name;
       }
@@ -198,14 +194,11 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   }
 
   void addOperation(Component component, Component comp, Component ancestor,
-      {bool componentParameterOperation = false,
-      ComponentParameter? componentParameter,
-      String? customNamed}) {
+      {bool componentParameterOperation = false, ComponentParameter? componentParameter, String? customNamed}) {
     if (componentParameterOperation) {
       componentParameter!.addComponent(comp);
     } else if (customNamed != null) {
-      (component as CustomNamedHolder)
-          .addOrUpdateChildWithKey(customNamed, comp);
+      (component as CustomNamedHolder).addOrUpdateChildWithKey(customNamed, comp);
     } else {
       if (component is Holder) {
         component.updateChild(comp);
@@ -223,8 +216,10 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
         if (component == ancestor) {
           ancestor.root = comp;
         }
-        refreshCustomComponents(ancestor);
       }
+    }
+    if (ancestor is CustomComponent) {
+      refreshCustomComponents(ancestor);
     }
   }
 
@@ -250,9 +245,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     while (index < list.length) {
       for (final comp in changeOrder) {
         if (list[index].value.contains(comp)) {
-          (project!.customComponents
-                  .firstWhere((element) => element.name == list[index].key))
-              .notifyChanged();
+          (project!.customComponents.firstWhere((element) => element.name == list[index].key)).notifyChanged();
           changeOrder.add(list[index].key);
           break;
         }
@@ -339,8 +332,8 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
     emit(ComponentOperationLoadingState());
     try {
-      await FireBridge.updateScreenRootComponent(project!.userId, project!.name,
-          project!.currentScreen, project!.rootComponent!);
+      await FireBridge.updateScreenRootComponent(
+          project!.userId, project!.name, project!.currentScreen, project!.rootComponent!);
       emit(ComponentOperationInitial());
     } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));
@@ -383,15 +376,12 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  void addCustomComponent(String name, CustomWidgetType type,
-      {Component? root}) async {
+  void addCustomComponent(String name, CustomWidgetType type, {Component? root}) async {
     final CustomComponent component;
     if (type == CustomWidgetType.stateless) {
-      component = StatelessComponent(
-          name: name, actionCode: StatelessComponent.defaultActionCode);
+      component = StatelessComponent(name: name, actionCode: StatelessComponent.defaultActionCode);
     } else {
-      component = StatefulComponent(
-          name: name, actionCode: StatefulComponent.defaultActionCode);
+      component = StatefulComponent(name: name, actionCode: StatefulComponent.defaultActionCode);
     }
     project?.customComponents.add(component);
     if (root != null) {
@@ -404,8 +394,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
     try {
       await waitForConnectivity();
-      await FireBridge.addNewGlobalCustomComponent(
-          project!.userId, project!, component);
+      await FireBridge.addNewGlobalCustomComponent(project!.userId, project!, component);
     } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));
     }
@@ -445,8 +434,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> deleteCustomComponentOnCloud(CustomComponent component) async {
     emit(ComponentOperationLoadingState());
     try {
-      await FireBridge.deleteGlobalCustomComponent(
-          project!.userId, project!, component);
+      await FireBridge.deleteGlobalCustomComponent(project!.userId, project!, component);
       for (final customComp in currentProject!.customComponents) {
         await FireBridge.saveComponent(project!, customComp);
       }
@@ -456,8 +444,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
   }
 
-  void removeRootComponentFromComponentParameter(
-      ComponentParameter componentParameter, Component component,
+  void removeRootComponentFromComponentParameter(ComponentParameter componentParameter, Component component,
       {bool removeAll = false}) {
     final index = componentParameter.components.indexOf(component);
     componentParameter.components.removeAt(index);
@@ -499,8 +486,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
           case 1:
             break;
           case 2:
-            parent.addChildren((component as MultiHolder).children,
-                index: index);
+            parent.addChildren((component as MultiHolder).children, index: index);
             component.children.clear();
             break;
           case 3:
@@ -540,17 +526,14 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
             (parent as CustomNamedHolder).replaceChild(component, null);
             break;
           case 2:
-            final key =
-                (parent as CustomNamedHolder).replaceChild(component, null);
-            if (key != null &&
-                (component as MultiHolder).children.length == 1) {
+            final key = (parent as CustomNamedHolder).replaceChild(component, null);
+            if (key != null && (component as MultiHolder).children.length == 1) {
               parent.childMap[key] = component.children.first;
               parent.childMap[key]?.setParent(parent);
             }
             break;
           case 3:
-            final key =
-                (parent as CustomNamedHolder).replaceChild(component, null);
+            final key = (parent as CustomNamedHolder).replaceChild(component, null);
             if (key != null) {
               parent.childMap[key] = (component as Holder).child;
               component.child?.setParent(parent);
@@ -581,8 +564,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
   }
 
-  void removeComponentAndRefresh(
-      BuildContext context, Component component, Component ancestor) {
+  void removeComponentAndRefresh(BuildContext context, Component component, Component ancestor) {
     removeComponent(component, ancestor);
     if (ancestor is CustomComponent) {
       refreshCustomComponents(ancestor);
@@ -620,8 +602,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
   Future<void> loadFavourites() async {
     emit(ComponentOperationLoadingState());
-    final favouriteComponentList =
-        await FireBridge.loadFavourites(project!.userId);
+    final favouriteComponentList = await FireBridge.loadFavourites(project!.userId);
     favouriteList.clear();
     favouriteList.addAll(favouriteComponentList.reversed);
     project!.favouriteList.clear();
@@ -645,8 +626,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
     for (final imageData in imageDataList) {
       if (!byteCache.containsKey(imageData.imageName!)) {
-        imageData.bytes =
-            await FireBridge.loadImage(project!.userId, imageData.imageName!);
+        imageData.bytes = await FireBridge.loadImage(project!.userId, imageData.imageName!);
         if (imageData.bytes != null) {
           byteCache[imageData.imageName!] = imageData.bytes!;
         }
@@ -671,22 +651,18 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     }
     final Rect? boundary;
     if (component.boundary == null) {
-      boundary = component.cloneElements
-          .firstWhereOrNull((element) => element.boundary != null)
-          ?.boundary;
+      boundary = component.cloneElements.firstWhereOrNull((element) => element.boundary != null)?.boundary;
     } else {
       boundary = null;
     }
     double width, height;
     width = component.boundary?.width ?? boundary?.width ?? 1;
     height = component.boundary?.height ?? boundary?.height ?? 1;
-    project!.favouriteList
-        .add(model..component.boundary = Rect.fromLTWH(0, 0, width, height));
+    project!.favouriteList.add(model..component.boundary = Rect.fromLTWH(0, 0, width, height));
     try {
       await waitForConnectivity();
 
-      await FireBridge.addToFavourites(
-          project!.userId, component, project!.name, width, height);
+      await FireBridge.addToFavourites(project!.userId, component, project!.name, width, height);
     } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));
     }
@@ -737,38 +713,38 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
-  bool shouldAddingEnable(
-      Component component, Component? ancestor, String? customNamed) {
+  bool shouldAddingEnable(Component component, Component? ancestor, String? customNamed) {
     return component is MultiHolder ||
         (component is Holder && component.child == null) ||
-        (component.type == 5 &&
-            component == ancestor &&
-            (component as CustomComponent).root == null) ||
-        (customNamed != null &&
-            (component as CustomNamedHolder).childMap[customNamed] == null);
+        (component.type == 5 && component == ancestor && (component as CustomComponent).root == null) ||
+        (customNamed != null && (component as CustomNamedHolder).childMap[customNamed] == null);
   }
 
-  void removeAllComponent(Component component, Component ancestor) {
+  void removeAllComponent(Component component, Component ancestor, {bool clear = true}) {
     if (ancestor is CustomComponent && component.parent == null) {
       ancestor.root = null;
-      switch (component.type) {
-        case 1:
-          break;
-        case 2:
-          (component as MultiHolder).children.clear();
-          break;
-        case 3:
-          (component as Holder).child = null;
-          break;
+      if (clear) {
+        switch (component.type) {
+          case 1:
+            break;
+          case 2:
+            (component as MultiHolder).children.clear();
+            break;
+          case 3:
+            (component as Holder).child = null;
+            break;
+        }
       }
       return;
     }
     final parent = component.parent!;
-    if (component.type == 2) {
-      (component as MultiHolder).children.clear();
-    } else if (component.type == 4) {
-      (component as CustomNamedHolder).childMap.clear();
-      component.childrenMap.clear();
+    if (clear) {
+      if (component.type == 2) {
+        (component as MultiHolder).children.clear();
+      } else if (component.type == 4) {
+        (component as CustomNamedHolder).childMap.clear();
+        component.childrenMap.clear();
+      }
     }
     switch (parent.type) {
       case 2:
@@ -817,8 +793,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
       emit(ComponentOperationLoadingState());
       await waitForConnectivity();
       project!.currentScreen.variables[variableModel.name] = variableModel;
-      await FireBridge.addVariableForScreen(
-          project!.userId, project!, variableModel);
+      await FireBridge.addVariableForScreen(project!.userId, project!, variableModel);
       emit(ComponentOperationInitial());
     } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));
@@ -884,8 +859,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     try {
       emit(ComponentOperationLoadingState());
       await waitForConnectivity();
-      await FireBridge.updateVariableForCustomComponent(
-          project!.userId, project!, component);
+      await FireBridge.updateVariableForCustomComponent(project!.userId, project!, component);
       emit(ComponentOperationInitial());
     } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));

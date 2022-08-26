@@ -1386,8 +1386,8 @@ class _SublistWidgetState extends State<SublistWidget> {
                       performReversibleOperation(() {
                         BlocProvider.of<ComponentOperationCubit>(context,
                                 listen: false)
-                            .removeComponentAndRefresh(
-                                context, object as Component, widget.ancestor);
+                            .removeAllComponent(
+                        object as Component, widget.ancestor,clear: false);
                         BlocProvider.of<ComponentOperationCubit>(context,
                                 listen: false)
                             .addOperation(
