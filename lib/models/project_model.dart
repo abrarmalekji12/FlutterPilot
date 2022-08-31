@@ -350,7 +350,7 @@ class UIScreen {
                 (variable.value as VariableModel).uiAttached)) {
           if (!(variable.value as VariableModel).isDynamic) {
             staticVariablesCode +=
-                'final ${DataType.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
+            'const ${DataType.dataTypeToCode(variable.value.dataType)} ${variable.key} = ${LocalModel.valueToCode(variable.value.value)};';
           } else {
             dynamicVariablesDefinitionCode +=
                 'late ${DataType.dataTypeToCode(variable.value.dataType)} ${variable.key};';

@@ -262,16 +262,24 @@ class CRadio extends ClickableComponent {
   }
 }
 
-class CSwitch extends Component {
+class CSwitch extends Component with Clickable{
   CSwitch()
       : super('Switch', [
           Parameters.enableParameter()
             ..withNamedParamInfoAndSameDisplayName('value'),
-        ]);
+        ]){
+    methods([
+      FVBFunction(
+          'onChanged', null, [FVBArgument('value', dataType: DataType.fvbBool)],
+          returnType: DataType.fvbVoid)
+    ]);
+  }
 
   @override
   Widget create(BuildContext context) {
-    return Switch(onChanged: (bool value) {}, value: parameters[0].value);
+    return Switch(onChanged: (bool value) {
+      perform(context,arguments: [value]);
+    }, value: parameters[0].value);
   }
 }
 

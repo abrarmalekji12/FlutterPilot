@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_builder/constant/app_colors.dart';
-import 'package:flutter_builder/constant/font_style.dart';
+import '../constant/app_colors.dart';
+import '../constant/font_style.dart';
 
 class AppButton extends StatefulWidget {
   AppButton(

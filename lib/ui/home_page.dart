@@ -50,6 +50,7 @@ import '../runtime_provider.dart';
 import '../screen_model.dart';
 import 'action_code_editor.dart';
 import 'action_widgets.dart';
+import 'api_view.dart';
 import 'boundary_widget.dart';
 import 'build_view/build_view.dart';
 import 'code_view_widget.dart';
@@ -509,6 +510,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
         const VariableShowHideMenu(),
         const ModelShowHideMenu(),
         const FilesShowHideMenu(),
+        const ApisShowHideMenu(),
         const ActionCodeShowHideMenu()
       ],
     );
@@ -545,6 +547,47 @@ class FilesShowHideMenu extends StatelessWidget {
             const Spacer(),
             Text(
               'Files',
+              style: AppFontStyle.roboto(13,
+                  color: Colors.black, fontWeight: FontWeight.w500),
+            ),
+            const Spacer(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ApisShowHideMenu extends StatelessWidget {
+  const ApisShowHideMenu({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        showDialog(
+            context: context,
+            builder: (_) {
+              return const ApiView();
+            });
+      },
+      child: Container(
+        width: 70,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: kElevationToShadow[1]),
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.api_outlined,
+              color: Colors.black,
+              size: 18,
+            ),
+            const Spacer(),
+            Text(
+              'Api',
               style: AppFontStyle.roboto(13,
                   color: Colors.black, fontWeight: FontWeight.w500),
             ),

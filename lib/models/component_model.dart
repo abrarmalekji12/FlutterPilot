@@ -172,6 +172,10 @@ abstract class Component {
             setId = fieldList[1];
             break;
           case 'model':
+            if(this is! BuilderComponent){
+              return;
+            }
+            print('NAME ${metaCode}');
             (this as BuilderComponent).model = flutterProject
                 ?.currentScreen.models
                 .firstWhereOrNull((element) => element.name == fieldList[1]);

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:win_toast/win_toast.dart';
 
 import 'bloc/action_code/action_code_bloc.dart';
+import 'bloc/api_bloc/api_bloc.dart';
 import 'bloc/error/error_bloc.dart';
 import 'bloc/key_fire/key_fire_bloc.dart';
 import 'bloc/state_management/state_management_bloc.dart';
@@ -45,7 +46,9 @@ void initInjector() async {
   get.registerSingleton<ComponentSelectionCubit>(ComponentSelectionCubit());
   get.registerSingleton<ComponentCreationCubit>(ComponentCreationCubit(get()));
   final _preference = DevicePreviewStorage.preferences();
-  get.registerSingleton<DevicePreviewStorage>(_preference);
   get.registerSingleton<SharedPreferences>(
       await SharedPreferences.getInstance());
+  get.registerSingleton<DevicePreviewStorage>(_preference);
+  get.registerSingleton<ApiBloc>(ApiBloc());
+
 }

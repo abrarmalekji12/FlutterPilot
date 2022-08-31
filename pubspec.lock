@@ -349,6 +349,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.7.0"
+  flutter_json_viewer:
+    dependency: "direct main"
+    description:
+      name: flutter_json_viewer
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -567,6 +574,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.5.0"
+  json_editor:
+    dependency: "direct main"
+    description:
+      name: json_editor
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.8"
   keyboard_event:
     dependency: "direct main"
     description:

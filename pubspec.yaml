@@ -54,6 +54,8 @@ dependencies:
   sliding_up_panel: ^2.0.0+1
   file_saver: ^0.1.1
   permission_handler: ^10.0.0
+  flutter_json_viewer: ^1.0.1
+  json_editor: ^0.0.8
 
 dev_dependencies:
   flutter_test:
