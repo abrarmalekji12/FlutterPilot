@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../common/compiler/code_processor.dart';
+import '../../common/compiler/fvb_function_variables.dart';
 import '../../cubit/component_creation/component_creation_cubit.dart';
 import '../../cubit/component_operation/component_operation_cubit.dart';
 import '../../cubit/component_selection/component_selection_cubit.dart';

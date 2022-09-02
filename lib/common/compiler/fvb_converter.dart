@@ -1,3 +1,5 @@
+import 'package:flutter_builder/common/compiler/fvb_class.dart';
+
 import 'code_processor.dart';
 
 abstract class FVBConverter<T> {

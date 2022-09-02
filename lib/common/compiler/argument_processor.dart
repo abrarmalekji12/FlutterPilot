@@ -4,6 +4,7 @@ import '../../code_to_component.dart';
 import '../ide/suggestion_processor.dart';
 import 'code_processor.dart';
 import 'datatype_processor.dart';
+import 'fvb_function_variables.dart';
 
 class ArgumentProcessor {
   ArgumentProcessor();

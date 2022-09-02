@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/compiler/fvb_function_variables.dart';
 import '../common/compiler/processor_component.dart';
 import '../common/converter/code_converter.dart';
 import 'variable_model.dart';

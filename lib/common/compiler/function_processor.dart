@@ -4,6 +4,7 @@ import '../../ui/models_view.dart';
 import 'argument_processor.dart';
 import 'code_processor.dart';
 import 'constants.dart';
+import 'fvb_function_variables.dart';
 
 class FunctionProcessor {
   static FVBFunction parse(

@@ -1,5 +1,6 @@
 import 'common/compiler/code_processor.dart';
 import 'common/compiler/constants.dart';
+import 'common/compiler/fvb_function_variables.dart';
 
 enum QuoteType { single, double, back }
 

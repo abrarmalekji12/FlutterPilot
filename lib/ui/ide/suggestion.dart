@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/key_fire/key_fire_bloc.dart';
 import '../../bloc/suggestion_code/suggestion_code_bloc.dart';
 import '../../common/compiler/code_processor.dart';
+import '../../common/compiler/fvb_class.dart';
+import '../../common/compiler/fvb_function_variables.dart';
 import '../../common/custom_popup_menu_button.dart';
 import '../../common/responsive/responsive_widget.dart';
 import '../../constant/app_colors.dart';

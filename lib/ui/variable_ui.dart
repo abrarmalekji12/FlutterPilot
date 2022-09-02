@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import '../common/common_methods.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/compiler/fvb_function_variables.dart';
 import '../common/custom_drop_down.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../common/custom_text_field.dart';

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import 'code_processor.dart';
 import 'fvb_classes.dart';

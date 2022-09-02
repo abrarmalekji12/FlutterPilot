@@ -6,6 +6,7 @@ import '../bloc/state_management/state_management_bloc.dart';
 import '../code_to_component.dart';
 import '../common/common_methods.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/compiler/fvb_function_variables.dart';
 import '../common/compiler/processor_component.dart';
 import '../common/converter/code_converter.dart';
 import '../common/converter/string_operation.dart';

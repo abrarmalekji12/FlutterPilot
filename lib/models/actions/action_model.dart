@@ -288,8 +288,7 @@ class ShowSnackBarAction extends ActionModel {
   void perform(BuildContext context) {
     // BlocProvider.of<StackActionCubit>(context)
     //     .showSnackBar(this);
-    (const GlobalObjectKey(deviceScaffoldMessenger).currentState
-            as ScaffoldState)
+   ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(
       content: Text(
         arguments[0].value,

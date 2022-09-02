@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
 import '../common/compiler/code_processor.dart';
+import '../common/compiler/fvb_function_variables.dart';
 import '../common/dynamic_value_filed.dart';
 import '../constant/app_colors.dart';
 import '../constant/font_style.dart';

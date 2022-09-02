@@ -14,6 +14,7 @@ import '../bloc/suggestion_code/suggestion_code_bloc.dart';
 import '../common/code_box/custom_code_controller.dart';
 import '../common/code_box/custom_code_field.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/compiler/fvb_function_variables.dart';
 import '../common/responsive/responsive_widget.dart';
 import '../common/utils/dateformat_utils.dart';
 import '../constant/app_colors.dart';

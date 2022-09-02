@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_builder/common/compiler/fvb_class.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
@@ -33,6 +34,8 @@ import 'datatype_processor.dart';
 import 'function_processor.dart';
 import 'fvb_classes.dart';
 import 'fvb_converter.dart';
+import 'fvb_enums.dart';
+import 'fvb_function_variables.dart';
 
 part 'fvb_behaviour.dart';
 

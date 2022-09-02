@@ -22,10 +22,11 @@ class LineNumberController extends TextEditingController {
       final el = list[k];
       final number = int.parse(el);
       var textSpan = TextSpan(text: el, style: style);
-      if (lineNumberBuilder != null)
+      if (lineNumberBuilder != null) {
         textSpan = lineNumberBuilder!(number, style);
+      }
       children.add(textSpan);
-      if (k < list.length - 1) children.add(TextSpan(text: '\n'));
+      if (k < list.length - 1) children.add(const TextSpan(text: '\n'));
     }
     return TextSpan(children: children, style: style);
   }

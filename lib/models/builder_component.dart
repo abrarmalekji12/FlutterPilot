@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/compiler/fvb_function_variables.dart';
 import '../common/compiler/processor_component.dart';
 import 'parameter_info_model.dart';
 import '../common/logger.dart';

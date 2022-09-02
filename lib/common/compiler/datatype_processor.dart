@@ -1,6 +1,9 @@
 import '../../models/local_model.dart';
 import 'code_processor.dart';
 import 'constants.dart';
+import 'fvb_class.dart';
+import 'fvb_enums.dart';
+import 'fvb_function_variables.dart';
 
 class DataTypeProcessor {
   DataTypeProcessor();

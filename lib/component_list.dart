@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'common/compiler/code_processor.dart';
+import 'common/compiler/fvb_function_variables.dart';
 import 'common/converter/string_operation.dart';
 import 'common/ui/custom_app_bar.dart';
 import 'constant/app_colors.dart';

@@ -1,4 +1,5 @@
 import '../common/compiler/code_processor.dart';
+import '../common/compiler/fvb_function_variables.dart';
 import 'local_model.dart';
 
 class VariableModel extends FVBVariable {

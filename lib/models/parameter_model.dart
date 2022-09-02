@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../common/compiler/code_processor.dart';
+import '../common/compiler/fvb_class.dart';
+import '../common/compiler/fvb_function_variables.dart';
 import '../common/converter/string_operation.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/visual_box_drawer/visual_box_cubit.dart';

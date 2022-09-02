@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../common/compiler/code_processor.dart';
+import '../../common/compiler/fvb_function_variables.dart';
 import '../../common/custom_popup_menu_button.dart';
 import '../../common/responsive/responsive_widget.dart';
 import '../../constant/font_style.dart';

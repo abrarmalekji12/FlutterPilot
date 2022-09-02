@@ -1,4 +1,6 @@
 import '../compiler/code_processor.dart';
+import '../compiler/fvb_class.dart';
+import '../compiler/fvb_function_variables.dart';
 
 class SuggestionProcessor {
   SuggestionProcessor();
