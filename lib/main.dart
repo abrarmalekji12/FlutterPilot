@@ -65,12 +65,12 @@ void main() async {
     initWebKeyEvent();
   }
   await Preferences.load();
-  // doCodeTesting();
+  doCodeTesting();
 
   // runZonedGuarded(() => runApp(const MyApp()), (error, stack) {
   //   showToast(error.toString(),error: true);
   // });
-  runApp(const MyApp());
+  // runApp(const MyApp());
 }
 
 void doCodeTesting() {
