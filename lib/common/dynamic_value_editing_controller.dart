@@ -39,8 +39,9 @@ class DynamicValueEditingController extends TextEditingController {
     final List<TextSpan> spans = [];
     int start = 0;
     for (int i = 0; i < indexList.length; i += 2) {
-      spans.add(TextSpan(
-          text: textValue.substring(start, indexList[i]), style: style));
+      spans.add(
+        TextSpan(text: textValue.substring(start, indexList[i]), style: style),
+      );
       final bold = textValue.substring(indexList[i], indexList[i + 1] + 2);
       spans.add(
         TextSpan(

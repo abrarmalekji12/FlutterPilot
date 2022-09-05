@@ -249,7 +249,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Flutter Visual Builder',
-        scrollBehavior: MyCustomScrollBehavior(),
+        // scrollBehavior: MyCustomScrollBehavior(),
         initialRoute: '',
         navigatorKey: const GlobalObjectKey('root-navigation'),
         routes: {

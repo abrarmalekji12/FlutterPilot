@@ -173,19 +173,27 @@ class IfCondition extends CustomNamedHolder {
           'else'
         ], [
           'else_if'
-  ]);
+        ]);
+
+  @override
+  String code({bool clean = true}) {
+    if (clean) {
+      return '${parameters[0].compiler.code}?${childMap['if']?.code(clean: clean)}:${childMap['else']?.code(clean: clean)}';
+    } else {
+      return super.code(clean: clean);
+    }
+  }
 
   @override
   Widget create(BuildContext context) {
     if (parameters[0].value == true) {
       return childMap['if']?.build(context) ?? const Offstage();
     }
-    for(final Component val in (childrenMap['else_if']??[]))
-      {
-        if(val is ElseIfCondition&&val.parameters[0].value==true){
-          return val.build(context);
-        }
+    for (final Component val in (childrenMap['else_if'] ?? [])) {
+      if (val is ElseIfCondition && val.parameters[0].value == true) {
+        return val.build(context);
       }
+    }
     return childMap['else']?.build(context) ?? const Offstage();
   }
 }
@@ -193,16 +201,16 @@ class IfCondition extends CustomNamedHolder {
 class ElseIfCondition extends CustomNamedHolder {
   ElseIfCondition()
       : super('ElseIfCondition', [
-    Parameters.enableParameter..val=false..displayName = 'condition',
-  ], [
-    'if',
-  ], [
-
-  ]);
+          Parameters.enableParameter
+            ..val = false
+            ..displayName = 'condition',
+        ], [
+          'if',
+        ], []);
 
   @override
   Widget create(BuildContext context) {
-      return childMap['if']?.build(context) ?? Container();
+    return childMap['if']?.build(context) ?? Container();
   }
 }
 

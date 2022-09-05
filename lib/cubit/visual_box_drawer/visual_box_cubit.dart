@@ -1,6 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
+import '../../ui/visual_model.dart';
+
 part 'visual_box_state.dart';
 
 class VisualBoxCubit extends Cubit<VisualBoxState> {
@@ -9,6 +11,10 @@ class VisualBoxCubit extends Cubit<VisualBoxState> {
 
   void visualUpdated() {
     emit(VisualBoxUpdatedState());
+  }
+
+  void visualHoverUpdated(final List<Boundary> boundaries) {
+    emit(VisualBoxHoverUpdatedState(boundaries));
   }
 
   void enableError(String message) {

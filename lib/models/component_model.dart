@@ -609,77 +609,93 @@ abstract class Component {
   Widget create(BuildContext context);
 
   String parametersCode(bool clean) {
+    print('PM CODE START $name');
     String middle = '';
-    if (clean && (this is Controller)) {
-      middle = 'key:GlobalObjectKey("$id"),';
-    }
-    if (this is Clickable && clean) {
-      final code1 = (this as Clickable)
-              .actionList
-              .firstWhereOrNull((element) => element is CustomAction)
-              ?.arguments[0]
-              ?.toString() ??
-          '';
-      if (code1.isNotEmpty) {
-        int start = 0;
-        for (final function in (this as Clickable).functions) {
-          if (start > code1.length - 1) {
-            break;
+    try {
+
+      if (clean && (this is Controller)) {
+        middle = 'key:GlobalObjectKey("$id"),';
+      }
+      if (this is Clickable && clean) {
+        final code1 = (this as Clickable)
+            .actionList
+            .firstWhereOrNull((element) => element is CustomAction)
+            ?.arguments[0]
+            ?.toString() ??
+            '';
+        if (code1.isNotEmpty) {
+          int start = 0;
+          for (final function in (this as Clickable).functions) {
+            if (start >= code1.length - 1) {
+              break;
+            }
+            final openIndex = code1.indexOf('{', start);
+            print('OPEN INDEX $openIndex');
+            if (openIndex == -1) {
+              break;
+            }
+            final closeIndex = CodeOperations.findCloseBracket(code1, openIndex,
+                CodeProcessor.curlyBracketOpen,
+                CodeProcessor.curlyBracketClose);
+            print('CLOSE INDEX $closeIndex');
+            start += closeIndex + 1;
+            final functionBody = code1.substring(openIndex + 1, closeIndex);
+            middle +=
+            '${function.name}:${function.getCleanInstanceCode(functionBody)},';
           }
-          final openIndex = code1.indexOf('{', start);
-          if (openIndex == -1) {
-            break;
-          }
-          final closeIndex = CodeOperations.findCloseBracket(code1, openIndex,
-              CodeProcessor.curlyBracketOpen, CodeProcessor.curlyBracketClose);
-          start += closeIndex + 1;
-          final functionBody = code1.substring(openIndex + 1, closeIndex);
+        } else if ((this as Clickable).functions.isNotEmpty) {
+          final function = (this as Clickable).functions.first;
           middle +=
-              '${function.name}:${function.getCleanInstanceCode(functionBody)},';
+          '${function.name}:${function.getCleanInstanceCode(
+              (this as Clickable).actionList.map((e) => '${e.code()};').join(
+                  ' '))},';
         }
-      } else if ((this as Clickable).functions.isNotEmpty) {
-        final function = (this as Clickable).functions.first;
-        middle +=
-            '${function.name}:${function.getCleanInstanceCode((this as Clickable).actionList.map((e) => '${e.code()};').join(' '))},';
       }
-    }
-    for (final parameter in parameters) {
-      final paramCode = parameter.code(clean);
-      if (paramCode.isNotEmpty) {
-        middle += '$paramCode,'.replaceAll(',,', ',');
+      for (final parameter in parameters) {
+        print('PM PARAM CODE FIND ${parameter.displayName}');
+        final paramCode = parameter.code(clean);
+        print('PM PARAM CODE $paramCode');
+        if (paramCode.isNotEmpty) {
+          middle += '$paramCode,'.replaceAll(',,', ',');
+        }
       }
-    }
-    if (clean) {
-      int start = 0;
-      int gotIndex = -1;
-      while (start < middle.length) {
-        if (gotIndex == -1) {
-          start = middle.indexOf('{{', start);
-          if (start == -1) {
-            break;
-          }
-          start += 2;
-          gotIndex = start;
-        } else {
-          start = middle.indexOf('}}', start);
-          if (start == -1) {
-            break;
-          }
-          String innerArea = middle.substring(gotIndex, start);
-          if (ComponentOperationCubit.processor.variables.isNotEmpty) {
-            // for (final variable in ComponentOperationCubit.codeProcessor.variables.values) {
-            //   innerArea = innerArea.replaceAll(variable.name,
-            //       '${variable!}[index].${variable.name}');
-            // }
-            middle =
-                middle.replaceRange(gotIndex - 2, start + 2, '\${$innerArea}');
-            gotIndex = -1;
+      if (clean) {
+        int start = 0;
+        int gotIndex = -1;
+        while (start < middle.length-1&&false) {
+          if (gotIndex == -1) {
+            start = middle.indexOf('{{', start);
+            if (start == -1) {
+              break;
+            }
             start += 2;
-            continue;
+            gotIndex = start;
+          } else {
+            start = middle.indexOf('}}', start);
+            if (start == -1) {
+              break;
+            }
+            String innerArea = middle.substring(gotIndex, start);
+            if (ComponentOperationCubit.processor.variables.isNotEmpty) {
+              // for (final variable in ComponentOperationCubit.codeProcessor.variables.values) {
+              //   innerArea = innerArea.replaceAll(variable.name,
+              //       '${variable!}[index].${variable.name}');
+              // }
+              print('MIDDLE ${gotIndex - 2} ${start + 2}');
+              middle =
+                  middle.replaceRange(
+                      gotIndex - 2, start + 2, '\${$innerArea}');
+              gotIndex = -1;
+              start += 2;
+              continue;
+            }
           }
         }
       }
+    }catch(e){
+      print('PARAMTETERS ERROR ${e.toString()}');
     }
+    print('PM CODE FINISH $name');
     return middle;
   }
 

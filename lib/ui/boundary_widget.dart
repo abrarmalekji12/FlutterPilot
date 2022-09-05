@@ -19,7 +19,6 @@ class BoundaryWidget extends StatelessWidget {
       child: BlocBuilder<ComponentSelectionCubit, ComponentSelectionState>(
         builder: (context, state) {
           logger('======== COMPONENT SELECTION ');
-
           return BlocBuilder<VisualBoxCubit, VisualBoxState>(
             builder: (context, state) {
               final List<Boundary> boundaries = getAllBoundaries(context);
@@ -35,7 +34,10 @@ class BoundaryWidget extends StatelessWidget {
                                 .project!
                                 .rootComponent!
                                 .boundary!
-                            : null),
+                            : null,
+                    hoverBoundaries: state is VisualBoxHoverUpdatedState
+                        ? state.boundaries
+                        : []),
               );
             },
           );

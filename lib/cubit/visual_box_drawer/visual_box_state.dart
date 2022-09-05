@@ -6,3 +6,8 @@ abstract class VisualBoxState {}
 class VisualBoxInitial extends VisualBoxState {}
 
 class VisualBoxUpdatedState extends VisualBoxState {}
+class VisualBoxHoverUpdatedState extends VisualBoxState {
+  final List<Boundary> boundaries;
+
+  VisualBoxHoverUpdatedState(this.boundaries);
+}

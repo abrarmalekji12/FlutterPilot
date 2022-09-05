@@ -372,7 +372,7 @@ class UIScreen {
         : '';
     final endBracket = mainCode.lastIndexOf('}');
     print('ACTION $actionCode');
-    final uiScreenModifiedCode ='';
+    final uiScreenModifiedCode =
         FVBEngine.instance.getDartCode(processor, actionCode, (p0) {
       if (p0 == 'build') {
         print('ROOT ${rootComponent?.name}');

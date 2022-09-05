@@ -6,7 +6,6 @@ import 'package:sliding_up_panel/sliding_up_panel.dart' as slidingUp;
 import '../bloc/error/error_bloc.dart';
 import '../bloc/key_fire/key_fire_bloc.dart';
 import '../bloc/sliding_property/sliding_property_bloc.dart';
-import '../bloc/state_management/state_management_bloc.dart';
 import '../common/custom_popup_menu_button.dart';
 import '../common/html_lib.dart' as html;
 
@@ -22,7 +21,6 @@ import '../common/common_methods.dart';
 import '../common/context_popup.dart';
 import '../common/custom_animated_dialog.dart';
 import '../common/custom_drop_down.dart';
-import '../common/dialog_selection.dart';
 import '../common/logger.dart';
 import '../common/material_alert.dart';
 import '../common/responsive/responsive_widget.dart';
@@ -42,7 +40,6 @@ import '../cubit/visual_box_drawer/visual_box_cubit.dart';
 import '../firestore/firestore_bridge.dart';
 import '../injector.dart';
 import '../main.dart';
-import '../models/builder_component.dart';
 import '../models/component_model.dart';
 import '../models/component_selection.dart';
 import '../models/variable_model.dart';
@@ -67,6 +64,7 @@ import 'models_view.dart';
 import 'parameter_ui.dart';
 import 'preview_ui.dart';
 import 'project_selection_page.dart';
+import 'visual_model.dart';
 
 class HomePage extends StatefulWidget {
   final String projectName;
@@ -391,8 +389,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
           onTap: () {
             CustomDialog.show(
               context,
-              const CodeViewerWidget(
-              ),
+              const CodeViewerWidget(),
             );
           },
           child: Container(
@@ -982,7 +979,9 @@ class _MobileVisualEditorState extends State<MobileVisualEditor> {
                             iconSize: 24,
                             buttonSize: 40,
                             onPressed: () {
-                              (const GlobalObjectKey('slider_drawer').currentState as SliderDrawerState).openSlider();
+                              (const GlobalObjectKey('slider_drawer')
+                                      .currentState as SliderDrawerState)
+                                  .openSlider();
                             },
                             icon: Icons.list,
                             color: AppColors.theme,
@@ -999,7 +998,8 @@ class _MobileVisualEditorState extends State<MobileVisualEditor> {
                           height: MediaQuery.of(context).size.height - 500,
                           child: RotatedBox(
                             quarterTurns: 1,
-                            child: StatefulBuilder(builder: (context, setState2) {
+                            child:
+                                StatefulBuilder(builder: (context, setState2) {
                               return Slider(
                                 value: _slidingPropertyBloc.value,
                                 activeColor: Colors.grey.withOpacity(0.5),
@@ -1336,7 +1336,6 @@ class _PropertyPortionState extends State<PropertyPortion> {
   }
 }
 
-
 class CenterMainSide extends StatelessWidget {
   final SlidingPropertyBloc? slidingPropertyBloc;
 
@@ -1468,23 +1467,28 @@ class _EditingViewState extends State<EditingView> {
             return const Offstage();
           }
           return EmulationView(
-            widget: GestureDetector(
-              onSecondaryTapDown: (event) {
-                onSecondaryTapDown(context, event);
-              },
-              onTapDown: onTapDown,
-              child: ColoredBox(
-                key: const GlobalObjectKey('device window'),
-                color: Colors.white,
-                child: Stack(
-                  children: [
-                    _componentOperationCubit.project!.run(
-                        context,
-                        BoxConstraints(
-                            maxWidth: _screenConfigCubit.screenConfig.width,
-                            maxHeight: _screenConfigCubit.screenConfig.height)),
-                    const BoundaryWidget(),
-                  ],
+            widget: MouseRegion(
+              onEnter: onHover,
+              onHover: onHover,
+              onExit: onHover,
+              child: GestureDetector(
+                onSecondaryTapDown: (event) {
+                  onSecondaryTapDown(context, event);
+                },
+                onTapDown: onTapDown,
+                child: ColoredBox(
+                  key: const GlobalObjectKey('device window'),
+                  color: Colors.white,
+                  child: Stack(
+                    children: [
+                      _componentOperationCubit.project!.run(
+                          context,
+                          BoxConstraints(
+                              maxWidth: _screenConfigCubit.screenConfig.width,
+                              maxHeight: _screenConfigCubit.screenConfig.height)),
+                      const BoundaryWidget(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1493,6 +1497,24 @@ class _EditingViewState extends State<EditingView> {
         });
       }),
     );
+  }
+
+  void onHover(event) {
+    final List<Component> components = [];
+    _componentOperationCubit.project!.rootComponent!
+        .searchTappedComponent(event.localPosition, components);
+    if(components.isEmpty){
+      return;
+    }
+    int depth=-1;
+    int index=-1;
+    for(int i=0;i<components.length;i++){
+      if((components[i].depth??0)>depth){
+        depth=(components[i].depth??0);
+        index=i;
+      }
+    }
+    context.read<VisualBoxCubit>().visualHoverUpdated([Boundary(components[index].boundary!, components[index].name)]);
   }
 
   void onTapDown(TapDownDetails event) {
