@@ -125,7 +125,9 @@ class Parameters {
                 );
               },
               name: 'Fixed cross count',
-              info: InnerObjectParameterInfo(innerObjectName: 'SliverGridDelegateWithFixedCrossAxisCount')),
+              info: InnerObjectParameterInfo(
+                  innerObjectName:
+                      'SliverGridDelegateWithFixedCrossAxisCount')),
           ComplexParameter(
               params: [
                 Parameters.widthParameter()
@@ -154,7 +156,9 @@ class Parameters {
                 );
               },
               name: 'By individual width',
-              info: InnerObjectParameterInfo(innerObjectName: 'SliverGridDelegateWithFixedCrossAxisCount')),
+              info: InnerObjectParameterInfo(
+                  innerObjectName:
+                      'SliverGridDelegateWithFixedCrossAxisCount')),
         ],
         required: true,
         info: NamedParameterInfo('gridDelegate'),
@@ -192,20 +196,24 @@ class Parameters {
               ..withRequired(false)
               ..withNamedParamInfoAndSameDisplayName('hintText'),
             Parameters.googleFontTextStyleParameter
-              ..withInnerNamedParamInfoAndDisplayName('labelStyle', 'GoogleFonts.getFont')
+              ..withInnerNamedParamInfoAndDisplayName(
+                  'labelStyle', 'GoogleFonts.getFont')
               ..withRequired(false),
             Parameters.googleFontTextStyleParameter
-              ..withInnerNamedParamInfoAndDisplayName('helperStyle', 'GoogleFonts.getFont')
+              ..withInnerNamedParamInfoAndDisplayName(
+                  'helperStyle', 'GoogleFonts.getFont')
               ..withRequired(false),
             Parameters.googleFontTextStyleParameter
-              ..withInnerNamedParamInfoAndDisplayName('hintStyle', 'GoogleFonts.getFont')
+              ..withInnerNamedParamInfoAndDisplayName(
+                  'hintStyle', 'GoogleFonts.getFont')
               ..withRequired(false),
             Parameters.textParameter()
               ..withDefaultValue(null)
               ..withRequired(false)
               ..withNamedParamInfoAndSameDisplayName('errorText'),
             Parameters.googleFontTextStyleParameter
-              ..withInnerNamedParamInfoAndDisplayName('errorStyle', 'GoogleFonts.getFont')
+              ..withInnerNamedParamInfoAndDisplayName(
+                  'errorStyle', 'GoogleFonts.getFont')
               ..withRequired(false),
             Parameters.inputBorderParameter(),
             ComponentParameter(
@@ -220,18 +228,24 @@ class Parameters {
               multiple: false,
               info: NamedParameterInfo('suffixIcon'),
             ),
-            Parameters.colorParameter..withNamedParamInfoAndSameDisplayName('iconColor'),
-            Parameters.textParameter()..withNamedParamInfoAndSameDisplayName('prefixText'),
+            Parameters.colorParameter
+              ..withNamedParamInfoAndSameDisplayName('iconColor'),
+            Parameters.textParameter()
+              ..withNamedParamInfoAndSameDisplayName('prefixText'),
             Parameters.googleFontTextStyleParameter
-              ..withInnerNamedParamInfoAndDisplayName('prefixStyle', 'GoogleFonts.getFont'),
-            Parameters.textParameter()..withNamedParamInfoAndSameDisplayName('suffixText'),
+              ..withInnerNamedParamInfoAndDisplayName(
+                  'prefixStyle', 'GoogleFonts.getFont'),
+            Parameters.textParameter()
+              ..withNamedParamInfoAndSameDisplayName('suffixText'),
             Parameters.googleFontTextStyleParameter
-              ..withInnerNamedParamInfoAndDisplayName('suffixStyle', 'GoogleFonts.getFont'),
-            Parameters.inputBorderParameter()..withNamedParamInfoAndSameDisplayName('enabledBorder'),
+              ..withInnerNamedParamInfoAndDisplayName(
+                  'suffixStyle', 'GoogleFonts.getFont'),
+            Parameters.inputBorderParameter()
+              ..withNamedParamInfoAndSameDisplayName('enabledBorder'),
             Parameters.colorParameter
               ..withNamedParamInfoAndSameDisplayName('fillColor')
               ..withRequired(false),
-            Parameters.enableParameter()
+            Parameters.enableParameter
           ],
           evaluate: (params) {
             return InputDecoration(
@@ -258,7 +272,9 @@ class Parameters {
               enabled: params[20].value,
             );
           },
-          info: InnerObjectParameterInfo(innerObjectName: 'InputDecoration', namedIfHaveAny: 'decoration'));
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'InputDecoration',
+              namedIfHaveAny: 'decoration'));
 
   static ChoiceParameter inputBorderParameter() => ChoiceParameter(options: [
         Parameters.underlineInputBorderParameter(),
@@ -276,7 +292,8 @@ class Parameters {
               borderSide: params[1].value,
             );
           },
-          info: InnerObjectParameterInfo(innerObjectName: 'UnderlineInputBorder'),
+          info:
+              InnerObjectParameterInfo(innerObjectName: 'UnderlineInputBorder'),
           name: 'underline-border');
 
   static ComplexParameter outlineInputBorderParameter() => ComplexParameter(
@@ -301,7 +318,8 @@ class Parameters {
   static ComplexParameter roundedRectangleBorderParameter() => ComplexParameter(
           params: [
             Parameters.borderRadiusParameter()..withRequired(true),
-            Parameters.borderSideParameter()..withInfo(NamedParameterInfo('side')),
+            Parameters.borderSideParameter()
+              ..withInfo(NamedParameterInfo('side')),
           ],
           evaluate: (params) {
             return RoundedRectangleBorder(
@@ -309,7 +327,8 @@ class Parameters {
               side: params[1].value,
             );
           },
-          info: InnerObjectParameterInfo(innerObjectName: 'RoundedRectangleBorder'),
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'RoundedRectangleBorder'),
           name: 'rounded-rectangle-border');
 
   static ComplexParameter decorationParameter() => ComplexParameter(
@@ -331,7 +350,8 @@ class Parameters {
               boxShadow: params[4].value,
               shape: params[5].value);
         },
-        info: InnerObjectParameterInfo(innerObjectName: 'BoxDecoration', namedIfHaveAny: 'decoration'),
+        info: InnerObjectParameterInfo(
+            innerObjectName: 'BoxDecoration', namedIfHaveAny: 'decoration'),
       );
 
   static borderParameter() => ChoiceParameter(
@@ -373,8 +393,11 @@ class Parameters {
                 ..withDisplayName('bottom'),
             ],
             name: 'only',
-            evaluate: (params) =>
-                Border(left: params[0].value, top: params[1].value, right: params[2].value, bottom: params[3].value),
+            evaluate: (params) => Border(
+                left: params[0].value,
+                top: params[1].value,
+                right: params[2].value,
+                bottom: params[3].value),
           ),
         ],
       );
@@ -406,7 +429,20 @@ class Parameters {
       },
       defaultValue: 'clamp',
       info: NamedParameterInfo('tileMode'));
-
+  static Parameter get scrollablePhysicsParameter => ChoiceValueParameter(
+      name: 'physics',
+      options: {
+        'AlwaysScrollableScrollPhysics': const AlwaysScrollableScrollPhysics(),
+        'BouncingScrollPhysics': const BouncingScrollPhysics(),
+        'ClampingScrollPhysics':const ClampingScrollPhysics(),
+        'RangeMaintainingScrollPhysics':const RangeMaintainingScrollPhysics(),
+        'NeverScrollableScrollPhysics': const NeverScrollableScrollPhysics(),
+      },
+      defaultValue: null,
+      fromCodeToKey: (code)=>code.substring(0,code.length-2),
+      getCode: (value)=>'$value()',
+      required: false,
+      info: NamedParameterInfo('tileMode'));
   static Parameter get autoValidateMode => ChoiceValueParameter(
       name: 'auto-validate-mode',
       options: {
@@ -766,7 +802,8 @@ class Parameters {
             Parameters.backgroundColorParameter(),
             Parameters.colorParameter
               ..withRequired(false)
-              ..inputCalculateAs = ((color, forward) => (color as Color).withAlpha(255))
+              ..inputCalculateAs =
+                  ((color, forward) => (color as Color).withAlpha(255))
               ..withNamedParamInfoAndSameDisplayName('primaryColor'),
             Parameters.colorParameter
               ..withRequired(false)
@@ -907,25 +944,35 @@ class Parameters {
         options: [
           SimpleParameter<double>(
               name: 'circular',
-              info: InnerObjectParameterInfo(innerObjectName: 'BorderRadius.circular'),
+              info: InnerObjectParameterInfo(
+                  innerObjectName: 'BorderRadius.circular'),
               evaluate: (value) {
                 return BorderRadius.circular(value);
               }),
           ComplexParameter(
-            info: InnerObjectParameterInfo(innerObjectName: 'BorderRadius.only'),
+            info:
+                InnerObjectParameterInfo(innerObjectName: 'BorderRadius.only'),
             params: [
               SimpleParameter<double>(
                   name: 'topLeft',
-                  info: InnerObjectParameterInfo(innerObjectName: 'Radius.circular', namedIfHaveAny: 'topLeft')),
+                  info: InnerObjectParameterInfo(
+                      innerObjectName: 'Radius.circular',
+                      namedIfHaveAny: 'topLeft')),
               SimpleParameter<double>(
                   name: 'bottomLeft',
-                  info: InnerObjectParameterInfo(innerObjectName: 'Radius.circular', namedIfHaveAny: 'bottomLeft')),
+                  info: InnerObjectParameterInfo(
+                      innerObjectName: 'Radius.circular',
+                      namedIfHaveAny: 'bottomLeft')),
               SimpleParameter<double>(
                   name: 'topRight',
-                  info: InnerObjectParameterInfo(innerObjectName: 'Radius.circular', namedIfHaveAny: 'topRight')),
+                  info: InnerObjectParameterInfo(
+                      innerObjectName: 'Radius.circular',
+                      namedIfHaveAny: 'topRight')),
               SimpleParameter<double>(
                   name: 'bottomRight',
-                  info: InnerObjectParameterInfo(innerObjectName: 'Radius.circular', namedIfHaveAny: 'bottomRight')),
+                  info: InnerObjectParameterInfo(
+                      innerObjectName: 'Radius.circular',
+                      namedIfHaveAny: 'bottomRight')),
             ],
             evaluate: (List<Parameter> params) {
               return BorderRadius.only(
@@ -940,17 +987,22 @@ class Parameters {
         ],
       );
 
-  static gradientParameter() => ChoiceParameter(options: [
-        linearGradientParameter(),
-        radialGradientParameter(),
-      ], name: 'gradient', required: false, info: NamedParameterInfo('gradient'));
+  static gradientParameter() => ChoiceParameter(
+          options: [
+            linearGradientParameter(),
+            radialGradientParameter(),
+          ],
+          name: 'gradient',
+          required: false,
+          info: NamedParameterInfo('gradient'));
 
   static linearGradientParameter() => ComplexParameter(
           params: [
             colorListParameter(),
             alignmentParameter()..withNamedParamInfoAndSameDisplayName('begin'),
             alignmentParameter()..withNamedParamInfoAndSameDisplayName('end'),
-            doubleListParameter()..withNamedParamInfoAndSameDisplayName('stops'),
+            doubleListParameter()
+              ..withNamedParamInfoAndSameDisplayName('stops'),
             tileModeParameter()
           ],
           name: 'linear gradient',
@@ -971,8 +1023,10 @@ class Parameters {
             radiusParameter()
               ..withDefaultValue(0.5)
               ..withRequired(true),
-            doubleListParameter()..withNamedParamInfoAndSameDisplayName('stops'),
-            alignmentParameter()..withNamedParamInfoAndSameDisplayName('center'),
+            doubleListParameter()
+              ..withNamedParamInfoAndSameDisplayName('stops'),
+            alignmentParameter()
+              ..withNamedParamInfoAndSameDisplayName('center'),
             tileModeParameter()
           ],
           name: 'radial gradient',
@@ -1038,13 +1092,20 @@ class Parameters {
       required: false);
 
   static SimpleParameter directionParameter() => SimpleParameter<double>(
-      info: NamedParameterInfo('direction'), name: 'direction', required: false, defaultValue: 0.0);
+      info: NamedParameterInfo('direction'),
+      name: 'direction',
+      required: false,
+      defaultValue: 0.0);
 
-  static SimpleParameter widthParameter() =>
-      SimpleParameter<double>(info: NamedParameterInfo('width'), name: 'width', required: false, defaultValue: 100.0);
+  static SimpleParameter widthParameter() => SimpleParameter<double>(
+      info: NamedParameterInfo('width'),
+      name: 'width',
+      required: false,
+      defaultValue: 100.0);
 
   static ComplexParameter offsetParameter() => ComplexParameter(
-          info: InnerObjectParameterInfo(namedIfHaveAny: 'offset', innerObjectName: 'Offset'),
+          info: InnerObjectParameterInfo(
+              namedIfHaveAny: 'offset', innerObjectName: 'Offset'),
           name: 'offset',
           evaluate: (params) {
             return Offset(params[0].value, params[1].value);
@@ -1061,7 +1122,8 @@ class Parameters {
           ]);
 
   static ComplexParameter sizeParameter() => ComplexParameter(
-          info: InnerObjectParameterInfo(namedIfHaveAny: 'preferredSize', innerObjectName: 'Size'),
+          info: InnerObjectParameterInfo(
+              namedIfHaveAny: 'preferredSize', innerObjectName: 'Size'),
           name: 'size',
           evaluate: (params) {
             return Size(params[0].value, params[1].value);
@@ -1077,37 +1139,65 @@ class Parameters {
               ..withDisplayName('height')
           ]);
 
-  static SimpleParameter heightParameter() =>
-      SimpleParameter<double>(info: NamedParameterInfo('height'), name: 'height', required: false, defaultValue: 100.0);
+  static SimpleParameter heightParameter() => SimpleParameter<double>(
+      info: NamedParameterInfo('height'),
+      name: 'height',
+      required: false,
+      defaultValue: 100.0);
 
-  static Parameter boxFitParameter() => ChoiceValueParameter(options: {
-        'none': BoxFit.none,
-        'fill': BoxFit.fill,
-        'fitWidth': BoxFit.fitWidth,
-        'fitHeight': BoxFit.fitHeight,
-        'contain': BoxFit.contain,
-        'scaleDown': BoxFit.scaleDown,
-        'cover': BoxFit.cover,
-      }, defaultValue: 'none', info: NamedParameterInfo('fit'), name: 'box-fit');
+  static Parameter boxFitParameter() => ChoiceValueParameter(
+          options: {
+            'none': BoxFit.none,
+            'fill': BoxFit.fill,
+            'fitWidth': BoxFit.fitWidth,
+            'fitHeight': BoxFit.fitHeight,
+            'contain': BoxFit.contain,
+            'scaleDown': BoxFit.scaleDown,
+            'cover': BoxFit.cover,
+          },
+          defaultValue: 'none',
+          info: NamedParameterInfo('fit'),
+          name: 'box-fit');
 
-  static Parameter filterQualityParameter() => ChoiceValueParameter(options: {
-        'none': FilterQuality.none,
-        'low': FilterQuality.low,
-        'medium': FilterQuality.medium,
-        'high': FilterQuality.high,
-      }, defaultValue: 'medium', info: NamedParameterInfo('filterQuality'), required: true, name: 'filter-quality');
+  static Parameter filterQualityParameter() => ChoiceValueParameter(
+          options: {
+            'none': FilterQuality.none,
+            'low': FilterQuality.low,
+            'medium': FilterQuality.medium,
+            'high': FilterQuality.high,
+          },
+          defaultValue: 'medium',
+          info: NamedParameterInfo('filterQuality'),
+          required: true,
+          name: 'filter-quality');
 
   static SimpleParameter thicknessParameter() => SimpleParameter<double>(
-      info: NamedParameterInfo('thickness'), name: 'thickness', required: false, defaultValue: 1.0);
+      info: NamedParameterInfo('thickness'),
+      name: 'thickness',
+      required: false,
+      defaultValue: 1.0);
 
-  static SimpleParameter radiusParameter() =>
-      SimpleParameter<double>(info: NamedParameterInfo('radius'), name: 'radius', required: false, defaultValue: 30.0);
+  static SimpleParameter radiusParameter() => SimpleParameter<double>(
+      info: NamedParameterInfo('radius'),
+      name: 'radius',
+      required: false,
+      defaultValue: 30.0);
 
-  static SimpleParameter<int> flexParameter() =>
-      SimpleParameter<int>(info: NamedParameterInfo('flex'), name: 'flex', required: true, defaultValue: 1);
-
-  static SimpleParameter<int> indexParameter() =>
-      SimpleParameter<int>(info: NamedParameterInfo('index'), name: 'index', required: true, defaultValue: 0);
+  static SimpleParameter<int> flexParameter() => SimpleParameter<int>(
+      info: NamedParameterInfo('flex'),
+      name: 'flex',
+      required: true,
+      defaultValue: 1);
+  static SimpleParameter<int> get itemLengthParameter => SimpleParameter<int>(
+      info: NamedParameterInfo('itemCount'),
+      name: 'item-count',
+      required: true,
+      defaultValue: 5);
+  static SimpleParameter<int> indexParameter() => SimpleParameter<int>(
+      info: NamedParameterInfo('index'),
+      name: 'index',
+      required: true,
+      defaultValue: 0);
 
   static ChoiceParameter borderSideParameter() => ChoiceParameter(
         info: NamedParameterInfo('borderSide'),
@@ -1151,9 +1241,11 @@ class Parameters {
             borderSideParameter()..withInfo(NamedParameterInfo('side')),
           ],
           evaluate: (params) {
-            return RoundedRectangleBorder(borderRadius: params[0].value, side: params[1].value);
+            return RoundedRectangleBorder(
+                borderRadius: params[0].value, side: params[1].value);
           },
-          info: InnerObjectParameterInfo(innerObjectName: 'RoundedRectangleBorder'),
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'RoundedRectangleBorder'),
         )
       ],
       name: 'Shape Border',
@@ -1187,45 +1279,62 @@ class Parameters {
       info: NamedParameterInfo('heightFactor'));
 
   static SimpleParameter elevationParameter() => SimpleParameter<double>(
-      defaultValue: 1.0, required: false, info: NamedParameterInfo('elevation'), name: 'elevation');
+      defaultValue: 1.0,
+      required: false,
+      info: NamedParameterInfo('elevation'),
+      name: 'elevation');
 
-  static SimpleParameter get intElevationParameter =>
-      SimpleParameter<int>(defaultValue: 1, required: false, info: NamedParameterInfo('elevation'), name: 'elevation');
+  static SimpleParameter get intElevationParameter => SimpleParameter<int>(
+      defaultValue: 1,
+      required: false,
+      info: NamedParameterInfo('elevation'),
+      name: 'elevation');
   static final toolbarHeight = heightParameter()
     ..withRequired(true)
     ..withDisplayName('toolbar-height')
     ..withInfo(NamedParameterInfo('toolbarHeight'))
     ..withDefaultValue(55.0);
 
-  static Parameter textSpanParameter() => ChoiceParameter(options: [
-        ComplexParameter(
-            params: [
-              textParameter()..withInfo(NamedParameterInfo('text')),
-              googleFontTextStyleParameter,
-            ],
-            evaluate: (params) => TextSpan(
-                text: params[0].value, style: params[1].value, recognizer: TapGestureRecognizer()..onTap = () {}),
-            name: 'Text'),
-        ComplexParameter(
-            params: [
-              ListParameter(
-                parameterGenerator: textSpanParameter,
-                displayName: 'text list',
-              )
-            ],
-            info: NamedParameterInfo('children'),
-            evaluate: (params) {
-              final List<InlineSpan> list = (params[0].value as List).map<InlineSpan>((e) => e as InlineSpan).toList();
-              return TextSpan(children: list);
-            },
-            name: 'Add Multiple Text')
-      ], info: InnerObjectParameterInfo(innerObjectName: 'TextSpan', namedIfHaveAny: 'children'));
+  static Parameter textSpanParameter() => ChoiceParameter(
+          options: [
+            ComplexParameter(
+                params: [
+                  textParameter()..withInfo(NamedParameterInfo('text')),
+                  googleFontTextStyleParameter,
+                ],
+                evaluate: (params) => TextSpan(
+                    text: params[0].value,
+                    style: params[1].value,
+                    recognizer: TapGestureRecognizer()..onTap = () {}),
+                name: 'Text'),
+            ComplexParameter(
+                params: [
+                  ListParameter(
+                    parameterGenerator: textSpanParameter,
+                    displayName: 'text list',
+                  )
+                ],
+                info: NamedParameterInfo('children'),
+                evaluate: (params) {
+                  final List<InlineSpan> list = (params[0].value as List)
+                      .map<InlineSpan>((e) => e as InlineSpan)
+                      .toList();
+                  return TextSpan(children: list);
+                },
+                name: 'Add Multiple Text')
+          ],
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'TextSpan', namedIfHaveAny: 'children'));
 
-  static SimpleParameter textParameter() =>
-      SimpleParameter<String>(name: 'text', defaultValue: '', inputType: ParamInputType.simple, required: true);
+  static SimpleParameter textParameter() => SimpleParameter<String>(
+      name: 'text',
+      defaultValue: '',
+      inputType: ParamInputType.simple,
+      required: true);
 
   static CodeParameter<CustomPainter> painterParameter() =>
-      CodeParameter<CustomPainter>('painter', NamedParameterInfo('painter'), true,
+      CodeParameter<CustomPainter>(
+          'painter', NamedParameterInfo('painter'), true,
           actionCode: '''\n void paint(Canvas canvas,Size size){
   // TODO: implement your logic here
   
@@ -1234,15 +1343,22 @@ class Parameters {
   bool shouldRepaint(painter) => true;
   ''',
           functions: [],
-          apiBindCallback: (String api, List<dynamic> args) {}, evaluate: (value) {
+          apiBindCallback: (String api, List<dynamic> args) {},
+          evaluate: (value) {
         return PainterWrapper(value);
       });
 
-  static SimpleParameter dynamicValueParameter() =>
-      SimpleParameter(name: 'value', defaultValue: 0, inputType: ParamInputType.simple, required: true);
+  static SimpleParameter dynamicValueParameter() => SimpleParameter(
+      name: 'value',
+      defaultValue: 0,
+      inputType: ParamInputType.simple,
+      required: true);
 
   static Parameter imageParameter() => SimpleParameter<ImageData>(
-      name: 'Choose image', required: true, defaultValue: ImageData(null, ''), inputType: ParamInputType.image);
+      name: 'Choose image',
+      required: true,
+      defaultValue: ImageData(null, ''),
+      inputType: ParamInputType.image);
 
   static Parameter googleFontTypeParameter() {
     return ChoiceValueListParameter<String>(
@@ -1264,11 +1380,12 @@ class Parameters {
         displayName: 'italic',
         required: false,
         val: false,
-        evaluate: (val) => val == true ? 'FontStyle.italic' : 'FontStyle.normal',
+        evaluate: (val) =>
+            val == true ? 'FontStyle.italic' : 'FontStyle.normal',
         info: NamedParameterInfo('fontStyle'),
       );
 
-  static BooleanParameter enableParameter() => BooleanParameter(
+  static BooleanParameter get enableParameter => BooleanParameter(
         displayName: 'enable',
         required: true,
         val: true,
@@ -1276,12 +1393,19 @@ class Parameters {
       );
 
   static BooleanParameter enableFeedbackParameter() => BooleanParameter(
-      displayName: 'enable-feedback', required: false, val: true, info: NamedParameterInfo('enableFeedback'));
+      displayName: 'enable-feedback',
+      required: false,
+      val: true,
+      info: NamedParameterInfo('enableFeedback'));
 
   static Parameter get textStyleParameter => ComplexParameter(
-        info: InnerObjectParameterInfo(innerObjectName: 'TextStyle', namedIfHaveAny: 'textStyle'),
+        info: InnerObjectParameterInfo(
+            innerObjectName: 'TextStyle', namedIfHaveAny: 'textStyle'),
         params: [
-          SimpleParameter<double>(name: 'font-size', info: NamedParameterInfo('fontSize'), defaultValue: 14.0),
+          SimpleParameter<double>(
+              name: 'font-size',
+              info: NamedParameterInfo('fontSize'),
+              defaultValue: 14.0),
           Parameters.colorParameter..withDefaultValue(AppColors.black),
           ChoiceValueParameter(
             options: {
@@ -1318,7 +1442,8 @@ class Parameters {
             fontSize: params[0].value,
             color: params[1].value,
             fontWeight: params[2].value,
-            fontStyle: params[3].value == true ? FontStyle.italic : FontStyle.normal,
+            fontStyle:
+                params[3].value == true ? FontStyle.italic : FontStyle.normal,
             decoration: params[4].value,
             decorationColor: params[5].value,
             decorationStyle: params[6].value,
@@ -1348,29 +1473,42 @@ class Parameters {
 
   static Parameter get googleFontTextStyleParameter => ComplexParameter(
       name: 'TextStyle',
-      info: InnerObjectParameterInfo(innerObjectName: 'GoogleFonts.getFont', namedIfHaveAny: 'style'),
+      info: InnerObjectParameterInfo(
+          innerObjectName: 'GoogleFonts.getFont', namedIfHaveAny: 'style'),
       params: [googleFontTypeParameter(), textStyleParameter],
       evaluate: (params) {
         return GoogleFonts.getFont(params[0].value, textStyle: params[1].value);
       });
 
-  static ComplexParameter materialStatePropertyParameter<T>(Parameter parameter, String named) => ComplexParameter(
+  static ComplexParameter materialStatePropertyParameter<T>(
+          Parameter parameter, String named) =>
+      ComplexParameter(
         params: [parameter],
         evaluate: (params) {
           return MaterialStateProperty.all<T>(params[0].value);
         },
-        info: InnerObjectParameterInfo(innerObjectName: 'MaterialStateProperty.all', namedIfHaveAny: named),
+        info: InnerObjectParameterInfo(
+            innerObjectName: 'MaterialStateProperty.all',
+            namedIfHaveAny: named),
       );
 
   static buttonStyleParameter() => ComplexParameter(
-      info: InnerObjectParameterInfo(namedIfHaveAny: 'style', innerObjectName: 'ButtonStyle'),
+      info: InnerObjectParameterInfo(
+          namedIfHaveAny: 'style', innerObjectName: 'ButtonStyle'),
       params: [
-        materialStatePropertyParameter<Color?>(backgroundColorParameter()..withChangeNamed(null), 'backgroundColor'),
-        materialStatePropertyParameter<Color?>(foregroundColorParameter()..withChangeNamed(null), 'foregroundColor'),
+        materialStatePropertyParameter<Color?>(
+            backgroundColorParameter()..withChangeNamed(null),
+            'backgroundColor'),
+        materialStatePropertyParameter<Color?>(
+            foregroundColorParameter()..withChangeNamed(null),
+            'foregroundColor'),
         alignmentParameter(),
-        materialStatePropertyParameter<TextStyle>(googleFontTextStyleParameter..withChangeNamed(null), 'textStyle'),
-        materialStatePropertyParameter<EdgeInsets?>(paddingParameter()..withChangeNamed(null), 'padding'),
-        materialStatePropertyParameter<BorderSide?>(borderSideParameter()..withChangeNamed(null), 'side'),
+        materialStatePropertyParameter<TextStyle>(
+            googleFontTextStyleParameter..withChangeNamed(null), 'textStyle'),
+        materialStatePropertyParameter<EdgeInsets?>(
+            paddingParameter()..withChangeNamed(null), 'padding'),
+        materialStatePropertyParameter<BorderSide?>(
+            borderSideParameter()..withChangeNamed(null), 'side'),
       ],
       evaluate: (params) {
         return ButtonStyle(
@@ -1391,9 +1529,11 @@ class Parameters {
             )
           ],
           evaluate: (params) {
-            return BottomNavigationBarItem(icon: (params[0] as ComponentParameter).build());
+            return BottomNavigationBarItem(
+                icon: (params[0] as ComponentParameter).build());
           },
-          info: InnerObjectParameterInfo(innerObjectName: 'BottomNavigationBarItem'));
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'BottomNavigationBarItem'));
 
   static bottomNavigationBarItems() => ListParameter(
         info: NamedParameterInfo('items'),
@@ -1414,9 +1554,11 @@ class Parameters {
               ..withNamedParamInfoAndSameDisplayName('sigmaY')
           ],
           evaluate: (params) {
-            return ImageFilter.blur(sigmaX: params[0].value, sigmaY: params[1].value);
+            return ImageFilter.blur(
+                sigmaX: params[0].value, sigmaY: params[1].value);
           },
-          info: InnerObjectParameterInfo(innerObjectName: 'ImageFilter.blur', namedIfHaveAny: 'filter'));
+          info: InnerObjectParameterInfo(
+              innerObjectName: 'ImageFilter.blur', namedIfHaveAny: 'filter'));
 
   static Parameter textDecorationParameter() => ChoiceValueParameter(
         name: 'text-decoration',

@@ -205,8 +205,9 @@ class UIScreen {
     processor.functions['setState'] = FVBFunction('setState', null, [
       FVBArgument('callback', dataType: DataType.fvbFunction)
     ], dartCall: (arguments, instance) {
-      (arguments[0] as FVBFunction).execute(processor, instance, []);
-      (arguments[1] as CodeProcessor).consoleCallback.call('api:refresh|$id');
+        (arguments[0] as FVBFunction).execute(processor, instance, []);
+        (arguments[1] as CodeProcessor).consoleCallback.call('api:refresh|$id');
+
     });
   }
 
@@ -370,10 +371,15 @@ class UIScreen {
         ? FVBEngine.instance.fvbToDart(flutterProject.actionCode)
         : '';
     final endBracket = mainCode.lastIndexOf('}');
-    final uiScreenModifiedCode =
+    print('ACTION $actionCode');
+    final uiScreenModifiedCode ='';
         FVBEngine.instance.getDartCode(processor, actionCode, (p0) {
       if (p0 == 'build') {
-        return 'return ${rootComponent!.code()};';
+        print('ROOT ${rootComponent?.name}');
+        final code=rootComponent!.code();
+        print('ROOT CODE DONE');
+
+        return 'return $code;';
       } else if (p0 == 'initState') {
         return 'super.initState();';
       }

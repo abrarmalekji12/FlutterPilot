@@ -58,6 +58,10 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
     emit(ComponentUpdatedState());
   }
 
+  void update(){
+    emit(ComponentUpdatedState());
+  }
+
   Future<void> waitForConnectivity() async {
     if (!await AppConnectivity.available()) {
       if (state is! ComponentOperationErrorState) {

@@ -391,7 +391,7 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
           onTap: () {
             CustomDialog.show(
               context,
-              CodeViewerWidget(
+              const CodeViewerWidget(
               ),
             );
           },
@@ -1208,10 +1208,10 @@ class _ComponentPropertySectionState extends State<ComponentPropertySection> {
                   const SizedBox(
                     height: 10,
                   ),
-                  if (component is BuilderComponent)
-                    BuilderComponentSettings(
-                      component: component as BuilderComponent,
-                    ),
+                  // if (component is BuilderComponent)
+                  //   BuilderComponentSettings(
+                  //     component: component as BuilderComponent,
+                  //   ),
                 ],
               );
             },
@@ -1336,82 +1336,6 @@ class _PropertyPortionState extends State<PropertyPortion> {
   }
 }
 
-class BuilderComponentSettings extends StatefulWidget {
-  final BuilderComponent component;
-
-  const BuilderComponentSettings({Key? key, required this.component})
-      : super(key: key);
-
-  @override
-  State<BuilderComponentSettings> createState() =>
-      _BuilderComponentSettingsState();
-}
-
-class _BuilderComponentSettingsState extends State<BuilderComponentSettings> {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Attach Model',
-          style: AppFontStyle.roboto(14, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(
-          height: 10,
-        ),
-        InkWell(
-          onTap: () {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              barrierLabel: 'barrierLabel',
-              barrierColor: Colors.black45,
-              builder: (context3) {
-                return Material(
-                  color: Colors.transparent,
-                  child: DialogSelection(
-                    title: 'Choose Model',
-                    data: BlocProvider.of<ComponentOperationCubit>(context,
-                            listen: false)
-                        .models
-                        .map((e) => e.name)
-                        .toList(),
-                    onSelection: (data) {
-                      widget.component.model =
-                          BlocProvider.of<ComponentOperationCubit>(context,
-                                  listen: false)
-                              .models
-                              .firstWhere((element) => element.name == data);
-                      BlocProvider.of<ComponentOperationCubit>(context,
-                              listen: false)
-                          .emit(ComponentUpdatedState());
-                      BlocProvider.of<ComponentCreationCubit>(context,
-                              listen: false)
-                          .changedComponent();
-                      setState(() {});
-                    },
-                  ),
-                );
-              },
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            child: Text(
-              widget.component.model?.name ?? 'Choose Model',
-              style: AppFontStyle.roboto(14, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ),
-        const SizedBox(
-          height: 10,
-        ),
-        SimpleParameterWidget(parameter: widget.component.itemLengthParameter)
-      ],
-    );
-  }
-}
 
 class CenterMainSide extends StatelessWidget {
   final SlidingPropertyBloc? slidingPropertyBloc;

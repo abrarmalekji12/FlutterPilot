@@ -25,69 +25,87 @@ class FVBEngine {
     String charName = '';
     String beforeCharName = '';
     final List<AppendString> list = [];
-    for (int i = 0; i < cleanCode.length; i++) {
-      if (cleanCode[i] == '(') {
-        final closeIndex = CodeOperations.findCloseBracket(cleanCode, i,
-            CodeProcessor.roundBracketOpen, CodeProcessor.roundBracketClose);
-        if (charName == processor.scopeName) {
-          int endIndex;
-          if (cleanCode[closeIndex + 1] == '{') {
-            endIndex = CodeOperations.findCloseBracket(
-                cleanCode,
-                closeIndex + 1,
-                CodeProcessor.curlyBracketOpen,
-                CodeProcessor.curlyBracketClose);
-          } else {
-            endIndex = closeIndex + 1;
-          }
-          cleanCode =
-              cleanCode.replaceRange(0, endIndex + 1, ' ' * (endIndex + 1));
-          i = endIndex;
-          beforeCharName = '';
-          charName = '';
-          continue;
-        }
-        if (cleanCode[closeIndex + 1] == '{') {
-          final appendString = appendInMethod.call(charName);
-          if (appendString != null) {
-            final closeBracketIndex = CodeOperations.findCloseBracket(
-                cleanCode,
-                closeIndex + 1,
-                CodeProcessor.curlyBracketOpen,
-                CodeProcessor.curlyBracketClose);
-            if (beforeCharName.isNotEmpty &&
-                i - charName.length - beforeCharName.length - 1 >= 0) {
-              try {
-                cleanCode = cleanCode.replaceRange(
-                    i - charName.length - beforeCharName.length - 1,
-                    i - charName.length - 1,
-                    ' ' * beforeCharName.length);
-              } catch (e) {
-                print(e);
-              }
-              beforeCharName = '';
+    try {
+      for (int i = 0; i < cleanCode.length; i++) {
+        print('CLEAN INDEX $i');
+        if (cleanCode[i] == '(') {
+          final closeIndex = CodeOperations.findCloseBracket(cleanCode, i,
+              CodeProcessor.roundBracketOpen, CodeProcessor.roundBracketClose);
+          print('CLEAN INDEX2 $closeIndex');
+          if (charName == processor.scopeName) {
+            int endIndex;
+            if (cleanCode[closeIndex + 1] == '{') {
+              endIndex = CodeOperations.findCloseBracket(
+                  cleanCode,
+                  closeIndex + 1,
+                  CodeProcessor.curlyBracketOpen,
+                  CodeProcessor.curlyBracketClose);
+              print('CLEAN INDEX3 $endIndex');
+            } else {
+              endIndex = closeIndex + 1;
             }
-            list.add(AppendString(appendString, closeBracketIndex));
-            i = closeBracketIndex;
+            print('CLEAN INDEX4 $endIndex');
+            cleanCode =
+                cleanCode.replaceRange(0, endIndex + 1, ' ' * (endIndex + 1));
+            print('CLEAN INDEX5 $endIndex');
+            i = endIndex;
+            beforeCharName = '';
             charName = '';
             continue;
           }
-        }
-        i = closeIndex;
-        charName = '';
-        continue;
-      }
-      if (cleanCode[i] == space) {
-        beforeCharName = charName;
-        charName = '';
-      } else {
-        if (CodeOperations.isVariableChar(cleanCode[i].codeUnits.first)) {
-          charName += cleanCode[i];
-        } else {
-          beforeCharName = '';
+          if (cleanCode.length>closeIndex+1&&cleanCode[closeIndex + 1] == '{') {
+            final appendString = appendInMethod.call(charName);
+            print('CLEAN INDEX6 $appendString');
+            if (appendString != null) {
+              final closeBracketIndex = CodeOperations.findCloseBracket(
+                  cleanCode,
+                  closeIndex + 1,
+                  CodeProcessor.curlyBracketOpen,
+                  CodeProcessor.curlyBracketClose);
+              print('CLEAN INDEX7 $closeBracketIndex');
+
+              if (beforeCharName.isNotEmpty &&
+                  i - charName.length - beforeCharName.length - 1 >= 0) {
+                  cleanCode = cleanCode.replaceRange(
+                      i - charName.length - beforeCharName.length - 1,
+                      i - charName.length - 1,
+                      ' ' * beforeCharName.length);
+
+                  print('CLEAN INDEX8 $cleanCode');
+                beforeCharName = '';
+              }
+
+              print('CLEAN INDEX9 $beforeCharName');
+              list.add(AppendString(appendString, closeBracketIndex));
+              i = closeBracketIndex;
+              charName = '';
+              continue;
+            }
+          }
+          i = closeIndex;
           charName = '';
+          continue;
+        }
+
+        print('CLEAN INDEX10 $beforeCharName');
+        if (cleanCode[i] == space) {
+          beforeCharName = charName;
+          charName = '';
+        } else {
+
+          print('CLEAN INDEX11 $beforeCharName');
+          if (CodeOperations.isVariableChar(cleanCode[i].codeUnits.first)) {
+            charName += cleanCode[i];
+          } else {
+            beforeCharName = '';
+            charName = '';
+          }
+
+          print('CLEAN INDEX13 $beforeCharName');
         }
       }
+    } catch (e) {
+      print('ERROR $e');
     }
     int index = 0;
     for (final append in list) {

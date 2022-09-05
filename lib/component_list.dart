@@ -93,6 +93,8 @@ final componentList = <String, Component Function()>{
   'FloatingActionButton': () => CFloatingActionButton(),
   'IconButton': () => CIconButton(),
   'Placeholder': () => CPlaceholder(),
+  'Builder': () => CBuilder(),
+  'StatefulBuilder': () => CStatefulBuilder(),
   'ListView.builder': () => CListViewBuilder(),
   'GridView.builder': () => CGridViewBuilder(),
   'PageView.builder': () => CPageViewBuilder(),
@@ -101,6 +103,10 @@ final componentList = <String, Component Function()>{
   'NotRecognizedWidget': () => CNotRecognizedWidget(),
   'DropdownButton': () => CDropDownButton(),
   'DropdownMenuItem': () => CDropdownMenuItem(),
+  'IfCondition': () => IfCondition(),
+  'ElseIfCondition': () => ElseIfCondition(),
+
+  // 'For'
 };
 
 class CMaterialApp extends CustomNamedHolder {
@@ -158,6 +164,48 @@ class CRichText extends Component {
   }
 }
 
+class IfCondition extends CustomNamedHolder {
+  IfCondition()
+      : super('IfCondition', [
+          Parameters.enableParameter..displayName = 'condition',
+        ], [
+          'if',
+          'else'
+        ], [
+          'else_if'
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+    if (parameters[0].value == true) {
+      return childMap['if']?.build(context) ?? const Offstage();
+    }
+    for(final Component val in (childrenMap['else_if']??[]))
+      {
+        if(val is ElseIfCondition&&val.parameters[0].value==true){
+          return val.build(context);
+        }
+      }
+    return childMap['else']?.build(context) ?? const Offstage();
+  }
+}
+
+class ElseIfCondition extends CustomNamedHolder {
+  ElseIfCondition()
+      : super('ElseIfCondition', [
+    Parameters.enableParameter..val=false..displayName = 'condition',
+  ], [
+    'if',
+  ], [
+
+  ]);
+
+  @override
+  Widget create(BuildContext context) {
+      return childMap['if']?.build(context) ?? Container();
+  }
+}
+
 class CCustomPaint extends Component {
   CCustomPaint()
       : super('CustomPaint', [
@@ -199,7 +247,7 @@ class CNotRecognizedWidget extends Component {
 class CCheckbox extends ClickableComponent {
   CCheckbox()
       : super('Checkbox', [
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('value'),
         ]) {
     methods([
@@ -263,12 +311,12 @@ class CRadio extends ClickableComponent {
   }
 }
 
-class CSwitch extends Component with Clickable{
+class CSwitch extends Component with Clickable {
   CSwitch()
       : super('Switch', [
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('value'),
-        ]){
+        ]) {
     methods([
       FVBFunction(
           'onChanged', null, [FVBArgument('value', dataType: DataType.fvbBool)],
@@ -278,9 +326,11 @@ class CSwitch extends Component with Clickable{
 
   @override
   Widget create(BuildContext context) {
-    return Switch(onChanged: (bool value) {
-      perform(context,arguments: [value]);
-    }, value: parameters[0].value);
+    return Switch(
+        onChanged: (bool value) {
+          perform(context, arguments: [value]);
+        },
+        value: parameters[0].value);
   }
 }
 
@@ -362,19 +412,19 @@ class CSafeArea extends Holder {
       : super(
             'SafeArea',
             [
-              Parameters.enableParameter()
+              Parameters.enableParameter
                 ..val = false
                 ..withRequired(false)
                 ..withNamedParamInfoAndSameDisplayName('left'),
-              Parameters.enableParameter()
+              Parameters.enableParameter
                 ..val = false
                 ..withRequired(false)
                 ..withNamedParamInfoAndSameDisplayName('right'),
-              Parameters.enableParameter()
+              Parameters.enableParameter
                 ..val = false
                 ..withRequired(false)
                 ..withNamedParamInfoAndSameDisplayName('top'),
-              Parameters.enableParameter()
+              Parameters.enableParameter
                 ..val = false
                 ..withRequired(false)
                 ..withNamedParamInfoAndSameDisplayName('bottom')
@@ -544,7 +594,7 @@ class CFlexible extends Holder {
 class CVisibility extends Holder {
   CVisibility()
       : super('Visibility', [
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('visible'),
         ]);
 
@@ -777,7 +827,7 @@ class CAppBar extends CustomNamedHolder {
           Parameters.elevationParameter()
             ..withDefaultValue(null)
             ..withRequired(false),
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('centerTitle')
             ..val = null
             ..withRequired(false)
@@ -827,7 +877,7 @@ class CScaffold extends CustomNamedHolder {
   @override
   Widget create(BuildContext context) {
     return Scaffold(
-      appBar: childMap['appBar'] != null
+      appBar: childMap['appBar'] != null && childMap['appBar'] is CAppBar
           ? PreferredSize(
               child: childMap['appBar']!.build(context),
               preferredSize:
@@ -1056,7 +1106,7 @@ class CListView extends MultiHolder with FVBScrollable {
               required: true,
               val: false,
               info: NamedParameterInfo('reverse')),
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..val = false
             ..withRequired(true)
             ..withNamedParamInfoAndSameDisplayName('shrinkWrap'),
@@ -1078,7 +1128,7 @@ class CListView extends MultiHolder with FVBScrollable {
 class CDropdownMenuItem extends ClickableHolder {
   CDropdownMenuItem()
       : super('DropdownMenuItem', [
-          Parameters.enableParameter()..withChangeNamed('enabled'),
+          Parameters.enableParameter..withChangeNamed('enabled'),
           Parameters.dynamicValueParameter()
             ..withNamedParamInfoAndSameDisplayName('value')
             ..withDefaultValue(DateTime.now().toIso8601String())
@@ -1143,9 +1193,9 @@ class CTooltip extends Holder {
             ..withDisplayName('textStyle'),
           Parameters.paddingParameter(),
           Parameters.marginParameter(),
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('preferBelow'),
         ]);
 
@@ -1267,7 +1317,7 @@ class CElevatedButton extends ClickableHolder {
 class CInkWell extends ClickableHolder {
   CInkWell()
       : super('InkWell', [
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
           Parameters.colorParameter
             ..withRequired(false)
@@ -1367,7 +1417,7 @@ class CIconButton extends ClickableComponent {
           Parameters.colorParameter
             ..withRequired(false)
             ..withNamedParamInfoAndSameDisplayName('focusColor'),
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
           Parameters.alignmentParameter(),
           Parameters.paddingParameter()..withRequired(true),
@@ -1457,7 +1507,7 @@ class CFloatingActionButton extends ClickableHolder {
           Parameters.backgroundColorParameter(),
           Parameters.foregroundColorParameter(),
           Parameters.elevationParameter(),
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
           Parameters.textParameter()
             ..withRequired(false)
@@ -1743,7 +1793,7 @@ class CColoredBox extends Holder {
 class COffstage extends Holder {
   COffstage()
       : super('Offstage', [
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('offstage'),
         ]);
 
@@ -1776,7 +1826,7 @@ class CSizedBox extends Holder {
 class CShimmerFromColors extends Holder {
   CShimmerFromColors()
       : super('Shimmer.fromColors', [
-          Parameters.enableParameter(),
+          Parameters.enableParameter,
           Parameters.colorParameter
             ..withNamedParamInfoAndSameDisplayName('baseColor')
             ..withRequired(true)
@@ -1949,7 +1999,7 @@ class CImageNetwork extends Component {
           Parameters.colorParameter
             ..withDefaultValue(null)
             ..withRequired(false),
-      Parameters.filterQualityParameter(),
+          Parameters.filterQualityParameter(),
         ]);
 
   @override
@@ -2083,13 +2133,13 @@ class CInputDecorator extends Component {
       : super('InputDecorator', [
           Parameters.googleFontTextStyleParameter..withChangeNamed('baseStyle'),
           Parameters.inputDecorationParameter(),
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('isEmpty')
             ..val = false,
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('isFocused')
             ..val = false,
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..withNamedParamInfoAndSameDisplayName('expands')
             ..val = false,
         ]) {

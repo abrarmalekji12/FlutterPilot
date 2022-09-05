@@ -225,7 +225,7 @@ class ShowBottomSheetInStackAction extends ActionModel {
   ShowBottomSheetInStackAction(UIScreen? uiScreen)
       : super([
           uiScreen,
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..val = true
             ..withDisplayName('Enable Drag')
         ]);

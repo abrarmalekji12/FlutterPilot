@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_builder/ui/route_not_found.dart';
+import 'ui/route_not_found.dart';
 import 'package:keyboard_event/keyboard_event.dart';
 import 'package:url_strategy/url_strategy.dart';
 
@@ -11,6 +12,7 @@ import 'bloc/action_code/action_code_bloc.dart';
 import 'bloc/error/error_bloc.dart';
 import 'bloc/key_fire/key_fire_bloc.dart';
 import 'bloc/state_management/state_management_bloc.dart';
+import 'common/common_methods.dart';
 import 'common/compiler/code_processor.dart';
 import 'common/html_lib.dart' as html;
 import 'common/shared_preferences.dart';
@@ -65,12 +67,11 @@ void main() async {
     initWebKeyEvent();
   }
   await Preferences.load();
-  doCodeTesting();
+  // doCodeTesting();
 
-  // runZonedGuarded(() => runApp(const MyApp()), (error, stack) {
-  //   showToast(error.toString(),error: true);
-  // });
-  // runApp(const MyApp());
+  runZonedGuarded(() => runApp(const MyApp()), (error, stack) {
+    showToast(error.toString(),error: true);
+  });
 }
 
 void doCodeTesting() {

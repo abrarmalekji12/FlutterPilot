@@ -3,39 +3,38 @@ import '../common/compiler/code_processor.dart';
 import '../common/compiler/fvb_function_variables.dart';
 import '../common/compiler/processor_component.dart';
 import 'parameter_info_model.dart';
-import '../common/logger.dart';
 import '../component_list.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../parameters_list.dart';
 import 'component_model.dart';
-import 'local_model.dart';
 import 'parameter_model.dart';
 
 abstract class BuilderComponent extends CustomNamedHolder {
-  LocalModel? model;
+  // LocalModel? model;
   final Map<String, List<Component>> builtList = {};
   final Map<String, FVBFunction> functionMap;
-  late SimpleParameter<int> itemLengthParameter;
-  final String countName;
 
-  BuilderComponent(String name, List<Parameter> parameters,
-      {required List<String> childBuilder,
-      required List<String> childrenBuilder,
-      required this.functionMap,
-      this.countName = 'itemCount'})
-      : super(name, parameters, childBuilder, childrenBuilder) {
-    itemLengthParameter =
-        SimpleParameter<int>(name: countName, defaultValue: 5, required: true);
+  // late SimpleParameter<int> itemLengthParameter;
+
+  BuilderComponent(
+    String name,
+    List<Parameter> parameters, {
+    required List<String> childBuilder,
+    required List<String> childrenBuilder,
+    required this.functionMap,
+  }) : super(name, parameters, childBuilder, childrenBuilder) {
+    // itemLengthParameter =
+    //     SimpleParameter<int>(name: countName, defaultValue: 5, required: true);
   }
 
   @override
   Component clone(Component? parent, {bool deepClone = false}) {
     final clone =
         (super.clone(parent, deepClone: deepClone) as BuilderComponent);
-    clone.model = model;
-    clone.itemLengthParameter = deepClone
-        ? (SimpleParameter<int>()..cloneOf(itemLengthParameter))
-        : itemLengthParameter;
+    // clone.model = model;
+    // clone.itemLengthParameter = deepClone
+    //     ? (SimpleParameter<int>()..cloneOf(itemLengthParameter))
+    //     : itemLengthParameter;
     clone.parent = parent;
     clone.childMap =
         childMap.map((key, value) => MapEntry(key, value?.clone(clone)));
@@ -52,46 +51,46 @@ abstract class BuilderComponent extends CustomNamedHolder {
     return clone;
   }
 
-  Widget builder(BuildContext context, String name, int index,
+  Widget builder(BuildContext context, String name,List<dynamic> args,
       {Component? Function()? defaultComp}) {
     final Component child = childMap[name] ??
         childrenMap[name]?[0] ??
         defaultComp?.call() ??
         CContainer();
-    if (model != null) {
-      for (int i = 0; i < (model?.variables.length ?? 0); i++) {
-        ComponentOperationCubit.processor
-            .localVariables[model!.variables[i].name] = model!.values[index][i];
-      }
-    }
+    // if (model != null) {
+    //   for (int i = 0; i < (model?.variables.length ?? 0); i++) {
+    //     ComponentOperationCubit.processor
+    //         .localVariables[model!.variables[i].name] = model!.values[index][i];
+    //   }
+    // }
     final parent = ProcessorProvider.maybeOf(context) ??
         ComponentOperationCubit.currentProject!.processor;
     final processor = CodeProcessor.build(name: name, processor: parent);
     final function = functionMap[name];
     final component = child.clone(this);
-    if (index < builtList[name]!.length) {
+    final index=args.isNotEmpty?(args.last is int?args.last:0):0;
+    if (index< builtList[name]!.length) {
       builtList[name]!.removeAt(index);
       builtList[name]!.insert(index, component);
     } else {
       builtList[name]!.add(component);
     }
+    if (CodeProcessor.error) {
+      return Container();
+    }
+    if (function != null) {
+      function.execute(parent, null, args,
+          defaultProcessor: processor,
+          filtered:
+          CodeProcessor.cleanCode(function.code ?? '', processor));
+    }
     return ProcessorProvider(
       processor,
       Builder(builder: (context) {
-        if (CodeProcessor.error) {
-          return Container();
-        }
-        if (function != null) {
-          function.execute(parent, null, [index],
-              defaultProcessor: processor,
-              filtered:
-                  CodeProcessor.cleanCode(function.code ?? '', processor));
-        }
         return component.build(context);
       }),
     );
   }
-
   void init() {
     for (final child in childMap.keys) {
       builtList[child] = [];
@@ -112,6 +111,7 @@ abstract class BuilderComponent extends CustomNamedHolder {
 
   @override
   String code({bool clean = true}) {
+    try{
     final middle = parametersCode(clean);
     final String defaultCode = CContainer().code(clean: clean);
     final Map<String, String> itemsCode = childMap.map((key, value) =>
@@ -122,7 +122,6 @@ abstract class BuilderComponent extends CustomNamedHolder {
     }
     // final List<DynamicVariableModel> usedVariables = [];
 
-    String itemCount = '';
     if (clean) {
       // itemCount = ', itemCount:${model?.listVariableName}.length,';
       // if (model != null) {
@@ -165,40 +164,51 @@ abstract class BuilderComponent extends CustomNamedHolder {
       //   }
       //
       // }
-      final countCode = itemLengthParameter.code(clean);
-      itemCount = countCode.isNotEmpty ? ', itemCount:$countCode,' : '';
-      return withState(
-          '''$name($middle 
-        ${itemsCode.entries.map((entry) => '${entry.key}:(context,index){${functionMap[entry.key]?.code ?? ''} return ${entry.value};}').join(',')}''' +
-              itemCount +
-              '),',
+      return withState('''$name($middle 
+        ${itemsCode.entries.map((entry) => '${entry.key}:(context,index){${functionMap[entry.key]?.code ?? ''} return ${entry.value};}').join(',')}),''',
           clean);
     }
     return '''$name($middle 
-        ${itemsCode.entries.map((entry) => '${entry.key}:(){`${functionMap[entry.key]?.code ?? ''}`return${entry.value};}').join(',')}''' +
-        itemCount +
-        '),';
+        ${itemsCode.entries.map((entry) => '${entry.key}:(){`${functionMap[entry.key]?.code ?? ''}`return${entry.value};}').join(',')}),''';
     // return '$name(\n${middle}child:${child!.code(clean: clean)}\n)';
-  }
-
-  int get count {
-    final length = itemLengthParameter.value;
-    if (model == null || length < model!.values.length) {
-      return length;
     }
-    return model!.values.length;
-  }
+    catch(e){
+      print('$name ${e.toString()}');
+    }
+    return '';
+    }
+
 }
 
-get itemBuilderFunction => FVBFunction(
+FVBFunction get itemBuilderFunction => FVBFunction(
       'itemBuilder',
       '',
       [
+        FVBArgument('context', dataType: DataType.dynamic, nullable: false),
         FVBArgument('index', dataType: DataType.fvbInt, nullable: false),
       ],
       returnType: DataType.fvbVoid,
       canReturnNull: false,
     );
+FVBFunction get builderFunction => FVBFunction(
+  'builder',
+  '',
+  [
+    FVBArgument('context', dataType: DataType.dynamic, nullable: false),
+  ],
+  returnType: DataType.fvbVoid,
+  canReturnNull: false,
+);
+FVBFunction get stateFulBuilderFunction => FVBFunction(
+  'builder',
+  '',
+  [
+    FVBArgument('context', dataType: DataType.dynamic, nullable: false),
+    FVBArgument('setState2', dataType: DataType.fvbInstance('setState'), nullable: false),
+  ],
+  returnType: DataType.fvbVoid,
+  canReturnNull: false,
+);
 
 get separatorBuilderFunction => FVBFunction(
       'separatorBuilder',
@@ -213,12 +223,14 @@ get separatorBuilderFunction => FVBFunction(
 class CPageViewBuilder extends BuilderComponent with Controller, Clickable {
   CPageViewBuilder()
       : super('PageView.builder', [
+          Parameters.itemLengthParameter,
           Parameters.axisParameter()
             ..withInfo(NamedParameterInfo('scrollDirection')),
-          Parameters.enableParameter()
+          Parameters.enableParameter
             ..val = true
             ..withRequired(true)
             ..withNamedParamInfoAndSameDisplayName('pageSnapping'),
+          Parameters.scrollablePhysicsParameter
         ], childBuilder: [
           'itemBuilder',
         ], childrenBuilder: [], functionMap: {
@@ -236,16 +248,17 @@ class CPageViewBuilder extends BuilderComponent with Controller, Clickable {
     assign('controller', PageController(), 'PageController()');
     init();
     return PageView.builder(
-      scrollDirection: parameters[0].value,
-      pageSnapping: parameters[1].value,
+      itemCount: parameters[0].value,
+      scrollDirection: parameters[1].value,
+      pageSnapping: parameters[2].value,
+      physics: parameters[3].value,
       itemBuilder: (context, index) {
-        return builder(context, 'itemBuilder', index);
+        return builder(context, 'itemBuilder', [context,index]);
       },
       controller: controlMap['controller']!.value,
       onPageChanged: (index) {
         perform(context, arguments: [index]);
       },
-      itemCount: count,
     );
   }
 }
@@ -253,27 +266,67 @@ class CPageViewBuilder extends BuilderComponent with Controller, Clickable {
 class ControlValue {
   final dynamic value;
   final String assignCode;
+
   ControlValue(this.value, this.assignCode);
 }
 
 class Controller {
   final Map<String, ControlValue> controlMap = {};
+
   void assign(String key, dynamic value, String assignCode) {
     controlMap[key] = ControlValue(value, assignCode);
   }
 }
+class CBuilder extends BuilderComponent{
+  CBuilder(): super('Builder', [], childBuilder: [
+    'builder',
+  ], childrenBuilder: [], functionMap: {
+    'builder': builderFunction,
+  });
 
+  @override
+  Widget create(BuildContext context) {
+    init();
+    return Builder(builder: (context){
+      return builder(context, 'builder', [context]);
+    });
+  }
+}
+class CStatefulBuilder extends BuilderComponent{
+  CStatefulBuilder(): super('StatefulBuilder', [], childBuilder: [
+    'builder',
+  ], childrenBuilder: [], functionMap: {
+    'builder': stateFulBuilderFunction,
+  });
+
+  @override
+  Widget create(BuildContext context) {
+    init();
+    return StatefulBuilder(builder: (context,setState){
+      return builder(context, 'builder', [context,setStateFunction..dartCall=(arguments,instance){
+        (arguments[0] as FVBFunction).execute(arguments.last, null, []);
+        setState((){
+
+        });
+      }]);
+    });
+  }
+}
 class CListViewBuilder extends BuilderComponent with FVBScrollable {
   CListViewBuilder()
       : super('ListView.builder', [
+          Parameters.itemLengthParameter,
           Parameters.axisParameter()
             ..withInfo(NamedParameterInfo('scrollDirection')),
-    Parameters.paddingParameter(),
-          Parameters.enableParameter()
+          Parameters.paddingParameter(),
+          Parameters.enableParameter
             ..val = false
             ..withRequired(true)
             ..withNamedParamInfoAndSameDisplayName('shrinkWrap'),
-          Parameters.enableParameter()..val=false..withNamedParamInfoAndSameDisplayName('reverse')
+          Parameters.enableParameter
+            ..val = false
+            ..withNamedParamInfoAndSameDisplayName('reverse'),
+    Parameters.scrollablePhysicsParameter
         ], childBuilder: [
           'itemBuilder',
         ], childrenBuilder: [], functionMap: {
@@ -285,14 +338,15 @@ class CListViewBuilder extends BuilderComponent with FVBScrollable {
     init();
     return ListView.builder(
       controller: initScrollController(context),
-      scrollDirection: parameters[0].value,
-      padding: parameters[1].value,
-      shrinkWrap: parameters[2].value,
-      reverse: parameters[3].value,
+      scrollDirection: parameters[1].value,
+      padding: parameters[2].value,
+      shrinkWrap: parameters[3].value,
+      reverse: parameters[4].value,
+      physics: parameters[5].value,
       itemBuilder: (context, index) {
-        return builder(context, 'itemBuilder', index);
+        return builder(context, 'itemBuilder', [context,index]);
       },
-      itemCount: count,
+      itemCount: parameters[0].value,
     );
   }
 }
@@ -300,12 +354,15 @@ class CListViewBuilder extends BuilderComponent with FVBScrollable {
 class CListViewSeparated extends BuilderComponent with FVBScrollable {
   CListViewSeparated()
       : super('ListView.separated', [
+          Parameters.itemLengthParameter,
           Parameters.axisParameter()
             ..withInfo(NamedParameterInfo('scrollDirection')),
-          Parameters.enableParameter()
+    Parameters.paddingParameter(),
+          Parameters.enableParameter
             ..val = false
             ..withRequired(true)
             ..withNamedParamInfoAndSameDisplayName('shrinkWrap'),
+    Parameters.scrollablePhysicsParameter,
         ], childBuilder: [
           'itemBuilder',
           'separatorBuilder'
@@ -319,14 +376,16 @@ class CListViewSeparated extends BuilderComponent with FVBScrollable {
     init();
     return ListView.separated(
       controller: initScrollController(context),
-      scrollDirection: parameters[0].value,
-      shrinkWrap: parameters[1].value,
+      scrollDirection: parameters[1].value,
+      padding: parameters[2].value,
+      shrinkWrap: parameters[3].value,
+      physics: parameters[4].value,
       itemBuilder: (context, index) {
-        return builder(context, 'itemBuilder', index);
+        return builder(context, 'itemBuilder', [context,index]);
       },
-      itemCount: count,
+      itemCount: parameters[0].value,
       separatorBuilder: (BuildContext context, int index) {
-        return builder(context, 'separatorBuilder', index,
+        return builder(context, 'separatorBuilder', [context,index],
             defaultComp: () => CDivider());
       },
     );
@@ -336,7 +395,10 @@ class CListViewSeparated extends BuilderComponent with FVBScrollable {
 class CGridViewBuilder extends BuilderComponent with FVBScrollable {
   CGridViewBuilder()
       : super('GridView.builder', [
+          Parameters.itemLengthParameter,
           Parameters.sliverDelegate(),
+    Parameters.scrollablePhysicsParameter,
+    Parameters.paddingParameter(),
         ], childBuilder: [
           'itemBuilder',
         ], childrenBuilder: [], functionMap: {
@@ -349,10 +411,12 @@ class CGridViewBuilder extends BuilderComponent with FVBScrollable {
     return GridView.builder(
       controller: initScrollController(context),
       itemBuilder: (context, index) {
-        return builder(context, 'itemBuilder', index);
+        return builder(context, 'itemBuilder', [context,index]);
       },
-      itemCount: count,
-      gridDelegate: parameters[0].value,
+      itemCount: parameters[0].value,
+      gridDelegate: parameters[1].value,
+      physics: parameters[2].value,
+      padding:parameters[3].value ,
     );
   }
 }

@@ -34,9 +34,7 @@ import 'common/variable_dialog.dart';
 import 'component_selection_dialog.dart';
 import 'project_setting_page.dart';
 
-
 class ComponentTree extends StatefulWidget {
-
   const ComponentTree({Key? key}) : super(key: key);
 
   @override
@@ -871,12 +869,13 @@ class CustomComponentWidget extends StatelessWidget {
           }, onWillAccept: (data) {
             return data is Component;
           }, onAccept: (data) {
+            final root = data.getCustomComponentRoot() ??
+                ComponentOperationCubit
+                    .currentProject!.currentScreen.rootComponent!;
+            _componentOperationCubit.removeAllComponent(data, root,
+                clear: false);
             _componentOperationCubit.addOperation(comp, data, comp);
-            _componentOperationCubit.removeAllComponent(
-                data,
-                data.getCustomComponentRoot() ??
-                    ComponentOperationCubit
-                        .currentProject!.currentScreen.rootComponent!);
+
             _componentCreationCubit.changedComponent();
             _componentOperationCubit.addedComponent(comp, comp);
             WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -1387,7 +1386,8 @@ class _SublistWidgetState extends State<SublistWidget> {
                         BlocProvider.of<ComponentOperationCubit>(context,
                                 listen: false)
                             .removeAllComponent(
-                        object as Component, widget.ancestor,clear: false);
+                                object as Component, widget.ancestor,
+                                clear: false);
                         BlocProvider.of<ComponentOperationCubit>(context,
                                 listen: false)
                             .addOperation(
@@ -1395,6 +1395,9 @@ class _SublistWidgetState extends State<SublistWidget> {
                           object,
                           widget.ancestor,
                         );
+                        BlocProvider.of<ComponentOperationCubit>(context,
+                                listen: false)
+                            .update();
                         BlocProvider.of<ComponentCreationCubit>(context,
                                 listen: false)
                             .changedComponent();
@@ -1470,8 +1473,9 @@ class _SublistWidgetState extends State<SublistWidget> {
                           performReversibleOperation(() {
                             BlocProvider.of<ComponentOperationCubit>(context,
                                     listen: false)
-                                .removeComponent(
-                                    object as Component, widget.ancestor);
+                                .removeAllComponent(
+                                    object as Component, widget.ancestor,
+                                    clear: false);
                             BlocProvider.of<ComponentOperationCubit>(context,
                                     listen: false)
                                 .addOperation(
@@ -1479,6 +1483,9 @@ class _SublistWidgetState extends State<SublistWidget> {
                             BlocProvider.of<ComponentCreationCubit>(context,
                                     listen: false)
                                 .changedComponent();
+                            BlocProvider.of<ComponentOperationCubit>(context,
+                                    listen: false)
+                                .update();
                             BlocProvider.of<ComponentSelectionCubit>(context,
                                     listen: false)
                                 .changeComponentSelection(
@@ -1583,11 +1590,52 @@ class _SublistWidgetState extends State<SublistWidget> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(
-                                        child,
-                                        style: AppFontStyle.roboto(12,
-                                            color: const Color(0xff494949),
-                                            fontWeight: FontWeight.w500),
+                                      DragTarget<Component>(
+                                        onAccept: (object) {
+                                          performReversibleOperation(() {
+                                            BlocProvider.of<
+                                                        ComponentOperationCubit>(
+                                                    context,
+                                                    listen: false)
+                                                .removeAllComponent(
+                                                    object,
+                                                    widget.ancestor,
+                                                    clear: false);
+                                            BlocProvider.of<
+                                                        ComponentOperationCubit>(
+                                                    context,
+                                                    listen: false)
+                                                .addOperation(widget.component,
+                                                    object, widget.ancestor,customNamed: child);
+                                            BlocProvider.of<
+                                                        ComponentCreationCubit>(
+                                                    context,
+                                                    listen: false)
+                                                .changedComponent();
+                                            BlocProvider.of<
+                                                        ComponentOperationCubit>(
+                                                    context,
+                                                    listen: false)
+                                                .update();
+                                            BlocProvider.of<
+                                                        ComponentSelectionCubit>(
+                                                    context,
+                                                    listen: false)
+                                                .changeComponentSelection(
+                                                    ComponentSelectionModel
+                                                        .unique(object,
+                                                            widget.ancestor));
+                                          });
+                                        },
+                                        onWillAccept: (data) => true,
+                                        builder:
+                                            (context, candidates, rejected) =>
+                                                Text(
+                                          child,
+                                          style: AppFontStyle.roboto(12,
+                                              color: const Color(0xff494949),
+                                              fontWeight: FontWeight.w500),
+                                        ),
                                       ),
                                       if (showMenu) ...[
                                         const SizedBox(
@@ -1706,11 +1754,52 @@ class _SublistWidgetState extends State<SublistWidget> {
                               },
                               child: Row(
                                 children: [
-                                  Text(
-                                    child,
-                                    style: AppFontStyle.roboto(12,
-                                        color: const Color(0xff494949),
-                                        fontWeight: FontWeight.w500),
+                                  DragTarget<Component>(
+                                    onAccept: (object) {
+                                      performReversibleOperation(() {
+                                        BlocProvider.of<
+                                            ComponentOperationCubit>(
+                                            context,
+                                            listen: false)
+                                            .removeAllComponent(
+                                            object,
+                                            widget.ancestor,
+                                            clear: false);
+                                        BlocProvider.of<
+                                            ComponentOperationCubit>(
+                                            context,
+                                            listen: false)
+                                            .addOperation(widget.component,
+                                            object, widget.ancestor,customNamed: child);
+                                        BlocProvider.of<
+                                            ComponentCreationCubit>(
+                                            context,
+                                            listen: false)
+                                            .changedComponent();
+                                        BlocProvider.of<
+                                            ComponentOperationCubit>(
+                                            context,
+                                            listen: false)
+                                            .update();
+                                        BlocProvider.of<
+                                            ComponentSelectionCubit>(
+                                            context,
+                                            listen: false)
+                                            .changeComponentSelection(
+                                            ComponentSelectionModel
+                                                .unique(object,
+                                                widget.ancestor));
+                                      });
+                                    },
+                                    onWillAccept: (data) => true,
+                                    builder:
+                                        (context, candidates, rejected) =>
+                                        Text(
+                                          '$child (List)',
+                                          style: AppFontStyle.roboto(12,
+                                              color: const Color(0xff494949),
+                                              fontWeight: FontWeight.w500),
+                                        ),
                                   ),
                                   if (showMenu) ...[
                                     const SizedBox(

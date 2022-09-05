@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_builder/common/compiler/code_processor.dart';
 import 'package:flutter_builder/common/io_lib.dart';
 
 import 'package:flutter/material.dart';
@@ -78,6 +79,9 @@ void doAPIOperation(String message,
     get<ErrorBloc>().add(ConsoleUpdatedEvent(
         ConsoleMessage(message.substring(6), ConsoleMessageType.info)));
   } else if (message.startsWith('api:')) {
+    if(CodeProcessor.operationType==OperationType.checkOnly) {
+      return;
+    }
     final value = message.replaceAll('api:', '');
     final split = value.split('|');
     final action = split[0];

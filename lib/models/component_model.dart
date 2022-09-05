@@ -10,7 +10,6 @@ import '../common/converter/code_converter.dart';
 import 'variable_model.dart';
 import 'package:get/get.dart';
 import '../bloc/state_management/state_management_bloc.dart';
-import '../common/common_methods.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../runtime_provider.dart';
 import 'actions/action_model.dart';
@@ -144,10 +143,10 @@ abstract class Component {
 
   String metaCode(String string) {
     string += '[id=$id';
-    if (this is BuilderComponent) {
-      string +=
-          '|model=${(this as BuilderComponent).model?.name}|len=${(this as BuilderComponent).itemLengthParameter.code(false)}';
-    }
+    // if (this is BuilderComponent) {
+    //   string +=
+    //       '|model=${(this as BuilderComponent).model?.name}';
+    // }
     if (this is Clickable) {
       string +=
           '|action={${(this as Clickable).actionList.map((e) => e.metaCode()).join(':')}}';
@@ -173,18 +172,18 @@ abstract class Component {
             setId = fieldList[1];
             break;
           case 'model':
-            if(this is! BuilderComponent){
-              return;
-            }
-            print('NAME ${metaCode}');
-            (this as BuilderComponent).model = flutterProject
-                ?.currentScreen.models
-                .firstWhereOrNull((element) => element.name == fieldList[1]);
-            logger('model setted ${(this as BuilderComponent).model?.name}');
+            // if(this is! BuilderComponent){
+            //   return;
+            // }
+            // print('NAME ${metaCode}');
+            // (this as BuilderComponent).model = flutterProject
+            //     ?.currentScreen.models
+            //     .firstWhereOrNull((element) => element.name == fieldList[1]);
+            // logger('model setted ${(this as BuilderComponent).model?.name}');
             break;
           case 'len':
             (this as BuilderComponent)
-                .itemLengthParameter
+                .parameters[0]
                 .fromCode(fieldList[1]);
             break;
           case 'action':
@@ -454,6 +453,9 @@ abstract class Component {
         return null;
       case RuntimeMode.preview:
         return GlobalObjectKey(uniqueId + id);
+      case RuntimeMode.favorite:
+        // TODO: Handle this case.
+        break;
     }
   }
 
@@ -1181,6 +1183,7 @@ abstract class CustomNamedHolder extends Component {
   void searchTappedComponent(Offset offset, List<Component> components) {
     if (boundary?.contains(offset) ?? false) {
       if (this is BuilderComponent) {
+        /// TODO: Handle childrenMap Case
         for (final child in childMap.keys) {
           for (final comp
               in (this as BuilderComponent).builtList[child] ?? []) {
@@ -1205,33 +1208,40 @@ abstract class CustomNamedHolder extends Component {
         }
       }
       components.add(this);
-      return;
     }
   }
 
   @override
   String code({bool clean = true}) {
-    final middle = parametersCode(clean);
-    String name = this.name;
-    if (!clean) {
-      name = metaCode(name);
-    }
-    String childrenCode = '';
-    for (final child in childMap.keys) {
-      if (childMap[child] != null) {
-        childrenCode += '$child:${childMap[child]!.code(clean: clean)},'
-            .replaceAll(',,', ',');
+    try {
+      final middle = parametersCode(clean);
+      String name = this.name;
+      if (!clean) {
+        name = metaCode(name);
       }
-    }
+      String childrenCode = '';
+      for (final child in childMap.keys) {
+        if (childMap[child] != null) {
+          childrenCode += '$child:${childMap[child]!.code(clean: clean)},'
+              .replaceAll(',,', ',');
+        }
+      }
 
-    for (final child in childrenMap.keys) {
-      if (childrenMap[child]?.isNotEmpty ?? false) {
-        childrenCode +=
-            '$child:[${childrenMap[child]!.map((e) => (e.code(clean: clean) + ',').replaceAll(',,', ',')).join('')}],'
-                .replaceAll(',,', ',');
+      for (final child in childrenMap.keys) {
+        if (childrenMap[child]?.isNotEmpty ?? false) {
+          childrenCode +=
+              '$child:[${childrenMap[child]!.map((e) =>
+                  (e.code(clean: clean) + ',').replaceAll(',,', ',')).join(
+                  '')}],'
+                  .replaceAll(',,', ',');
+        }
       }
+      return withState('$name($middle$childrenCode)', clean);
     }
-    return withState('$name($middle$childrenCode)', clean);
+    catch(e){
+      print('$name ${e.toString()}');
+    }
+    return '';
   }
 
   @override
@@ -1321,8 +1331,12 @@ abstract class CustomComponent extends Component {
       processor.functions['setState'] = FVBFunction('setState', null, [
         FVBArgument('callback', dataType: DataType.fvbFunction)
       ], dartCall: (arguments, instance) {
-        (arguments[0] as FVBFunction).execute(processor, null, []);
-        (arguments[1] as CodeProcessor).consoleCallback.call('api:refresh|$id');
+
+        if(CodeProcessor.operationType!=OperationType.checkOnly) {
+          (arguments[0] as FVBFunction).execute(processor, null, []);
+          (arguments[1] as CodeProcessor).consoleCallback.call('api:refresh|$id');
+        }
+
       });
     }
     processor.variables.addAll((variables ?? [])
