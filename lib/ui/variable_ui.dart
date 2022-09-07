@@ -171,7 +171,7 @@ class _VariableBoxState extends State<VariableBox> {
                     width: 20,
                   ),
                   IconButton(
-                    visualDensity: const VisualDensity(horizontal: -5,vertical: -5),
+                    visualDensity: const VisualDensity(horizontal: -4,vertical: -4),
                     color: AppColors.theme,
                     onPressed: () {
                       if (_controller1.text.isEmpty) {
