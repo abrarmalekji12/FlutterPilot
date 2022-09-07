@@ -609,7 +609,6 @@ abstract class Component {
   Widget create(BuildContext context);
 
   String parametersCode(bool clean) {
-    print('PM CODE START $name');
     String middle = '';
     try {
 
@@ -630,14 +629,12 @@ abstract class Component {
               break;
             }
             final openIndex = code1.indexOf('{', start);
-            print('OPEN INDEX $openIndex');
             if (openIndex == -1) {
               break;
             }
             final closeIndex = CodeOperations.findCloseBracket(code1, openIndex,
                 CodeProcessor.curlyBracketOpen,
                 CodeProcessor.curlyBracketClose);
-            print('CLOSE INDEX $closeIndex');
             start += closeIndex + 1;
             final functionBody = code1.substring(openIndex + 1, closeIndex);
             middle +=
@@ -657,43 +654,42 @@ abstract class Component {
           middle += '$paramCode,'.replaceAll(',,', ',');
         }
       }
-      if (clean) {
-        int start = 0;
-        int gotIndex = -1;
-        while (start < middle.length-1&&false) {
-          if (gotIndex == -1) {
-            start = middle.indexOf('{{', start);
-            if (start == -1) {
-              break;
-            }
-            start += 2;
-            gotIndex = start;
-          } else {
-            start = middle.indexOf('}}', start);
-            if (start == -1) {
-              break;
-            }
-            String innerArea = middle.substring(gotIndex, start);
-            if (ComponentOperationCubit.processor.variables.isNotEmpty) {
-              // for (final variable in ComponentOperationCubit.codeProcessor.variables.values) {
-              //   innerArea = innerArea.replaceAll(variable.name,
-              //       '${variable!}[index].${variable.name}');
-              // }
-              print('MIDDLE ${gotIndex - 2} ${start + 2}');
-              middle =
-                  middle.replaceRange(
-                      gotIndex - 2, start + 2, '\${$innerArea}');
-              gotIndex = -1;
-              start += 2;
-              continue;
-            }
-          }
-        }
-      }
+      // if (clean) {
+      //   int start = 0;
+      //   int gotIndex = -1;
+      //   while (start < middle.length-1) {
+      //     if (gotIndex == -1) {
+      //       start = middle.indexOf('{{', start);
+      //       if (start == -1) {
+      //         break;
+      //       }
+      //       start += 2;
+      //       gotIndex = start;
+      //     } else {
+      //       start = middle.indexOf('}}', start);
+      //       if (start == -1) {
+      //         break;
+      //       }
+      //       String innerArea = middle.substring(gotIndex, start);
+      //       if (ComponentOperationCubit.processor.variables.isNotEmpty) {
+      //         // for (final variable in ComponentOperationCubit.codeProcessor.variables.values) {
+      //         //   innerArea = innerArea.replaceAll(variable.name,
+      //         //       '${variable!}[index].${variable.name}');
+      //         // }
+      //         print('MIDDLE ${gotIndex - 2} ${start + 2}');
+      //         middle =
+      //             middle.replaceRange(
+      //                 gotIndex - 2, start + 2, '\${$innerArea}');
+      //         gotIndex = -1;
+      //         start += 2;
+      //         continue;
+      //       }
+      //     }
+      //   }
+      // }
     }catch(e){
       print('PARAMTETERS ERROR ${e.toString()}');
     }
-    print('PM CODE FINISH $name');
     return middle;
   }
 

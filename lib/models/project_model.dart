@@ -375,10 +375,7 @@ class UIScreen {
     final uiScreenModifiedCode =
         FVBEngine.instance.getDartCode(processor, actionCode, (p0) {
       if (p0 == 'build') {
-        print('ROOT ${rootComponent?.name}');
         final code=rootComponent!.code();
-        print('ROOT CODE DONE');
-
         return 'return $code;';
       } else if (p0 == 'initState') {
         return 'super.initState();';
