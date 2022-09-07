@@ -154,16 +154,6 @@ class _VariableBoxState extends State<VariableBox> {
                       },
                     ),
                   ),
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: Text(
-                        ' = ',
-                        style: AppFontStyle.roboto(15,
-                            color: Colors.black, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
                   Expanded(
                     child: TextField(
                       controller: _controller2,
@@ -181,6 +171,8 @@ class _VariableBoxState extends State<VariableBox> {
                     width: 20,
                   ),
                   IconButton(
+                    visualDensity: const VisualDensity(horizontal: -5,vertical: -5),
+                    color: AppColors.theme,
                     onPressed: () {
                       if (_controller1.text.isEmpty) {
                         showToast('Please enter variable name and it\'s value',
@@ -268,7 +260,10 @@ class _VariableBoxState extends State<VariableBox> {
               height: 10,
             ),
             Expanded(
-              child: ListView.builder(
+              child: ListView.separated(
+                separatorBuilder: (_,__){
+                  return const SizedBox(height:4,);
+                },
                 controller: _scrollController,
                 itemBuilder: (context, i) {
                   return EditVariable(
@@ -333,148 +328,154 @@ class _EditVariableState extends State<EditVariable> {
   @override
   Widget build(BuildContext context) {
     final variable = widget.variable.value;
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Flexible(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: widget.variable.key));
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        widget.variable.key,
-                        style: AppFontStyle.roboto(
-                          15,
-                          color: widget.variable.value.isFinal
-                              ? Colors.black
-                              : AppColors.theme,
-                          fontWeight: FontWeight.w500,
+        Row(
+          children: [
+            IntrinsicWidth(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: widget.variable.key));
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.variable.key,
+                          style: AppFontStyle.roboto(
+                            15,
+                            color: widget.variable.value.isFinal
+                                ? Colors.black
+                                : AppColors.theme,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    const Icon(
-                      Icons.copy,
-                      size: 18,
-                      color: AppColors.grey,
-                    )
-                  ],
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      const Icon(
+                        Icons.copy,
+                        size: 18,
+                        color: AppColors.grey,
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(5.0),
-            child: Text(
-              ' = ',
-              style: AppFontStyle.roboto(15,
-                  color: Colors.black, fontWeight: FontWeight.w600),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Text(
+                  ' = ',
+                  style: AppFontStyle.roboto(15,
+                      color: Colors.black, fontWeight: FontWeight.w600),
+                ),
+              ),
             ),
-          ),
-        ),
-        Expanded(
-          child: CustomTextField(
-            enabled: !variable.isFinal &&
-                (variable is VariableModel && variable.uiAttached) &&
-                ([
-                  DataType.fvbInt,
-                  DataType.fvbDouble,
-                  DataType.string,
-                  DataType.fvbBool
-                ].contains(variable.dataType)),
-            controller: _textEditingController,
-            onChange: (val) {
-              late final dynamic value;
-              switch (widget.variable.value.dataType) {
-                case DataType.fvbInt:
-                  value = int.tryParse(val);
-                  break;
-                case DataType.fvbDouble:
-                  value = double.tryParse(val);
-                  break;
-                case DataType.string:
-                  value = val;
-                  break;
-                case DataType.fvbBool:
-                  value = val == 'true';
-                  break;
-                case DataType.dynamic:
-                  if (double.tryParse(val) != null) {
-                    value = double.tryParse(val);
-                  } else if (int.tryParse(val) != null) {
-                    value = int.tryParse(val);
-                  } else if (val == 'true' || val == 'false') {
-                    value = val == 'true';
-                  } else {
-                    value = val;
+            Expanded(
+              child: CustomTextField(
+                enabled: !variable.isFinal &&
+                    (variable is VariableModel && variable.uiAttached) &&
+                    ([
+                      DataType.fvbInt,
+                      DataType.fvbDouble,
+                      DataType.string,
+                      DataType.fvbBool
+                    ].contains(variable.dataType)),
+                controller: _textEditingController,
+                onChange: (val) {
+                  late final dynamic value;
+                  switch (widget.variable.value.dataType) {
+                    case DataType.fvbInt:
+                      value = int.tryParse(val);
+                      break;
+                    case DataType.fvbDouble:
+                      value = double.tryParse(val);
+                      break;
+                    case DataType.string:
+                      value = val;
+                      break;
+                    case DataType.fvbBool:
+                      value = val == 'true';
+                      break;
+                    case DataType.dynamic:
+                      if (double.tryParse(val) != null) {
+                        value = double.tryParse(val);
+                      } else if (int.tryParse(val) != null) {
+                        value = int.tryParse(val);
+                      } else if (val == 'true' || val == 'false') {
+                        value = val == 'true';
+                      } else {
+                        value = val;
+                      }
+                      break;
                   }
-                  break;
-              }
-              if (value != null) {
-                widget.variable.value.value = value;
-                widget.onChanged.call(widget.variable.value as VariableModel);
-              }
-            },
-          ),
-        ),
-        if (widget.options.isNotEmpty)
-          CustomPopupMenuButton<VariableDialogOption>(
-            child: const Icon(
-              Icons.more_vert,
-              color: Colors.black,
+                  if (value != null) {
+                    widget.variable.value.value = value;
+                    widget.onChanged.call(widget.variable.value as VariableModel);
+                  }
+                },
+              ),
             ),
-            onSelected: (val) {
-              val.callback.call(widget.variable.value as VariableModel);
-              widget.setState2(() {});
-            },
-            itemBuilder: (context) {
-              return widget.options.map((option) {
-                return CustomPopupMenuItem<VariableDialogOption>(
-                  value: option,
-                  child: Text(
-                    option.name,
-                  ),
-                );
-              }).toList();
-            },
-          ),
+            if (widget.options.isNotEmpty)
+              CustomPopupMenuButton<VariableDialogOption>(
+                child: const Icon(
+                  Icons.more_vert,
+                  color: Colors.black,
+                ),
+                onSelected: (val) {
+                  val.callback.call(widget.variable.value as VariableModel);
+                  widget.setState2(() {});
+                },
+                itemBuilder: (context) {
+                  return widget.options.map((option) {
+                    return CustomPopupMenuItem<VariableDialogOption>(
+                      value: option,
+                      child: Text(
+                        option.name,
+                      ),
+                    );
+                  }).toList();
+                },
+              ),
+
+            if (variable is VariableModel &&
+                variable.uiAttached &&
+                variable.deletable) ...[
+              const SizedBox(
+                width: 20,
+              ),
+              AppIconButton(
+                onPressed: () {
+                  widget.onDelete.call(variable);
+                  setState(() {});
+                },
+                icon: Icons.delete,
+                color: Colors.red,
+              )
+            ]
+          ],
+        ),
         if ((variable is VariableModel && variable.description != null))
           Container(
-            width: 200,
-            padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: AppColors.lightGrey,
+              borderRadius: BorderRadius.circular(4)
+            ),
+            padding: const EdgeInsets.all(4.0),
             child: Text(
               variable.description!,
-              style: AppFontStyle.roboto(12,
-                  color: Colors.black, fontWeight: FontWeight.w600),
+              style: AppFontStyle.roboto(13,
+                  color:Colors.grey.shade700, fontWeight: FontWeight.w600),
             ),
           ),
-        if (variable is VariableModel &&
-            variable.uiAttached &&
-            variable.deletable) ...[
-          const SizedBox(
-            width: 20,
-          ),
-          AppIconButton(
-            onPressed: () {
-              widget.onDelete.call(variable);
-              setState(() {});
-            },
-            icon: Icons.delete,
-            color: Colors.red,
-          )
-        ]
       ],
     );
   }
