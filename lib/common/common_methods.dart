@@ -33,7 +33,9 @@ void showToast(final String message, {bool error = false}) async {
         webBgColor: error ? '#ff0000' : '#00ff00');
   }
 }
-
+bool isKeyboardOpen(BuildContext context){
+  return MediaQuery.of(context).viewInsets.bottom>0;
+}
 Future<dynamic> showModelDialog(BuildContext context, Widget builder) async {
   return await showDialog(context: context, builder: (_) => builder);
 }

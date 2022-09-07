@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../common/common_methods.dart';
 import '../../common/compiler/code_processor.dart';
 import '../../common/compiler/fvb_function_variables.dart';
 import '../../common/custom_popup_menu_button.dart';
@@ -80,8 +81,7 @@ class ActionCodeDialog {
                               ? null
                               : (Responsive.isLargeScreen(context)
                                   ? 600
-                                  : (MediaQuery.of(context).size.height -
-                                      400))),
+                                  : double.infinity)),
                       padding: const EdgeInsets.all(10),
                       child: Column(
                         children: [
@@ -154,7 +154,10 @@ class ActionCodeDialog {
                               ),
                             ),
                           ),
+                          if(isKeyboardOpen(context)&&!(config?.singleLine??false))
+                            SizedBox(height: MediaQuery.of(context).viewInsets.bottom,)
                         ],
+
                       ),
                     ),
                   ),

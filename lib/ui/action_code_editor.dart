@@ -181,11 +181,11 @@ class _FVBCodeEditorState extends State<FVBCodeEditor> {
         _scrollController.jumpTo(offset);
       });
     }
-    final onError = (error, line) {
+    void onError(error, line) {
       consoleMessages.add(
           ConsoleMessage('$error at Line $line', ConsoleMessageType.error));
       _consoleChangeNotifier.value++;
-    };
+    }
     processor = CodeProcessor(
       consoleCallback: CodeProcessor.testConsoleCallback,
       onError: onError,
@@ -534,6 +534,7 @@ class _FVBCodeEditorState extends State<FVBCodeEditor> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if(!widget.config.singleLine&&!widget.config.string)
                 AppIconButton(
                     icon: Icons.format_align_center,
                     onPressed: () {

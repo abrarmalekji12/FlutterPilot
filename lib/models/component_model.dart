@@ -652,9 +652,7 @@ abstract class Component {
         }
       }
       for (final parameter in parameters) {
-        print('PM PARAM CODE FIND ${parameter.displayName}');
         final paramCode = parameter.code(clean);
-        print('PM PARAM CODE $paramCode');
         if (paramCode.isNotEmpty) {
           middle += '$paramCode,'.replaceAll(',,', ',');
         }
