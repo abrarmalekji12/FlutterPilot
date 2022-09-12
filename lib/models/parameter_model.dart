@@ -308,7 +308,7 @@ class SimpleParameter<T> extends Parameter {
       } else {
         if (T == double && result is int) {
           val = result.toDouble() as T;
-        } else if (result is T) {
+        } {
           val = result;
           if (val is FVBInstance) {
             return (val as FVBInstance).toDart();
