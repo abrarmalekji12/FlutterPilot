@@ -578,7 +578,7 @@ class _SimpleParameterWidgetState extends State<SimpleParameterWidget> {
     if (result is! FVBUndefined) {
       if (widget.parameter.type == double && result.runtimeType == int) {
         widget.parameter.val = (result as int).toDouble();
-      } else {
+      } else if (result.runtimeType == widget.parameter.type){
         widget.parameter.val = result;
       }
       if (widget.parameter.inputCalculateAs != null) {

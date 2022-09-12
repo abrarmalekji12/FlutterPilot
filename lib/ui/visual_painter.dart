@@ -29,16 +29,16 @@ class BoundaryPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     myPaint.color = Colors.blueAccent.withOpacity(0.6);
-    for (final boundary in boundaries) {
-      drawSelection(canvas, Colors.blueAccent, size, boundary);
-    }
+
 
     for (final boundary in hoverBoundaries) {
       if (!boundaries.contains(boundary)) {
         drawSelection(canvas, Colors.yellow.shade700, size, boundary);
       }
     }
-
+    for (final boundary in boundaries) {
+      drawSelection(canvas, Colors.blueAccent, size, boundary);
+    }
     if (errorBoundary != null) {
       myPaint.color = Colors.red;
       canvas.drawRect(errorBoundary!, myPaint);
