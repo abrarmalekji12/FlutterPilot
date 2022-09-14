@@ -55,6 +55,7 @@ abstract class FireBridge {
       'messagingSenderId': '1087783488343',
       'appId': '1:1087783488343:web:efb618e6387c69e3a88c12'
     }));
+    
     initialized = true;
   }
 
@@ -188,6 +189,12 @@ abstract class FireBridge {
     return favouriteModels;
   }
 
+  static Future<List<CustomComponent>> loadAllCustomComponents(final int userId) async {
+    await FirebaseFirestore.instance
+        .collection('us$userId')
+        .doc(Strings.kFlutterProject).collection();
+    return;
+  }
   static Future<void> addToFavourites(int userId, Component component,
       String projectName, double width, double height) async {
     await FirebaseFirestore.instance

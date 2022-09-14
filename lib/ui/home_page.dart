@@ -1,6 +1,6 @@
 import 'dart:async';
+import '../common/io_lib.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter_slider_drawer/flutter_slider_drawer.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart' as slidingUp;
 import '../bloc/error/error_bloc.dart';
@@ -21,6 +21,7 @@ import '../common/common_methods.dart';
 import '../common/context_popup.dart';
 import '../common/custom_animated_dialog.dart';
 import '../common/custom_drop_down.dart';
+import '../common/io_lib.dart';
 import '../common/logger.dart';
 import '../common/material_alert.dart';
 import '../common/responsive/responsive_widget.dart';
@@ -1500,6 +1501,9 @@ class _EditingViewState extends State<EditingView> {
   }
 
   void onHover(event) {
+    if(Platform.isAndroid||Platform.isIOS){
+      return;
+    }
     final List<Component> components = [];
     _componentOperationCubit.project!.rootComponent!
         .searchTappedComponent(event.localPosition, components);

@@ -2,18 +2,19 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../code_to_component.dart';
 import '../common/compiler/code_processor.dart';
 import '../common/compiler/fvb_class.dart';
 import '../common/compiler/fvb_function_variables.dart';
 import '../common/converter/string_operation.dart';
+import '../common/logger.dart';
 import '../cubit/component_operation/component_operation_cubit.dart';
 import '../cubit/visual_box_drawer/visual_box_cubit.dart';
-import 'operation_model.dart';
-import '../code_to_component.dart';
-import 'component_model.dart';
-import 'other_model.dart';
-import '../common/logger.dart';
 import '../enums.dart';
+import 'component_model.dart';
+import 'operation_model.dart';
+import 'other_model.dart';
 import 'parameter_info_model.dart';
 
 abstract class Parameter {
@@ -24,9 +25,7 @@ abstract class Parameter {
   ParameterInfo? info;
 
   Parameter(String? displayName, this.info, this.isRequired) {
-    this.displayName = (displayName != null
-        ? StringOperation.toNormalCase(displayName)
-        : null);
+    this.displayName = (displayName != null ? StringOperation.toNormalCase(displayName) : null);
   }
 
   get value;
@@ -48,8 +47,7 @@ abstract class Parameter {
         (this as ChoiceParameter).options[i].cloneOf(parameter.options[i]);
       }
       if (parameter.val != null) {
-        (this as ChoiceParameter).val = (this as ChoiceParameter)
-            .options[parameter.options.indexOf(parameter.val!)];
+        (this as ChoiceParameter).val = (this as ChoiceParameter).options[parameter.options.indexOf(parameter.val!)];
       } else {
         (this as ChoiceParameter).val = null;
       }
@@ -58,14 +56,12 @@ abstract class Parameter {
     } else if (parameter is ComplexParameter) {
       for (int i = 0; i < (this as ComplexParameter).params.length; i++) {
         (this as ComplexParameter).params[i].cloneOf(parameter.params[i]);
-        (this as ComplexParameter).enable= parameter.enable;
+        (this as ComplexParameter).enable = parameter.enable;
       }
     } else if (parameter is ListParameter) {
       (this as ListParameter).params.clear();
       for (final param in parameter.params) {
-        (this as ListParameter)
-            .params
-            .add((this as ListParameter).parameterGenerator()..cloneOf(param));
+        (this as ListParameter).params.add((this as ListParameter).parameterGenerator()..cloneOf(param));
       }
     } else if (parameter is CodeParameter) {
       (this as CodeParameter).actionCode = parameter.actionCode;
@@ -77,9 +73,7 @@ abstract class Parameter {
           (this as BooleanParameter).val = (parameter as BooleanParameter).val;
           break;
         case ComponentParameter:
-          (this as ComponentParameter)
-              .components
-              .addAll((parameter as ComponentParameter).components);
+          (this as ComponentParameter).components.addAll((parameter as ComponentParameter).components);
           break;
       }
     }
@@ -92,8 +86,7 @@ abstract class Parameter {
       return double.tryParse(code);
     } else if (T == String) {
       final codeValue = code;
-      final processed =
-          codeValue.replaceAll('\\\$', '\$').replaceAll('__quote__', '\'');
+      final processed = codeValue.replaceAll('\\\$', '\$').replaceAll('__quote__', '\'');
       if (processed.startsWith('\'') && processed.endsWith('\'')) {
         return processed.substring(1, processed.length - 1);
       }
@@ -103,12 +96,7 @@ abstract class Parameter {
       return Color(int.parse(colorString));
     } else if (T == ImageData) {
       return ImageData(
-          null,
-          code
-              .replaceAll('\'', '')
-              .replaceAll('"', '')
-              .replaceAll('\\\$', '\$')
-              .replaceAll('__quote__', '\''));
+          null, code.replaceAll('\'', '').replaceAll('"', '').replaceAll('\\\$', '\$').replaceAll('__quote__', '\''));
     }
     return code;
   }
@@ -152,10 +140,8 @@ abstract class Parameter {
     displayName = name;
   }
 
-  void withInnerNamedParamInfoAndDisplayName(
-      String name, String innerObjectName) {
-    info = InnerObjectParameterInfo(
-        innerObjectName: innerObjectName, namedIfHaveAny: name);
+  void withInnerNamedParamInfoAndDisplayName(String name, String innerObjectName) {
+    info = InnerObjectParameterInfo(innerObjectName: innerObjectName, namedIfHaveAny: name);
     displayName = name;
   }
 
@@ -186,8 +172,7 @@ abstract class Parameter {
                   NullParameter(displayName: nullParameterName),
                 );
           }
-          (this as ChoiceParameter).val = (this as ChoiceParameter)
-              .options[(this as ChoiceParameter).defaultValue];
+          (this as ChoiceParameter).val = (this as ChoiceParameter).options[(this as ChoiceParameter).defaultValue];
           break;
         case ComplexParameter:
           (this as ComplexParameter).enable = isRequired;
@@ -248,10 +233,8 @@ class BooleanParameter extends Parameter {
   process(String value, {CodeProcessor? processor}) {
     CodeProcessor.error = false;
 
-    return (processor ?? ComponentOperationCubit.processor).process<bool>(
-        CodeOperations.trim(value)!,
-        extendedError:
-            '${processor==null?ComponentOperationCubit.componentId:''} => ${displayName ?? ''}');
+    return (processor ?? ComponentOperationCubit.processor).process<bool>(CodeOperations.trim(value)!,
+        extendedError: '${processor == null ? ComponentOperationCubit.componentId : ''} => ${displayName ?? ''}');
   }
 
   @override
@@ -296,23 +279,25 @@ class SimpleParameter<T> extends Parameter {
   dynamic get value {
     final processor = ComponentOperationCubit.processor;
     val = null;
-    final result = compiler.code.isNotEmpty
-        ? process(compiler.code, processor: processor)
-        : null;
+    final result = compiler.code.isNotEmpty ? process(compiler.code, processor: processor) : null;
     if (result != null && result is! FVBUndefined) {
       if (T == Color) {
         val = hexToColor(result.toString()) as T?;
       } else if (T == ImageData) {
-        val =
-            ImageData(ComponentOperationCubit.bytesCache[result], result) as T;
+        val = ImageData(ComponentOperationCubit.bytesCache[result], result) as T;
       } else {
         if (T == double && result is int) {
           val = result.toDouble() as T;
-        } {
+        } else if (T == int && result is double) {
+          val = result.toInt() as T;
+        } else {
           val = result;
           if (val is FVBInstance) {
             return (val as FVBInstance).toDart();
           }
+        }
+        if (val is FVBInstance) {
+          return (val as FVBInstance).toDart();
         }
       }
     }
@@ -392,10 +377,7 @@ class SimpleParameter<T> extends Parameter {
 
   @override
   String code(bool clean) {
-    if (!isRequired &&
-        val == null &&
-        (compiler.code.isEmpty) &&
-        info?.getName() != null) {
+    if (!isRequired && val == null && (compiler.code.isEmpty) && info?.getName() != null) {
       return '';
     }
     String tempCode = '';
@@ -410,8 +392,7 @@ class SimpleParameter<T> extends Parameter {
           tempCode = '\'${tempCode.replaceAll("'", "\\'")}\''.replaceAll('\$', '\\\$');
         }
       } else if (T == Color) {
-        tempCode =
-            'hexToColor(${tempCode.startsWith('#') ? '\'$tempCode\'' : tempCode})';
+        tempCode = 'hexToColor(${tempCode.startsWith('#') ? '\'$tempCode\'' : tempCode})';
       } else if (T == ImageData) {
         tempCode = '\'assets/images/$tempCode\'';
       }
@@ -433,10 +414,8 @@ class SimpleParameter<T> extends Parameter {
         if (T == ImageData) {
           val = ImageData(
               null,
-              ComponentOperationCubit.processor.process<String>(compiler.code
-                  .replaceAll('\'', '')
-                  .replaceAll('\\\$', '\$')
-                  .replaceAll('__quote__', '\''))) as T;
+              ComponentOperationCubit.processor.process<String>(
+                  compiler.code.replaceAll('\'', '').replaceAll('\\\$', '\$').replaceAll('__quote__', '\''))) as T;
         }
       } else {
         val = getValueFromCode<T>(paramCode);
@@ -449,12 +428,10 @@ class SimpleParameter<T> extends Parameter {
   }
 
   process(String value, {CodeProcessor? processor}) {
-    final code =
-        (T == String || T == ImageData) ? value : CodeOperations.trim(value)!;
+    final code = (T == String || T == ImageData) ? value : CodeOperations.trim(value)!;
     CodeProcessor.error = false;
-    return (processor ?? ComponentOperationCubit.processor).process<T>(code,
-        extendedError:
-            '${ComponentOperationCubit.componentId} => ${displayName ?? ''}');
+    return (processor ?? ComponentOperationCubit.processor)
+        .process<T>(code, extendedError: '${ComponentOperationCubit.componentId} => ${displayName ?? ''}');
   }
 }
 
@@ -480,8 +457,7 @@ class CodeParameter<T> extends Parameter {
   bool fromCode(String code) {
     if (code.isNotEmpty) {
       final extractedCode = info!.fromCode(code);
-      actionCode = String.fromCharCodes(
-          base64Decode(extractedCode.substring(1, extractedCode.length - 1)));
+      actionCode = String.fromCharCodes(base64Decode(extractedCode.substring(1, extractedCode.length - 1)));
     }
     return true;
   }
@@ -489,12 +465,10 @@ class CodeParameter<T> extends Parameter {
   @override
   String code(bool clean) {
     if (!clean) {
-      return info?.code('"${base64Encode(actionCode.codeUnits)}"') ??
-          '"${base64Encode(actionCode.codeUnits)}"';
+      return info?.code('"${base64Encode(actionCode.codeUnits)}"') ?? '"${base64Encode(actionCode.codeUnits)}"';
     } else {
       //toDartCode?.call(actionCode) ?? actionCode
-      return info?.code(
-              '${StringOperation.toCamelCase(displayName!)}${actionCode.hashCode}()') ??
+      return info?.code('${StringOperation.toCamelCase(displayName!)}${actionCode.hashCode}()') ??
           '${StringOperation.toCamelCase(displayName!)}${actionCode.hashCode}()';
     }
   }
@@ -550,9 +524,8 @@ class ListParameter<T> extends Parameter {
     String parametersCode = '[';
     for (final parameter in params) {
       if (parameter.info is InnerObjectParameterInfo) {
-        parameter.withInfo(InnerObjectParameterInfo(
-            innerObjectName:
-                (parameter.info as InnerObjectParameterInfo).innerObjectName));
+        parameter.withInfo(
+            InnerObjectParameterInfo(innerObjectName: (parameter.info as InnerObjectParameterInfo).innerObjectName));
       }
       parametersCode += '${(parameter).code(clean)},'.replaceAll(',,', ',');
     }
@@ -566,8 +539,7 @@ class ListParameter<T> extends Parameter {
   @override
   bool fromCode(String code) {
     final processedCode = info?.fromCode(code) ?? code;
-    final valueList = CodeOperations.splitBy(
-        processedCode.substring(1, processedCode.length - 1));
+    final valueList = CodeOperations.splitBy(processedCode.substring(1, processedCode.length - 1));
     if (valueList.isEmpty) {
       return true;
     }
@@ -601,11 +573,7 @@ class ListParameter<T> extends Parameter {
     if (params.isEmpty && !isRequired) {
       return null;
     }
-    return params
-        .map((e) => e.value)
-        .where((element) => element != null)
-        .map<T>((e) => e)
-        .toList(growable: false);
+    return params.map((e) => e.value).where((element) => element != null).map<T>((e) => e).toList(growable: false);
   }
 }
 
@@ -649,15 +617,13 @@ class ChoiceValueParameter extends Parameter {
       if (info?.optional ?? false) {
         return '';
       } else {
-        return info!.code(
-            getCode != null ? getCode!.call(rawValue) : toValue.toString());
+        return info!.code(getCode != null ? getCode!.call(rawValue) : toValue.toString());
       }
     }
     if (info == null || info is SimpleParameterInfo) {
       return getCode != null ? getCode!.call(rawValue) : toValue.toString();
     }
-    return info!
-        .code(getCode != null ? getCode!.call(rawValue) : toValue.toString());
+    return info!.code(getCode != null ? getCode!.call(rawValue) : toValue.toString());
   }
 
   @override
@@ -665,13 +631,11 @@ class ChoiceValueParameter extends Parameter {
     final paramCode = (info?.fromCode(code) ?? code);
     if (paramCode != 'null') {
       if (fromCodeToKey == null) {
-        final option = options.entries
-            .firstWhere((element) => element.value.toString() == paramCode);
+        final option = options.entries.firstWhere((element) => element.value.toString() == paramCode);
         val = option.key;
       } else {
         final code = fromCodeToKey!.call(paramCode);
-        final option =
-            options.entries.firstWhere((element) => element.key == code);
+        final option = options.entries.firstWhere((element) => element.key == code);
         val = option.key;
       }
     } else {
@@ -810,9 +774,7 @@ class ChoiceParameter extends Parameter {
     if (paramCode.isEmpty ||
         (info != null &&
             (info is NamedParameterInfo ||
-                (info is InnerObjectParameterInfo &&
-                    (info as InnerObjectParameterInfo).namedIfHaveAny !=
-                        null)) &&
+                (info is InnerObjectParameterInfo && (info as InnerObjectParameterInfo).namedIfHaveAny != null)) &&
             paramCode == 'null')) {
       return '';
     }
@@ -834,10 +796,8 @@ class ChoiceParameter extends Parameter {
         for (final parameter in options) {
           logger('TESTING for param ${parameter.displayName}');
           if ((parameter.info is InnerObjectParameterInfo) &&
-              (paramCode.startsWith(
-                      '${(parameter.info as InnerObjectParameterInfo).innerObjectName}[') ||
-                  paramCode.startsWith(
-                      '${(parameter.info as InnerObjectParameterInfo).innerObjectName}('))) {
+              (paramCode.startsWith('${(parameter.info as InnerObjectParameterInfo).innerObjectName}[') ||
+                  paramCode.startsWith('${(parameter.info as InnerObjectParameterInfo).innerObjectName}('))) {
             val = parameter;
             break;
           }
@@ -857,21 +817,14 @@ class ChoiceParameter extends Parameter {
               bool found = false;
               for (final param in parameter.params) {
                 final tempCode = param.info?.code('_value_', allowEmpty: true);
-                final infoCode =
-                    tempCode?.substring(0, tempCode.indexOf('_value_'));
+                final infoCode = tempCode?.substring(0, tempCode.indexOf('_value_'));
 
                 if (param is ListParameter) {
                   if (childCode.startsWith('[') ||
-                      childCode.startsWith(param
-                              .parameterGenerator()
-                              .info
-                              ?.code('', allowEmpty: true) ??
-                          'N/A')) {
+                      childCode.startsWith(param.parameterGenerator().info?.code('', allowEmpty: true) ?? 'N/A')) {
                     found = true;
                   }
-                } else if (infoCode != null &&
-                    infoCode.isNotEmpty &&
-                    childCode.startsWith(infoCode)) {
+                } else if (infoCode != null && infoCode.isNotEmpty && childCode.startsWith(infoCode)) {
                   found = true;
                 }
               }
@@ -903,11 +856,7 @@ class ComplexParameter extends Parameter {
   final dynamic Function(List<Parameter>) evaluate;
 
   ComplexParameter(
-      {String? name,
-      required this.params,
-      required this.evaluate,
-      ParameterInfo? info,
-      bool required = true})
+      {String? name, required this.params, required this.evaluate, ParameterInfo? info, bool required = true})
       : super(name, info, required) {
     enable = required;
   }
@@ -1018,9 +967,7 @@ class ConstantValueParameter extends Parameter {
       }
       return constantValueString;
     }
-    return info!.code(paramType == ParamType.string
-        ? '\'$constantValueString}\''
-        : constantValueString);
+    return info!.code(paramType == ParamType.string ? '\'$constantValueString}\'' : constantValueString);
   }
 
   @override
@@ -1034,14 +981,11 @@ class ConstantValueParameter extends Parameter {
 }
 
 class NullParameter extends Parameter {
-  NullParameter(
-      {String? displayName, ParameterInfo? info, bool required = false})
-      : super(displayName, info, required);
+  NullParameter({String? displayName, ParameterInfo? info, bool required = false}) : super(displayName, info, required);
 
   @override
   String code(bool clean) {
-    if ((info is InnerObjectParameterInfo &&
-            (info as InnerObjectParameterInfo).namedIfHaveAny == null) ||
+    if ((info is InnerObjectParameterInfo && (info as InnerObjectParameterInfo).namedIfHaveAny == null) ||
         info == null) {
       return 'null';
     }
@@ -1059,8 +1003,7 @@ class NullParameter extends Parameter {
 }
 
 class CallbackParameter extends Parameter {
-  CallbackParameter(
-      {String? displayName, ParameterInfo? info, bool required = false})
+  CallbackParameter({String? displayName, ParameterInfo? info, bool required = false})
       : super(displayName, info, required);
 
   @override
@@ -1119,15 +1062,12 @@ class ComponentParameter extends Parameter {
   bool fromCode(String code) {
     final paramCode = info?.fromCode(code) ?? code;
     if (multiple) {
-      final componentCodes =
-          CodeOperations.splitBy(paramCode.substring(1, paramCode.length - 1));
+      final componentCodes = CodeOperations.splitBy(paramCode.substring(1, paramCode.length - 1));
       for (final compCode in componentCodes) {
-        components.add(Component.fromCode(
-            compCode, ComponentOperationCubit.currentProject!)!);
+        components.add(Component.fromCode(compCode, ComponentOperationCubit.currentProject!)!);
       }
     } else {
-      components.add(Component.fromCode(
-          paramCode, ComponentOperationCubit.currentProject!)!);
+      components.add(Component.fromCode(paramCode, ComponentOperationCubit.currentProject!)!);
     }
     return true;
   }
