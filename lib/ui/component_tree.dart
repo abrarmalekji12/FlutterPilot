@@ -567,6 +567,7 @@ class _ComponentTreeState extends State<ComponentTree> {
                                     ],
                                   ),
                                 ),
+
                                 for (final CustomComponent comp
                                     in _componentOperationCubit
                                         .project!.customComponents) ...[
