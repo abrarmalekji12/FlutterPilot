@@ -48,19 +48,19 @@ abstract class FireBridge {
     }
     await Firebase.initializeApp(
         options: FirebaseOptions.fromMap(const {
-      'apiKey': 'AIzaSyDOJQUOBFfomuLrYK6oCXr8-uJMXo-AByg',
-      'authDomain': 'flutter-visual-builder-2.firebaseapp.com',
-      'projectId': 'flutter-visual-builder-2',
-      'storageBucket': 'flutter-visual-builder-2.appspot.com',
-      'messagingSenderId': '1087783488343',
-      'appId': '1:1087783488343:web:efb618e6387c69e3a88c12'
-    }));
-    
+          'apiKey': 'AIzaSyDOJQUOBFfomuLrYK6oCXr8-uJMXo-AByg',
+          'authDomain': 'flutter-visual-builder-2.firebaseapp.com',
+          'projectId': 'flutter-visual-builder-2',
+          'storageBucket': 'flutter-visual-builder-2.appspot.com',
+          'messagingSenderId': '1087783488343',
+          'appId': '1:1087783488343:web:efb618e6387c69e3a88c12'
+        }));
+
     initialized = true;
   }
 
-  static Future<void> saveComponent(
-      FlutterProject project, CustomComponent customComponent,
+  static Future<void> saveComponent(FlutterProject project,
+      CustomComponent customComponent,
       {String? newName}) async {
     if (newName != null && newName != customComponent.name) {
       final String type;
@@ -74,31 +74,23 @@ abstract class FireBridge {
       }
 
       await FirePath.customComponentReference(
-              project.userId, project.docId!, newName)
-          .set({
-        'code': CodeOperations.trim(customComponent.root?.code(clean: false)),
-        'name': newName,
-        'type': type,
-        'action_code': customComponent.actionCode,
-        'variables': customComponent.variables.values
-            .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
-            .map((e) => e.toJson())
-            .toList(),
-      });
+          project.userId, project.docId!, newName)
+          .set(customComponent.toJson());
 
       await FirePath.customComponentReference(
-              project.userId, project.docId!, customComponent.name)
+          project.userId, project.docId!, customComponent.name)
           .delete();
       customComponent.name = newName;
     } else {
       await FirePath.customComponentReference(
-              project.userId, project.docId!, customComponent.name)
+          project.userId, project.docId!, customComponent.name)
           .update({
         'code': CodeOperations.trim(customComponent.root?.code(clean: false)),
         'name': customComponent.name,
         'action_code': customComponent.actionCode,
         'variables': customComponent.variables.values
-            .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
+            .where((element) =>
+        element is VariableModel && element.uiAttached && !element.isDynamic)
             .map((e) => e.toJson())
             .toList(),
       });
@@ -114,13 +106,14 @@ abstract class FireBridge {
       type = 'stateful';
     }
     await FirePath.customComponentReference(
-            userId, flutterProject.docId!, customComponent.name)
+        userId, flutterProject.docId!, customComponent.name)
         .set({
       'name': customComponent.name,
       'action_code': customComponent.actionCode,
       'code': CodeOperations.trim(customComponent.root?.code(clean: false)),
       'variables': customComponent.variables.values
-          .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
+          .where((element) =>
+      element is VariableModel && element.uiAttached && !element.isDynamic)
           .map((e) => e.toJson())
           .toList(),
       'type': type
@@ -132,7 +125,7 @@ abstract class FireBridge {
   static Future<void> deleteGlobalCustomComponent(int userId,
       FlutterProject flutterProject, CustomComponent customComponent) async {
     await FirePath.customComponentReference(
-            userId, flutterProject.docId!, customComponent.name)
+        userId, flutterProject.docId!, customComponent.name)
         .delete();
     logger('=== FIRE-BRIDGE == deleteGlobalCustomComponent ==');
   }
@@ -167,6 +160,54 @@ abstract class FireBridge {
     }
   }
 
+  static Future<void> moveDocument(List<DocData> fromData, List<DocData> toData,
+      {bool deleteOld = true, Map<
+          String,
+          dynamic>? additionalData}) async {
+    final Map<String, dynamic>? data;
+    late DocumentReference reference =
+    FirebaseFirestore.instance.collection(fromData.first.collectId).doc(
+        fromData.first.docId);
+    for (final doc in fromData.sublist(1)) {
+      reference = reference.collection(doc.collectId).doc(doc.docId);
+    }
+    data = (await reference.get()).data();
+    late DocumentReference destReference =
+    FirebaseFirestore.instance.collection(toData.first.collectId).doc(
+        toData.first.docId);
+    for (final doc in toData.sublist(1)) {
+      destReference = destReference.collection(doc.collectId).doc(doc.docId);
+    }
+    await destReference.set(data..addAll(additionalData ?? {}));
+    if (deleteOld) {
+      await reference.delete();
+    }
+  }
+
+  static Future<void> moveCollection(List<DocData> fromData,
+      List<DocData> toData,
+      {bool deleteOld = true, Map<String, dynamic>? additionalData}) async {
+    final List<QueryDocumentSnapshot>? data;
+    late CollectionReference reference =
+    FirebaseFirestore.instance.collection(fromData.first.collectId);
+    for (final doc in fromData.sublist(1)) {
+      reference = reference.doc(doc.docId).collection(doc.collectId);
+    }
+    data = (await reference.get()).docs;
+    late CollectionReference destReference =
+    FirebaseFirestore.instance.collection(toData.first.collectId);
+    for (final doc in toData.sublist(1)) {
+      destReference = destReference.doc(doc.docId).collection(doc.collectId);
+    }
+    for (final QueryDocumentSnapshot doc in data ?? []) {
+      await destReference.doc(doc.id).set(doc.data()
+        ..addAll(additionalData ?? {}));
+      if (deleteOld) {
+        await reference.doc(doc.id).delete();
+      }
+    }
+  }
+
   static Future<List<FavouriteModel>> loadFavourites(final int userId) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot;
     snapshot = await FirebaseFirestore.instance
@@ -189,17 +230,21 @@ abstract class FireBridge {
     return favouriteModels;
   }
 
-  static Future<List<CustomComponent>> loadAllCustomComponents(final int userId) async {
-    await FirebaseFirestore.instance
-        .collection('us$userId')
-        .doc(Strings.kFlutterProject).collection();
-    return;
+  static Future<List<CustomComponent>> loadAllCustomComponents(
+      final int userId) async {
+    // await FirebaseFirestore.instance
+    //     .collection('us$userId')
+    //     .doc(Strings.kFlutterProject).collection();
+    return [];
   }
+
   static Future<void> addToFavourites(int userId, Component component,
       String projectName, double width, double height) async {
     await FirebaseFirestore.instance
         .collection('us$userId|${Strings.kFavourites}')
-        .doc('${DateTime.now().millisecondsSinceEpoch}')
+        .doc('${DateTime
+        .now()
+        .millisecondsSinceEpoch}')
         .set({
       'code': CodeOperations.trim(component.code(clean: false)),
       'id': component.id,
@@ -209,8 +254,8 @@ abstract class FireBridge {
     });
   }
 
-  static Future<void> removeFromFavourites(
-      int userId, Component component) async {
+  static Future<void> removeFromFavourites(int userId,
+      Component component) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('us$userId|${Strings.kFavourites}')
         .where('id', isEqualTo: component.id)
@@ -220,8 +265,8 @@ abstract class FireBridge {
     }
   }
 
-  static Future<AuthResponse> registerUser(
-      String userName, String password) async {
+  static Future<AuthResponse> registerUser(String userName,
+      String password) async {
     // final usersMatched=await FirebaseFirestore.instance
     //     .collection('users')
     //     .where('username', isEqualTo: userName).get();
@@ -261,8 +306,7 @@ abstract class FireBridge {
   }
 
   static Future<List<FlutterProject>> loadAllFlutterProjects(
-    int userId,
-  ) async {
+      int userId,) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProjectInfo)
@@ -273,19 +317,20 @@ abstract class FireBridge {
     final List<FlutterProject> projectList = [];
     final data = snapshot.data()!;
     for (final projectName in data['projects'] ?? []) {
-      projectList.add(FlutterProject(projectName, userId, null,imageList: []));
+      projectList.add(FlutterProject(projectName, userId, null, imageList: []));
     }
     return projectList;
   }
 
-  static Future<void> saveFlutterProject(
-      int userId, FlutterProject project) async {
+  static Future<void> saveFlutterProject(int userId,
+      FlutterProject project) async {
     final List<CustomComponent> components = project.customComponents;
     final projectInfo = <String, dynamic>{
       'project_name': project.name,
       'root': CodeOperations.trim(project.rootComponent?.code(clean: false)),
       'variables': project.variables.values
-          .where((element) => (element is VariableModel) && element.uiAttached&&!element.isDynamic)
+          .where((element) =>
+      (element is VariableModel) && element.uiAttached && !element.isDynamic)
           .map((element) => element.toJson())
           .toList(growable: false),
       // 'models': project.models.map((e) => e.toJson()).toList(growable: false),
@@ -301,7 +346,7 @@ abstract class FireBridge {
         .collection(project.name)
         .add(projectInfo);
     final jsonList =
-        project.uiScreens.map((e) => e.toJson()).toList(growable: false);
+    project.uiScreens.map((e) => e.toJson()).toList(growable: false);
     for (final screenJson in jsonList) {
       await FirebaseFirestore.instance
           .collection('us$userId')
@@ -323,7 +368,7 @@ abstract class FireBridge {
           break;
       }
       await FirePath.customComponentReference(
-              userId, project.docId!, component.name)
+          userId, project.docId!, component.name)
           .set({
         'name': component.name,
         'type': type,
@@ -355,8 +400,8 @@ abstract class FireBridge {
   }
 
   static Future<Optional<FlutterProject, ProjectLoadErrorModel>>
-      loadFlutterProject(int userId, String name,
-          {bool ifPublic = false}) async {
+  loadFlutterProject(int userId, String name,
+      {bool ifPublic = false}) async {
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('us$userId')
@@ -397,7 +442,7 @@ abstract class FireBridge {
       // }
       ComponentOperationCubit.currentProject = flutterProject;
       documents.retainWhere(
-          (element) => !element.data().containsKey('project_name'));
+              (element) => !element.data().containsKey('project_name'));
 
       // for (final modelJson in projectInfo['screens'] ?? []) {
       //   final screen = UIScreen.fromJson(modelJson, flutterProject);
@@ -405,15 +450,26 @@ abstract class FireBridge {
       // }
 
       final customDocs = await FirePath.customComponentsReferenceByProjectName(
-              userId, flutterProject.docId!)
+          userId, flutterProject.docId!)
           .get();
+      if (customDocs.docs.isNotEmpty) {
+        moveCollection([
+          DocData('us$userId', ''),
+          DocData('Custom|${flutterProject.docId}', Strings.kFlutterProject)
+        ], [
+          DocData('us$userId', ''),
+          DocData('Custom', Strings.kFlutterProject)
+        ],additionalData: {
+          'project':flutterProject.name
+        });
+      }
       for (final screenDoc in documents) {
         final screen = UIScreen.fromJson(screenDoc.data(), flutterProject);
         flutterProject.uiScreens.add(screen);
       }
       for (final doc in customDocs.docs) {
         final Map<String, dynamic> componentBody =
-            doc.data()! as Map<String, dynamic>;
+        doc.data()! as Map<String, dynamic>;
         if (componentBody['type'] == 'stateless') {
           flutterProject.customComponents
               .add(StatelessComponent.fromJson(componentBody));
@@ -424,7 +480,8 @@ abstract class FireBridge {
       }
 
       if (projectInfo['current_screen'] != null) {
-        bool initializedMain = false, initializedCurrent = false;
+        bool initializedMain = false,
+            initializedCurrent = false;
         for (final screen in flutterProject.uiScreens) {
           if (screen.name == projectInfo['main_screen']) {
             flutterProject.mainScreen = screen;
@@ -461,7 +518,7 @@ abstract class FireBridge {
 
       for (int i = 0; i < customDocs.docs.length; i++) {
         final Map<String, dynamic> componentBody =
-            customDocs.docs[i].data()! as Map<String, dynamic>;
+        customDocs.docs[i].data()! as Map<String, dynamic>;
         flutterProject.customComponents[i].root = componentBody['code'] != null
             ? Component.fromCode(componentBody['code']!, flutterProject)
             : null;
@@ -547,7 +604,7 @@ abstract class FireBridge {
     final response = await FirebaseFirestore.instance
         .collection('users')
         .where('uid', isEqualTo: loginResponse.user!.uid)
-        // .where('password', isEqualTo: password)
+    // .where('password', isEqualTo: password)
         .get();
     if (response.docs.isEmpty || !response.docs[0].exists) {
       return AuthResponse.right(
@@ -558,8 +615,8 @@ abstract class FireBridge {
     return AuthResponse.left(data['userId']);
   }
 
-  static Future<void> uploadImage(
-      int userId, String projectName, ImageData imageData) async {
+  static Future<void> uploadImage(int userId, String projectName,
+      ImageData imageData) async {
     await FirebaseFirestore.instance
         .collection('us$userId|${Strings.kImages}')
         .add({
@@ -668,8 +725,8 @@ abstract class FireBridge {
     logger('=== FIRE-BRIDGE == addVariable ==');
   }
 
-  static Future<void> updateVariable(
-      final int userId, final FlutterProject project) async {
+  static Future<void> updateVariable(final int userId,
+      final FlutterProject project) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -677,15 +734,16 @@ abstract class FireBridge {
         .doc(project.docId)
         .update({
       'variables': project.variables.values
-          .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
+          .where((element) =>
+      element is VariableModel && element.uiAttached && !element.isDynamic)
           .map((e) => e.toJson())
           .toList(growable: false)
     });
     logger('=== FIRE-BRIDGE == update variable ==');
   }
 
-  static Future<void> updateUIScreenVariable(
-      final int userId, final FlutterProject project) async {
+  static Future<void> updateUIScreenVariable(final int userId,
+      final FlutterProject project) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -693,23 +751,23 @@ abstract class FireBridge {
         .doc(project.currentScreen.name)
         .update({
       'variables': project.currentScreen.variables.values
-          .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
+          .where((element) =>
+      element is VariableModel && element.uiAttached && !element.isDynamic)
           .map((e) => e.toJson())
           .toList(growable: false)
     });
     logger('=== FIRE-BRIDGE == update variable ==');
   }
 
-  static Future<void> updateVariableForCustomComponent(
-    final int userId,
-    final FlutterProject project,
-    final CustomComponent component,
-  ) async {
+  static Future<void> updateVariableForCustomComponent(final int userId,
+      final FlutterProject project,
+      final CustomComponent component,) async {
     await FirePath.customComponentReference(
-            project.userId, project.docId!, component.name)
+        project.userId, project.docId!, component.name)
         .update({
       'variables': component.variables.values
-          .where((element) => element is VariableModel && element.uiAttached&&!element.isDynamic)
+          .where((element) =>
+      element is VariableModel && element.uiAttached && !element.isDynamic)
           .map((e) => e.toJson())
           .toList(growable: false)
     });
@@ -726,8 +784,8 @@ abstract class FireBridge {
         .update({'device': device});
   }
 
-  static Future<void> updateSettings(
-      final int userId, final FlutterProject project) async {
+  static Future<void> updateSettings(final int userId,
+      final FlutterProject project) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -736,8 +794,8 @@ abstract class FireBridge {
         .update({'settings': project.settings.toJson()});
   }
 
-  static Future<void> updateCurrentScreen(
-      int userId, final FlutterProject project) async {
+  static Future<void> updateCurrentScreen(int userId,
+      final FlutterProject project) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -746,8 +804,8 @@ abstract class FireBridge {
         .update({'current_screen': project.currentScreen.name});
   }
 
-  static Future<void> updateMainScreen(
-      int userId, final FlutterProject project) async {
+  static Future<void> updateMainScreen(int userId,
+      final FlutterProject project) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -756,8 +814,8 @@ abstract class FireBridge {
         .update({'main_screen': project.currentScreen.name});
   }
 
-  static Future<void> updateProjectValue(
-      final FlutterProject project, String key, dynamic value) async {
+  static Future<void> updateProjectValue(final FlutterProject project,
+      String key, dynamic value) async {
     await FirebaseFirestore.instance
         .collection('us${project.userId}')
         .doc(Strings.kFlutterProject)
@@ -766,8 +824,8 @@ abstract class FireBridge {
         .update({key: value});
   }
 
-  static Future<void> updateActionCode(
-      int userId, final FlutterProject project) async {
+  static Future<void> updateActionCode(int userId,
+      final FlutterProject project) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -776,8 +834,8 @@ abstract class FireBridge {
         .update({'action_code': project.actionCode});
   }
 
-  static Future<void> updateScreenActionCode(
-      int userId, final FlutterProject project) async {
+  static Future<void> updateScreenActionCode(int userId,
+      final FlutterProject project) async {
     await FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -789,7 +847,7 @@ abstract class FireBridge {
   static Future<void> updateCustomComponentActionCode(int userId,
       final FlutterProject project, final CustomComponent component) async {
     await FirePath.customComponentReference(
-            project.userId, project.docId!, component.name)
+        project.userId, project.docId!, component.name)
         .update({
       'action_code': component.actionCode,
     });
@@ -833,8 +891,7 @@ abstract class FireBridge {
     logger('=== FIRE-BRIDGE == addUIScreen ==');
   }
 
-  static Future<void> updateScreenRootComponent(
-      final int userId,
+  static Future<void> updateScreenRootComponent(final int userId,
       final String projectName,
       final UIScreen uiScreen,
       final Component component) async {
@@ -867,8 +924,8 @@ abstract class FireBridge {
 }
 
 class FirePath {
-  static DocumentReference customComponentReference(
-      int userId, String projectId, String customComponentName) {
+  static DocumentReference customComponentReference(int userId,
+      String projectId, String customComponentName) {
     return FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -876,8 +933,8 @@ class FirePath {
         .doc(customComponentName);
   }
 
-  static CollectionReference customComponentsReferenceByProjectName(
-      int userId, String projectId) {
+  static CollectionReference customComponentsReferenceByProjectName(int userId,
+      String projectId) {
     return FirebaseFirestore.instance
         .collection('us$userId')
         .doc(Strings.kFlutterProject)
@@ -928,4 +985,11 @@ class Optional<A, B> {
   B get right {
     return b!;
   }
+}
+
+class DocData {
+  final String collectId;
+  final String docId;
+
+  DocData(this.collectId, this.docId);
 }

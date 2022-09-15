@@ -52,7 +52,7 @@ class ComponentController extends ChangeNotifier {
 
 final Map<String, CodeProcessor> processorWithComp = {};
 final List<String> refresherUsed = [];
-final Map<String,bool> importFiles={};
+final Map<String, bool> importFiles = {};
 
 abstract class Component {
   static final Random random = Random.secure();
@@ -182,9 +182,7 @@ abstract class Component {
             // logger('model setted ${(this as BuilderComponent).model?.name}');
             break;
           case 'len':
-            (this as BuilderComponent)
-                .parameters[0]
-                .fromCode(fieldList[1]);
+            (this as BuilderComponent).parameters[0].fromCode(fieldList[1]);
             break;
           case 'action':
             if (this is Clickable) {
@@ -407,7 +405,7 @@ abstract class Component {
         builder: (context, state) {
           ComponentOperationCubit.processor =
               ProcessorProvider.maybeOf(context)!;
-          ComponentOperationCubit.componentId=id;
+          ComponentOperationCubit.componentId = id;
           if (this is Clickable) {
             (this as Clickable).test();
           }
@@ -418,7 +416,7 @@ abstract class Component {
       );
     }
     ComponentOperationCubit.processor = ProcessorProvider.maybeOf(context)!;
-    ComponentOperationCubit.componentId=id;
+    ComponentOperationCubit.componentId = id;
     if (this is Clickable) {
       (this as Clickable).test();
     }
@@ -611,16 +609,15 @@ abstract class Component {
   String parametersCode(bool clean) {
     String middle = '';
     try {
-
       if (clean && (this is Controller)) {
         middle = 'key:GlobalObjectKey("$id"),';
       }
       if (this is Clickable && clean) {
         final code1 = (this as Clickable)
-            .actionList
-            .firstWhereOrNull((element) => element is CustomAction)
-            ?.arguments[0]
-            ?.toString() ??
+                .actionList
+                .firstWhereOrNull((element) => element is CustomAction)
+                ?.arguments[0]
+                ?.toString() ??
             '';
         if (code1.isNotEmpty) {
           int start = 0;
@@ -632,20 +629,20 @@ abstract class Component {
             if (openIndex == -1) {
               break;
             }
-            final closeIndex = CodeOperations.findCloseBracket(code1, openIndex,
+            final closeIndex = CodeOperations.findCloseBracket(
+                code1,
+                openIndex,
                 CodeProcessor.curlyBracketOpen,
                 CodeProcessor.curlyBracketClose);
             start += closeIndex + 1;
             final functionBody = code1.substring(openIndex + 1, closeIndex);
             middle +=
-            '${function.name}:${function.getCleanInstanceCode(functionBody)},';
+                '${function.name}:${function.getCleanInstanceCode(functionBody)},';
           }
         } else if ((this as Clickable).functions.isNotEmpty) {
           final function = (this as Clickable).functions.first;
           middle +=
-          '${function.name}:${function.getCleanInstanceCode(
-              (this as Clickable).actionList.map((e) => '${e.code()};').join(
-                  ' '))},';
+              '${function.name}:${function.getCleanInstanceCode((this as Clickable).actionList.map((e) => '${e.code()};').join(' '))},';
         }
       }
       for (final parameter in parameters) {
@@ -687,7 +684,7 @@ abstract class Component {
       //     }
       //   }
       // }
-    }catch(e){
+    } catch (e) {
       print('PARAMTETERS ERROR ${e.toString()}');
     }
     return middle;
@@ -996,18 +993,18 @@ mixin Clickable {
 
   void methods(List<FVBFunction> function) {
     functions.addAll(function);
-    _processor=CodeProcessor.build(name: (this as Component).name);
+    _processor = CodeProcessor.build(name: (this as Component).name);
   }
 
   void test() {
-    _processor.parentProcessor=ComponentOperationCubit.processor;
+    _processor.parentProcessor = ComponentOperationCubit.processor;
     final processor = CodeProcessor(
         scopeName: (this as Component).name,
-        parentProcessor:    _processor.parentProcessor!.clone(
+        parentProcessor: _processor.parentProcessor!.clone(
             CodeProcessor.testConsoleCallback, CodeProcessor.testOnError),
         consoleCallback: CodeProcessor.testConsoleCallback,
         onError: CodeProcessor.testOnError);
-    for(final fun1 in functions) {
+    for (final fun1 in functions) {
       processor.functions.remove(fun1.name);
     }
     for (final ActionModel action in actionList) {
@@ -1017,8 +1014,6 @@ mixin Clickable {
         _processor.executeCode(action.arguments[0], declarativeOnly: true);
       }
     }
-
-
   }
 
   String get defaultCode {
@@ -1240,15 +1235,12 @@ abstract class CustomNamedHolder extends Component {
       for (final child in childrenMap.keys) {
         if (childrenMap[child]?.isNotEmpty ?? false) {
           childrenCode +=
-              '$child:[${childrenMap[child]!.map((e) =>
-                  (e.code(clean: clean) + ',').replaceAll(',,', ',')).join(
-                  '')}],'
+              '$child:[${childrenMap[child]!.map((e) => (e.code(clean: clean) + ',').replaceAll(',,', ',')).join('')}],'
                   .replaceAll(',,', ',');
         }
       }
       return withState('$name($middle$childrenCode)', clean);
-    }
-    catch(e){
+    } catch (e) {
       print('$name ${e.toString()}');
     }
     return '';
@@ -1341,12 +1333,12 @@ abstract class CustomComponent extends Component {
       processor.functions['setState'] = FVBFunction('setState', null, [
         FVBArgument('callback', dataType: DataType.fvbFunction)
       ], dartCall: (arguments, instance) {
-
-        if(CodeProcessor.operationType!=OperationType.checkOnly) {
+        if (CodeProcessor.operationType != OperationType.checkOnly) {
           (arguments[0] as FVBFunction).execute(processor, null, []);
-          (arguments[1] as CodeProcessor).consoleCallback.call('api:refresh|$id');
+          (arguments[1] as CodeProcessor)
+              .consoleCallback
+              .call('api:refresh|$id');
         }
-
       });
     }
     processor.variables.addAll((variables ?? [])
@@ -1415,7 +1407,6 @@ abstract class CustomComponent extends Component {
 
   @override
   Widget build(BuildContext context) {
-
     if (RuntimeProvider.of(context) == RuntimeMode.edit) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         lookForUIChanges(context);
@@ -1579,6 +1570,23 @@ abstract class CustomComponent extends Component {
         return (component as CustomComponent).root;
     }
     return null;
+  }
+
+  Map<String, dynamic> toJson({String? newName}) {
+    return {
+      'code': CodeOperations.trim(root?.code(clean: false)),
+      'name': newName ?? name,
+      'project': ComponentOperationCubit.currentProject!.name,
+      'type': type,
+      'action_code': actionCode,
+      'variables': variables.values
+          .where((element) =>
+              element is VariableModel &&
+              element.uiAttached &&
+              !element.isDynamic)
+          .map((e) => e.toJson())
+          .toList(),
+    };
   }
 }
 
