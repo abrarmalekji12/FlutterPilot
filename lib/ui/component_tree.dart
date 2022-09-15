@@ -127,6 +127,21 @@ class _ComponentTreeState extends State<ComponentTree> {
                             size: 20,
                           );
                         } else if (state is ComponentOperationErrorState) {
+                          if(state.type!=ErrorType.network) {
+                            WidgetsBinding.instance
+                                .addPostFrameCallback((timeStamp) {
+                              showAlertDialog(context,state.msg,'');
+                            });
+                            return const Icon(
+                              Icons.error,
+                              color: Colors.blueAccent,
+                              size: 20,
+                            );
+                          }
+                          WidgetsBinding.instance
+                              .addPostFrameCallback((timeStamp) {
+                            showNoNetworkDialog(context);
+                          });
                           WidgetsBinding.instance
                               .addPostFrameCallback((timeStamp) {
                             showNoNetworkDialog(context);
@@ -529,41 +544,49 @@ class _ComponentTreeState extends State<ComponentTree> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.all(10),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                  child: Column(
                                     children: [
-                                      Text(
-                                        'Custom Widgets',
-                                        style: AppFontStyle.roboto(14,
-                                            color: const Color(0xff494949),
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      InkWell(
-                                        borderRadius: BorderRadius.circular(10),
-                                        onTap: () {
-                                          //ADD Custom Widgets
-                                          showCustomWidgetAdd(context,
-                                              (type, value) {
-                                            BlocProvider.of<
-                                                        ComponentOperationCubit>(
-                                                    context,
-                                                    listen: false)
-                                                .addCustomComponent(
-                                                    value, type);
-                                            Navigator.pop(context);
-                                          });
-                                        },
-                                        child: const CircleAvatar(
-                                          radius: 10,
-                                          backgroundColor: AppColors.theme,
-                                          child: Icon(
-                                            Icons.add,
-                                            size: 15,
-                                            color: Colors.white,
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Custom Widgets',
+                                            style: AppFontStyle.roboto(14,
+                                                color: const Color(0xff494949),
+                                                fontWeight: FontWeight.bold),
                                           ),
-                                        ),
+                                          InkWell(
+                                            borderRadius: BorderRadius.circular(10),
+                                            onTap: () {
+                                              //ADD Custom Widgets
+                                              showCustomWidgetAdd(context,
+                                                  (type, value) {
+                                                BlocProvider.of<
+                                                            ComponentOperationCubit>(
+                                                        context,
+                                                        listen: false)
+                                                    .addCustomComponent(
+                                                        value, type);
+                                                Navigator.pop(context);
+                                              });
+                                            },
+                                            child: const CircleAvatar(
+                                              radius: 10,
+                                              backgroundColor: AppColors.theme,
+                                              child: Icon(
+                                                Icons.add,
+                                                size: 15,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                      const SizedBox(height: 10,),
+                                      AppButton(
+                                        title: 'From Other Projects',
+                                      )
                                     ],
                                   ),
                                 ),

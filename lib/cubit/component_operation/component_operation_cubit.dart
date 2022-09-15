@@ -65,7 +65,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> waitForConnectivity() async {
     if (!await AppConnectivity.available()) {
       if (state is! ComponentOperationErrorState) {
-        emit(ComponentOperationErrorState('No Connection'));
+        emit(ComponentOperationErrorState('No Connection',type: ErrorType.network));
       }
       final stream = AppConnectivity.listen();
       await for (final check in stream) {
@@ -187,7 +187,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
     emit(ComponentOperationLoadingState());
     try {
-      await FireBridge.saveComponent(project!, customComponent, newName: newName);
+      await FireBridge.saveCustomComponent(project!, customComponent, newName: newName);
       for (final Component comp in customComponent.objects) {
         comp.name = customComponent.name;
       }
@@ -398,7 +398,7 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
 
     try {
       await waitForConnectivity();
-      await FireBridge.addNewGlobalCustomComponent(project!.userId, project!, component);
+      await FireBridge.addCustomComponent(project!.userId, project!, component);
     } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));
     }
@@ -438,9 +438,9 @@ class ComponentOperationCubit extends Cubit<ComponentOperationState> {
   Future<void> deleteCustomComponentOnCloud(CustomComponent component) async {
     emit(ComponentOperationLoadingState());
     try {
-      await FireBridge.deleteGlobalCustomComponent(project!.userId, project!, component);
+      await FireBridge.deleteCustomComponent(project!.userId, project!, component);
       for (final customComp in currentProject!.customComponents) {
-        await FireBridge.saveComponent(project!, customComp);
+        await FireBridge.saveCustomComponent(project!, customComp);
       }
       emit(ComponentOperationInitial());
     } on Exception catch (e) {

@@ -10,6 +10,7 @@ import '../models/project_model.dart';
 import '../cubit/flutter_project/flutter_project_cubit.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'common/custom_shimmer.dart';
 import 'home/landing_page.dart';
 
 class ProjectSelectionPage extends StatefulWidget {
@@ -172,7 +173,7 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.center,
+                                    CrossAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.max,
                                     children: [
                                       Text(
@@ -216,15 +217,28 @@ class _ProjectSelectionPageState extends State<ProjectSelectionPage> {
                           ),
                           Expanded(
                             child: SingleChildScrollView(
-                              child: Wrap(
-                                children: _flutterProjectCubit.projects
-                                    .map(
-                                      (project) => ProjectTile(
-                                          name: project.name,
-                                          id: widget.userId,
-                                          project: project),
+                              child: BlocBuilder<FlutterProjectCubit, FlutterProjectState>(
+                                builder: (context, state) {
+                                  if(state is FlutterProjectLoadingState){
+                                    return Wrap(
+                                      children: List.filled(10, CustomShimmer(child: Container(width: 200,height: 30,decoration: BoxDecoration(
+                                        color: AppColors.shimmerColor,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),))),
+                                    );
+                                  }
+                                  return Wrap(
+                                    children: _flutterProjectCubit.projects
+                                        .map(
+                                          (project) =>
+                                          ProjectTile(
+                                              name: project.name,
+                                              id: widget.userId,
+                                              project: project),
                                     )
-                                    .toList(growable: false),
+                                        .toList(growable: false),
+                                  );
+                                },
                               ),
                             ),
                           ),
@@ -243,8 +257,7 @@ class ProjectTile extends StatelessWidget {
   final FlutterProject project;
   final int id;
 
-  const ProjectTile(
-      {Key? key, required this.name, required this.id, required this.project})
+  const ProjectTile({Key? key, required this.name, required this.id, required this.project})
       : super(key: key);
 
   @override
@@ -276,7 +289,7 @@ class ProjectTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Text(
                     name,
                     style: AppFontStyle.roboto(14, color: Colors.white),
@@ -303,17 +316,18 @@ class ProjectTile extends StatelessWidget {
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (_) => MaterialAlertDialog(
-                    title:
+                  builder: (_) =>
+                      MaterialAlertDialog(
+                        title:
                         'Do you really want to delete this project?, you will not be able to get back',
-                    positiveButtonText: 'delete',
-                    negativeButtonText: 'cancel',
-                    onPositiveTap: () {
-                      context
-                          .read<FlutterProjectCubit>()
-                          .deleteProject(project);
-                    },
-                  ),
+                        positiveButtonText: 'delete',
+                        negativeButtonText: 'cancel',
+                        onPositiveTap: () {
+                          context
+                              .read<FlutterProjectCubit>()
+                              .deleteProject(project);
+                        },
+                      ),
                 );
               },
               color: AppColors.red,
@@ -332,13 +346,12 @@ class AppIconButton extends StatelessWidget {
   final VoidCallback onPressed;
   final Color color;
 
-  const AppIconButton(
-      {Key? key,
-      required this.icon,
-      required this.onPressed,
-      required this.color,
-      this.iconSize = 14,
-      this.buttonSize = 24})
+  const AppIconButton({Key? key,
+    required this.icon,
+    required this.onPressed,
+    required this.color,
+    this.iconSize = 14,
+    this.buttonSize = 24})
       : super(key: key);
 
   @override
@@ -368,11 +381,10 @@ class RoundBorderedTextField extends StatelessWidget {
   final List<String> projects;
   final String hint;
 
-  const RoundBorderedTextField(
-      {Key? key,
-      required this.controller,
-      required this.hint,
-      required this.projects})
+  const RoundBorderedTextField({Key? key,
+    required this.controller,
+    required this.hint,
+    required this.projects})
       : super(key: key);
 
   @override

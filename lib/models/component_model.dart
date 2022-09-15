@@ -1318,12 +1318,14 @@ abstract class CustomComponent extends Component {
   Component? root;
   List<CustomComponent> objects = [];
   Map<String, String> arguments = {};
+  String? project;
 
   CustomComponent(
       {required this.extensionName,
       required String name,
       this.root,
       this.actionCode = '',
+        this.project,
       List<VariableModel>? variables})
       : super(name, []) {
     processor = CodeProcessor.build(
@@ -1588,6 +1590,14 @@ abstract class CustomComponent extends Component {
           .toList(),
     };
   }
+
+  static CustomComponent fromJson(final Map<String,dynamic> json) {
+    if (json['type'] == 'stateless') {
+      return StatelessComponent.fromJson(json);
+    } else {
+      return StatefulComponent.fromJson(json);
+    }
+  }
 }
 
 class ABC extends StatefulWidget {
@@ -1615,6 +1625,7 @@ class StatelessComponent extends CustomComponent {
       {required String name,
       super.actionCode = defaultActionCode,
       super.variables,
+        super.project,
       Component? root})
       : super(extensionName: 'StatelessWidget', name: name, root: root) {
     if (root != null) {
@@ -1677,6 +1688,7 @@ class StatefulComponent extends CustomComponent {
       {required String name,
       super.actionCode = defaultActionCode,
       super.variables,
+        super.project,
       Component? root})
       : super(extensionName: 'StatefulWidget', name: name, root: root) {
     if (root != null) {

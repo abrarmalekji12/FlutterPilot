@@ -14,9 +14,14 @@ class ComponentLoadBytesState extends ComponentOperationState {
 
 class ComponentOperationErrorState extends ComponentOperationState {
   final String msg;
-  ComponentOperationErrorState(this.msg);
+  final ErrorType type;
+  ComponentOperationErrorState(this.msg, {this.type=ErrorType.other});
 }
 
 class ComponentUpdatedState extends ComponentOperationState {
   ComponentUpdatedState();
+}
+enum ErrorType{
+  network,
+  other
 }
