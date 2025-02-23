@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "585919568929",
+    "project_id": "flutter-visual-builder-staging",
+    "storage_bucket": "flutter-visual-builder-staging.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585919568929:android:5c13ac1472f8d02e98d760",
+        "android_client_info": {
+          "package_name": "com.example.flutter_builder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "585919568929-31cbsirnvc8gik6oh63dqv6m2f2t1d9k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdcKrtGV-8p-NxhkY_G6bQfbL6Um1CHYY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "585919568929-31cbsirnvc8gik6oh63dqv6m2f2t1d9k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

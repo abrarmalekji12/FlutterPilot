@@ -1,0 +1,16 @@
+# Configure FlutterFire
+
+flutterfire configure --project=flutter-visual-builder-staging
+
+// For web
+
+  firebase_core: ^2.15.1
+  firebase_auth: ^4.7.3
+  cloud_firestore: ^4.8.5
+  firebase_storage: ^11.2.6
+
+// For win
+
+
+  firebase_core: ^2.16.0
+  firebase_auth: ^4.10.0

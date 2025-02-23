@@ -1,0 +1,101 @@
+name: update web app
+on: [push]
+jobs:
+  semantic-pull-request:
+    name: "Semantic"
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/semantic_pull_request.yml@v1
+
+  build:
+    name: Build
+    needs: [ semantic-pull-request]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📚 Git Checkout
+        uses: actions/checkout@v3
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: 3.22.2
+
+      - name: Create .env file
+        run: echo "FIGMA_SECRET_KEY=${{ secrets.FIGMA_SECRET_KEY }}" > .env
+
+      - name: 📦 Install Dependencies
+        run: |
+          flutter pub get
+
+      - name: 🛠️ Build web application
+        run: |
+          bash scripts/web.sh
+          flutter build web --release --no-tree-shake-icons
+  
+
+      - name: 🎯 Deploy to firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FLUTTERPILOT_22E59 }}'
+          channelId: live
+          projectId: flutterpilot-22e59
+
+
+      - name: ⬇️ Archive Production Artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: build
+          path: build/web
+
+  build-windows:
+    name: Build-windows
+    runs-on: windows-latest
+    steps:
+      - name: 📚 Git Checkout
+        uses: actions/checkout@v3
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: 3.22.2
+
+      - name: Create .env file
+        run: echo "FIGMA_SECRET_KEY=${{ secrets.FIGMA_SECRET_KEY }}" > .env
+        
+      - name: 📦 Install Dependencies
+        run: |
+          flutter pub get
+
+      - name: 🛠️ Build windows application
+        run: |
+          flutter build windows --release
+
+      - uses: actions/checkout@master
+      - uses: chrnorm/deployment-action@releases/v1
+        name: Create GitHub deployment
+        id: test
+        with:
+          token: ${{ secrets.GITHUB_TOKEN}}
+          description: 'Preview my app'
+          environment: preview
+
+      - uses: shallwefootball/s3-upload-action@master
+        name: Upload S3
+        id: S3
+        with:
+          aws_key_id: ${{ secrets.AWS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_bucket: ${{ secrets.AWS_BUCKET }}
+          source_dir: 'build\windows\x64\runner\Release'
+          destination_dir: 'windows_build'
+
+      - name: Update deployment status (success)
+        if: success()
+        uses: chrnorm/deployment-status@releases/v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target_url: https://aws-bucket.s3.ap-south-1.amazonaws.com/${{steps.S3.outputs.object_key}}/index.html
+          state: 'success'
+          deployment_id: ${{ steps.test.outputs.deployment_id}}

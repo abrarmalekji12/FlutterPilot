@@ -1,0 +1,548 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-3cb9e2dd6c8a58b6581d.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "flutter",
+					"jsonFile" : "directory-flutter-Debug-79e0260f2327d8493c28.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "flutter",
+					"targetIndexes" : 
+					[
+						5,
+						7,
+						8
+					]
+				},
+				{
+					"build" : "runner",
+					"jsonFile" : "directory-runner-Debug-86f38b7dcb6f33eb04e4.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "runner",
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"build" : "plugins/connectivity_plus",
+					"jsonFile" : "directory-plugins.connectivity_plus-Debug-8892e390d67bf7cf402e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "flutter/ephemeral/.plugin_symlinks/connectivity_plus/windows",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "plugins/desktop_webview_auth",
+					"jsonFile" : "directory-plugins.desktop_webview_auth-Debug-85ee0ee1ba17e9b1d2c9.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : "flutter/ephemeral/.plugin_symlinks/desktop_webview_auth/windows",
+					"targetIndexes" : 
+					[
+						1,
+						2
+					]
+				},
+				{
+					"build" : "plugins/file_saver",
+					"jsonFile" : "directory-plugins.file_saver-Debug-7c3efd5d3ba02d58e7d8.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 4,
+					"source" : "flutter/ephemeral/.plugin_symlinks/file_saver/windows",
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"build" : "plugins/file_selector_windows",
+					"jsonFile" : "directory-plugins.file_selector_windows-Debug-00e6fb393360b0d33738.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 5,
+					"source" : "flutter/ephemeral/.plugin_symlinks/file_selector_windows/windows",
+					"targetIndexes" : 
+					[
+						4
+					]
+				},
+				{
+					"build" : "plugins/keyboard_event",
+					"jsonFile" : "directory-plugins.keyboard_event-Debug-ef883f142e2e5694ea40.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 6,
+					"source" : "flutter/ephemeral/.plugin_symlinks/keyboard_event/windows",
+					"targetIndexes" : 
+					[
+						9,
+						13
+					]
+				},
+				{
+					"build" : "plugins/native_context_menu",
+					"jsonFile" : "directory-plugins.native_context_menu-Debug-2fb38b027bd765b8c687.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 7,
+					"source" : "flutter/ephemeral/.plugin_symlinks/native_context_menu/windows",
+					"targetIndexes" : 
+					[
+						10
+					]
+				},
+				{
+					"build" : "plugins/pasteboard",
+					"jsonFile" : "directory-plugins.pasteboard-Debug-f5446d338864a5e624b2.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 8,
+					"source" : "flutter/ephemeral/.plugin_symlinks/pasteboard/windows",
+					"targetIndexes" : 
+					[
+						11
+					]
+				},
+				{
+					"build" : "plugins/permission_handler_windows",
+					"jsonFile" : "directory-plugins.permission_handler_windows-Debug-a59e40fd26397b75cc14.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 9,
+					"source" : "flutter/ephemeral/.plugin_symlinks/permission_handler_windows/windows",
+					"targetIndexes" : 
+					[
+						12
+					]
+				},
+				{
+					"build" : "plugins/uni_links_desktop",
+					"jsonFile" : "directory-plugins.uni_links_desktop-Debug-1b0b0f6f1cc9ea2d3170.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 10,
+					"source" : "flutter/ephemeral/.plugin_symlinks/uni_links_desktop/windows",
+					"targetIndexes" : 
+					[
+						14
+					]
+				},
+				{
+					"build" : "plugins/url_launcher_windows",
+					"jsonFile" : "directory-plugins.url_launcher_windows-Debug-b718b41db8fa69359ace.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 11,
+					"source" : "flutter/ephemeral/.plugin_symlinks/url_launcher_windows/windows",
+					"targetIndexes" : 
+					[
+						15
+					]
+				},
+				{
+					"build" : "plugins/window_to_front",
+					"jsonFile" : "directory-plugins.window_to_front-Debug-b33ae84e43fed12f2bb5.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 12,
+					"source" : "flutter/ephemeral/.plugin_symlinks/window_to_front/windows",
+					"targetIndexes" : 
+					[
+						16
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12
+					],
+					"directoryIndexes" : 
+					[
+						0,
+						1
+					],
+					"name" : "flutter_builder",
+					"targetIndexes" : 
+					[
+						5,
+						7,
+						8
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "runner",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3
+					],
+					"name" : "connectivity_plus",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						4
+					],
+					"name" : "desktop_webview_auth",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						1,
+						2
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						5
+					],
+					"name" : "file_saver",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						6
+					],
+					"name" : "file_selector_windows",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						4
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						7
+					],
+					"name" : "keyboard_event",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						9,
+						13
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						8
+					],
+					"name" : "native_context_menu",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						10
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						9
+					],
+					"name" : "pasteboard",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						11
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						10
+					],
+					"name" : "permission_handler_windows",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						12
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						11
+					],
+					"name" : "uni_links_desktop",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						14
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						12
+					],
+					"name" : "url_launcher_windows",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						15
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						13
+					],
+					"name" : "window_to_front",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						16
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 3,
+					"id" : "connectivity_plus_plugin::@6eaccbd1f84c59b7458d",
+					"jsonFile" : "target-connectivity_plus_plugin-Debug-ad40c5df7bec199ce85c.json",
+					"name" : "connectivity_plus_plugin",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "desktop_webview_auth_DEPENDENCIES_DOWNLOAD::@0509e840bb5940ecccd3",
+					"jsonFile" : "target-desktop_webview_auth_DEPENDENCIES_DOWNLOAD-Debug-0d9d4049d71ac5d34b54.json",
+					"name" : "desktop_webview_auth_DEPENDENCIES_DOWNLOAD",
+					"projectIndex" : 3
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "desktop_webview_auth_plugin::@0509e840bb5940ecccd3",
+					"jsonFile" : "target-desktop_webview_auth_plugin-Debug-d34b458f090e965ec248.json",
+					"name" : "desktop_webview_auth_plugin",
+					"projectIndex" : 3
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "file_saver_plugin::@2ef6fde6d7f656501064",
+					"jsonFile" : "target-file_saver_plugin-Debug-f8b2d47723d61752dbdb.json",
+					"name" : "file_saver_plugin",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "file_selector_windows_plugin::@24329985f05541c6c489",
+					"jsonFile" : "target-file_selector_windows_plugin-Debug-8742a6096eef8171557e.json",
+					"name" : "file_selector_windows_plugin",
+					"projectIndex" : 5
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "flutter_assemble::@2bb09fbb03a373b2cb34",
+					"jsonFile" : "target-flutter_assemble-Debug-cb3fecbbe66607912d0c.json",
+					"name" : "flutter_assemble",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "flutter_builder::@056c4f61b0156d1d9b06",
+					"jsonFile" : "target-flutter_builder-Debug-cc21923754f660ef3453.json",
+					"name" : "flutter_builder",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "flutter_wrapper_app::@2bb09fbb03a373b2cb34",
+					"jsonFile" : "target-flutter_wrapper_app-Debug-2a43969d7c8214f907c6.json",
+					"name" : "flutter_wrapper_app",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "flutter_wrapper_plugin::@2bb09fbb03a373b2cb34",
+					"jsonFile" : "target-flutter_wrapper_plugin-Debug-c6d71c2df806cb6b84d1.json",
+					"name" : "flutter_wrapper_plugin",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 7,
+					"id" : "keyboard_event_plugin::@9b6f9f39592f7468c9d3",
+					"jsonFile" : "target-keyboard_event_plugin-Debug-0fa5bbbd17a28007b3bc.json",
+					"name" : "keyboard_event_plugin",
+					"projectIndex" : 6
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "native_context_menu_plugin::@a9efe0cfafc55a85a954",
+					"jsonFile" : "target-native_context_menu_plugin-Debug-372e6fe5f10507165765.json",
+					"name" : "native_context_menu_plugin",
+					"projectIndex" : 7
+				},
+				{
+					"directoryIndex" : 9,
+					"id" : "pasteboard_plugin::@c38b5f14bc92c496432a",
+					"jsonFile" : "target-pasteboard_plugin-Debug-b20dcaaf96498e516d47.json",
+					"name" : "pasteboard_plugin",
+					"projectIndex" : 8
+				},
+				{
+					"directoryIndex" : 10,
+					"id" : "permission_handler_windows_plugin::@15851dc22c812b45487c",
+					"jsonFile" : "target-permission_handler_windows_plugin-Debug-c6d64feba0d88e1fa96f.json",
+					"name" : "permission_handler_windows_plugin",
+					"projectIndex" : 9
+				},
+				{
+					"directoryIndex" : 7,
+					"id" : "timestamp.h::@9b6f9f39592f7468c9d3",
+					"jsonFile" : "target-timestamp.h-Debug-8b41f71b929abf37e0c4.json",
+					"name" : "timestamp.h",
+					"projectIndex" : 6
+				},
+				{
+					"directoryIndex" : 11,
+					"id" : "uni_links_desktop_plugin::@1aadb4b2d26fadbcac1c",
+					"jsonFile" : "target-uni_links_desktop_plugin-Debug-0e723d70f46893435f37.json",
+					"name" : "uni_links_desktop_plugin",
+					"projectIndex" : 10
+				},
+				{
+					"directoryIndex" : 12,
+					"id" : "url_launcher_windows_plugin::@82e8e937a0da8e6132e4",
+					"jsonFile" : "target-url_launcher_windows_plugin-Debug-06e98027fdc2f998ae3f.json",
+					"name" : "url_launcher_windows_plugin",
+					"projectIndex" : 11
+				},
+				{
+					"directoryIndex" : 13,
+					"id" : "window_to_front_plugin::@620b589872d7ec1d2396",
+					"jsonFile" : "target-window_to_front_plugin-Debug-0b1fa9177c1fed078885.json",
+					"name" : "window_to_front_plugin",
+					"projectIndex" : 12
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/abrar/StudioProjects/flutter_builder/windows/out/build/x64-Debug",
+		"source" : "C:/Users/abrar/StudioProjects/flutter_builder/windows"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 5
+	}
+}
