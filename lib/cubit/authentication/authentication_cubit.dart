@@ -26,6 +26,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         _userSession.user = response;
         _userSession.settingModel =
             await dataBridge.loadUserDetails(_userSession.user.userId!);
+
         emit(AuthLoginSuccessState(response.userId!));
       }
       emit(AuthenticationInitial());

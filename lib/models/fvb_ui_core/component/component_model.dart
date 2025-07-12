@@ -25,7 +25,7 @@ import '../../../cubit/component_selection/component_selection_cubit.dart';
 import '../../../cubit/visual_box_drawer/visual_box_cubit.dart';
 import '../../../data/remote/firestore/firebase_bridge.dart';
 import '../../../injector.dart';
-import '../../../parameters_list.dart';
+import '../../../parameter/parameters_list.dart';
 import '../../../runtime_provider.dart';
 import '../../../ui/boundary_widget.dart';
 import '../../../ui/paint_tools/paint_tools.dart';
@@ -37,13 +37,7 @@ import '../../parameter_rule_model.dart';
 import '../../project_model.dart';
 import 'custom_component.dart';
 
-enum ResizeType {
-  verticalAndHorizontal,
-  symmetricResize,
-  verticalOnly,
-  horizontalOnly,
-  scale
-}
+enum ResizeType { verticalAndHorizontal, symmetricResize, verticalOnly, horizontalOnly, scale }
 
 enum MoveType { self, child }
 
@@ -114,8 +108,7 @@ mixin operations {
   void replaceChildOperation(Component component, {String? attributeName});
 }
 
-final setStateFunction = FVBFunction(
-    'setState', null, [FVBArgument('callback', dataType: DataType.fvbFunction)],
+final setStateFunction = FVBFunction('setState', null, [FVBArgument('callback', dataType: DataType.fvbFunction)],
     dartCall: (_, instance) {});
 
 final Map<String, Component> componentMap = {};
@@ -139,6 +132,7 @@ class Ancestor {
 }
 
 final formatter = DartFormatter();
+
 
 class ComponentDefaultParamConfig {
   final bool padding, width, height, visibility, alignment;
@@ -212,9 +206,7 @@ abstract class Component {
 
   bool get hasImageAsset {
     return (name == 'Image.asset' && parameters.isNotEmpty) ||
-        (name == 'Image' &&
-            (parameters[0] as ChoiceParameter).val ==
-                (parameters[0] as ChoiceParameter).options[0]);
+        (name == 'Image' && (parameters[0] as ChoiceParameter).val == (parameters[0] as ChoiceParameter).options[0]);
   }
 
   Ancestor get ancestor {
@@ -226,13 +218,12 @@ abstract class Component {
         component = component.parent;
       }
     }
-    final screen = collection.project!.screens.firstWhereOrNull(
-        (element) => element.rootComponent?.id == component.id);
+    final screen = collection.project!.screens.firstWhereOrNull((element) => element.rootComponent?.id == component.id);
     if (screen != null) {
       return Ancestor(component, screen);
     }
-    final custom = collection.project!.customComponents.firstWhereOrNull(
-        (element) => element.rootComponent?.id == component.id);
+    final custom =
+        collection.project!.customComponents.firstWhereOrNull((element) => element.rootComponent?.id == component.id);
     if (custom != null) {
       return Ancestor(custom, null);
     }
@@ -241,8 +232,7 @@ abstract class Component {
 
   Rect? get boundary {
     if (_boundary != null) {
-      return Rect.fromLTWH(_boundary!.left - 1, _boundary!.top - 1,
-          _boundary!.width + 2, _boundary!.height + 2);
+      return Rect.fromLTWH(_boundary!.left - 1, _boundary!.top - 1, _boundary!.width + 2, _boundary!.height + 2);
     }
     if (this is CustomComponent) {
       return (this as CustomComponent).rootComponent?.boundary;
@@ -263,16 +253,12 @@ abstract class Component {
       if (root is CustomComponent) {
         return root.processor;
       } else {
-        return screen?.processor.functions['build']?.processor ??
-            collection.project!.processor;
+        return screen?.processor.functions['build']?.processor ?? collection.project!.processor;
       }
     }
     if (parent is BuilderComponent) {
-      String? key = (parent as BuilderComponent)
-          .childMap
-          .entries
-          .firstWhereOrNull((element) => element.value == this)
-          ?.key;
+      String? key =
+          (parent as BuilderComponent).childMap.entries.firstWhereOrNull((element) => element.value == this)?.key;
       key ??= (parent as BuilderComponent)
           .childrenMap
           .entries
@@ -282,19 +268,12 @@ abstract class Component {
         if ((parent as BuilderComponent).processorMap.containsKey(key)) {
           return (parent as BuilderComponent).processorMap[key];
         }
-        final processor = Processor.build(
-            name: key,
-            parent: (parent as Component).parentProcessor(screen, root));
-        (parent as BuilderComponent)
-            .functionMap[key]
-            ?.execute(processor, null, [], defaultProcessor: processor);
+        final processor = Processor.build(name: key, parent: (parent as Component).parentProcessor(screen, root));
+        (parent as BuilderComponent).functionMap[key]?.execute(processor, null, [], defaultProcessor: processor);
         return processor;
       }
     }
-    return (parent! is Component
-            ? parent!
-            : (parent as ComponentParameter).parent)
-        .parentProcessor(screen, root);
+    return (parent! is Component ? parent! : (parent as ComponentParameter).parent).parentProcessor(screen, root);
   }
 
   set setId(final String id) {
@@ -315,9 +294,7 @@ abstract class Component {
 
   void onFreshAdded() {
     if (this is Clickable) {
-      (this as Clickable)
-          .actionList
-          .add(CustomAction(code: (this as Clickable).defaultCode));
+      (this as Clickable).actionList.add(CustomAction(code: (this as Clickable).defaultCode));
     }
     for (final parameter in parameters) {
       if (parameter is SimpleParameter && parameter.initialValue != null) {
@@ -326,8 +303,7 @@ abstract class Component {
     }
   }
 
-  void addComponentParameters(
-      final List<ComponentParameter> componentParameters) {
+  void addComponentParameters(final List<ComponentParameter> componentParameters) {
     componentParameters.forEach((element) {
       element.parent = this;
     });
@@ -362,85 +338,58 @@ abstract class Component {
     String outputCode = withRefresher();
     final insets = (defaultParam[2]?.value) as EdgeInsets?;
 
-    if ((defaultParam[0]?.compiler.code.isNotEmpty ?? false) ||
-        (defaultParam[1]?.compiler.code.isNotEmpty ?? false)) {
-      outputCode = 'SizedBox(child:$outputCode,${_parametersCode([
-            defaultParam[0],
-            defaultParam[1]
-          ])})';
+    if ((defaultParam[0]?.compiler.code.isNotEmpty ?? false) || (defaultParam[1]?.compiler.code.isNotEmpty ?? false)) {
+      outputCode = 'SizedBox(child:$outputCode,${_parametersCode([defaultParam[0], defaultParam[1]])})';
     }
-    if (insets != null &&
-        (insets.top > 0 ||
-            insets.bottom > 0 ||
-            insets.left > 0 ||
-            insets.right > 0)) {
-      outputCode =
-          'Padding(child:$outputCode,${_parametersCode([defaultParam[2]])})';
+    if (insets != null && (insets.top > 0 || insets.bottom > 0 || insets.left > 0 || insets.right > 0)) {
+      outputCode = 'Padding(child:$outputCode,${_parametersCode([defaultParam[2]])})';
     }
 
-    if (defaultParam[3] != null &&
-        (defaultParam[3] as BooleanParameter).compiler.code.isNotEmpty) {
-      outputCode =
-          'Visibility(${_parametersCode([defaultParam[3]])}child:$outputCode)';
+    if (defaultParam[3] != null && (defaultParam[3] as BooleanParameter).compiler.code.isNotEmpty) {
+      outputCode = 'Visibility(${_parametersCode([defaultParam[3]])}child:$outputCode)';
     }
-    if (defaultParam[4] != null &&
-        (defaultParam[4] as ChoiceValueParameter).val != null) {
-      outputCode =
-          'Align(${_parametersCode([defaultParam[4]])}child:$outputCode)';
+    if (defaultParam[4] != null && (defaultParam[4] as ChoiceValueParameter).val != null) {
+      outputCode = 'Align(${_parametersCode([defaultParam[4]])}child:$outputCode)';
     }
     if ((defaultParam[5] as ComplexParameter).enable) {
-      final durationCode =
-          (defaultParam[5] as ComplexParameter).params[0].code(true);
-      outputCode =
-          '${outputCode}.animate(${durationCode.length > 1 ? durationCode : ''})';
-      for (final p
-          in ((defaultParam[5] as ComplexParameter).params[1] as ListParameter)
-              .params) {
+      final durationCode = (defaultParam[5] as ComplexParameter).params[0].code(true);
+      outputCode = '${outputCode}.animate(${durationCode.length > 1 ? durationCode : ''})';
+      for (final p in ((defaultParam[5] as ComplexParameter).params[1] as ListParameter).params) {
         final duration = (p as ComplexParameter).params[1].code(true);
         final delay = p.params[2].code(true);
         final curve = p.params[3].code(true);
         switch (p.params[0].value) {
           case 'slideLeftToRight':
-            outputCode =
-                '$outputCode.slideX(begin: -1, end: 0,$duration$delay$curve,)';
+            outputCode = '$outputCode.slideX(begin: -1, end: 0,$duration$delay$curve,)';
             break;
           case 'slideRightToLeft':
-            outputCode =
-                '$outputCode.slideX(begin: 1, end: 0,$duration$delay$curve,)';
+            outputCode = '$outputCode.slideX(begin: 1, end: 0,$duration$delay$curve,)';
             break;
           case 'slideTopToBottom':
-            outputCode =
-                '$outputCode.slideY(begin: -1, end: 0,$duration$delay$curve,)';
+            outputCode = '$outputCode.slideY(begin: -1, end: 0,$duration$delay$curve,)';
             break;
           case 'slideBottomToTop':
-            outputCode =
-                '$outputCode.slideY(begin: 1, end: 0,$duration$delay$curve,)';
+            outputCode = '$outputCode.slideY(begin: 1, end: 0,$duration$delay$curve,)';
             break;
 
           case 'scaleUpHorizontal':
-            outputCode =
-                '$outputCode.scaleX(begin:0, end: 1,$duration$delay$curve,)';
+            outputCode = '$outputCode.scaleX(begin:0, end: 1,$duration$delay$curve,)';
             break;
           case 'scaleDownHorizontal':
-            outputCode =
-                '$outputCode.scaleX(begin:2, end: 1,$duration$delay$curve,)';
+            outputCode = '$outputCode.scaleX(begin:2, end: 1,$duration$delay$curve,)';
             break;
           case 'scaleUpVertical':
-            outputCode =
-                '$outputCode.scaleY(begin:0, end: 1,$duration$delay$curve,)';
+            outputCode = '$outputCode.scaleY(begin:0, end: 1,$duration$delay$curve,)';
             break;
           case 'scaleDownVertical':
-            outputCode =
-                '$outputCode.scaleY(begin:2, end: 1,$duration$delay$curve,)';
+            outputCode = '$outputCode.scaleY(begin:2, end: 1,$duration$delay$curve,)';
             break;
           case 'scaleUp':
-            outputCode =
-                '$outputCode.scaleXY(begin:0, end: 1,$duration$delay$curve,)';
+            outputCode = '$outputCode.scaleXY(begin:0, end: 1,$duration$delay$curve,)';
             break;
 
           case 'scaleDown':
-            outputCode =
-                '$outputCode.scaleXY(begin:2, end: 1,$duration$delay$curve,)';
+            outputCode = '$outputCode.scaleXY(begin:2, end: 1,$duration$delay$curve,)';
             break;
           case 'fadeIn':
             outputCode = '$outputCode.fadeIn($duration$delay$curve,)';
@@ -475,8 +424,7 @@ abstract class Component {
       return null;
     }
     for (final rule in paramRules) {
-      if (rule.changedParameter == changedParameter ||
-          rule.anotherParameter == changedParameter) {
+      if (rule.changedParameter == changedParameter || rule.anotherParameter == changedParameter) {
         if (rule.hold()) {
           return rule;
         }
@@ -487,13 +435,12 @@ abstract class Component {
 
   String metaCode(String string) {
     string += '[id=$id';
-    // if (this is BuilderComponent) {
-    //   string +=
-    //       '|model=${(this as BuilderComponent).model?.name}';
-    // }
+// if (this is BuilderComponent) {
+//   string +=
+//       '|model=${(this as BuilderComponent).model?.name}';
+// }
     if (this is Clickable) {
-      string +=
-          '|action={${(this as Clickable).actionList.map((e) => e.metaCode()).join(':')}}';
+      string += '|action={${(this as Clickable).actionList.map((e) => e.metaCode()).join(':')}}';
     }
     if (this is FVBPainter) {
       final objs = (this as FVBPainter).paintObjects;
@@ -514,42 +461,32 @@ abstract class Component {
   Map<String, dynamic> metaToJson() {
     return {
       if ((this is Clickable) && (this as Clickable).actionList.isNotEmpty)
-        'actions':
-            (this as Clickable).actionList.map((e) => e.toJson()).toList(),
+        'actions': (this as Clickable).actionList.map((e) => e.toJson()).toList(),
       if ((this is FVBPainter) && (this as FVBPainter).paintObjects.isNotEmpty)
-        'paintObjects':
-            (this as FVBPainter).paintObjects.map((e) => e.toJson()).toList(),
+        'paintObjects': (this as FVBPainter).paintObjects.map((e) => e.toJson()).toList(),
     };
   }
 
-  void metaInfoFromJson(
-      Map<String, dynamic> json, final FVBProject? flutterProject) {
+  void metaInfoFromJson(Map<String, dynamic> json, final FVBProject? flutterProject) {
     if (this is FVBPainter) {
-      (this as FVBPainter).paintObjects.addAll(
-          List.from(json['paintObjects'] ?? [])
-              .map((e) => FVBPaintObj.fromJson(e)));
+      (this as FVBPainter)
+          .paintObjects
+          .addAll(List.from(json['paintObjects'] ?? []).map((e) => FVBPaintObj.fromJson(e)));
     }
 
     if (this is Clickable) {
       for (int i = 0; i < (json['actions']?.length ?? 0); i++) {
-        (this as Clickable)
-            .actionList
-            .add(CustomAction()..fromJson(json['actions'][i]));
+        (this as Clickable).actionList.add(CustomAction()..fromJson(json['actions'][i]));
       }
     }
   }
 
   void metaInfoFromCode(final String metaCode, final FVBProject? project) {
-    final list = CodeOperations.splitBy(
-        metaCode.substring(1, metaCode.length - 1),
-        splitBy: pipeCodeUnit);
+    final list = CodeOperations.splitBy(metaCode.substring(1, metaCode.length - 1), splitBy: pipeCodeUnit);
     for (final value in list) {
       if (value.isNotEmpty) {
         final equalIndex = value.indexOf('=');
-        final fieldList = [
-          value.substring(0, equalIndex),
-          value.substring(equalIndex + 1)
-        ];
+        final fieldList = [value.substring(0, equalIndex), value.substring(equalIndex + 1)];
         switch (fieldList[0]) {
           case 'id':
             setId = fieldList[1];
@@ -559,32 +496,28 @@ abstract class Component {
               final list = fieldList[1].substring(1, fieldList[1].length - 1);
               list.split(':').forEach((e) => (this as FVBPainter)
                   .paintObjects
-                  .add(FVBPaintObj.fromJson(
-                      jsonDecode(String.fromCharCodes(base64Decode(e))))));
+                  .add(FVBPaintObj.fromJson(jsonDecode(String.fromCharCodes(base64Decode(e))))));
             }
             break;
           case 'model':
-            // if(this is! BuilderComponent){
-            //   return;
-            // }
-            // print('NAME ${metaCode}');
-            // (this as BuilderComponent).model = flutterProject
-            //     ?.currentScreen.models
-            //     .firstWhereOrNull((element) => element.name == fieldList[1]);
-            // logger('model setted ${(this as BuilderComponent).model?.name}');
+// if(this is! BuilderComponent){
+//   return;
+// }
+// print('NAME ${metaCode}');
+// (this as BuilderComponent).model = flutterProject
+//     ?.currentScreen.models
+//     .firstWhereOrNull((element) => element.name == fieldList[1]);
+// logger('model setted ${(this as BuilderComponent).model?.name}');
             break;
           case 'len':
-            (this as BuilderComponent)
-                .parameters[0]
-                .fromCode(fieldList[1], project);
+            (this as BuilderComponent).parameters[0].fromCode(fieldList[1], project);
             break;
           case 'action':
             if (this is Clickable) {
               final list = fieldList[1].substring(1, fieldList[1].length - 1);
               if (list.isNotEmpty) {
                 if (list.contains(':')) {
-                  list.split(':').forEach((e) =>
-                      (this as Clickable).fromMetaCodeToAction(e, project));
+                  list.split(':').forEach((e) => (this as Clickable).fromMetaCodeToAction(e, project));
                 } else {
                   (this as Clickable).fromMetaCodeToAction(list, project);
                 }
@@ -606,10 +539,7 @@ abstract class Component {
       if (this is Holder)
         'child': (this as Holder).child?.toJson()
       else if (this is MultiHolder)
-        'children': (this as MultiHolder)
-            .children
-            .map((e) => jsonEncode(e.toJson()))
-            .toList()
+        'children': (this as MultiHolder).children.map((e) => jsonEncode(e.toJson())).toList()
       else if (this is CustomNamedHolder) ...{
         'childMap': (this as CustomNamedHolder).childMap.map(
               (key, value) => MapEntry(
@@ -624,12 +554,10 @@ abstract class Component {
               ),
             ),
         if (this is BuilderComponent) ...{
-          'functions': (this as BuilderComponent)
-              .functionMap
-              .map<String, dynamic>((key, value) => MapEntry(key, value.code))
+          'functions':
+              (this as BuilderComponent).functionMap.map<String, dynamic>((key, value) => MapEntry(key, value.code))
         }
-      } else if (this is CustomComponent &&
-          (this as CustomComponent).arguments.isNotEmpty) ...{
+      } else if (this is CustomComponent && (this as CustomComponent).arguments.isNotEmpty) ...{
         'arguments': (this as CustomComponent).arguments
       }
     }..addAll(meta);
@@ -640,15 +568,15 @@ abstract class Component {
     try {
       if (clean && (this is Controller)) {
         final kId = id;
-        // if(controllerIds.containsKey(kId)) {
-        //   final v=controllerIds[kId]??0;
-        //   middle = 'key:GlobalObjectKey("$kId${v}"),';
-        //   controllerIds[kId]=v+1;
-        // }
-        // else{
+// if(controllerIds.containsKey(kId)) {
+//   final v=controllerIds[kId]??0;
+//   middle = 'key:GlobalObjectKey("$kId${v}"),';
+//   controllerIds[kId]=v+1;
+// }
+// else{
         middle = 'key:GlobalObjectKey("$kId"),';
-        // controllerIds[kId]=1;
-        // }
+// controllerIds[kId]=1;
+// }
       }
       if (this is Clickable && clean) {
         final code1 = (this as Clickable)
@@ -667,19 +595,16 @@ abstract class Component {
             if (openIndex == -1) {
               break;
             }
-            final closeIndex = CodeOperations.findCloseBracket(
-                code1, openIndex, curlyBracketOpen, curlyBracketClose);
+            final closeIndex = CodeOperations.findCloseBracket(code1, openIndex, curlyBracketOpen, curlyBracketClose);
             if (closeIndex != null) {
               final roundClose = code1.lastIndexOf(')', openIndex);
               if (roundClose != -1) {
-                function.isAsync =
-                    code1.substring(roundClose, openIndex).contains('async');
+                function.isAsync = code1.substring(roundClose, openIndex).contains('async');
               }
               start += closeIndex + 1;
               final functionBody = code1.substring(openIndex + 1, closeIndex);
 
-              middle +=
-                  '${function.name}:${function.getCleanInstanceCode(functionBody)},';
+              middle += '${function.name}:${function.getCleanInstanceCode(functionBody)},';
             }
           }
         } else if ((this as Clickable).functions.isNotEmpty) {
@@ -696,39 +621,39 @@ abstract class Component {
           }
         }
       }
-      // if (clean) {
-      //   int start = 0;
-      //   int gotIndex = -1;
-      //   while (start < middle.length-1) {
-      //     if (gotIndex == -1) {
-      //       start = middle.indexOf('{{', start);
-      //       if (start == -1) {
-      //         break;
-      //       }
-      //       start += 2;
-      //       gotIndex = start;
-      //     } else {
-      //       start = middle.indexOf('}}', start);
-      //       if (start == -1) {
-      //         break;
-      //       }
-      //       String innerArea = middle.substring(gotIndex, start);
-      //       if (ComponentOperationCubit.processor.variables.isNotEmpty) {
-      //         // for (final variable in ComponentOperationCubit.codeProcessor.variables.values) {
-      //         //   innerArea = innerArea.replaceAll(variable.name,
-      //         //       '${variable!}[index].${variable.name}');
-      //         // }
-      //         print('MIDDLE ${gotIndex - 2} ${start + 2}');
-      //         middle =
-      //             middle.replaceRange(
-      //                 gotIndex - 2, start + 2, '\${$innerArea}');
-      //         gotIndex = -1;
-      //         start += 2;
-      //         continue;
-      //       }
-      //     }
-      //   }
-      // }
+// if (clean) {
+//   int start = 0;
+//   int gotIndex = -1;
+//   while (start < middle.length-1) {
+//     if (gotIndex == -1) {
+//       start = middle.indexOf('{{', start);
+//       if (start == -1) {
+//         break;
+//       }
+//       start += 2;
+//       gotIndex = start;
+//     } else {
+//       start = middle.indexOf('}}', start);
+//       if (start == -1) {
+//         break;
+//       }
+//       String innerArea = middle.substring(gotIndex, start);
+//       if (ComponentOperationCubit.processor.variables.isNotEmpty) {
+//         // for (final variable in ComponentOperationCubit.codeProcessor.variables.values) {
+//         //   innerArea = innerArea.replaceAll(variable.name,
+//         //       '${variable!}[index].${variable.name}');
+//         // }
+//         print('MIDDLE ${gotIndex - 2} ${start + 2}');
+//         middle =
+//             middle.replaceRange(
+//                 gotIndex - 2, start + 2, '\${$innerArea}');
+//         gotIndex = -1;
+//         start += 2;
+//         continue;
+//       }
+//     }
+//   }
+// }
     } on Exception catch (e) {
       print('PARAMETERS ERROR ${e.toString()}');
     }
@@ -747,83 +672,63 @@ abstract class Component {
     return withState('$name($middle)', clean);
   }
 
-  factory Component.fromJson(json, final FVBProject? project,
-      {List<CustomComponent>? customs}) {
+  factory Component.fromJson(json, final FVBProject? project, {List<CustomComponent>? customs}) {
     if (json is String) {
       return Component._fromCode(json, project, customs: customs)!;
     }
-    final comp = _getComponentFromName(json['name'],
-        flutterProject: project, template: customs);
+    final comp = _getComponentFromName(json['name'].toString(), flutterProject: project, template: customs);
     if (json['id'] != null) {
-      comp.setId = json['id'];
+      comp.setId = json['id'].toString();
     }
     if (json['meta'] != null) {
       comp.metaInfoFromJson(json['meta'] ?? {}, project);
     } else
-      comp.metaInfoFromJson(json, project);
+      comp.metaInfoFromJson(Map<String, dynamic>.from(json), project);
 
     if (comp is CustomComponent) {
       comp.arguments.clear();
-      comp.arguments
-          .addAll(List.of(json['arguments'] ?? []).whereType<String>());
+      comp.arguments.addAll(List.of(json['arguments'] ?? []).whereType<String>());
     } else {
-      for (int i = 0;
-          i < (json['parameters']?.length ?? 0) && i < comp.parameters.length;
-          i++) {
-        comp.parameters[i].fromJson(json['parameters'][i], project);
+      for (int i = 0; i < (json['parameters']?.length ?? 0) && i < comp.parameters.length; i++) {
+        if (json['parameters'][i] != null)
+          comp.parameters[i].fromJson(Map<String, dynamic>.from(json['parameters'][i]), project);
       }
-      for (int i = 0;
-          i < (json['defaultParameters']?.length ?? 0) &&
-              i < comp.defaultParam.length;
-          i++) {
-        if (json['defaultParameters'][i] != null) {
+      for (int i = 0; i < (json['defaultParameters']?.length ?? 0) && i < comp.defaultParam.length; i++) {
+        if (json['defaultParameters'][i] != null && json['defaultParameters'][i] is Map) {
           comp.defaultParam[i]?.fromJson(json['defaultParameters'][i], project);
         }
       }
-      if (comp is Holder && json['child'] != null) {
-        comp.updateChild(
-            Component.fromJson(json['child'], project, customs: customs));
+      if (comp is Holder && json['child'] != null && json['child'] is! String) {
+        comp.updateChild(Component.fromJson(Map.from(json['child'] ?? {}), project, customs: customs));
       }
 
       if (comp is MultiHolder && json['children'] != null) {
-        comp.children = (json['children'] as List)
-            .map((e) => Component.fromJson(
-                e is String ? jsonDecode(e) : e, project,
-                customs: customs)
-              ..setParent(comp))
+        comp.children = (json['children'] as List).where((e)=>e is Map?e.containsKey('name'):true)
+            .map((e) => Component.fromJson(e is String ? jsonDecode(e) : e, project, customs: customs)..setParent(comp))
             .toList();
       }
       if (comp is CustomNamedHolder) {
         if (json['childMap'] != null) {
-          comp.childMap = (json['childMap'] as Map).map((k, v) => MapEntry(
-              k,
-              v != null
-                  ? (Component.fromJson(v, project, customs: customs)
-                    ..setParent(comp))
-                  : null));
+          comp.childMap = (json['childMap'] as Map).map((k, v) =>
+              MapEntry(k, v != null ? (Component.fromJson(v, project, customs: customs)..setParent(comp)) : null));
         }
         if (json['childrenMap'] != null) {
           comp.childrenMap = (json['childrenMap'] as Map).map(
             (k, v) => MapEntry(
               k,
-              List.from(v)
-                  .map((e) => Component.fromJson(e, project, customs: customs)
-                    ..setParent(comp))
-                  .toList(),
+              List.from(v).map((e) => Component.fromJson(e, project, customs: customs)..setParent(comp)).toList(),
             ),
           );
         }
         if (comp is BuilderComponent) {
           final Map<String, dynamic> functionMap = json['functions'] ?? {};
-          for (final function in functionMap.entries)
-            comp.functionMap[function.key]?.code = function.value;
+          for (final function in functionMap.entries) comp.functionMap[function.key]?.code = function.value;
         }
       }
       for (final p in [...comp.parameters, ...comp.defaultParam]) {
         if (p is UsableParam && (p as UsableParam).usableName != null) {
           project?.commonParams
-              .firstWhereOrNull(
-                  (element) => element.name == (p as UsableParam).usableName)
+              .firstWhereOrNull((element) => element.name == (p as UsableParam).usableName)
               ?.connected
               .add(comp);
         }
@@ -832,8 +737,7 @@ abstract class Component {
     return comp;
   }
 
-  static Component? _fromCode(String? code, final FVBProject? project,
-      {List<CustomComponent>? customs}) {
+  static Component? _fromCode(String? code, final FVBProject? project, {List<CustomComponent>? customs}) {
     if (code == null || code.isEmpty) {
       return null;
     }
@@ -842,17 +746,14 @@ abstract class Component {
     if (name.contains('[')) {
       final index = code.indexOf('[', 0);
       final compName = name.substring(0, index);
-      comp = _getComponentFromName(compName,
-          flutterProject: project, template: customs);
+      comp = _getComponentFromName(compName, flutterProject: project, template: customs);
       comp.metaInfoFromCode(name.substring(index), project);
     } else {
-      comp = _getComponentFromName(name,
-          flutterProject: project, template: customs);
+      comp = _getComponentFromName(name, flutterProject: project, template: customs);
     }
 
     final componentCode = code.replaceFirst('$name(', '');
-    final parameterCodes = CodeOperations.splitBy(
-        componentCode.substring(0, componentCode.length - 1));
+    final parameterCodes = CodeOperations.splitBy(componentCode.substring(0, componentCode.length - 1));
     switch (comp.type) {
       case 3:
         int index = -1;
@@ -864,9 +765,8 @@ abstract class Component {
         }
         if (index != -1) {
           final childCode = parameterCodes.removeAt(index);
-          (comp as Holder).updateChild(Component._fromCode(
-              childCode.replaceFirst('child:', ''), project,
-              customs: customs));
+          (comp as Holder)
+              .updateChild(Component._fromCode(childCode.replaceFirst('child:', ''), project, customs: customs));
         }
         break;
       case 2:
@@ -881,12 +781,9 @@ abstract class Component {
           final childCode = parameterCodes.removeAt(index);
           final code2 = childCode.replaceFirst('children:[', '');
           final List<Component> componentList = [];
-          final List<String> childrenCodes =
-              CodeOperations.splitBy(code2.substring(0, code2.length - 1));
+          final List<String> childrenCodes = CodeOperations.splitBy(code2.substring(0, code2.length - 1));
           for (final childCode in childrenCodes) {
-            componentList.add(
-                Component._fromCode(childCode, project, customs: customs)!
-                  ..setParent(comp));
+            componentList.add(Component._fromCode(childCode, project, customs: customs)!..setParent(comp));
           }
           (comp as MultiHolder).children = componentList;
         }
@@ -906,29 +803,23 @@ abstract class Component {
               final startIndex = builderCode.indexOf('`');
               final returnIndex = builderCode.indexOf('`return');
               comp.childMap[name] = Component._fromCode(
-                  builderCode.substring(
-                      returnIndex + 7, builderCode.lastIndexOf(';')),
-                  project,
+                  builderCode.substring(returnIndex + 7, builderCode.lastIndexOf(';')), project,
                   customs: customs)
                 ?..setParent(comp);
               final endIndex = returnIndex;
-              if (startIndex >= 0 &&
-                  startIndex < returnIndex &&
-                  endIndex >= 0) {
-                comp.functionMap[name]!.code =
-                    builderCode.substring(startIndex + 1, endIndex);
+              if (startIndex >= 0 && startIndex < returnIndex && endIndex >= 0) {
+                comp.functionMap[name]!.code = builderCode.substring(startIndex + 1, endIndex);
               } else {
                 comp.functionMap[name]!.code = '';
               }
               nameList.remove(name);
               removeList.add(parameterCodes[i]);
             } else if (childrenNameList.contains(name)) {
-              final childrenCode = CodeOperations.splitBy(parameterCodes[i]
-                  .substring(colonIndex + 2, parameterCodes[i].length - 1));
+              final childrenCode =
+                  CodeOperations.splitBy(parameterCodes[i].substring(colonIndex + 2, parameterCodes[i].length - 1));
               comp.childrenMap[name]!.addAll(
                 childrenCode.map(
-                  (e) => Component._fromCode(e, project, customs: customs)!
-                    ..setParent(comp),
+                  (e) => Component._fromCode(e, project, customs: customs)!..setParent(comp),
                 ),
               );
               removeList.add(parameterCodes[i]);
@@ -939,8 +830,7 @@ abstract class Component {
           }
           break;
         } else {
-          final List<String> nameList =
-              (comp as CustomNamedHolder).childMap.keys.toList();
+          final List<String> nameList = (comp as CustomNamedHolder).childMap.keys.toList();
           final List<String> childrenNameList = comp.childrenMap.keys.toList();
 
           final removeList = [];
@@ -950,20 +840,18 @@ abstract class Component {
             if (colonIndex != -1) {
               final name = parameterCodes[i].substring(0, colonIndex);
               if (nameList.contains(name)) {
-                comp.childMap[name] = Component._fromCode(
-                    parameterCodes[i].substring(colonIndex + 1), project,
-                    customs: customs)
-                  ?..setParent(comp);
+                comp.childMap[name] =
+                    Component._fromCode(parameterCodes[i].substring(colonIndex + 1), project, customs: customs)
+                      ?..setParent(comp);
                 nameList.remove(name);
                 removeList.add(parameterCodes[i]);
               } else if (childrenNameList.contains(name)) {
-                final childrenCode = CodeOperations.splitBy(parameterCodes[i]
-                    .substring(colonIndex + 2, parameterCodes[i].length - 1));
+                final childrenCode =
+                    CodeOperations.splitBy(parameterCodes[i].substring(colonIndex + 2, parameterCodes[i].length - 1));
                 comp.childrenMap[name]!.clear();
                 comp.childrenMap[name]!.addAll(
                   childrenCode.map(
-                    (e) => Component._fromCode(e, project, customs: customs)!
-                      ..setParent(comp),
+                    (e) => Component._fromCode(e, project, customs: customs)!..setParent(comp),
                   ),
                 );
                 removeList.add(parameterCodes[i]);
@@ -980,8 +868,7 @@ abstract class Component {
         (comp as CustomComponent).arguments.clear();
         for (int i = 0; i < parameterCodes.length; i++) {
           final colonIndex = parameterCodes[i].indexOf(':');
-          comp.arguments.add(parameterCodes[i]
-              .substring(colonIndex + 2, parameterCodes[i].length - 1));
+          comp.arguments.add(parameterCodes[i].substring(colonIndex + 2, parameterCodes[i].length - 1));
         }
         break;
       case 1:
@@ -1012,8 +899,7 @@ abstract class Component {
     for (final value in removeList) {
       parameterCodes.remove(value);
     }
-    final list =
-        comp.defaultParam.whereType<Parameter>().toList(growable: false);
+    final list = comp.defaultParam.whereType<Parameter>().toList(growable: false);
     for (int i = 0; i < list.length; i++) {
       if (parameterCodes.length > i) {
         list[i].fromCode(parameterCodes[i], project);
@@ -1022,8 +908,7 @@ abstract class Component {
     for (final p in comp.parameters) {
       if (p is UsableParam && (p as UsableParam).usableName != null) {
         project?.commonParams
-            .firstWhereOrNull(
-                (element) => element.name == (p as UsableParam).usableName)
+            .firstWhereOrNull((element) => element.name == (p as UsableParam).usableName)
             ?.connected
             .add(comp);
       }
@@ -1034,18 +919,18 @@ abstract class Component {
   static Component _getComponentFromName(final String compName,
       {FVBProject? flutterProject, List<CustomComponent>? template}) {
     if (!componentList.containsKey(compName)) {
-      final custom = (flutterProject?.customComponents ?? template!)
-          .firstWhereOrNull((element) => element.name == compName);
+      final custom =
+          (flutterProject?.customComponents ?? template!).firstWhereOrNull((element) => element.name == compName);
       if (custom != null) {
         return custom.createInstance(null);
       } else {
-        // for (final model in flutterProject.favouriteList) {
-        //   final comp = model.components
-        //       .firstWhereOrNull((element) => element.name == compName);
-        //   if (comp != null) {
-        //     return comp;
-        //   }
-        // }
+// for (final model in flutterProject.favouriteList) {
+//   final comp = model.components
+//       .firstWhereOrNull((element) => element.name == compName);
+//   if (comp != null) {
+//     return comp;
+//   }
+// }
         throw Exception('Custom-Component $compName not found!!');
       }
     }
@@ -1067,8 +952,7 @@ abstract class Component {
       processorWithComp[id] = processor;
     } else if (RuntimeProvider.of(context) == RuntimeMode.run) {
       return BlocBuilder<StateManagementBloc, StateManagementState>(
-        buildWhen: (previous, current) =>
-            current.id == id && current.mode == mode,
+        buildWhen: (previous, current) => current.id == id && current.mode == mode,
         builder: (context, state) {
           _initParamSetup(processor);
           if (this is Controller) {
@@ -1083,19 +967,15 @@ abstract class Component {
     }
     if (this is Controller) {
       return BlocConsumer<StateManagementBloc, StateManagementState>(
-        buildWhen: (previous, current) =>
-            current.id == id && current.mode == mode,
-        listenWhen: (previous, current) =>
-            current.id == id && current.mode == mode,
+        buildWhen: (previous, current) => current.id == id && current.mode == mode,
+        listenWhen: (previous, current) => current.id == id && current.mode == mode,
         listener: (context, state) {
           if (this is Clickable) {
             _initParamSetup(processor);
             (this as Clickable).test();
           }
           if (state is StateManagementUpdatedState) {
-            context
-                .read<VisualBoxCubit>()
-                .visualUpdated(ViewableProvider.maybeOf(context)!);
+            context.read<VisualBoxCubit>().visualUpdated(ViewableProvider.maybeOf(context)!);
           }
         },
         builder: (context, state) {
@@ -1109,19 +989,15 @@ abstract class Component {
       );
     }
     return BlocConsumer<StateManagementBloc, StateManagementState>(
-      buildWhen: (previous, current) =>
-          current.id == id && current.mode == mode,
-      listenWhen: (previous, current) =>
-          current.id == id && current.mode == mode,
+      buildWhen: (previous, current) => current.id == id && current.mode == mode,
+      listenWhen: (previous, current) => current.id == id && current.mode == mode,
       listener: (context, state) {
         if (this is Clickable) {
           _initParamSetup(processor);
           (this as Clickable).test();
         }
         if (state is StateManagementUpdatedState) {
-          context
-              .read<VisualBoxCubit>()
-              .visualUpdated(ViewableProvider.maybeOf(context)!);
+          context.read<VisualBoxCubit>().visualUpdated(ViewableProvider.maybeOf(context)!);
         }
       },
       builder: (context, state) {
@@ -1187,8 +1063,7 @@ abstract class Component {
     return null;
   }
 
-  bool forEachInComponentParameter(final bool Function(Component) work,
-      {required bool withClone}) {
+  bool forEachInComponentParameter(final bool Function(Component) work, {required bool withClone}) {
     for (final ComponentParameter componentParameter in componentParameters) {
       for (final component in componentParameter.components) {
         if (work.call(component)) {
@@ -1220,8 +1095,7 @@ abstract class Component {
     return cloneElements.any((e) => screen.rootComponent == e.getLastRoot());
   }
 
-  Component? getRootCustomComponent(
-      FVBProject flutterProject, Viewable screen) {
+  Component? getRootCustomComponent(FVBProject flutterProject, Viewable screen) {
     dynamic _tracer = this, _root = this;
     while (_tracer != null && _tracer is! CustomComponent) {
       _root = _tracer;
@@ -1250,22 +1124,19 @@ abstract class Component {
       final comp = reversedTree[i];
       if (comp is Holder &&
           comp.child is CustomComponent &&
-          (comp.child as CustomComponent).rootComponent ==
-              reversedTree[i - 1]) {
+          (comp.child as CustomComponent).rootComponent == reversedTree[i - 1]) {
         logger('======= TRACER FIND CUSTOM ROOT ${comp.child?.name}');
         return comp.child;
       } else if (comp is MultiHolder) {
         for (final childComp in comp.children) {
-          if (childComp is CustomComponent &&
-              childComp.rootComponent == reversedTree[i - 1]) {
+          if (childComp is CustomComponent && childComp.rootComponent == reversedTree[i - 1]) {
             logger('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
             return childComp;
           }
         }
       } else if (comp is CustomNamedHolder) {
         for (final childComp in comp.childMap.values) {
-          if (childComp is CustomComponent &&
-              childComp.rootComponent == reversedTree[i - 1]) {
+          if (childComp is CustomComponent && childComp.rootComponent == reversedTree[i - 1]) {
             logger('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
             return childComp;
           }
@@ -1289,22 +1160,19 @@ abstract class Component {
       final comp = reversedTree[i];
       if (comp is Holder &&
           comp.child is CustomComponent &&
-          (comp.child as CustomComponent).rootComponent ==
-              reversedTree[i + 1]) {
+          (comp.child as CustomComponent).rootComponent == reversedTree[i + 1]) {
         logger('======= TRACER FIND CUSTOM ROOT ${comp.child?.name}');
         return comp.child;
       } else if (comp is MultiHolder) {
         for (final childComp in comp.children) {
-          if (childComp is CustomComponent &&
-              childComp.rootComponent == reversedTree[i + 1]) {
+          if (childComp is CustomComponent && childComp.rootComponent == reversedTree[i + 1]) {
             logger('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
             return childComp;
           }
         }
       } else if (comp is CustomNamedHolder) {
         for (final childComp in comp.childMap.values) {
-          if (childComp is CustomComponent &&
-              childComp.rootComponent == reversedTree[i + 1]) {
+          if (childComp is CustomComponent && childComp.rootComponent == reversedTree[i + 1]) {
             logger('======= TRACER FIND CUSTOM ROOT ${childComp.name}');
             return childComp;
           }
@@ -1334,16 +1202,14 @@ abstract class Component {
       try {
         return object.size;
       } catch (e) {
-        sl<SelectionCubit>().showError(
-            this, 'RenderBox has no size', AnalysisErrorType.overflow);
+        sl<SelectionCubit>().showError(this, 'RenderBox has no size', AnalysisErrorType.overflow);
         throw e;
       }
     } else if (object is RenderSliver) {
       try {
         return object.paintBounds.size;
       } catch (e) {
-        sl<SelectionCubit>().showError(
-            this, 'SliverBox has no size', AnalysisErrorType.overflow);
+        sl<SelectionCubit>().showError(this, 'SliverBox has no size', AnalysisErrorType.overflow);
         throw e;
       }
     } else {
@@ -1375,24 +1241,18 @@ abstract class Component {
     if (GlobalObjectKey(this).currentContext == null) {
       return;
     }
-    final RenderObject object = GlobalObjectKey(this)
-        .currentContext!
-        .findRenderObject() as RenderObject;
-    final ancestorRenderBox = GlobalObjectKey(screen.id)
-        .currentContext!
-        .findRenderObject() as RenderBox;
+    final RenderObject object = GlobalObjectKey(this).currentContext!.findRenderObject() as RenderObject;
+    final ancestorRenderBox = GlobalObjectKey(screen.id).currentContext!.findRenderObject() as RenderBox;
     Offset? position = _position(object, ancestorRenderBox);
     if (position == null) {
       return;
     }
     final size = _size(object);
-    this.boundary =
-        Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
+    this.boundary = Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
     depth = _depth(object);
   }
 
-  void lookForUIChanges(BuildContext context,
-      {bool initialCheck = true, bool checkForNeighbors = true}) async {
+  void lookForUIChanges(BuildContext context, {bool initialCheck = true, bool checkForNeighbors = true}) async {
     if (GlobalObjectKey(this).currentContext == null) {
       return;
     }
@@ -1400,28 +1260,22 @@ abstract class Component {
     if (screen == null) {
       return;
     }
-    final RenderObject object = GlobalObjectKey(this)
-        .currentContext!
-        .findRenderObject() as RenderObject;
-    final ancestorRenderBox = GlobalObjectKey(screen.id)
-        .currentContext!
-        .findRenderObject() as RenderBox;
+    final RenderObject object = GlobalObjectKey(this).currentContext!.findRenderObject() as RenderObject;
+    final ancestorRenderBox = GlobalObjectKey(screen.id).currentContext!.findRenderObject() as RenderBox;
     Offset? position = _position(object, ancestorRenderBox);
     if (position == null) {
       return;
     }
     int sameCount = 1;
-    final count =
-        (boundaryRepaintDelay == null ? 1 : (boundaryRepaintDelay! / 10));
+    final count = (boundaryRepaintDelay == null ? 1 : (boundaryRepaintDelay! / 10));
     while (sameCount <= count) {
       final size = _size(object);
       if (boundary != null) {
         sameCount++;
       }
-      final b =
-          Rect.fromLTWH(position!.dx, position.dy, size.width, size.height);
+      final b = Rect.fromLTWH(position!.dx, position.dy, size.width, size.height);
       depth = _depth(object);
-      // if (context.mounted)
+// if (context.mounted)
       if (b != this.boundary) {
         sl<VisualBoxCubit>().visualUpdated(screen);
       }
@@ -1460,8 +1314,7 @@ abstract class Component {
     final comp = componentList[name]!();
     if (comp is Clickable) {
       if (deepClone) {
-        (comp as Clickable).actionList =
-            (this as Clickable).actionList.map((e) => e.clone()).toList();
+        (comp as Clickable).actionList = (this as Clickable).actionList.map((e) => e.clone()).toList();
       } else {
         (comp as Clickable).actionList = (this as Clickable).actionList;
       }
@@ -1469,9 +1322,7 @@ abstract class Component {
     if (comp is FVBPainter) {
       if (deepClone) {
         (comp as FVBPainter).paintObjects.clear();
-        (comp as FVBPainter)
-            .paintObjects
-            .addAll((this as FVBPainter).paintObjects.map((e) => e.clone));
+        (comp as FVBPainter).paintObjects.addAll((this as FVBPainter).paintObjects.map((e) => e.clone));
       } else {
         (comp as FVBPainter).paintObjects = (this as FVBPainter).paintObjects;
       }
@@ -1483,8 +1334,7 @@ abstract class Component {
           param.parent = comp;
           param.components.addAll(
             (parameters[i] as ComponentParameter).components.map(
-                  (e) =>
-                      e.clone(param, deepClone: deepClone, connect: deepClone),
+                  (e) => e.clone(param, deepClone: deepClone, connect: deepClone),
                 ),
           );
         } else {
@@ -1497,11 +1347,10 @@ abstract class Component {
         }
       }
     } else {
-      cloneComponentParam(
-          ComponentParameter componentParameter, ComponentParameter param) {
+      cloneComponentParam(ComponentParameter componentParameter, ComponentParameter param) {
         componentParameter.parent = comp;
-        componentParameter.components.addAll(param.components
-            .map((e) => e.clone(param, deepClone: false, connect: true)));
+        componentParameter.components
+            .addAll(param.components.map((e) => e.clone(param, deepClone: false, connect: true)));
         return componentParameter;
       }
 
@@ -1510,12 +1359,12 @@ abstract class Component {
           return parameters[index];
         } else {
           return cloneComponentParam(
-              comp.parameters[index] as ComponentParameter,
-              parameters[index] as ComponentParameter);
+              comp.parameters[index] as ComponentParameter, parameters[index] as ComponentParameter);
         }
       });
-      for (int i = 0; i < defaultParam.length; i++)
-        comp.defaultParam[i] = defaultParam[i];
+
+
+      for (int i = 0; i < defaultParam.length; i++) comp.defaultParam[i] = defaultParam[i];
     }
     if (!deepClone) {
       comp.cid = id;
@@ -1556,10 +1405,8 @@ abstract class MultiHolder extends Component {
   List<Component> children = [];
 
   MultiHolder(String name, List<Parameter> parameters,
-      {List<ParameterRuleModel>? rules,
-      ComponentDefaultParamConfig? defaultParamConfig})
-      : super(name, parameters,
-            rules: rules, defaultParamConfig: defaultParamConfig);
+      {List<ParameterRuleModel>? rules, ComponentDefaultParamConfig? defaultParamConfig})
+      : super(name, parameters, rules: rules, defaultParamConfig: defaultParamConfig);
 
   Axis get direction => Axis.vertical;
 
@@ -1624,9 +1471,7 @@ abstract class MultiHolder extends Component {
       component.rootComponent?.parent = this;
     }
     cloneElements.forEach((element) {
-      (element as MultiHolder).addChild(
-          component.clone(element, connect: true, deepClone: false),
-          index: index);
+      (element as MultiHolder).addChild(component.clone(element, connect: true, deepClone: false), index: index);
     });
   }
 
@@ -1650,8 +1495,7 @@ abstract class MultiHolder extends Component {
     }
     getAllClones().forEach((element) {
       (element as MultiHolder).children.removeAt(index);
-      (element).children.insert(
-          index, component.clone(null, deepClone: false, connect: true));
+      (element).children.insert(index, component.clone(null, deepClone: false, connect: true));
     });
   }
 
@@ -1690,11 +1534,8 @@ abstract class MultiHolder extends Component {
 
   @override
   Component clone(parent, {bool deepClone = false, bool connect = false}) {
-    final comp = super.clone(parent, deepClone: deepClone, connect: connect)
-        as MultiHolder;
-    comp.children = children
-        .map((e) => e.clone(comp, deepClone: deepClone, connect: connect))
-        .toList();
+    final comp = super.clone(parent, deepClone: deepClone, connect: connect) as MultiHolder;
+    comp.children = children.map((e) => e.clone(comp, deepClone: deepClone, connect: connect)).toList();
     return comp;
   }
 
@@ -1714,22 +1555,20 @@ abstract class Holder extends Component {
       super.boundaryRepaintDelay,
       List<ParameterRuleModel>? rules,
       ComponentDefaultParamConfig? defaultParamConfig})
-      : super(name, parameters,
-            rules: rules, defaultParamConfig: defaultParamConfig);
+      : super(name, parameters, rules: rules, defaultParamConfig: defaultParamConfig);
 
   Component? get child => _child;
 
   set child(Component? comp) => _child = comp;
 
   void updateChild(Component? child) {
-    // this.child?.setParent(null);
+// this.child?.setParent(null);
     this._child = child;
     if (child != null) {
       child.setParent(this);
     }
     cloneElements.forEach((element) {
-      (element as Holder)
-          .updateChild(child?.clone(element, deepClone: false, connect: true));
+      (element as Holder).updateChild(child?.clone(element, deepClone: false, connect: true));
     });
   }
 
@@ -1768,8 +1607,7 @@ abstract class Holder extends Component {
   }
 
   @override
-  void searchTappedComponent(
-      final Offset offset, final Set<Component> components) {
+  void searchTappedComponent(final Offset offset, final Set<Component> components) {
     if (boundary?.contains(offset) ?? false) {
       child?.searchTappedComponent(offset, components);
       for (final compParam in componentParameters) {
@@ -1799,16 +1637,13 @@ abstract class Holder extends Component {
         return withState('$name(${middle}child:Offstage(),)', clean);
       }
     }
-    return withState(
-        '$name(${middle}child:${child!.code(clean: clean)})', clean);
+    return withState('$name(${middle}child:${child!.code(clean: clean)})', clean);
   }
 
   @override
   Component clone(parent, {bool deepClone = false, bool connect = false}) {
-    final comp =
-        super.clone(parent, deepClone: deepClone, connect: connect) as Holder;
-    comp.updateChild(
-        child?.clone(comp, deepClone: deepClone, connect: connect));
+    final comp = super.clone(parent, deepClone: deepClone, connect: connect) as Holder;
+    comp.updateChild(child?.clone(comp, deepClone: deepClone, connect: connect));
     return comp;
   }
 
@@ -1840,8 +1675,7 @@ abstract class ClickableHolder extends Holder with Clickable {
 }
 
 abstract class ClickableComponent extends Component with Clickable {
-  ClickableComponent(String name, List<Parameter> parameters,
-      {ComponentDefaultParamConfig? config})
+  ClickableComponent(String name, List<Parameter> parameters, {ComponentDefaultParamConfig? config})
       : super(name, parameters, defaultParamConfig: config);
 
   @override
@@ -1882,8 +1716,7 @@ mixin Clickable {
     _processor.parentProcessor = OperationCubit.paramProcessor;
     final processor = Processor(
         scopeName: (this as Component).name,
-        parentProcessor: _processor.parentProcessor!
-            .clone(Processor.testConsoleCallback, Processor.testOnError, false),
+        parentProcessor: _processor.parentProcessor!.clone(Processor.testConsoleCallback, Processor.testOnError, false),
         consoleCallback: Processor.testConsoleCallback,
         onError: Processor.testOnError);
     for (final fun1 in functions) {
@@ -1895,13 +1728,8 @@ mixin Clickable {
         processor.executeCode(action.arguments[0], declarativeOnly: true);
         _processor.executeCode(action.arguments[0], declarativeOnly: true);
         final cubit = sl<SelectionCubit>();
-        if (!oldError &&
-            Processor.errorMessage.isNotEmpty &&
-            !_processor.errorSuppress &&
-            processComponent != null) {
-          cubit.showError(
-              processComponent!, Processor.errorMessage, AnalysisErrorType.code,
-              action: action);
+        if (!oldError && Processor.errorMessage.isNotEmpty && !_processor.errorSuppress && processComponent != null) {
+          cubit.showError(processComponent!, Processor.errorMessage, AnalysisErrorType.code, action: action);
         }
       }
     }
@@ -1916,8 +1744,7 @@ mixin Clickable {
     return formatter.format(code);
   }
 
-  performCustomAction(
-      BuildContext context, ActionModel action, List<dynamic>? arguments,
+  performCustomAction(BuildContext context, ActionModel action, List<dynamic>? arguments,
       {String? name, final Processor? processor}) {
     final function = name != null
         ? functions.firstWhereOrNull((e) => e.name == name)
@@ -1926,13 +1753,10 @@ mixin Clickable {
       return;
     }
 
-    _processor.parentProcessor =
-        processor ?? ProcessorProvider.maybeOf(context)!;
-    _processor.executeCode(action.arguments[0],
-        declarativeOnly: true, type: OperationType.regular);
+    _processor.parentProcessor = processor ?? ProcessorProvider.maybeOf(context)!;
+    _processor.executeCode(action.arguments[0], declarativeOnly: true, type: OperationType.regular);
     if (_processor.functions.containsKey(function.name)) {
-      final out = _processor.functions[function.name]!
-          .execute(_processor, null, arguments ?? []);
+      final out = _processor.functions[function.name]!.execute(_processor, null, arguments ?? []);
       return out;
     }
   }
@@ -1975,26 +1799,21 @@ mixin Clickable {
 
   void fromMetaCodeToAction(String code, final FVBProject? project) {
     if (code.startsWith('CA')) {
-      final endIndex = CodeOperations.findCloseBracket(
-          code, 2, '<'.codeUnits.first, '>'.codeUnits.first);
-      actionList.add(CustomAction(
-          code:
-              String.fromCharCodes(base64Decode(code.substring(3, endIndex)))));
+      final endIndex = CodeOperations.findCloseBracket(code, 2, '<'.codeUnits.first, '>'.codeUnits.first);
+      actionList.add(CustomAction(code: String.fromCharCodes(base64Decode(code.substring(3, endIndex)))));
     } else if (code.startsWith('NPISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
       actionList.add(NewPageInStackAction(getUIScreenWithName(name, project)));
     } else if (code.startsWith('RCPISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
-      actionList.add(
-          ReplaceCurrentPageInStackAction(getUIScreenWithName(name, project)));
+      actionList.add(ReplaceCurrentPageInStackAction(getUIScreenWithName(name, project)));
     } else if (code.startsWith('NBISA')) {
       actionList.add(GoBackInStackAction());
     } else if (code.startsWith('SBSISA')) {
       final name = code.substring(code.indexOf('<') + 1, code.indexOf('>'));
-      actionList.add(
-          ShowBottomSheetInStackAction(getUIScreenWithName(name, project)));
+      actionList.add(ShowBottomSheetInStackAction(getUIScreenWithName(name, project)));
     } else if (code.startsWith('HBSISA')) {
-      // actionList.add(HideBottomSheetInStackAction());
+// actionList.add(HideBottomSheetInStackAction());
     } else if (code.startsWith('SSBA')) {
       final list = getParams(code.substring(4));
       final action = ShowSnackBarAction();
@@ -2013,7 +1832,7 @@ mixin Clickable {
           break;
         }
       }
-      // actionList.add(ShowCustomDialogInStackAction(comp: selectedUiScreen));
+// actionList.add(ShowCustomDialogInStackAction(comp: selectedUiScreen));
     }
   }
 
@@ -2031,8 +1850,7 @@ abstract class CustomNamedHolder extends Component {
   Map<String, Component?> childMap = {};
   Map<String, List<Component>> childrenMap = {};
 
-  CustomNamedHolder(String name, List<Parameter> parameters,
-      List<String> childMap, List<String> childrenMap,
+  CustomNamedHolder(String name, List<Parameter> parameters, List<String> childMap, List<String> childrenMap,
       {List<ParameterRuleModel>? rules, ComponentDefaultParamConfig? config})
       : super(name, parameters, rules: rules, defaultParamConfig: config) {
     for (final child in childMap) {
@@ -2064,8 +1882,8 @@ abstract class CustomNamedHolder extends Component {
       }
     }
     cloneElements.forEach((element) {
-      (element as CustomNamedHolder).addOrUpdateChildWithKey(
-          key, component?.clone(element, deepClone: false, connect: true));
+      (element as CustomNamedHolder)
+          .addOrUpdateChildWithKey(key, component?.clone(element, deepClone: false, connect: true));
     });
   }
 
@@ -2097,11 +1915,10 @@ abstract class CustomNamedHolder extends Component {
       cloneElements.forEach((element) {
         if (index >= 0) {
           (element as CustomNamedHolder).updateChild(
-              element.childrenMap[key]![index],
-              component?.clone(element, deepClone: false, connect: true));
+              element.childrenMap[key]![index], component?.clone(element, deepClone: false, connect: true));
         } else {
-          (element as CustomNamedHolder).updateChild(element.childMap[key]!,
-              component?.clone(element, deepClone: false, connect: true));
+          (element as CustomNamedHolder)
+              .updateChild(element.childMap[key]!, component?.clone(element, deepClone: false, connect: true));
         }
       });
     }
@@ -2112,15 +1929,15 @@ abstract class CustomNamedHolder extends Component {
     if (work.call(this)) {
       return true;
     }
-    // if(this is BuilderComponent){
-    //   for(final list in (this as BuilderComponent).builtList.values){
-    //    for(final v in list){
-    //      if(work.call(v)){
-    //        return true;
-    //      }
-    //    }
-    //   }
-    // }
+// if(this is BuilderComponent){
+//   for(final list in (this as BuilderComponent).builtList.values){
+//    for(final v in list){
+//      if(work.call(v)){
+//        return true;
+//      }
+//    }
+//   }
+// }
     for (final child in childMap.values) {
       if (child != null) {
         if (child.forEachWithClones(work)) {
@@ -2182,8 +1999,7 @@ abstract class CustomNamedHolder extends Component {
     if (boundary?.contains(offset) ?? false) {
       if (this is BuilderComponent) {
         for (final child in childMap.keys) {
-          for (final comp
-              in (this as BuilderComponent).builtList[child] ?? []) {
+          for (final comp in (this as BuilderComponent).builtList[child] ?? []) {
             final len = components.length;
             comp.searchTappedComponent(offset, components);
             if (len != components.length) {
@@ -2193,8 +2009,7 @@ abstract class CustomNamedHolder extends Component {
         }
       } else {
         for (final child in childMap.entries) {
-          if (child.value == null ||
-              (child.key == 'drawer' && !fvbNavigationBloc.model.drawer)) {
+          if (child.value == null || (child.key == 'drawer' && !fvbNavigationBloc.model.drawer)) {
             continue;
           }
           child.value?.searchTappedComponent(offset, components);
@@ -2226,13 +2041,11 @@ abstract class CustomNamedHolder extends Component {
 
       for (final child in childrenMap.keys) {
         if (childrenMap[child]?.isNotEmpty ?? false) {
-          childrenCode +=
-              '$child:[${childrenMap[child]!.map((e) => (e.code(clean: clean) + ',')).join('')}],';
+          childrenCode += '$child:[${childrenMap[child]!.map((e) => (e.code(clean: clean) + ',')).join('')}],';
         }
       }
       if (this is CMaterialApp && clean && _collection.project != null) {
-        childrenCode +=
-            AppConfigCode.generateMaterialCode(_collection.project!);
+        childrenCode += AppConfigCode.generateMaterialCode(_collection.project!);
       }
       return withState('$name($middle$childrenCode)', clean);
     } on Exception catch (e) {
@@ -2243,16 +2056,13 @@ abstract class CustomNamedHolder extends Component {
 
   @override
   Component clone(parent, {bool deepClone = false, bool connect = false}) {
-    final comp = super.clone(parent, deepClone: deepClone, connect: connect)
-        as CustomNamedHolder;
-    comp.childMap = childMap.map((key, value) => MapEntry(
-        key, value?.clone(comp, deepClone: deepClone, connect: connect)));
+    final comp = super.clone(parent, deepClone: deepClone, connect: connect) as CustomNamedHolder;
+    comp.childMap =
+        childMap.map((key, value) => MapEntry(key, value?.clone(comp, deepClone: deepClone, connect: connect)));
     comp.childrenMap = childrenMap.map(
       (key, value) => MapEntry(
         key,
-        value
-            .map((e) => e.clone(comp, deepClone: deepClone, connect: connect))
-            .toList(),
+        value.map((e) => e.clone(comp, deepClone: deepClone, connect: connect)).toList(),
       ),
     );
     return comp;
@@ -2280,9 +2090,7 @@ abstract class CustomNamedHolder extends Component {
         }
       }
     }
-    return compKey != null
-        ? MapEntry<String, bool>(compKey, fromChildMap)
-        : null;
+    return compKey != null ? MapEntry<String, bool>(compKey, fromChildMap) : null;
   }
 
   String? replaceChild(Component oldComp, Component? comp) {
@@ -2294,8 +2102,7 @@ abstract class CustomNamedHolder extends Component {
         childMap[compKey] = comp;
         comp?.setParent(this);
         cloneElements.forEach((element) => (element as CustomNamedHolder)
-            .addOrUpdateChildWithKey(compKey,
-                comp?.clone(element, deepClone: false, connect: true)));
+            .addOrUpdateChildWithKey(compKey, comp?.clone(element, deepClone: false, connect: true)));
       } else {
         final int index = childrenMap[compKey]!.indexOf(oldComp);
         childrenMap[compKey]!.removeAt(index);
@@ -2307,9 +2114,7 @@ abstract class CustomNamedHolder extends Component {
           }
         }
         cloneElements.forEach((element) => (element as CustomNamedHolder)
-            .addOrUpdateChildWithKey(
-                compKey, comp?.clone(element, deepClone: false, connect: true),
-                index: index));
+            .addOrUpdateChildWithKey(compKey, comp?.clone(element, deepClone: false, connect: true), index: index));
       }
 
       return compKey;
@@ -2328,9 +2133,7 @@ class CustomComponentImpl extends Component {
 
   @override
   Widget create(BuildContext context) {
-    return customComponent.rootComponent
-            ?.clone(parent, deepClone: false, connect: false)
-            .create(context) ??
+    return customComponent.rootComponent?.clone(parent, deepClone: false, connect: false).create(context) ??
         Container();
   }
 }
@@ -2360,9 +2163,7 @@ class ComponentWidget extends StatelessWidget {
   final Widget child;
   final Component component;
 
-  const ComponentWidget(
-      {Key? key, required this.child, required this.component})
-      : super(key: key);
+  const ComponentWidget({Key? key, required this.child, required this.component}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -2373,8 +2174,7 @@ class ComponentWidget extends StatelessWidget {
           )
         : child;
 
-    if (component.defaultParam[0] != null ||
-        component.defaultParam[1] != null) {
+    if (component.defaultParam[0] != null || component.defaultParam[1] != null) {
       final width = component.defaultParam[0]?.value;
       final height = component.defaultParam[1]?.value;
       if (width != null || height != null) {
@@ -2394,8 +2194,7 @@ class ComponentWidget extends StatelessWidget {
         );
       }
     }
-    if (component.defaultParam[3] != null &&
-        component.defaultParam[3]!.compiler.code.isNotEmpty) {
+    if (component.defaultParam[3] != null && component.defaultParam[3]!.compiler.code.isNotEmpty) {
       final value = component.defaultParam[3]!.value;
       if (value == false) {
         output = Visibility(
@@ -2414,57 +2213,32 @@ class ComponentWidget extends StatelessWidget {
       }
     }
     final mode = RuntimeProvider.of(context);
-    if (component.defaultParam[5] != null &&
-        mode != RuntimeMode.favorite &&
-        mode != RuntimeMode.preview) {
+    if (component.defaultParam[5] != null && mode != RuntimeMode.favorite && mode != RuntimeMode.preview) {
       if ((component.defaultParam[5] as ComplexParameter).enable) {
         final state = context.read<StateManagementBloc>().state;
         output = output.animate(
-            delay:
-                (component.defaultParam[5] as ComplexParameter).params[0].value,
+            delay: (component.defaultParam[5] as ComplexParameter).params[0].value,
             key: (RuntimeProvider.of(context) == RuntimeMode.edit &&
                     state is StateManagementUpdatedState &&
                     state.id == component.id)
                 ? UniqueKey()
                 : null);
-        for (final p in ((component.defaultParam[5] as ComplexParameter)
-                .params[1] as ListParameter)
-            .params) {
+        for (final p in ((component.defaultParam[5] as ComplexParameter).params[1] as ListParameter).params) {
           final duration = (p as ComplexParameter).params[1].value;
           final delay = p.params[2].value;
           final curve = p.params[3].value;
           switch (p.params[0].rawValue) {
             case 'slideLeftToRight':
-              output = (output as Animate).slideX(
-                  begin: -1,
-                  end: 0,
-                  duration: duration,
-                  delay: delay,
-                  curve: curve);
+              output = (output as Animate).slideX(begin: -1, end: 0, duration: duration, delay: delay, curve: curve);
               break;
             case 'slideRightToLeft':
-              output = (output as Animate).slideX(
-                  begin: 1,
-                  end: 0,
-                  duration: duration,
-                  delay: delay,
-                  curve: curve);
+              output = (output as Animate).slideX(begin: 1, end: 0, duration: duration, delay: delay, curve: curve);
               break;
             case 'slideTopToBottom':
-              output = (output as Animate).slideY(
-                  begin: -1,
-                  end: 0,
-                  duration: duration,
-                  delay: delay,
-                  curve: curve);
+              output = (output as Animate).slideY(begin: -1, end: 0, duration: duration, delay: delay, curve: curve);
               break;
             case 'slideBottomToTop':
-              output = (output as Animate).slideY(
-                  begin: 1,
-                  end: 0,
-                  duration: duration,
-                  delay: delay,
-                  curve: curve);
+              output = (output as Animate).slideY(begin: 1, end: 0, duration: duration, delay: delay, curve: curve);
               break;
 
             case 'scaleUpHorizontal':
@@ -2570,16 +2344,13 @@ class StatefulComponentWidget extends StatefulWidget {
   final Widget Function(BuildContext) child;
   final Controller component;
 
-  const StatefulComponentWidget(
-      {Key? key, required this.child, required this.component})
-      : super(key: key);
+  const StatefulComponentWidget({Key? key, required this.child, required this.component}) : super(key: key);
 
   @override
   State<StatefulComponentWidget> createState() => _StatefulComponentState();
 }
 
-class _StatefulComponentState extends State<StatefulComponentWidget>
-    with TickerProviderStateMixin {
+class _StatefulComponentState extends State<StatefulComponentWidget> with TickerProviderStateMixin {
   @override
   void didChangeDependencies() {
     widget.component.applyValues(context, this);

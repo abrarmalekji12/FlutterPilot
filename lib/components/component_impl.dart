@@ -24,7 +24,7 @@ import '../models/fvb_ui_core/component/component_model.dart';
 import '../models/other_model.dart';
 import '../models/parameter_info_model.dart';
 import '../models/parameter_model.dart';
-import '../parameters_list.dart';
+import '../parameter/parameters_list.dart';
 import '../runtime_provider.dart';
 import '../ui/paint_tools/paint_tools.dart';
 import '../widgets/divider/dashed_divider.dart';
@@ -40,8 +40,7 @@ class CRichText extends Component {
       : super('RichText', [
           Parameters.textAlignParameter,
           Parameters.textSpanParameter()
-            ..withInfo(InnerObjectParameterInfo(
-                innerObjectName: 'TextSpan', namedIfHaveAny: 'text')),
+            ..withInfo(InnerObjectParameterInfo(innerObjectName: 'TextSpan', namedIfHaveAny: 'text')),
           Parameters.overflowParameter
             ..withRequired(true)
             ..withDefaultValue('clip')
@@ -81,8 +80,7 @@ class CCustomPaint extends Component with Resizable, FVBPainter {
               ),
               for (final obj in paintObjects)
                 BlocBuilder<PaintObjBloc, PaintObjState>(
-                    buildWhen: (state1, state2) =>
-                        state2 is! PaintObjUpdateState || state2.obj == obj,
+                    buildWhen: (state1, state2) => state2 is! PaintObjUpdateState || state2.obj == obj,
                     builder: (context, state) {
                       final b = obj.boundary;
                       return Positioned(
@@ -106,8 +104,7 @@ class CCustomPaint extends Component with Resizable, FVBPainter {
   }
 
   @override
-  String? get import =>
-      '${StringOperation.toSnakeCase(parameters[0].displayName!)}${parameters[0].hashCode}';
+  String? get import => '${StringOperation.toSnakeCase(parameters[0].displayName!)}${parameters[0].hashCode}';
 
   String get implCode {
     return '''
@@ -134,10 +131,8 @@ class CCustomPaint extends Component with Resizable, FVBPainter {
   @override
   void onResize(Size size) {
     final params = (parameters[1] as ComplexParameter).params;
-    linearChange(
-        params[0], (params[0].value ?? boundary?.width ?? 0), size.width);
-    linearChange(
-        params[1], (params[1].value ?? boundary?.height ?? 0), size.height);
+    linearChange(params[0], (params[0].value ?? boundary?.width ?? 0), size.width);
+    linearChange(params[1], (params[1].value ?? boundary?.height ?? 0), size.height);
   }
 
   @override
@@ -184,13 +179,9 @@ class CSwitch extends Component with Clickable {
       : super(
             'Switch',
             [
-              Parameters.enableParameter()
-                ..withNamedParamInfoAndSameDisplayName('value'),
+              Parameters.enableParameter()..withNamedParamInfoAndSameDisplayName('value'),
               Parameters.choiceValueFromEnum(MaterialTapTargetSize.values,
-                  optional: false,
-                  require: false,
-                  name: 'materialTapTargetSize',
-                  defaultValue: null),
+                  optional: false, require: false, name: 'materialTapTargetSize', defaultValue: null),
               Parameters.configColorParameter('activeColor'),
               Parameters.configColorParameter('focusColor'),
               Parameters.configColorParameter('hoverColor'),
@@ -204,9 +195,7 @@ class CSwitch extends Component with Clickable {
               alignment: true,
             )) {
     methods([
-      FVBFunction(
-          'onChanged', null, [FVBArgument('value', dataType: DataType.fvbBool)],
-          returnType: DataType.fvbVoid)
+      FVBFunction('onChanged', null, [FVBArgument('value', dataType: DataType.fvbBool)], returnType: DataType.fvbVoid)
     ]);
   }
 
@@ -236,8 +225,7 @@ class CBackButton extends ClickableComponent {
             ..defaultValue = null
         ]) {
     methods([
-      FVBFunction('onPressed', 'App.pop(context);', [],
-          returnType: DataType.fvbVoid),
+      FVBFunction('onPressed', 'App.pop(context);', [], returnType: DataType.fvbVoid),
     ]);
   }
 
@@ -260,8 +248,7 @@ class CCloseButton extends ClickableComponent {
             ..defaultValue = null
         ]) {
     methods([
-      FVBFunction('onPressed', 'App.pop(context);', [],
-          returnType: DataType.fvbVoid),
+      FVBFunction('onPressed', 'App.pop(context);', [], returnType: DataType.fvbVoid),
     ]);
   }
 
@@ -357,8 +344,7 @@ class CDivider extends Component with Resizable {
 
   @override
   void onResize(Size size) {
-    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0),
-        size.height);
+    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0), size.height);
   }
 
   @override
@@ -413,10 +399,8 @@ class CDashedLine extends Component with CLeafRenderModel {
               ..withDefaultValue(
                 ColorAssets.black,
               ),
-            Parameters.widthParameter(initial: '2')
-              ..withNamedParamInfoAndSameDisplayName('dash'),
-            Parameters.widthParameter(initial: '2')
-              ..withNamedParamInfoAndSameDisplayName('gap'),
+            Parameters.widthParameter(initial: '2')..withNamedParamInfoAndSameDisplayName('dash'),
+            Parameters.widthParameter(initial: '2')..withNamedParamInfoAndSameDisplayName('gap'),
           ],
           defaultParamConfig: ComponentDefaultParamConfig(
             padding: true,
@@ -452,9 +436,7 @@ class CText extends Component with CLeafRenderModel {
       : super(
             'Text',
             [
-              Parameters.textParameter(
-                  required: true, defaultValue: 'Write Text Here')
-                ..compiler.code = text ?? '',
+              Parameters.textParameter(required: true, defaultValue: 'Write Text Here')..compiler.code = text ?? '',
               Parameters.googleFontTextStyleParameter..withRequired(false),
               Parameters.textAlignParameter,
               Parameters.overflowParameter,
@@ -500,8 +482,7 @@ class CText extends Component with CLeafRenderModel {
 class CImageNetwork extends Component with Resizable {
   CImageNetwork()
       : super('Image.network', [
-          Parameters.textParameter(defaultValue: '', required: true)
-            ..withDisplayName('url'),
+          Parameters.textParameter(defaultValue: '', required: true)..withDisplayName('url'),
           Parameters.widthParameter(),
           Parameters.heightParameter(),
           Parameters.boxFitParameter(),
@@ -513,24 +494,41 @@ class CImageNetwork extends Component with Resizable {
 
   @override
   void onResize(Size size) {
-    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0),
-        size.width);
-    linearChange(parameters[2], (parameters[2].value ?? boundary?.height ?? 0),
-        size.height);
+    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0), size.width);
+    linearChange(parameters[2], (parameters[2].value ?? boundary?.height ?? 0), size.height);
   }
 
   @override
   ResizeType get resizeType => ResizeType.verticalAndHorizontal;
 
   @override
-  List<Parameter> get resizeAffectedParameters =>
-      [parameters[1], parameters[2]];
+  List<Parameter> get resizeAffectedParameters => [parameters[1], parameters[2]];
 
   @override
   Widget create(BuildContext context) {
     final path = parameters[0].value;
     final w = parameters[1].value;
     final h = parameters[2].value;
+    if (path is String && path.isEmpty) {
+      final iconSize=((w != null ? w : 0) + (h != null ? h : 0)) / 3;
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        lookForUIChanges(context, initialCheck: false);
+      });
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        width: w,
+        height: h,
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.image,
+          size: iconSize!=0?iconSize:30,
+          color: Colors.grey,
+        ),
+      );
+    }
     return Image.network(
       path,
       width: w,
@@ -596,8 +594,7 @@ class CIcon extends Component with Resizable, CRenderModel {
               ..withRequired(false)
               ..withNamedParamInfoAndSameDisplayName('semanticLabel')
           ],
-          defaultParamConfig:
-              ComponentDefaultParamConfig(padding: true, alignment: true),
+          defaultParamConfig: ComponentDefaultParamConfig(padding: true, alignment: true),
         ) {
     if (icon != null) {
       (parameters[0] as ChoiceValueParameter).update(icon);
@@ -616,8 +613,7 @@ class CIcon extends Component with Resizable, CRenderModel {
 
   @override
   void onResize(Size size) {
-    linearChange(parameters[1], (parameters[1].value ?? 24),
-        (size.width + size.height) / 2);
+    linearChange(parameters[1], (parameters[1].value ?? 24), (size.width + size.height) / 2);
   }
 
   @override
@@ -658,29 +654,24 @@ class CImageAsset extends Component with Resizable {
 
   @override
   void onResize(Size size) {
-    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0),
-        size.width);
-    linearChange(parameters[2], (parameters[2].value ?? boundary?.height ?? 0),
-        size.height);
+    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0), size.width);
+    linearChange(parameters[2], (parameters[2].value ?? boundary?.height ?? 0), size.height);
   }
 
   @override
   ResizeType get resizeType => ResizeType.verticalAndHorizontal;
 
   @override
-  List<Parameter> get resizeAffectedParameters =>
-      [parameters[1], parameters[2]];
+  List<Parameter> get resizeAffectedParameters => [parameters[1], parameters[2]];
 
   @override
   Widget create(BuildContext context) {
     final image = parameters[0].value as FVBImage?;
-    return _handleAssetImage(
-        context, image, parameters[1].value, parameters[2].value, parameters);
+    return _handleAssetImage(context, image, parameters[1].value, parameters[2].value, parameters);
   }
 }
 
-Widget loadImage(BuildContext context, FVBImage image, double? w, double? h,
-    List<Parameter> parameters) {
+Widget loadImage(BuildContext context, FVBImage image, double? w, double? h, List<Parameter> parameters) {
   if (image.bytes!.isEmpty) {
     return FVBImageNetworkError(
       path: image.path ?? image.name!,
@@ -703,8 +694,7 @@ Widget loadImage(BuildContext context, FVBImage image, double? w, double? h,
   );
 }
 
-_handleAssetImage(BuildContext context, FVBImage? image, double? width,
-    double? height, List<Parameter> parameters) {
+_handleAssetImage(BuildContext context, FVBImage? image, double? width, double? height, List<Parameter> parameters) {
   return image?.name != null
       ? (image!.bytes != null
           ? loadImage(context, image, width, height, parameters)
@@ -714,17 +704,13 @@ _handleAssetImage(BuildContext context, FVBImage? image, double? width,
                 if (data.hasData) {
                   if (data.data != null) {
                     image.bytes = data.data?.bytes;
-                    return loadImage(
-                        context, data.data!, width, height, parameters);
+                    return loadImage(context, data.data!, width, height, parameters);
                   } else {
                     return FVBImageNetworkError(path: image.name ?? '');
                   }
                 }
                 return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  child: const Icon(Icons.image, color: Colors.grey, size: 30),
                   width: parameters[1].value,
                   height: parameters[2].value,
                 );
@@ -744,8 +730,7 @@ class CImage extends Component with Resizable, CLeafRenderModel {
               ChoiceParameter(
                 options: [
                   Parameters.imageParameter(),
-                  Parameters.textParameter(defaultValue: '', required: true)
-                    ..withDisplayName('url'),
+                  Parameters.textParameter(defaultValue: '', required: true)..withDisplayName('url'),
                   Parameters.bytesParameter(required: true),
                 ],
                 name: 'Source',
@@ -760,8 +745,7 @@ class CImage extends Component with Resizable, CLeafRenderModel {
               Parameters.alignmentParameter(),
               Parameters.blendModeParameter(name: 'colorBlendMode'),
             ],
-            defaultParamConfig:
-                ComponentDefaultParamConfig(padding: true, alignment: true)) {
+            defaultParamConfig: ComponentDefaultParamConfig(padding: true, alignment: true)) {
     autoHandleKey = false;
   }
 
@@ -795,8 +779,7 @@ class CImage extends Component with Resizable, CLeafRenderModel {
         height: h,
       ),
       frameBuilder: (context, child, _, __) {
-        if (parent is Component &&
-            RuntimeProvider.of(context) == RuntimeMode.edit) {
+        if (parent is Component && RuntimeProvider.of(context) == RuntimeMode.edit) {
           WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
             ViewableProvider.maybeOf(context)?.rootComponent?.forEach((p0) {
               p0.lookForUIChanges(context);
@@ -818,18 +801,15 @@ class CImage extends Component with Resizable, CLeafRenderModel {
 
   @override
   void onResize(Size size) {
-    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0),
-        size.width);
-    linearChange(parameters[2], (parameters[2].value ?? boundary?.height ?? 0),
-        size.height);
+    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0), size.width);
+    linearChange(parameters[2], (parameters[2].value ?? boundary?.height ?? 0), size.height);
   }
 
   @override
   ResizeType get resizeType => ResizeType.verticalAndHorizontal;
 
   @override
-  List<Parameter> get resizeAffectedParameters =>
-      [parameters[1], parameters[2]];
+  List<Parameter> get resizeAffectedParameters => [parameters[1], parameters[2]];
 
   @override
   Widget create(BuildContext context) {
@@ -903,10 +883,7 @@ class CImage extends Component with Resizable, CLeafRenderModel {
   Future<Size> size(Size size) async {
     double? width = parameters[1].value, height = parameters[2].value;
     final fit = parameters[4].value;
-    if (width != null &&
-        height != null &&
-        size.width >= width &&
-        size.height >= height) {
+    if (width != null && height != null && size.width >= width && size.height >= height) {
       return Size(width, height);
     }
     final choice = (parameters[0] as ChoiceParameter);
@@ -922,9 +899,7 @@ class CImage extends Component with Resizable, CLeafRenderModel {
     } else {
       final path = parameters[0].value;
 
-      final img = uiImageCache.containsKey(path)
-          ? uiImageCache[path]!
-          : (await getImage(path));
+      final img = uiImageCache.containsKey(path) ? uiImageCache[path]! : (await getImage(path));
 
       imageSize = Size(img.width.toDouble(), img.height.toDouble());
     }
@@ -934,9 +909,7 @@ class CImage extends Component with Resizable, CLeafRenderModel {
   Future<ui.Image> getImage(String path) async {
     final completer = Completer<ImageInfo>();
     final img = NetworkImage(path);
-    img
-        .resolve(const ImageConfiguration())
-        .addListener(ImageStreamListener((info, _) {
+    img.resolve(const ImageConfiguration()).addListener(ImageStreamListener((info, _) {
       completer.complete(info);
     }));
     final ImageInfo imageInfo = await completer.future;
@@ -952,16 +925,13 @@ class CImage extends Component with Resizable, CLeafRenderModel {
   }
 }
 
-Size fitImage(BoxFit fit, double? width, double? height, Size imageSize,
-    Size availableSize) {
+Size fitImage(BoxFit fit, double? width, double? height, Size imageSize, Size availableSize) {
   final scale = imageSize.width / imageSize.height;
   switch (fit) {
     case BoxFit.fill:
       final w = width != null && width >= 0
           ? width
-          : (imageSize.width > availableSize.width
-              ? availableSize.width
-              : imageSize.width);
+          : (imageSize.width > availableSize.width ? availableSize.width : imageSize.width);
       return Size(w, height != null ? height : w / scale);
     case BoxFit.contain:
       // TODO: Handle this case.
@@ -997,8 +967,7 @@ class CSvgImage extends Component {
 
   @override
   Widget create(BuildContext context) {
-    return parameters[0].value != null &&
-            (parameters[0].value as FVBImage).bytes != null
+    return parameters[0].value != null && (parameters[0].value as FVBImage).bytes != null
         ? SvgPicture.memory(
             (parameters[0].value as FVBImage).bytes!,
             width: parameters[1].value,
@@ -1019,13 +988,11 @@ class CInputDecorator extends Holder {
       : super('InputDecorator', [
           Parameters.googleFontTextStyleParameter..withChangeNamed('baseStyle'),
           Parameters.inputDecorationParameter(),
-          Parameters.enableParameter(false)
-            ..withNamedParamInfoAndSameDisplayName('isEmpty'),
+          Parameters.enableParameter(false)..withNamedParamInfoAndSameDisplayName('isEmpty'),
           Parameters.enableParameter(
             false,
           )..withNamedParamInfoAndSameDisplayName('isFocused'),
-          Parameters.enableParameter(false)
-            ..withNamedParamInfoAndSameDisplayName('expands'),
+          Parameters.enableParameter(false)..withNamedParamInfoAndSameDisplayName('expands'),
         ]) {
     addComponentParameters([
       (parameters[1] as ComplexParameter).params[10] as ComponentParameter,
@@ -1055,8 +1022,7 @@ class CTextField extends Component with Clickable, Controller {
             [
               Parameters.textInputTypeParameter(),
               Parameters.googleFontTextStyleParameter..withRequired(false),
-              Parameters.enableParameter(false)
-                ..withNamedParamInfoAndSameDisplayName('readOnly'),
+              Parameters.enableParameter(false)..withNamedParamInfoAndSameDisplayName('readOnly'),
               Parameters.inputDecorationParameter(),
               Parameters.flexParameter()
                 ..withNamedParamInfoAndSameDisplayName('maxLength')
@@ -1079,23 +1045,20 @@ class CTextField extends Component with Clickable, Controller {
       (parameters[3] as ComplexParameter).params[12] as ComponentParameter,
     ]);
     methods([
-      FVBFunction('onChanged', null,
-          [FVBArgument('value', dataType: DataType.string, nullable: false)],
+      FVBFunction('onChanged', null, [FVBArgument('value', dataType: DataType.string, nullable: false)],
           returnType: DataType.fvbVoid),
-      FVBFunction('onSubmitted', null,
-          [FVBArgument('value', dataType: DataType.string, nullable: false)],
+      FVBFunction('onSubmitted', null, [FVBArgument('value', dataType: DataType.string, nullable: false)],
           returnType: DataType.fvbVoid),
       FVBFunction('onTap', null, [], returnType: DataType.fvbVoid),
     ]);
-    assign('controller', (_, vsync) => TextEditingController(),
-        'TextEditingController()');
+    assign('controller', (_, vsync) => TextEditingController(), 'TextEditingController()');
   }
 
   @override
   Widget create(BuildContext context) {
     return TextField(
       keyboardType: parameters[0].value,
-      controller: values['controller']!,
+      controller: values['controller'],
       onChanged: (value) {
         perform(context, arguments: [value]);
       },
@@ -1120,20 +1083,13 @@ class CTextFormField extends Component with Clickable {
       : super('TextFormField', [
           Parameters.textInputTypeParameter(),
           Parameters.googleFontTextStyleParameter,
-          BooleanParameter(
-              required: true,
-              val: false,
-              info: NamedParameterInfo('readOnly'),
-              displayName: 'readOnly'),
+          BooleanParameter(required: true, val: false, info: NamedParameterInfo('readOnly'), displayName: 'readOnly'),
           Parameters.inputDecorationParameter(),
           Parameters.flexParameter()
             ..withNamedParamInfoAndSameDisplayName('maxLength')
             ..withRequired(false),
           BooleanParameter(
-              required: false,
-              val: false,
-              info: NamedParameterInfo('obscureText'),
-              displayName: 'obscure-text'),
+              required: false, val: false, info: NamedParameterInfo('obscureText'), displayName: 'obscure-text'),
           Parameters.textInputActionParameter(),
         ]) {
     addComponentParameters([
@@ -1142,11 +1098,9 @@ class CTextFormField extends Component with Clickable {
       (parameters[3] as ComplexParameter).params[12] as ComponentParameter,
     ]);
     methods([
-      FVBFunction('onChanged', null,
-          [FVBArgument('value', dataType: DataType.string, nullable: false)],
+      FVBFunction('onChanged', null, [FVBArgument('value', dataType: DataType.string, nullable: false)],
           returnType: DataType.fvbVoid),
-      FVBFunction('validator', null,
-          [FVBArgument('value', dataType: DataType.string, nullable: true)],
+      FVBFunction('validator', null, [FVBArgument('value', dataType: DataType.string, nullable: true)],
           returnType: DataType.string, canReturnNull: true),
     ]);
   }
@@ -1158,9 +1112,7 @@ class CTextFormField extends Component with Clickable {
     initComponentParameters(context);
     return TextFormField(
       keyboardType: parameters[0].value,
-      controller: RuntimeProvider.of(context) == RuntimeMode.run
-          ? textEditingController
-          : null,
+      controller: RuntimeProvider.of(context) == RuntimeMode.run ? textEditingController : null,
       onChanged: (value) {
         perform(context, arguments: [value]);
       },
@@ -1186,8 +1138,7 @@ class CLoadingIndicator extends Component {
           Parameters.widthParameter()
             ..withDefaultValue(null)
             ..withNamedParamInfoAndSameDisplayName('strokeWidth'),
-          Parameters.colorListParameter(
-              [const Color(0xff009FFD), const Color(0xff2A2A72)]),
+          Parameters.colorListParameter([const Color(0xff009FFD), const Color(0xff2A2A72)]),
           Parameters.enableParameter()
             ..val = false
             ..withNamedParamInfoAndSameDisplayName('pause')
@@ -1228,15 +1179,12 @@ class CLinearProgressIndicator extends Component {
                 evaluate: (params) {
                   return AlwaysStoppedAnimation<Color?>(params[0].value);
                 },
-                info: InnerObjectParameterInfo(
-                    innerObjectName: 'AlwaysStoppedAnimation',
-                    namedIfHaveAny: 'valueColor'),
+                info: InnerObjectParameterInfo(innerObjectName: 'AlwaysStoppedAnimation', namedIfHaveAny: 'valueColor'),
               ),
               Parameters.colorParameter,
               Parameters.backgroundColorParameter(),
             ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-                padding: true, width: true, height: true, alignment: true));
+            defaultParamConfig: ComponentDefaultParamConfig(padding: true, width: true, height: true, alignment: true));
 
   @override
   Widget create(BuildContext context) {
@@ -1273,15 +1221,12 @@ class CCircularProgressIndicator extends Component {
                 evaluate: (params) {
                   return AlwaysStoppedAnimation<Color?>(params[0].value);
                 },
-                info: InnerObjectParameterInfo(
-                    innerObjectName: 'AlwaysStoppedAnimation',
-                    namedIfHaveAny: 'valueColor'),
+                info: InnerObjectParameterInfo(innerObjectName: 'AlwaysStoppedAnimation', namedIfHaveAny: 'valueColor'),
               ),
               Parameters.colorParameter,
               Parameters.backgroundColorParameter(),
             ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-                padding: true, width: true, height: true, alignment: true));
+            defaultParamConfig: ComponentDefaultParamConfig(padding: true, width: true, height: true, alignment: true));
 
   @override
   Widget create(BuildContext context) {

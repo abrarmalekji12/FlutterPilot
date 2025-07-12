@@ -110,7 +110,7 @@ class _ProjectCreationDialogState extends State<ProjectCreationDialog> {
                                   .contains(value)) {
                                 return 'this project name already exists';
                               }
-                              return Validations.commonNameValidator()
+                              return Validations.projectNameValidator()
                                   .call(value);
                             },
                           ),

@@ -7,7 +7,7 @@ import '../../common/converter/code_converter.dart';
 import '../../constant/font_style.dart';
 import '../../constant/string_constant.dart';
 import '../../cubit/stack_action/stack_action_cubit.dart';
-import '../../parameters_list.dart';
+import '../../parameter/parameters_list.dart';
 import '../fvb_ui_core/component/custom_component.dart';
 import '../parameter_info_model.dart';
 import '../parameter_model.dart';

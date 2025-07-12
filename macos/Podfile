@@ -28,6 +28,8 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_macos_podfile_setup
 
+
+
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
@@ -45,7 +47,8 @@ post_install do |installer|
     target.build_configurations.each do |config|
           config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
     end
-
+    
+    
     if target.name == 'BoringSSL-GRPC'
           target.source_build_phase.files.each do |file|
             if file.settings && file.settings['COMPILER_FLAGS']
@@ -56,4 +59,20 @@ post_install do |installer|
           end
     end
   end
+end
+
+
+post_integrate do |installer|
+  pods_project = installer.pods_project
+  pods_project.targets.each do |target|
+    target.build_phases
+      .select { |phase| phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase) }
+      .each do |phase|
+        if phase.name == 'Create Symlinks to Header Folders'
+          # ✅ Disable dependency analysis
+          phase.always_out_of_date = "1"
+        end
+      end
+  end
+  pods_project.save
 end

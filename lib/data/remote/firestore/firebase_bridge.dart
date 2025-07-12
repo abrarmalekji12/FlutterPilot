@@ -838,9 +838,9 @@ class FirebaseDataBridge extends DataBridge {
       try {
         List.from(projectData['models'] ?? [])
             .forEach((e) => FVBModelClass.fromJson(e, project));
-      } on Exception catch (e) {
-        print('MODELS ERROR $e');
-        e.printError();
+      }  catch (e, stack) {
+        print('🔴 Error: $e');
+        print('📌 Stack Trace:\n$stack');
       }
       return Optional.left(project);
     } on Exception catch (e) {

@@ -81,11 +81,13 @@ class _NavigationSettingsViewState extends State<NavigationSettingsView> {
                               color: ColorAssets.theme,
                             ),
                             10.wBox,
-                            Text(
-                              selectionCubit.selected.viewable!.name,
-                              style: AppFontStyle.lato(13,
-                                  fontWeight: FontWeight.w700,
-                                  color: theme.text1Color),
+                            Flexible(
+                              child: Text(
+                                selectionCubit.selected.viewable!.name,
+                                style: AppFontStyle.lato(13,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.text1Color),
+                              ),
                             ),
                           ],
                         ),

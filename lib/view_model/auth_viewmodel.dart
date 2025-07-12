@@ -14,8 +14,8 @@ class FVBUser {
         email = 'test_fvb1@mailinator.com';
         password = 'password';
       } else if (dbType == DBType.latest1) {
-        email = 'abrar_malekji@mailinator.com';
-        password = 'password';
+        email = 'abrar.malekji@mailinator.com';
+        password = 'abrar123';
       }
     }
   }

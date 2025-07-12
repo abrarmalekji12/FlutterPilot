@@ -21,8 +21,8 @@ class RuntimeProvider extends InheritedWidget {
   static RuntimeMode of(BuildContext context) {
     final RuntimeProvider? result =
         context.dependOnInheritedWidgetOfExactType<RuntimeProvider>();
-    assert(result != null, 'No runtimeMode found in context');
-    return result!.runtimeMode;
+    // assert(result != null, 'No runtimeMode found in context');
+    return result?.runtimeMode??RuntimeMode.viewOnly;
   }
 
   @override

@@ -27,7 +27,6 @@ extension ThemeToolbarExtension on DevicePreviewToolBarThemeData {
           ),
           primaryColor: accentColor,
           primaryColorDark: accentColor,
-          indicatorColor: accentColor,
           toggleButtonsTheme: base.toggleButtonsTheme.copyWith(
             selectedColor: accentColor,
           ),
@@ -39,7 +38,7 @@ extension ThemeToolbarExtension on DevicePreviewToolBarThemeData {
             activeTickMarkColor: accentColor,
             inactiveTickMarkColor: accentColor,
             overlayColor: accentColor.withOpacity(0.12),
-          ),
+          ), tabBarTheme: const TabBarThemeData(indicatorColor: accentColor),
         );
       case DevicePreviewToolBarThemeData.light:
         final base = ThemeData.light();
@@ -52,7 +51,6 @@ extension ThemeToolbarExtension on DevicePreviewToolBarThemeData {
           ),
           primaryColor: accentColor,
           primaryColorDark: accentColor,
-          indicatorColor: accentColor,
           toggleButtonsTheme: base.toggleButtonsTheme.copyWith(
             selectedColor: accentColor,
           ),
@@ -67,7 +65,7 @@ extension ThemeToolbarExtension on DevicePreviewToolBarThemeData {
             activeTickMarkColor: accentColor,
             inactiveTickMarkColor: accentColor,
             overlayColor: accentColor.withOpacity(0.12),
-          ),
+          ), tabBarTheme: const TabBarThemeData(indicatorColor: accentColor),
         );
     }
   }

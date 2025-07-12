@@ -7,7 +7,7 @@ import '../../constant/color_assets.dart';
 import '../../constant/font_style.dart';
 
 class FilledButtonWidget extends StatelessWidget {
-  final String text;
+  final String? text;
   final VoidCallback? onTap;
   final Color fillColor;
   final Color? textColor;
@@ -16,11 +16,13 @@ class FilledButtonWidget extends StatelessWidget {
   final double? width;
   final double? fontSize;
   final EdgeInsets? padding;
+  final Widget? child;
 
   const FilledButtonWidget(
       {Key? key,
-      required this.text,
+      this.text,
       this.onTap,
+      this.child,
       this.fillColor = ColorAssets.theme,
       this.enable = true,
       this.textColor,
@@ -32,6 +34,10 @@ class FilledButtonWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textStyle = AppFontStyle.lato(fontSize ?? res(context, 18.sp, 16.sp),
+            color: enable ? (textColor ?? Colors.white) : Colors.white,
+            fontWeight: Responsive.isMobile(context) ? FontWeight.w400 : FontWeight.w500)
+        .copyWith(height: 0.8);
     return SizedBox(
       width: width,
       height: height ?? 45,
@@ -57,18 +63,14 @@ class FilledButtonWidget extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(res(context, 10.r, 6.r)),
           ),
-          padding: EdgeInsets.only(
-              top: (fontSize ?? res(context, 18.sp, 16.sp)!) / 4),
+          padding: EdgeInsets.only(top: (fontSize ?? res(context, 18.sp, 16.sp)!) / 4),
           alignment: Alignment.center,
-          child: Text(
-            text,
-            style: AppFontStyle.lato(fontSize ?? res(context, 18.sp, 16.sp),
-                    color: enable ? (textColor ?? Colors.white) : Colors.white,
-                    fontWeight: Responsive.isMobile(context)
-                        ? FontWeight.w400
-                        : FontWeight.w500)
-                .copyWith(height: 0.8),
-          ),
+          child: child != null
+              ? DefaultTextStyle(style: textStyle, child: child!)
+              : Text(
+                  text ?? '',
+                  style: textStyle,
+                ),
         ),
       ),
     );

@@ -9,7 +9,7 @@ import '../code_operations.dart';
 import '../components/custom/load_data.dart';
 import '../components/holder_impl.dart';
 import '../injector.dart';
-import '../parameters_list.dart';
+import '../parameter/parameters_list.dart';
 import '../runtime_provider.dart';
 import 'fvb_ui_core/component/component_model.dart';
 import 'parameter_info_model.dart';
@@ -82,7 +82,7 @@ abstract class BuilderComponent extends CustomNamedHolder {
     function?.processor = processor;
     final component = child.clone(this, deepClone: false, connect: true);
     final index = args.isNotEmpty ? (args.last is int ? args.last : 0) : 0;
-    final list = builtList[name]!;
+    final list = builtList[name]??[];
     if (index < list.length) {
       list.removeAt(index);
       list.insert(index, component);

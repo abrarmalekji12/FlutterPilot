@@ -97,8 +97,8 @@ class _LoginPageState extends State<LoginPage> {
                               onTap: kDebugMode
                                   ? () {
                                       _userNameController.text =
-                                          'abrar_malekji@mailinator.com';
-                                      _passwordController.text = 'password';
+                                          'abrar.malekji@mailinator.com';
+                                      _passwordController.text = 'abrar123';
                                     }
                                   : null,
                               child: Text(

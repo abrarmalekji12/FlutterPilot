@@ -148,6 +148,8 @@ abstract class Parameter {
         : null);
   }
 
+  String? get idName => (info.getName() ?? displayName)?.toLowerCase();
+
   get value;
 
   get rawValue;
@@ -1644,7 +1646,7 @@ class ComplexParameter extends Parameter with UsableParam {
   void fromJson(Map<String, dynamic> map, FVBProject? project) {
     super.fromJson(map, project);
     for (int i = 0; i < (map['params'] ?? []).length; i++) {
-      params[i].fromJson(map['params'][i], project);
+      params[i].fromJson(Map<String,dynamic>.from(map['params'][i]), project);
     }
     if (isRequired) {
       enable = true;
@@ -1937,7 +1939,7 @@ class ComponentParameter extends Parameter {
   void fromJson(Map<String, dynamic> map, FVBProject? project) {
     super.fromJson(map, project);
     components.addAll(List.of(map['components'] ?? [])
-        .map((e) => Component.fromJson(e, project)..parent = this)
+        .map((e) => e is Map && e.containsKey('name')?(Component.fromJson(e, project)..parent = this):null).nonNulls
         .toList());
   }
 

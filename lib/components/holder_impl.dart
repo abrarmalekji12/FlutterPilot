@@ -10,7 +10,7 @@ import '../models/fvb_ui_core/component/component_model.dart';
 import '../models/parameter_info_model.dart';
 import '../models/parameter_model.dart';
 import '../models/parameter_rule_model.dart';
-import '../parameters_list.dart';
+import '../parameter/parameters_list.dart';
 import '../runtime_provider.dart';
 import '../ui/build_view/build_view.dart';
 

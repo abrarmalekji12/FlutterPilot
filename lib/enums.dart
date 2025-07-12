@@ -1,4 +1,4 @@
-enum ParamType { int, double, string, other }
+enum ParamType { int, double, string, other,none }
 
 enum ParamInputType {
   simple,

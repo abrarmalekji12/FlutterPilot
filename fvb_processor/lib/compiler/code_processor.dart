@@ -1768,7 +1768,7 @@ class Processor {
           } else if (stringCount > 0 && ch == curlyBracketClose) {
             stringCount--;
           }
-          if (!noBackslash && currentIndex > 0) {
+          if (!noBackslash && currentIndex > 0&&variable.length>1) {
             variable = variable.substring(0, variable.length - 1);
           }
           variable += nextToken;

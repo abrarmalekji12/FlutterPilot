@@ -42,8 +42,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
   final SelectionCubit selectionCubit;
   final UserSession _userSession;
 
-  UserDetailsCubit(this.operationCubit, this.selectionCubit, this._userSession)
-      : super(FlutterProjectInitial());
+  UserDetailsCubit(this.operationCubit, this.selectionCubit, this._userSession) : super(FlutterProjectInitial());
 
   // set userId
   set setUserId(String userId) {
@@ -114,8 +113,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
         print('BODY ${response.body}');
         if (json.containsKey('access_token')) {
           _userSession.settingModel?.figmaAccessToken = json['access_token'];
-          await operationCubit.updateUserSetting(
-              'figmaAccessToken', json['access_token']);
+          await operationCubit.updateUserSetting('figmaAccessToken', json['access_token']);
           emit(UserDetailsFigmaTokenUpdatedState());
         }
       }
@@ -131,10 +129,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
     try {
       await waitForConnectivity();
       await LoadTimeChecker.checkTime('Loading Projects', () async {
-        final [
-          userDetails as UserSettingModel?,
-          projects as List<FVBProject>?
-        ] = await Future.wait([
+        final [userDetails as UserSettingModel?, projects as List<FVBProject>?] = await Future.wait([
           if (_userSession.settingModel != null)
             Future.value(_userSession.settingModel!)
           else
@@ -161,10 +156,8 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
     emit(ProjectUpdateLoadingState());
     try {
       await waitForConnectivity();
-      await dataBridge.deleteProject(_userSession.user.userId!, project,
-          _userSession.settingModel!.projects);
-      _userSession.settingModel!.projects
-          .removeWhere((value) => value.id == project.id);
+      await dataBridge.deleteProject(_userSession.user.userId!, project, _userSession.settingModel!.projects);
+      _userSession.settingModel!.projects.removeWhere((value) => value.id == project.id);
       collection.project = null;
       emit(ProjectUpdateSuccessState(deleted: true));
     } on Exception catch (e) {
@@ -185,8 +178,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
     }
   }
 
-  Future<FVBProject?> createProject(final String name,
-      {FVBTemplate? template}) async {
+  Future<FVBProject?> createProject(final String name, {FVBTemplate? template}) async {
     try {
       emit(ProjectCreationLoadingState());
       await waitForConnectivity();
@@ -195,8 +187,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
       if (template == null) {
         project = FVBProject.createNewProject(name, _userSession.user);
       } else {
-        final response = await dataBridge.loadProject(template.projectId,
-            checkIfPublic: true);
+        final response = await dataBridge.loadProject(template.projectId, checkIfPublic: true);
         if (response.isLeft) {
           project = response.a!;
           project.name = name;
@@ -205,34 +196,25 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
             screen.project = project;
           }
 
-          for (final component
-              in response.a?.customComponents ?? <CustomComponent>[]) {
+          for (final component in response.a?.customComponents ?? <CustomComponent>[]) {
             component.id = randomId;
             component.project = project;
           }
 
           project.userId = _userSession.user.userId!;
         } else {
-          emit(UserDetailsErrorState(
-              message:
-                  '${response.right.projectLoadError.name}: ${response.right.error ?? ''}'));
+          emit(
+              UserDetailsErrorState(message: '${response.right.projectLoadError.name}: ${response.right.error ?? ''}'));
           return null;
         }
       }
       Processor.init();
       collection.project = project;
       project.variables.addAll({
-        'tabletWidthLimit': VariableModel(
-            'tabletWidthLimit', DataType.fvbDouble,
-            description: 'maximum width tablet can have',
-            value: 1200,
-            deletable: false,
-            uiAttached: true),
+        'tabletWidthLimit': VariableModel('tabletWidthLimit', DataType.fvbDouble,
+            description: 'maximum width tablet can have', value: 1200, deletable: false, uiAttached: true),
         'phoneWidthLimit': VariableModel('phoneWidthLimit', DataType.fvbDouble,
-            deletable: false,
-            value: 900,
-            uiAttached: true,
-            description: 'maximum width phone can have')
+            deletable: false, value: 900, uiAttached: true, description: 'maximum width phone can have')
       });
       await dataBridge.createProject(_userSession.user.userId!, project);
       AppLoader.update(0.9);
@@ -246,9 +228,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
   }
 
   Future<FVBImage> takeScreenShot(Screen screen) async {
-    final boundary = ScreenKey('${screen.id}')
-        .currentContext
-        ?.findRenderObject() as RenderRepaintBoundary?;
+    final boundary = ScreenKey('${screen.id}').currentContext?.findRenderObject() as RenderRepaintBoundary?;
     if (boundary == null) {
       return FVBImage(name: screen.name, bytes: Uint8List.fromList([]));
     }
@@ -263,8 +243,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
     try {
       emit(ProjectUploadAsTemplateLoadingState());
       await waitForConnectivity();
-      final images = await Future.wait(
-          [for (final screen in project.screens) takeScreenShot(screen)]);
+      final images = await Future.wait([for (final screen in project.screens) takeScreenShot(screen)]);
       await Future.wait([
         dataBridge.addToTemplates(
           FVBTemplate(
@@ -278,12 +257,9 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
               likes: 0,
               public: true),
         ),
-        for (final image in images)
-          dataBridge.uploadImageOnPath(
-              ImageRef.templateImage(image.name!), image)
+        for (final image in images) dataBridge.uploadImageOnPath(ImageRef.templateImage(image.name!), image)
       ]);
-      for (final image in images)
-        byteCache[ImageRef.templateImage(image.name!)] = image.bytes!;
+      for (final image in images) byteCache[ImageRef.templateImage(image.name!)] = image.bytes!;
       emit(ProjectUploadAsTemplateSuccessState());
     } on Exception catch (e) {
       emit(UserDetailsErrorState(message: e.toString()));
@@ -304,12 +280,10 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
   }
 
   void reloadProject({required int userId}) {
-    loadProject(operationCubit.project!.id,
-        userId: _userSession.user.userId!, name: operationCubit.project!.name);
+    loadProject(operationCubit.project!.id, userId: _userSession.user.userId!, name: operationCubit.project!.name);
   }
 
-  void loadProject(final String id,
-      {required String? userId, String? name}) async {
+  void loadProject(final String id, {required String? userId, String? name}) async {
     emit(ProjectLoadingState());
     await LoadTimeChecker.checkTime('PROJECT', () async {
       try {
@@ -322,8 +296,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
         }
         final errorBloc = sl<EventLogBloc>();
         errorBloc.consoleVisible = false;
-        final response = await dataBridge.loadProject(id,
-            checkIfPublic: userId != _userSession.user.userId);
+        final response = await dataBridge.loadProject(id, checkIfPublic: userId != _userSession.user.userId);
         if (response.a != null) {
           collection.project = response.a!;
         }
@@ -357,8 +330,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
         }
         final project = response.left;
         if (project.screens.isNotEmpty) {
-          project.screens.sort((page1, page2) =>
-              page1.createdAt.isAfter(page2.createdAt) ? 1 : -1);
+          project.screens.sort((page1, page2) => page1.createdAt.isAfter(page2.createdAt) ? 1 : -1);
         }
         final List<FVBImage> imageDataList = [];
         operationCubit.setFlutterProject = project;
@@ -379,8 +351,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
         }
         AppLoader.update(0.8);
         if (project.screens.isNotEmpty) {
-          project.screens.sort((page1, page2) =>
-              page1.createdAt.isAfter(page2.createdAt) ? 1 : -1);
+          project.screens.sort((page1, page2) => page1.createdAt.isAfter(page2.createdAt) ? 1 : -1);
         }
         AppLoader.update(0.95);
         if (userId != null) {
@@ -389,8 +360,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
             for (final FVBImage imageData in imageDataList)
               Future(() async {
                 if (!byteCache.containsKey(imageData.name!)) {
-                  imageData.bytes =
-                      await dataBridge.loadImage(userId, imageData.name!);
+                  imageData.bytes = await dataBridge.loadImage(userId, imageData.name!);
                   if (imageData.bytes?.isNotEmpty ?? false) {
                     byteCache[imageData.name!] = imageData.bytes!;
                   }
@@ -400,14 +370,10 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
               }),
             if (_userSession.settingModel == null)
               Future(() async {
-                final [
-                  settings as UserSettingModel?,
-                  projects as List<FVBProject>?
-                ] = await Future.wait([
-                  dataBridge.loadUserDetails(userId),
-                  dataBridge.loadProjectList(userId)
-                ]);
+                final [settings as UserSettingModel?, projects as List<FVBProject>?] =
+                    await Future.wait([dataBridge.loadUserDetails(userId), dataBridge.loadProjectList(userId)]);
                 _userSession.settingModel = settings;
+
                 if (projects != null) {
                   _userSession.settingModel?.projects.addAll(projects);
                 }
@@ -417,40 +383,27 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
 
         AppLoader.update(1);
 
-        if (project.variables.entries
-                .firstWhereOrNull((e) => e.key == 'tabletWidthLimit') ==
-            null) {
-          operationCubit.addVariable(VariableModel(
-              'tabletWidthLimit', DataType.fvbDouble,
-              deletable: false,
-              description: 'maximum width tablet can have',
-              value: 1200,
-              uiAttached: true));
+        if (project.variables.entries.firstWhereOrNull((e) => e.key == 'tabletWidthLimit') == null) {
+          operationCubit.addVariable(VariableModel('tabletWidthLimit', DataType.fvbDouble,
+              deletable: false, description: 'maximum width tablet can have', value: 1200, uiAttached: true));
         }
-        if (project.variables.entries
-                .firstWhereOrNull((e) => e.key == 'phoneWidthLimit') ==
-            null) {
-          operationCubit.addVariable(VariableModel(
-              'phoneWidthLimit', DataType.fvbDouble,
-              deletable: false,
-              description: 'maximum width tablet can have',
-              value: 900,
-              uiAttached: true));
+        if (project.variables.entries.firstWhereOrNull((e) => e.key == 'phoneWidthLimit') == null) {
+          operationCubit.addVariable(VariableModel('phoneWidthLimit', DataType.fvbDouble,
+              deletable: false, description: 'maximum width tablet can have', value: 900, uiAttached: true));
         }
 
         errorBloc.consoleVisible = true;
         collection.project = project;
-        final index = _userSession.settingModel?.projects
-                .indexWhere((element) => element.id == project.id) ??
-            -1;
+        final index = _userSession.settingModel?.projects.indexWhere((element) => element.id == project.id) ?? -1;
         if (index >= 0) {
           _userSession.settingModel!.projects.removeAt(index);
           _userSession.settingModel!.projects.insert(index, project);
         }
         if (project.settings.firebaseConnect != null) {
-          await dataBridge.connect(
-              project.id, project.settings.firebaseConnect!.json);
+          await dataBridge.connect(project.id, project.settings.firebaseConnect!.json);
         }
+        if (_userSession.settingModel?.openAISecretToken != null) componentGenerator.initialize();
+
         emit(FlutterProjectLoadedState(project));
       } on Exception catch (error) {
         print('ERROR $error');
@@ -459,8 +412,7 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
     });
   }
 
-  void restoreProject(FVBCommit commit, Set<String> screens,
-      Set<String> components, FVBProject project) async {
+  void restoreProject(FVBCommit commit, Set<String> screens, Set<String> components, FVBProject project) async {
     emit(ProjectLoadingState());
     try {
       AppLoader.update(0.7);

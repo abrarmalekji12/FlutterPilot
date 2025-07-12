@@ -45,8 +45,10 @@ import 'local_build_generator.dart';
 import 'navigation/animated_dialog.dart';
 
 class CodeViewerWidget extends StatefulWidget {
+  final FVBFile? code;
+
   const CodeViewerWidget({
-    Key? key,
+    Key? key, this.code,
   }) : super(key: key);
 
   @override
@@ -78,7 +80,14 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
     final theme = editorThemes[_userSession.settingModel!.iDETheme];
     _codeController = CustomCodeController(language: dart, theme: theme);
     backgroundColor = theme!['root']!.backgroundColor;
-    _initializeCodeGeneration();
+    if (widget.code != null) {
+      rootDirectory = FVBDirectory('', [widget.code!], []);
+      selectedFile=widget.code!;
+      format(rootDirectory);
+    }
+    else {
+      _initializeCodeGeneration();
+    }
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final focusContext = GlobalObjectKey(selectedFile!).currentContext;
       if (focusContext != null) {
@@ -112,10 +121,16 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
   Widget build(BuildContext context) {
     return SizedBox(
       width: Responsive.isDesktop(context)
-          ? MediaQuery.of(context).size.width * 0.7
+          ? MediaQuery
+          .of(context)
+          .size
+          .width * 0.7
           : null,
       height: Responsive.isDesktop(context)
-          ? MediaQuery.of(context).size.height * 0.8
+          ? MediaQuery
+          .of(context)
+          .size
+          .height * 0.8
           : null,
       child: Card(
         margin: EdgeInsets.zero,
@@ -176,9 +191,9 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
                         child: ScrollbarTheme(
                           data: ScrollbarTheme.of(context).copyWith(
                             thumbColor:
-                                const WidgetStatePropertyAll(Colors.white),
+                            const WidgetStatePropertyAll(Colors.white),
                             trackColor:
-                                const WidgetStatePropertyAll(Colors.white),
+                            const WidgetStatePropertyAll(Colors.white),
                             radius: const Radius.circular(10),
                             thickness: const WidgetStatePropertyAll(10),
                           ),
@@ -296,7 +311,7 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
       }
     }
     final mainFile =
-        FVBFile('main.dart', componentOperationCubit.project!.code());
+    FVBFile('main.dart', componentOperationCubit.project!.code());
     final List<CCustomPaint> customPaints = [];
     [
       ...componentOperationCubit.project!.screens.map((e) => e.rootComponent),
@@ -349,7 +364,7 @@ class _CodeViewerWidgetState extends State<CodeViewerWidget> {
         ], [
           FVBDirectory('models', [
             for (final model
-                in Processor.classes.values.whereType<FVBModelClass>())
+            in Processor.classes.values.whereType<FVBModelClass>())
               FVBFile(model.fileName + '.dart', model.implCode(project))
           ], [])
         ]),
@@ -567,7 +582,7 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
       showConfirmDialog(
           title: 'Error generating code',
           subtitle:
-              'Error with files\n${formatErrors.entries.map((e) => '${e.key}: ${e.value}').join('\n')}',
+          'Error with files\n${formatErrors.entries.map((e) => '${e.key}: ${e.value}').join('\n')}',
           context: context,
           positive: 'Ok');
     }
@@ -587,9 +602,9 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
   void addFilesOfFolder(imageToBase64Map, FVBDirectory directory, String path) {
     for (final file in directory.files) {
       imageToBase64Map[(path.isNotEmpty ? '$path/' : '') + file.name] =
-          file.name.endsWith('.dart')
-              ? _formatDartCode(file, file.code ?? '')
-              : file.code ?? '';
+      file.name.endsWith('.dart')
+          ? _formatDartCode(file, file.code ?? '')
+          : file.code ?? '';
     }
     for (final folder in directory.folders) {
       addFilesOfFolder(imageToBase64Map, folder,
@@ -621,7 +636,7 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
       AppLoader.show(context);
       http
           .post(Uri.parse('http://127.0.0.1:8000/generate'),
-              body: jsonEncode(generatedCode))
+          body: jsonEncode(generatedCode))
           .then((response) {
         AppLoader.hide(context);
 
@@ -633,7 +648,7 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
               positive: 'ok');
           FileSaver.instance
               .saveFile(
-                  name: 'app-release', bytes: response.bodyBytes, ext: 'apk')
+              name: 'app-release', bytes: response.bodyBytes, ext: 'apk')
               .then((value) {
             showConfirmDialog(
                 context: context,
@@ -668,7 +683,7 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
   Future<bool> downloadProject() async {
     final imageToBase64Map = generateCode();
     return await DownloadUtils.downloadWithoutZip(imageToBase64Map,
-            widget.componentOperationCubit.project!.packageName)
+        widget.componentOperationCubit.project!.packageName)
         .then((value) async {
       // final path = sl<UserSession>().settingModel?.otherSettings?.flutterPath;
       // if (path != null) {
@@ -691,11 +706,10 @@ class FileTile extends StatelessWidget {
   final FVBFile? selectedFile;
   final ValueChanged<FVBFile> onChange;
 
-  FileTile(
-      {Key? key,
-      required this.directory,
-      this.selectedFile,
-      required this.onChange})
+  FileTile({Key? key,
+    required this.directory,
+    this.selectedFile,
+    required this.onChange})
       : super(key: key);
 
   @override
@@ -719,84 +733,84 @@ class FileTile extends StatelessWidget {
       children: !enable
           ? []
           : [
-              Container(
-                decoration: BoxDecoration(
-                    color: theme.background1,
-                    border: Border(
-                      left: BorderSide(color: theme.border1, width: 2),
-                    )),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ListView.separated(
-                        separatorBuilder: (context, i) {
-                          return const SizedBox(
-                            height: 5,
-                          );
-                        },
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        padding:
-                            const EdgeInsets.only(left: 5, top: 3, bottom: 5),
-                        itemCount: directory.folders.length,
-                        itemBuilder: (context, i) {
-                          return FileTile(
-                            directory: directory.folders[i],
-                            selectedFile: selectedFile,
-                            onChange: onChange,
-                          );
-                        }),
-                    ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(4),
-                        itemCount: directory.files.length,
-                        itemBuilder: (context, i) {
-                          return InkWell(
-                            key: GlobalObjectKey(directory.files[i]),
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: () {
-                              onChange.call(directory.files[i]);
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 4, horizontal: 4),
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(6),
-                                  color: selectedFile == directory.files[i]
-                                      ? ColorAssets.theme.withOpacity(0.1)
-                                      : (formatErrors[directory.files[i]] !=
-                                              null
-                                          ? ColorAssets.red.withOpacity(0.3)
-                                          : null)),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.code,
-                                    size: 16,
-                                    color: ColorAssets.theme,
-                                  ),
-                                  const SizedBox(
-                                    width: 4,
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      directory.files[i].name,
-                                      style: AppFontStyle.lato(12.5,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.black),
-                                    ),
-                                  ),
-                                ],
+        Container(
+          decoration: BoxDecoration(
+              color: theme.background1,
+              border: Border(
+                left: BorderSide(color: theme.border1, width: 2),
+              )),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListView.separated(
+                  separatorBuilder: (context, i) {
+                    return const SizedBox(
+                      height: 5,
+                    );
+                  },
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  padding:
+                  const EdgeInsets.only(left: 5, top: 3, bottom: 5),
+                  itemCount: directory.folders.length,
+                  itemBuilder: (context, i) {
+                    return FileTile(
+                      directory: directory.folders[i],
+                      selectedFile: selectedFile,
+                      onChange: onChange,
+                    );
+                  }),
+              ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(4),
+                  itemCount: directory.files.length,
+                  itemBuilder: (context, i) {
+                    return InkWell(
+                      key: GlobalObjectKey(directory.files[i]),
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () {
+                        onChange.call(directory.files[i]);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 4),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            color: selectedFile == directory.files[i]
+                                ? ColorAssets.theme.withOpacity(0.1)
+                                : (formatErrors[directory.files[i]] !=
+                                null
+                                ? ColorAssets.red.withOpacity(0.3)
+                                : null)),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.code,
+                              size: 16,
+                              color: ColorAssets.theme,
+                            ),
+                            const SizedBox(
+                              width: 4,
+                            ),
+                            Expanded(
+                              child: Text(
+                                directory.files[i].name,
+                                style: AppFontStyle.lato(12.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black),
                               ),
                             ),
-                          );
-                        }),
-                  ],
-                ),
-              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
             ],
+          ),
+        ),
+      ],
     );
   }
 }

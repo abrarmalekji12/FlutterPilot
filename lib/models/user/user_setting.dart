@@ -12,6 +12,8 @@ class UserSettingModel {
   String iDETheme = 'idea';
   String? figmaCode;
   String? figmaAccessToken;
+  String? openAISecretToken;
+  String? geminiSecretToken;
   ThemeType generalTheme = ThemeType.light;
   FVBOtherSettings? otherSettings;
 
@@ -23,7 +25,9 @@ class UserSettingModel {
       'theme': iDETheme,
       'figmaCode': figmaCode,
       'figmaAccessToken': figmaAccessToken,
-      'general_theme': generalTheme.index,
+      'openAISecretToken': openAISecretToken,
+      'geminiSecretToken': geminiSecretToken,
+      'generalTheme': generalTheme.index,
       'otherSettings': otherSettings?.toJson()
     };
   }
@@ -32,8 +36,10 @@ class UserSettingModel {
     final model = UserSettingModel()
       ..iDETheme = json['theme'] ?? defaultThemeKey
       ..figmaCode = json['figmaCode']
+      ..openAISecretToken=json['openAISecretToken']
+      ..geminiSecretToken=json['geminiSecretToken']
       ..figmaAccessToken = json['figmaAccessToken']
-      ..generalTheme = ThemeType.values[json['general_theme'] ?? 0]
+      ..generalTheme = ThemeType.values[json['generalTheme'] ?? 0]
       ..otherSettings = json['otherSettings'] != null
           ? FVBOtherSettings.fromJson(json['otherSettings'])
           : FVBOtherSettings();

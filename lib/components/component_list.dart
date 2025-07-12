@@ -16,7 +16,7 @@ import '../models/fvb_ui_core/component/custom_component.dart';
 import '../models/parameter_info_model.dart';
 import '../models/parameter_model.dart';
 import '../models/project_model.dart';
-import '../parameters_list.dart';
+import '../parameter/parameters_list.dart';
 import '../runtime_provider.dart';
 import 'component_impl.dart';
 import 'holder_impl.dart';
@@ -74,24 +74,6 @@ final componentImages = <String, String>{
   'Visibility': 'visibility',
 };
 
-final List<Component> tempComponentList = [
-  CScaffold(),
-  CColumn(),
-  CContainer(),
-  CRow(),
-  CStack(),
-  CAppBar(),
-  CText(),
-  CTextField(),
-  CCheckbox(),
-  CSwitch(),
-  CCircleAvatar(),
-  CInkWell(),
-  CIconButton(),
-  CListView(),
-  CSingleChildScrollView(),
-  CTextButton(),
-];
 final componentList = <String, Component Function()>{
   'MaterialApp': () => CMaterialApp(),
   'Scaffold': () => CScaffold(),
@@ -208,23 +190,25 @@ final componentList = <String, Component Function()>{
   'PopupMenuItem': () => CPopupMenuItem(),
 };
 
+final componentCreatedCache = componentList.map((k, v) => MapEntry(k, v()));
+
 class CMaterialApp extends CustomNamedHolder with ComplexRenderModel {
   CMaterialApp()
       : super('MaterialApp', [
-          Parameters.colorParameter
-            ..inputCalculateAs =
-                ((color, forward) => (color as Color).withAlpha(255))
-            ..withRequired(false),
-          Parameters.textParameter(defaultValue: 'App', required: true)
-            ..withNamedParamInfoAndSameDisplayName('title'),
-          Parameters.themeModeParameter(),
-          Parameters.themeDataParameter()..withChangeNamed('theme'),
-          Parameters.themeDataParameter()
-            ..withChangeNamed('darkTheme')
-            ..withDisplayName('Dark Theme'),
-        ], [
-          'home'
-        ], []) {
+    Parameters.colorParameter
+      ..inputCalculateAs = ((color, forward) => (color as Color).withAlpha(255))
+      ..withRequired(false),
+    Parameters.textParameter(defaultValue: 'App', required: true)
+      ..withNamedParamInfoAndSameDisplayName('title'),
+    Parameters.themeModeParameter(),
+    Parameters.themeDataParameter()
+      ..withChangeNamed('theme'),
+    Parameters.themeDataParameter()
+      ..withChangeNamed('darkTheme')
+      ..withDisplayName('Dark Theme'),
+  ], [
+    'home'
+  ], []) {
     autoHandleKey = false;
   }
 
@@ -269,18 +253,20 @@ class CMaterialApp extends CustomNamedHolder with ComplexRenderModel {
 class IfCondition extends CustomNamedHolder {
   IfCondition()
       : super('IfCondition', [
-          Parameters.enableParameter(true, false)..displayName = 'condition',
-        ], [
-          'if',
-          'else'
-        ], [
-          'else_if'
-        ]);
+    Parameters.enableParameter(true, false)
+      ..displayName = 'condition',
+  ], [
+    'if',
+    'else'
+  ], [
+    'else_if'
+  ]);
 
   @override
   String code({bool clean = true}) {
     if (clean) {
-      return '${parameters[0].compiler.code}?${childMap['if']?.code(clean: clean)}:${childMap['else']?.code(clean: clean)}';
+      return '${parameters[0].compiler.code}?${childMap['if']?.code(clean: clean)}:${childMap['else']?.code(
+          clean: clean)}';
     } else {
       return super.code(clean: clean);
     }
@@ -303,10 +289,11 @@ class IfCondition extends CustomNamedHolder {
 class ElseIfCondition extends CustomNamedHolder {
   ElseIfCondition()
       : super('ElseIfCondition', [
-          Parameters.enableParameter(false, false)..displayName = 'condition',
-        ], [
-          'if',
-        ], []);
+    Parameters.enableParameter(false, false)
+      ..displayName = 'condition',
+  ], [
+    'if',
+  ], []);
 
   @override
   Widget create(BuildContext context) {
@@ -317,21 +304,20 @@ class ElseIfCondition extends CustomNamedHolder {
 class CCheckbox extends ClickableComponent {
   CCheckbox()
       : super('Checkbox', [
-          Parameters.enableParameter(true, false)
-            ..withNamedParamInfoAndSameDisplayName('value'),
-          Parameters.materialTapSizeParameter,
-          Parameters.configColorParameter('activeColor'),
-          Parameters.WidgetStatePropertyParameter<Color?>(
-              Parameters.backgroundColorParameter()
-                ..withDisplayName('fillColor')
-                ..withChangeNamed(null),
-              'fillColor'),
-          Parameters.configColorParameter('focusColor'),
-          Parameters.configColorParameter('hoverColor'),
-        ]) {
+    Parameters.enableParameter(true, false)
+      ..withNamedParamInfoAndSameDisplayName('value'),
+    Parameters.materialTapSizeParameter,
+    Parameters.configColorParameter('activeColor'),
+    Parameters.WidgetStatePropertyParameter<Color?>(
+        Parameters.backgroundColorParameter()
+          ..withDisplayName('fillColor')
+          ..withChangeNamed(null),
+        'fillColor'),
+    Parameters.configColorParameter('focusColor'),
+    Parameters.configColorParameter('hoverColor'),
+  ]) {
     methods([
-      FVBFunction('onChanged', null,
-          [FVBArgument('value', dataType: DataType.fvbBool, nullable: true)],
+      FVBFunction('onChanged', null, [FVBArgument('value', dataType: DataType.fvbBool, nullable: true)],
           returnType: DataType.fvbVoid)
     ]);
   }
@@ -355,31 +341,27 @@ class CCheckbox extends ClickableComponent {
 class CRadio extends ClickableComponent {
   CRadio()
       : super('Radio', [
-          Parameters.dynamicValueParameter()
-            ..withDefaultValue(1)
-            ..withNamedParamInfoAndSameDisplayName('value'),
-          Parameters.dynamicValueParameter()
-            ..withDefaultValue(1)
-            ..withNamedParamInfoAndSameDisplayName('groupValue'),
-          Parameters.choiceValueFromEnum(MaterialTapTargetSize.values,
-              optional: false,
-              require: false,
-              name: 'materialTapTargetSize',
-              defaultValue: null),
-          Parameters.enableParameter(false)
-            ..withNamedParamInfoAndSameDisplayName('toggleable'),
-          Parameters.configColorParameter('activeColor'),
-          Parameters.WidgetStatePropertyParameter<Color?>(
-              Parameters.backgroundColorParameter()
-                ..withDisplayName('fillColor')
-                ..withChangeNamed(null),
-              'fillColor'),
-          Parameters.configColorParameter('focusColor'),
-          Parameters.configColorParameter('hoverColor'),
-        ]) {
+    Parameters.dynamicValueParameter()
+      ..withDefaultValue(1)
+      ..withNamedParamInfoAndSameDisplayName('value'),
+    Parameters.dynamicValueParameter()
+      ..withDefaultValue(1)
+      ..withNamedParamInfoAndSameDisplayName('groupValue'),
+    Parameters.choiceValueFromEnum(MaterialTapTargetSize.values,
+        optional: false, require: false, name: 'materialTapTargetSize', defaultValue: null),
+    Parameters.enableParameter(false)
+      ..withNamedParamInfoAndSameDisplayName('toggleable'),
+    Parameters.configColorParameter('activeColor'),
+    Parameters.WidgetStatePropertyParameter<Color?>(
+        Parameters.backgroundColorParameter()
+          ..withDisplayName('fillColor')
+          ..withChangeNamed(null),
+        'fillColor'),
+    Parameters.configColorParameter('focusColor'),
+    Parameters.configColorParameter('hoverColor'),
+  ]) {
     methods([
-      FVBFunction('onChanged', null,
-          [FVBArgument('value', dataType: DataType.fvbDynamic)],
+      FVBFunction('onChanged', null, [FVBArgument('value', dataType: DataType.fvbDynamic)],
           returnType: DataType.fvbVoid)
     ]);
   }
@@ -420,8 +402,8 @@ class CAnimatedOpacity extends COpacity {
 class CAnimatedSwitcher extends Holder {
   CAnimatedSwitcher()
       : super('AnimatedSwitcher', [
-          Parameters.durationParameter,
-        ]);
+    Parameters.durationParameter,
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -435,12 +417,12 @@ class CAnimatedSwitcher extends Holder {
 class COpacity extends Holder {
   COpacity()
       : super('Opacity', [
-          Parameters.widthFactorParameter()
-            ..withInfo(NamedParameterInfo('opacity'))
-            ..withDefaultValue(1.0)
-            ..withDisplayName('opacity')
-            ..withRequired(true),
-        ]);
+    Parameters.widthFactorParameter()
+      ..withInfo(NamedParameterInfo('opacity'))
+      ..withDefaultValue(1.0)
+      ..withDisplayName('opacity')
+      ..withRequired(true),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -454,8 +436,8 @@ class COpacity extends Holder {
 class CTransformRotate extends Holder {
   CTransformRotate()
       : super('Transform.rotate', [
-          Parameters.angleParameter(),
-        ]);
+    Parameters.angleParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -469,11 +451,11 @@ class CTransformRotate extends Holder {
 class CTransformScale extends Holder {
   CTransformScale()
       : super('Transform.scale', [
-          Parameters.widthFactorParameter()
-            ..withDefaultValue(1.0)
-            ..withNamedParamInfoAndSameDisplayName('scale')
-            ..withRequired(true),
-        ]);
+    Parameters.widthFactorParameter()
+      ..withDefaultValue(1.0)
+      ..withNamedParamInfoAndSameDisplayName('scale')
+      ..withRequired(true),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -487,10 +469,10 @@ class CTransformScale extends Holder {
 class CDrawer extends Holder {
   CDrawer()
       : super('Drawer', [
-          Parameters.backgroundColorParameter(),
-          Parameters.elevationParameter(),
-          Parameters.shapeBorderParameter(),
-        ]);
+    Parameters.backgroundColorParameter(),
+    Parameters.elevationParameter(),
+    Parameters.shapeBorderParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -506,8 +488,8 @@ class CDrawer extends Holder {
 class CTransformTranslate extends Holder {
   CTransformTranslate()
       : super('Transform.translate', [
-          Parameters.offsetParameter(),
-        ]);
+    Parameters.offsetParameter(),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -520,17 +502,23 @@ class CTransformTranslate extends Holder {
 
 class CCard extends Holder {
   CCard()
-      : super('Card', [
-          Parameters.colorParameter..withDefaultValue(ColorAssets.white),
-          Parameters.shapeBorderParameter(),
-          Parameters.elevationParameter(),
-          Parameters.marginParameter(),
-          Parameters.colorParameter
-            ..withDisplayName('shadowColor')
-            ..withInfo(
-              NamedParameterInfo('shadowColor'),
-            ),
-        ]);
+      : super(
+      'Card',
+      [
+        Parameters.colorParameter..withDefaultValue(ColorAssets.white),
+        Parameters.shapeBorderParameter(),
+        Parameters.elevationParameter(),
+        Parameters.marginParameter(),
+        Parameters.colorParameter
+          ..withDisplayName('shadowColor')
+          ..withInfo(
+            NamedParameterInfo('shadowColor'),
+          ),
+      ],
+      defaultParamConfig: ComponentDefaultParamConfig(
+        width: true,
+        height: true,
+      ));
 
   @override
   Widget create(BuildContext context) {
@@ -547,36 +535,36 @@ class CCard extends Holder {
 class CAppBar extends CustomNamedHolder with CRenderModel, Resizable {
   CAppBar()
       : super('AppBar', [
-          Parameters.colorParameter
-            ..withDefaultValue(null)
-            ..withRequired(false)
-            ..withDisplayName('background-color')
-            ..withInfo(NamedParameterInfo('backgroundColor')),
-          Parameters.toolbarHeight,
-          Parameters.elevationParameter()
-            ..withDefaultValue(null)
-            ..withRequired(false),
-          Parameters.enableParameter(null, false)
-            ..withNamedParamInfoAndSameDisplayName('centerTitle')
-            ..val = null
-            ..withRequired(false),
-          Parameters.shapeBorderParameter(),
-          Parameters.foregroundColorParameter(),
-          Parameters.clipBehaviourParameter(),
-          Parameters.doubleParameter('leadingWidth'),
-          Parameters.configColorParameter('shadowColor'),
-          Parameters.primaryParameter(true),
-          Parameters.doubleParameter('titleSpacing'),
-          Parameters.configColorParameter('surfaceTintColor'),
-          Parameters.boolConfigParameter('forceMaterialTransparency', false),
-          Parameters.configGoogleFontTextStyleParameter('titleTextStyle')
-        ], [
-          'title',
-          'leading',
-          'flexibleSpace'
-        ], [
-          'actions'
-        ]);
+    Parameters.colorParameter
+      ..withDefaultValue(null)
+      ..withRequired(false)
+      ..withDisplayName('background-color')
+      ..withInfo(NamedParameterInfo('backgroundColor')),
+    Parameters.toolbarHeight,
+    Parameters.elevationParameter()
+      ..withDefaultValue(null)
+      ..withRequired(false),
+    Parameters.enableParameter(null, false)
+      ..withNamedParamInfoAndSameDisplayName('centerTitle')
+      ..val = null
+      ..withRequired(false),
+    Parameters.shapeBorderParameter(),
+    Parameters.foregroundColorParameter(),
+    Parameters.clipBehaviourParameter(),
+    Parameters.doubleParameter('leadingWidth'),
+    Parameters.configColorParameter('shadowColor'),
+    Parameters.primaryParameter(true),
+    Parameters.doubleParameter('titleSpacing'),
+    Parameters.configColorParameter('surfaceTintColor'),
+    Parameters.boolConfigParameter('forceMaterialTransparency', false),
+    Parameters.configGoogleFontTextStyleParameter('titleTextStyle')
+  ], [
+    'title',
+    'leading',
+    'flexibleSpace'
+  ], [
+    'actions'
+  ]);
 
   @override
   get direction => Axis.horizontal;
@@ -586,8 +574,7 @@ class CAppBar extends CustomNamedHolder with CRenderModel, Resizable {
 
   @override
   void onResize(Size size) {
-    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0),
-        size.height);
+    linearChange(parameters[1], (parameters[1].value ?? boundary?.width ?? 0), size.height);
   }
 
   @override
@@ -617,9 +604,7 @@ class CAppBar extends CustomNamedHolder with CRenderModel, Resizable {
       title: childMap['title']?.build(context),
       leading: childMap['leading']?.build(context),
       flexibleSpace: childMap['flexibleSpace']?.build(context),
-      actions: childrenMap['actions']
-          ?.map((e) => e.build(context))
-          .toList(growable: false),
+      actions: childrenMap['actions']?.map((e) => e.build(context)).toList(growable: false),
     );
   }
 
@@ -643,61 +628,48 @@ class MyTickerProvider extends TickerProvider {
 class CTabBar extends CustomNamedHolder with Controller, Clickable {
   CTabBar()
       : super('TabBar', [
-          Parameters.enableParameter(false)
-            ..withNamedParamInfoAndSameDisplayName('isScrollable',
-                optional: true),
-          Parameters.configColorParameter('labelColor'),
-          Parameters.configColorParameter('unselectedLabelColor'),
-          Parameters.configColorParameter('indicatorColor'),
-          Parameters.googleFontTextStyleParameter
-            ..withNamedParamInfoAndSameDisplayName('labelStyle', inner: true)
-            ..withRequired(false),
-          Parameters.googleFontTextStyleParameter
-            ..withNamedParamInfoAndSameDisplayName('unselectedLabelStyle',
-                inner: true)
-            ..withRequired(false),
-          Parameters.paddingParameter(),
-          Parameters.paddingParameter()
-            ..withNamedParamInfoAndSameDisplayName('indicatorPadding')
-            ..withRequired(true),
-          Parameters.paddingParameter()
-            ..withNamedParamInfoAndSameDisplayName('labelPadding')
-            ..withRequired(true),
-          Parameters.decorationParameter()
-            ..withRequired(false)
-            ..withInnerNamedParamInfoAndDisplayName(
-                'indicator', 'BoxDecoration'),
-          Parameters.scrollPhysicsParameter,
-          Parameters.choiceValueFromEnum(
-            TabBarIndicatorSize.values,
-            optional: true,
-            require: false,
-            name: 'indicatorSize',
-            defaultValue: null,
-          )
-        ], [], [
-          'tabs'
-        ]) {
+    Parameters.enableParameter(false)
+      ..withNamedParamInfoAndSameDisplayName('isScrollable', optional: true),
+    Parameters.configColorParameter('labelColor'),
+    Parameters.configColorParameter('unselectedLabelColor'),
+    Parameters.configColorParameter('indicatorColor'),
+    Parameters.googleFontTextStyleParameter
+      ..withNamedParamInfoAndSameDisplayName('labelStyle', inner: true)
+      ..withRequired(false),
+    Parameters.googleFontTextStyleParameter
+      ..withNamedParamInfoAndSameDisplayName('unselectedLabelStyle', inner: true)
+      ..withRequired(false),
+    Parameters.paddingParameter(),
+    Parameters.paddingParameter()
+      ..withNamedParamInfoAndSameDisplayName('indicatorPadding')
+      ..withRequired(true),
+    Parameters.paddingParameter()
+      ..withNamedParamInfoAndSameDisplayName('labelPadding')
+      ..withRequired(true),
+    Parameters.decorationParameter()
+      ..withRequired(false)
+      ..withInnerNamedParamInfoAndDisplayName('indicator', 'BoxDecoration'),
+    Parameters.scrollPhysicsParameter,
+    Parameters.choiceValueFromEnum(
+      TabBarIndicatorSize.values,
+      optional: true,
+      require: false,
+      name: 'indicatorSize',
+      defaultValue: null,
+    )
+  ], [], [
+    'tabs'
+  ]) {
     controls([
-      SelectionControl(
-          'page',
-          () => List.generate(
-              childrenMap['tabs']!.length, (i) => (i + 1).toString()), (p0) {
+      SelectionControl('page', () => List.generate(childrenMap['tabs']!.length, (i) => (i + 1).toString()), (p0) {
         (values['controller'] as TabController?)?.index = int.parse(p0) - 1;
-      },
-          () => (((values['controller'] as TabController?)?.index ?? 0) + 1)
-              .toString())
+      }, () => (((values['controller'] as TabController?)?.index ?? 0) + 1).toString())
     ]);
     methods([
-      FVBFunction(
-          'onTap', null, [FVBArgument('value', dataType: DataType.fvbInt)],
-          returnType: DataType.fvbVoid)
+      FVBFunction('onTap', null, [FVBArgument('value', dataType: DataType.fvbInt)], returnType: DataType.fvbVoid)
     ]);
     childrenMap['tabs']!.addAll({CTab(), CTab(), CTab()});
-    assign(
-        'controller',
-        (_, vsync) =>
-            TabController(length: childrenMap['tabs']!.length, vsync: vsync),
+    assign('controller', (_, vsync) => TabController(length: childrenMap['tabs']!.length, vsync: vsync),
         'TabController(${childrenMap['tabs']!.length})');
   }
 
@@ -723,9 +695,7 @@ class CTabBar extends CustomNamedHolder with Controller, Clickable {
       onTap: (value) {
         perform(context, name: 'onTap', arguments: [value]);
       },
-      tabs: childrenMap['tabs']!
-          .map((e) => e.build(context))
-          .toList(growable: false),
+      tabs: childrenMap['tabs']!.map((e) => e.build(context)).toList(growable: false),
     );
   }
 }
@@ -733,20 +703,20 @@ class CTabBar extends CustomNamedHolder with Controller, Clickable {
 class CTab extends CustomNamedHolder {
   CTab()
       : super('Tab', [
-          Parameters.textParameter()
-            ..withDefaultValue('tab')
-            ..withRequired(false)
-            ..withNamedParamInfoAndSameDisplayName('text'),
-          Parameters.heightParameter()
-            ..withDefaultValue(null)
-            ..withRequired(false),
-          Parameters.marginParameter()
-            ..withRequired(true)
-            ..withNamedParamInfoAndSameDisplayName('iconMargin')
-        ], [
-          'child',
-          'icon'
-        ], []) {
+    Parameters.textParameter()
+      ..withDefaultValue('tab')
+      ..withRequired(false)
+      ..withNamedParamInfoAndSameDisplayName('text'),
+    Parameters.heightParameter()
+      ..withDefaultValue(null)
+      ..withRequired(false),
+    Parameters.marginParameter()
+      ..withRequired(true)
+      ..withNamedParamInfoAndSameDisplayName('iconMargin')
+  ], [
+    'child',
+    'icon'
+  ], []) {
     final param = (parameters[2] as ChoiceParameter);
     param.val = param.options[1];
     (param.val as ComplexParameter).params[0].compiler.code = '10';
@@ -770,22 +740,22 @@ class CTab extends CustomNamedHolder {
 class CScaffold extends CustomNamedHolder with ComplexRenderModel {
   CScaffold()
       : super('Scaffold', [
-          Parameters.backgroundColorParameter(),
-          BooleanParameter(
-            required: false,
-            val: false,
-            displayName: 'resize to avoid bottom inset',
-            info: NamedParameterInfo('resizeToAvoidBottomInset'),
-          ),
-        ], [
-          'appBar',
-          'body',
-          'drawer',
-          'endDrawer',
-          'floatingActionButton',
-          'bottomNavigationBar',
-          'bottomSheet',
-        ], []) {
+    Parameters.backgroundColorParameter(),
+    BooleanParameter(
+      required: false,
+      val: false,
+      displayName: 'resize to avoid bottom inset',
+      info: NamedParameterInfo('resizeToAvoidBottomInset'),
+    ),
+  ], [
+    'appBar',
+    'body',
+    'drawer',
+    'endDrawer',
+    'floatingActionButton',
+    'bottomNavigationBar',
+    'bottomSheet',
+  ], []) {
     autoHandleKey = false;
   }
 
@@ -804,11 +774,10 @@ class CScaffold extends CustomNamedHolder with ComplexRenderModel {
       for (final child in childMap.keys) {
         if (childMap[child] != null) {
           final childComp = childMap[child]!;
-          if (child == 'appBar' &&
-              childComp is! CAppBar &&
-              childComp is! CPreferredSize) {
+          if (child == 'appBar' && childComp is! CAppBar && childComp is! CPreferredSize) {
             childrenCode +=
-                '$child:PreferredSize(preferredSize: Size.fromHeight(kToolbarHeight),child:${childComp.code(clean: clean)}),';
+            '$child:PreferredSize(preferredSize: Size.fromHeight(kToolbarHeight),child:${childComp.code(
+                clean: clean)}),';
           } else {
             childrenCode += '$child:${childComp.code(clean: clean)},';
           }
@@ -817,8 +786,7 @@ class CScaffold extends CustomNamedHolder with ComplexRenderModel {
 
       for (final child in childrenMap.keys) {
         if (childrenMap[child]?.isNotEmpty ?? false) {
-          childrenCode +=
-              '$child:[${childrenMap[child]!.map((e) => (e.code(clean: clean) + ',')).join('')}],';
+          childrenCode += '$child:[${childrenMap[child]!.map((e) => (e.code(clean: clean) + ',')).join('')}],';
         }
       }
       return withState('$name($middle$childrenCode)', clean);
@@ -837,14 +805,13 @@ class CScaffold extends CustomNamedHolder with ComplexRenderModel {
       resizeToAvoidBottomInset: parameters[1].value,
       appBar: childMap['appBar'] != null && childMap['appBar'] is CAppBar
           ? PreferredSize(
-              child: childMap['appBar']!.build(context),
-              preferredSize:
-                  Size.fromHeight(childMap['appBar']!.parameters[1].value),
-            )
+        child: childMap['appBar']!.build(context),
+        preferredSize: Size.fromHeight(childMap['appBar']!.parameters[1].value),
+      )
           : PreferredSize(
-              child: childMap['appBar']?.build(context) ?? const Offstage(),
-              preferredSize: const Size.fromHeight(kToolbarHeight),
-            ),
+        child: childMap['appBar']?.build(context) ?? const Offstage(),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+      ),
       drawer: RuntimeProvider(
           runtimeMode: RuntimeProvider.of(context),
           child: ProcessorProvider(
@@ -868,27 +835,26 @@ class CScaffold extends CustomNamedHolder with ComplexRenderModel {
           )),
       endDrawer: childMap['endDrawer'] != null
           ? RuntimeProvider(
-              runtimeMode: RuntimeProvider.of(context),
-              child: ProcessorProvider(
-                processor: ProcessorProvider.maybeOf(context)!,
-                child: BlocBuilder<CreationCubit, CreationState>(
-                  buildWhen: (prev, state) {
-                    if (fvbNavigationBloc.model.drawer ||
-                        fvbNavigationBloc.model.endDrawer ||
-                        fvbNavigationBloc.model.dialog ||
-                        fvbNavigationBloc.model.bottomSheet) {
-                      return true;
-                    }
-                    return false;
-                  },
-                  builder: (context, state) {
-                    // final original=(getOriginal())!.cloneElements.last;
-                    // return (original as CustomNamedHolder).
-                    return childMap['endDrawer']?.build(context) ??
-                        const Offstage();
-                  },
-                ),
-              ))
+          runtimeMode: RuntimeProvider.of(context),
+          child: ProcessorProvider(
+            processor: ProcessorProvider.maybeOf(context)!,
+            child: BlocBuilder<CreationCubit, CreationState>(
+              buildWhen: (prev, state) {
+                if (fvbNavigationBloc.model.drawer ||
+                    fvbNavigationBloc.model.endDrawer ||
+                    fvbNavigationBloc.model.dialog ||
+                    fvbNavigationBloc.model.bottomSheet) {
+                  return true;
+                }
+                return false;
+              },
+              builder: (context, state) {
+                // final original=(getOriginal())!.cloneElements.last;
+                // return (original as CustomNamedHolder).
+                return childMap['endDrawer']?.build(context) ?? const Offstage();
+              },
+            ),
+          ))
           : null,
       body: childMap['body']?.build(context),
       floatingActionButton: childMap['floatingActionButton']?.build(context),
@@ -904,9 +870,65 @@ class CScaffold extends CustomNamedHolder with ComplexRenderModel {
   ComponentSize childSize(String child) {
     switch (child) {
       case 'body':
-        return const ComponentSize(Size.infinite,
-            margin: EdgeInsets.only(top: kToolbarHeight));
+        return const ComponentSize(Size.infinite, margin: EdgeInsets.only(top: kToolbarHeight));
     }
+    return ComponentSize.infinite;
+  }
+}
+
+class CChip extends CustomNamedHolder with ComplexRenderModel, Clickable {
+
+  CChip()
+      : super('Chip', [
+    Parameters.backgroundColorParameter(),
+    Parameters.WidgetStatePropertyParameter<Color?>(
+        Parameters.colorParameter..withChangeNamed(null),
+        'color'),
+    Parameters.paddingParameter()
+      ..withChangeNamed('labelPadding'),
+    Parameters.paddingParameter(),
+    Parameters.elevationParameter(),
+    Parameters.shapeBorderParameter(),
+    Parameters.clipBehaviourParameter(),
+    Parameters.configColorParameter('shadowColor'),
+    Parameters.configColorParameter('surfaceTintColor'),
+  ], [
+    'label',
+    'deleteIcon',
+    'avatar',
+  ], []) {
+    autoHandleKey = false;
+    methods([
+      FVBFunction('onDeleted', null, [], returnType: DataType.fvbVoid)
+    ]);
+  }
+
+  @override
+  Widget create(BuildContext context) {
+    return Chip(
+      backgroundColor: parameters[0].value,
+      color: parameters[1].value,
+      labelPadding: parameters[2].value,
+      padding: parameters[3].value,
+      elevation: parameters[4].value,
+      shape: parameters[5].value,
+      clipBehavior: parameters[6].value,
+      shadowColor: parameters[7].value,
+      surfaceTintColor: parameters[8].value,
+      label: childMap['label']?.build(context) ?? Container(),
+      deleteIcon: childMap['deleteIcon']?.build(context),
+      avatar: childMap['avatar']?.build(context),
+      onDeleted: () {
+        perform(context, name: 'onDeleted');
+      },
+    );
+  }
+
+  @override
+  Size get size => Size.infinite;
+
+  @override
+  ComponentSize childSize(String child) {
     return ComponentSize.infinite;
   }
 }
@@ -914,40 +936,41 @@ class CScaffold extends CustomNamedHolder with ComplexRenderModel {
 class CListTile extends CustomNamedHolder with ComplexRenderModel, Clickable {
   CListTile()
       : super('ListTile', [
-          Parameters.paddingParameter()
-            ..withNamedParamInfoAndSameDisplayName('contentPadding'),
-          Parameters.configColorParameter('tileColor'),
-          Parameters.configColorParameter('textColor'),
-          Parameters.choiceValueFromEnum(
-            ListTileStyle.values,
-            optional: true,
-            require: false,
-            name: 'style',
-            defaultValue: null,
-          ),
-          Parameters.boolConfigParameter('enabled', true),
-          Parameters.boolConfigParameter('autofocus', false),
-          Parameters.boolConfigParameter('selected', false),
-          Parameters.boolConfigParameter('dense', null),
-          Parameters.configColorParameter('focusColor'),
-          Parameters.configColorParameter('splashColor'),
-          Parameters.configColorParameter('hoverColor'),
-          Parameters.configColorParameter('selectedColor'),
-          Parameters.configColorParameter('iconColor'),
-          Parameters.configColorParameter('selectedTileColor'),
-          Parameters.shapeBorderParameter()..withRequired(false),
-          Parameters.doubleParameter('horizontalTitleGap'),
-          Parameters.boolConfigParameter('isThreeLine', false),
-          Parameters.doubleParameter('minLeadingWidth'),
-          Parameters.doubleParameter('minVerticalPadding'),
-          Parameters.visualDensityParameter,
-          Parameters.boolConfigParameter('enableFeedback', null),
-        ], [
-          'title',
-          'subtitle',
-          'trailing',
-          'leading',
-        ], []) {
+    Parameters.paddingParameter()
+      ..withNamedParamInfoAndSameDisplayName('contentPadding'),
+    Parameters.configColorParameter('tileColor'),
+    Parameters.configColorParameter('textColor'),
+    Parameters.choiceValueFromEnum(
+      ListTileStyle.values,
+      optional: true,
+      require: false,
+      name: 'style',
+      defaultValue: null,
+    ),
+    Parameters.boolConfigParameter('enabled', true),
+    Parameters.boolConfigParameter('autofocus', false),
+    Parameters.boolConfigParameter('selected', false),
+    Parameters.boolConfigParameter('dense', null),
+    Parameters.configColorParameter('focusColor'),
+    Parameters.configColorParameter('splashColor'),
+    Parameters.configColorParameter('hoverColor'),
+    Parameters.configColorParameter('selectedColor'),
+    Parameters.configColorParameter('iconColor'),
+    Parameters.configColorParameter('selectedTileColor'),
+    Parameters.shapeBorderParameter()
+      ..withRequired(false),
+    Parameters.doubleParameter('horizontalTitleGap'),
+    Parameters.boolConfigParameter('isThreeLine', false),
+    Parameters.doubleParameter('minLeadingWidth'),
+    Parameters.doubleParameter('minVerticalPadding'),
+    Parameters.visualDensityParameter,
+    Parameters.boolConfigParameter('enableFeedback', null),
+  ], [
+    'title',
+    'subtitle',
+    'trailing',
+    'leading',
+  ], []) {
     autoHandleKey = false;
     methods([
       FVBFunction('onTap', null, [], returnType: DataType.fvbVoid),
@@ -1018,39 +1041,37 @@ class CListTile extends CustomNamedHolder with ComplexRenderModel, Clickable {
 class CPopupMenuButton extends CustomNamedHolder with Clickable, Controller {
   CPopupMenuButton()
       : super('PopupMenuButton', [
-          Parameters.enableParameter(),
-          Parameters.dynamicValueParameter()
-            ..withNamedParamInfoAndSameDisplayName('initialValue')
-            ..withRequired(false),
-          Parameters.paddingParameter(
-            defaultVal: 0,
-            required: true,
-            allValue: 8.0,
-          ),
-          Parameters.offsetParameter(),
-          Parameters.colorParameter,
-          Parameters.elevationParameter()
-            ..withDefaultValue(null)
-            ..withRequired(false),
-          Parameters.textParameter()..withChangeNamed('tooltip'),
-          Parameters.choiceValueFromEnum(PopupMenuPosition.values,
-              optional: false,
-              require: false,
-              name: 'position',
-              defaultValue: null),
-          Parameters.widthParameter()
-            ..withChangeNamed('iconSize')
-            ..withDefaultValue(null),
-          Parameters.widthParameter()
-            ..withChangeNamed('splashRadius')
-            ..withDefaultValue(null),
-          Parameters.clipBehaviourParameter('none')
-        ], [
-          'icon',
-          'child',
-        ], [
-          'itemBuilder'
-        ]) {
+    Parameters.enableParameter(),
+    Parameters.dynamicValueParameter()
+      ..withNamedParamInfoAndSameDisplayName('initialValue')
+      ..withRequired(false),
+    Parameters.paddingParameter(
+      defaultVal: 0,
+      required: true,
+      allValue: 8.0,
+    ),
+    Parameters.offsetParameter(),
+    Parameters.colorParameter,
+    Parameters.elevationParameter()
+      ..withDefaultValue(null)
+      ..withRequired(false),
+    Parameters.textParameter()
+      ..withChangeNamed('tooltip'),
+    Parameters.choiceValueFromEnum(PopupMenuPosition.values,
+        optional: false, require: false, name: 'position', defaultValue: null),
+    Parameters.widthParameter()
+      ..withChangeNamed('iconSize')
+      ..withDefaultValue(null),
+    Parameters.widthParameter()
+      ..withChangeNamed('splashRadius')
+      ..withDefaultValue(null),
+    Parameters.clipBehaviourParameter('none')
+  ], [
+    'icon',
+    'child',
+  ], [
+    'itemBuilder'
+  ]) {
     methods([
       FVBFunction(
           'onSelected',
@@ -1063,11 +1084,9 @@ class CPopupMenuButton extends CustomNamedHolder with Clickable, Controller {
       FVBFunction('onOpened', null, [], returnType: DataType.fvbVoid)
     ]);
     controls([
-      ButtonControl('Popup', (value) => value != true ? 'show' : 'hide',
-          (value) {
+      ButtonControl('Popup', (value) => value != true ? 'show' : 'hide', (value) {
         if (value != true) {
-          (GlobalObjectKey(this).currentState as PopupMenuButtonState)
-              .showButtonMenu();
+          (GlobalObjectKey(this).currentState as PopupMenuButtonState).showButtonMenu();
           return true;
         }
         Navigator.of(GlobalObjectKey(this).currentContext!).pop();
@@ -1081,8 +1100,7 @@ class CPopupMenuButton extends CustomNamedHolder with Clickable, Controller {
   Widget create(BuildContext context) {
     if ((list[0] as ButtonControl).value == true) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        (GlobalObjectKey(this).currentState as PopupMenuButtonState)
-            .showButtonMenu();
+        (GlobalObjectKey(this).currentState as PopupMenuButtonState).showButtonMenu();
       });
     }
 
@@ -1104,8 +1122,7 @@ class CPopupMenuButton extends CustomNamedHolder with Clickable, Controller {
       itemBuilder: (BuildContext context) {
         return childrenMap['itemBuilder']!
             .whereType<CPopupMenuItem>()
-            .map(
-                (e) => (e.create(context) as BinderWidget<PopupMenuItem>).value)
+            .map((e) => (e.create(context) as BinderWidget<PopupMenuItem>).value)
             .toList(growable: false);
       },
       icon: childMap['icon']?.build(context),
@@ -1128,22 +1145,21 @@ class CPopupMenuButton extends CustomNamedHolder with Clickable, Controller {
 class CDropDownButton extends CustomNamedHolder with Clickable, Controller {
   CDropDownButton()
       : super(
-            'DropdownButton',
-            [
-              Parameters.dynamicValueParameter()
-                ..withNamedParamInfoAndSameDisplayName('value')
-                ..withRequired(false),
-              Parameters.intElevationParameter
-                ..withDefaultValue(8)
-                ..withRequired(true),
-              Parameters.googleFontTextStyleParameter,
-              Parameters.borderRadiusParameter(),
-              Parameters.enableFeedbackParameter()
-            ],
-            ['icon', 'hint', 'underline'],
-            ['items'],
-            config: ComponentDefaultParamConfig(
-                padding: true, width: true, height: true)) {
+      'DropdownButton',
+      [
+        Parameters.dynamicValueParameter()
+          ..withNamedParamInfoAndSameDisplayName('value')
+          ..withRequired(false),
+        Parameters.intElevationParameter
+          ..withDefaultValue(8)
+          ..withRequired(true),
+        Parameters.googleFontTextStyleParameter,
+        Parameters.borderRadiusParameter(),
+        Parameters.enableFeedbackParameter()
+      ],
+      ['icon', 'hint', 'underline'],
+      ['items'],
+      config: ComponentDefaultParamConfig(padding: true, width: true, height: true)) {
     methods([
       FVBFunction(
           'onChanged',
@@ -1155,8 +1171,7 @@ class CDropDownButton extends CustomNamedHolder with Clickable, Controller {
       FVBFunction('onTap', null, [], returnType: DataType.fvbVoid)
     ]);
     controls([
-      ButtonControl('Dropdown', (value) => value != true ? 'show' : 'hide',
-          (value) {
+      ButtonControl('Dropdown', (value) => value != true ? 'show' : 'hide', (value) {
         if (value != true) {
           GestureDetector? detector;
           void searchForGestureDetector(BuildContext element) {
@@ -1197,29 +1212,26 @@ class CDropDownButton extends CustomNamedHolder with Clickable, Controller {
         perform(context, name: 'onTap');
       },
       icon: childMap['icon']?.build(context),
-      selectedItemBuilder: (context) => (List.castFrom<Component,
-              CDropdownMenuItem>(childrenMap['items']
-                  ?.map((e) => (e).clone(this, deepClone: false, connect: true))
-                  .toList(growable: false) ??
+      selectedItemBuilder: (context) =>
+          (List.castFrom<Component, CDropdownMenuItem>(childrenMap['items']
+              ?.map((e) => (e).clone(this, deepClone: false, connect: true))
+              .toList(growable: false) ??
               []))
-          .map<DropdownMenuItem>((e) => e.create(context) as DropdownMenuItem)
-          .toList(),
+              .map<DropdownMenuItem>((e) => e.create(context) as DropdownMenuItem)
+              .toList(),
       hint: childMap['hint']?.build(context),
       underline: childMap['underline']?.build(context),
       items: (childrenMap['items'] ?? [])
-          .map<DropdownMenuItem>(
-              (e) => e.buildWithoutKey(context) as DropdownMenuItem)
+          .map<DropdownMenuItem>((e) => e.buildWithoutKey(context) as DropdownMenuItem)
           .toList(),
     );
   }
 
   @override
   Component clone(parent, {bool deepClone = false, bool connect = false}) {
-    final cloneComp =
-        super.clone(parent, deepClone: deepClone, connect: connect);
+    final cloneComp = super.clone(parent, deepClone: deepClone, connect: connect);
     if (deepClone) {
-      (cloneComp as Clickable).actionList =
-          actionList.map((e) => e.clone()).toList();
+      (cloneComp as Clickable).actionList = actionList.map((e) => e.clone()).toList();
     } else {
       (cloneComp as Clickable).actionList = actionList;
     }
@@ -1230,19 +1242,19 @@ class CDropDownButton extends CustomNamedHolder with Clickable, Controller {
 class CRow extends MultiHolder with CFlexModel {
   CRow()
       : super(
-            'Row',
-            [
-              Parameters.mainAxisAlignmentParameter(),
-              Parameters.crossAxisAlignmentParameter(),
-              Parameters.mainAxisSizeParameter()
-            ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-              padding: true,
-              width: true,
-              visibility: true,
-              alignment: true,
-              height: true,
-            ));
+      'Row',
+      [
+        Parameters.mainAxisAlignmentParameter(),
+        Parameters.crossAxisAlignmentParameter(),
+        Parameters.mainAxisSizeParameter()
+      ],
+      defaultParamConfig: ComponentDefaultParamConfig(
+        padding: true,
+        width: true,
+        visibility: true,
+        alignment: true,
+        height: true,
+      ));
 
   @override
   Axis get direction => Axis.horizontal;
@@ -1267,26 +1279,21 @@ class CRow extends MultiHolder with CFlexModel {
 class CPageView extends MultiHolder with Controller {
   CPageView()
       : super('PageView', [
-          Parameters.axisParameter()
-            ..withInfo(NamedParameterInfo('scrollDirection')),
-          BooleanParameter(
-              displayName: 'reverse',
-              required: true,
-              val: false,
-              info: NamedParameterInfo('reverse')),
-          BooleanParameter(
-            displayName: 'page-snapping',
-            required: true,
-            val: true,
-            info: NamedParameterInfo('pageSnapping'),
-          ),
-          Parameters.clipBehaviourParameter('hardEdge'),
-        ]) {}
+    Parameters.axisParameter()
+      ..withInfo(NamedParameterInfo('scrollDirection')),
+    BooleanParameter(displayName: 'reverse', required: true, val: false, info: NamedParameterInfo('reverse')),
+    BooleanParameter(
+      displayName: 'page-snapping',
+      required: true,
+      val: true,
+      info: NamedParameterInfo('pageSnapping'),
+    ),
+    Parameters.clipBehaviourParameter('hardEdge'),
+  ]) {}
 
   @override
   Widget create(BuildContext context) {
-    assign(
-        'pageController', (_, vsync) => PageController(), 'PageController()');
+    assign('pageController', (_, vsync) => PageController(), 'PageController()');
     return PageView(
       scrollDirection: parameters[0].value,
       reverse: parameters[1].value,
@@ -1301,19 +1308,19 @@ class CPageView extends MultiHolder with Controller {
 class CColumn extends MultiHolder with CFlexModel {
   CColumn()
       : super(
-            'Column',
-            [
-              Parameters.mainAxisAlignmentParameter(),
-              Parameters.crossAxisAlignmentParameter(),
-              Parameters.mainAxisSizeParameter()
-            ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-              padding: true,
-              width: true,
-              visibility: true,
-              alignment: true,
-              height: true,
-            ));
+      'Column',
+      [
+        Parameters.mainAxisAlignmentParameter(),
+        Parameters.crossAxisAlignmentParameter(),
+        Parameters.mainAxisSizeParameter()
+      ],
+      defaultParamConfig: ComponentDefaultParamConfig(
+        padding: true,
+        width: true,
+        visibility: true,
+        alignment: true,
+        height: true,
+      ));
 
   @override
   Widget create(BuildContext context) {
@@ -1326,38 +1333,37 @@ class CColumn extends MultiHolder with CFlexModel {
   }
 
   @override
-  CrossAxisAlignment get crossAxisAlignment =>
-      (parameters[0] as ChoiceValueParameter).value;
+  CrossAxisAlignment get crossAxisAlignment => (parameters[0] as ChoiceValueParameter).value;
 
   @override
-  MainAxisSize get mainAxisSize =>
-      (parameters[2] as ChoiceValueParameter).value;
+  MainAxisSize get mainAxisSize => (parameters[2] as ChoiceValueParameter).value;
 }
 
 class CWrap extends MultiHolder {
   CWrap()
       : super(
-            'Wrap',
-            [
-              Parameters.wrapAlignmentParameter(),
-              Parameters.wrapCrossAxisAlignmentParameter(),
-              Parameters.axisParameter()..withDefaultValue('horizontal'),
-              Parameters.widthParameter()
-                ..withDefaultValue(0.0)
-                ..withRequired(true)
-                ..withNamedParamInfoAndSameDisplayName('spacing'),
-              Parameters.widthParameter()
-                ..withDefaultValue(0.0)
-                ..withRequired(true)
-                ..withNamedParamInfoAndSameDisplayName('runSpacing'),
-            ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-              padding: true,
-              width: true,
-              visibility: true,
-              alignment: true,
-              height: true,
-            ));
+      'Wrap',
+      [
+        Parameters.wrapAlignmentParameter(),
+        Parameters.wrapCrossAxisAlignmentParameter(),
+        Parameters.axisParameter()
+          ..withDefaultValue('horizontal'),
+        Parameters.widthParameter()
+          ..withDefaultValue(0.0)
+          ..withRequired(true)
+          ..withNamedParamInfoAndSameDisplayName('spacing'),
+        Parameters.widthParameter()
+          ..withDefaultValue(0.0)
+          ..withRequired(true)
+          ..withNamedParamInfoAndSameDisplayName('runSpacing'),
+      ],
+      defaultParamConfig: ComponentDefaultParamConfig(
+        padding: true,
+        width: true,
+        visibility: true,
+        alignment: true,
+        height: true,
+      ));
 
   @override
   Widget create(BuildContext context) {
@@ -1375,18 +1381,18 @@ class CWrap extends MultiHolder {
 class CStack extends MultiHolder {
   CStack()
       : super(
-            'Stack',
-            [
-              Parameters.alignmentParameter(),
-              Parameters.stackFitParameter(),
-            ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-              padding: true,
-              width: true,
-              visibility: true,
-              alignment: true,
-              height: true,
-            ));
+      'Stack',
+      [
+        Parameters.alignmentParameter(),
+        Parameters.stackFitParameter(),
+      ],
+      defaultParamConfig: ComponentDefaultParamConfig(
+        padding: true,
+        width: true,
+        visibility: true,
+        alignment: true,
+        height: true,
+      ));
 
   @override
   Widget create(BuildContext context) {
@@ -1400,21 +1406,22 @@ class CStack extends MultiHolder {
 
 class CIndexedStack extends MultiHolder {
   int index = 0;
+
   CIndexedStack()
       : super(
-            'IndexedStack',
-            [
-              Parameters.alignmentParameter(),
-              Parameters.intConfigParameter(),
-              Parameters.clipBehaviourParameter('hardEdge'),
-            ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-              padding: true,
-              width: true,
-              height: true,
-              visibility: true,
-              alignment: true,
-            ));
+      'IndexedStack',
+      [
+        Parameters.alignmentParameter(),
+        Parameters.intConfigParameter(),
+        Parameters.clipBehaviourParameter('hardEdge'),
+      ],
+      defaultParamConfig: ComponentDefaultParamConfig(
+        padding: true,
+        width: true,
+        height: true,
+        visibility: true,
+        alignment: true,
+      ));
 
   @override
   Widget create(BuildContext context) {
@@ -1430,16 +1437,17 @@ class CIndexedStack extends MultiHolder {
 class CDropdownMenuItem extends ClickableHolder {
   CDropdownMenuItem()
       : super('DropdownMenuItem', [
-          Parameters.enableParameter()..withChangeNamed('enabled'),
-          Parameters.dynamicValueParameter()
-            ..withNamedParamInfoAndSameDisplayName('value')
-            ..withDefaultValue(DateTime.now().toIso8601String())
-            ..withRequired(true),
-          Parameters.alignmentParameter()
-            ..info = NamedParameterInfo('alignment')
-            ..withDefaultValue('centerLeft')
-            ..withRequired(true),
-        ]) {
+    Parameters.enableParameter()
+      ..withChangeNamed('enabled'),
+    Parameters.dynamicValueParameter()
+      ..withNamedParamInfoAndSameDisplayName('value')
+      ..withDefaultValue(DateTime.now().toIso8601String())
+      ..withRequired(true),
+    Parameters.alignmentParameter()
+      ..info = NamedParameterInfo('alignment')
+      ..withDefaultValue('centerLeft')
+      ..withRequired(true),
+  ]) {
     autoHandleKey = false;
   }
 
@@ -1461,19 +1469,19 @@ class CDropdownMenuItem extends ClickableHolder {
 class CFlex extends MultiHolder {
   CFlex()
       : super(
-            'Flex',
-            [
-              Parameters.mainAxisAlignmentParameter(),
-              Parameters.crossAxisAlignmentParameter(),
-              Parameters.mainAxisSizeParameter(),
-              Parameters.axisParameter()
-            ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-                padding: true,
-                width: true,
-                height: true,
-                alignment: true,
-                visibility: true));
+      'Flex',
+      [
+        Parameters.mainAxisAlignmentParameter(),
+        Parameters.crossAxisAlignmentParameter(),
+        Parameters.mainAxisSizeParameter(),
+        Parameters.axisParameter()
+      ],
+      defaultParamConfig: ComponentDefaultParamConfig(
+          padding: true,
+          width: true,
+          height: true,
+          alignment: true,
+          visibility: true));
 
   @override
   Axis get direction => parameters.last.value;
@@ -1491,8 +1499,9 @@ class CFlex extends MultiHolder {
 }
 
 class CPadding extends Holder with CRenderModel {
-  CPadding()
-      : super('Padding', [Parameters.paddingParameter()..withRequired(true)]);
+  CPadding() : super('Padding', [Parameters.paddingParameter()
+    ..withRequired(true)
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -1515,18 +1524,18 @@ class CPadding extends Holder with CRenderModel {
 class CTooltip extends Holder {
   CTooltip()
       : super('Tooltip', [
-          Parameters.textParameter(defaultValue: '', required: true)
-            ..withNamedParamInfoAndSameDisplayName('message'),
-          Parameters.googleFontTextStyleParameter
-            ..withChangeNamed('textStyle')
-            ..withDisplayName('textStyle'),
-          Parameters.paddingParameter(),
-          Parameters.marginParameter(),
-          Parameters.enableParameter(null)
-            ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
-          Parameters.enableParameter(null)
-            ..withNamedParamInfoAndSameDisplayName('preferBelow'),
-        ]);
+    Parameters.textParameter(defaultValue: '', required: true)
+      ..withNamedParamInfoAndSameDisplayName('message'),
+    Parameters.googleFontTextStyleParameter
+      ..withChangeNamed('textStyle')
+      ..withDisplayName('textStyle'),
+    Parameters.paddingParameter(),
+    Parameters.marginParameter(),
+    Parameters.enableParameter(null)
+      ..withNamedParamInfoAndSameDisplayName('enableFeedback'),
+    Parameters.enableParameter(null)
+      ..withNamedParamInfoAndSameDisplayName('preferBelow'),
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -1543,9 +1552,9 @@ class CTooltip extends Holder {
 }
 
 class CClipRRect extends Holder {
-  CClipRRect()
-      : super('ClipRRect',
-            [Parameters.borderRadiusParameter()..withRequired(true)]);
+  CClipRRect() : super('ClipRRect', [Parameters.borderRadiusParameter()
+    ..withRequired(true)
+  ]);
 
   @override
   Widget create(BuildContext context) {
@@ -1581,24 +1590,24 @@ class CDropdownButtonHideUnderline extends Holder {
 class CCircleAvatar extends Holder with Resizable {
   CCircleAvatar()
       : super(
-            'CircleAvatar',
-            [
-              Parameters.radiusParameter(),
-              Parameters.backgroundColorParameter(),
-              Parameters.foregroundColorParameter(),
-              // Parameters.radiusParameter()
-              //   ..withDisplayName('minimum radius')
-              //   ..withInfo(NamedParameterInfo('minRadius')),
-              // Parameters.radiusParameter()
-              //   ..withDisplayName('maximum radius')
-              //   ..withInfo(NamedParameterInfo('maxRadius')),
-            ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-              padding: true,
-              visibility: true,
-              alignment: true,
-            ),
-            boundaryRepaintDelay: 400);
+      'CircleAvatar',
+      [
+        Parameters.radiusParameter(),
+        Parameters.backgroundColorParameter(),
+        Parameters.foregroundColorParameter(),
+        // Parameters.radiusParameter()
+        //   ..withDisplayName('minimum radius')
+        //   ..withInfo(NamedParameterInfo('minRadius')),
+        // Parameters.radiusParameter()
+        //   ..withDisplayName('maximum radius')
+        //   ..withInfo(NamedParameterInfo('maxRadius')),
+      ],
+      defaultParamConfig: ComponentDefaultParamConfig(
+        padding: true,
+        visibility: true,
+        alignment: true,
+      ),
+      boundaryRepaintDelay: 400);
 
   @override
   Widget create(BuildContext context) {
@@ -1614,8 +1623,7 @@ class CCircleAvatar extends Holder with Resizable {
 
   @override
   void onResize(Size change) {
-    symmetricChange(parameters[0],
-        (parameters[0].value ?? ((boundary?.width ?? 0) / 2)), change / 2);
+    symmetricChange(parameters[0], (parameters[0].value ?? ((boundary?.width ?? 0) / 2)), change / 2);
   }
 
   @override
@@ -1628,13 +1636,13 @@ class CCircleAvatar extends Holder with Resizable {
 class COutlinedButton extends ClickableHolder {
   COutlinedButton()
       : super('OutlinedButton', [Parameters.buttonStyleParameter()],
-            defaultParamConfig: ComponentDefaultParamConfig(
-              padding: true,
-              width: true,
-              visibility: true,
-              alignment: true,
-              height: true,
-            )) {
+      defaultParamConfig: ComponentDefaultParamConfig(
+        padding: true,
+        width: true,
+        visibility: true,
+        alignment: true,
+        height: true,
+      )) {
     methods([FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid)]);
   }
 
@@ -1653,22 +1661,21 @@ class COutlinedButton extends ClickableHolder {
 class CElevatedButton extends ClickableHolder {
   CElevatedButton()
       : super(
-            'ElevatedButton',
-            [
-              Parameters.buttonStyleParameter(),
-            ],
-            defaultParamConfig: ComponentDefaultParamConfig(
-              padding: true,
-              width: true,
-              visibility: true,
-              alignment: true,
-              height: true,
-            )) {
+      'ElevatedButton',
+      [
+        Parameters.buttonStyleParameter(),
+      ],
+      defaultParamConfig: ComponentDefaultParamConfig(
+        padding: true,
+        width: true,
+        visibility: true,
+        alignment: true,
+        height: true,
+      )) {
     methods([
       FVBFunction('onPressed', null, [], returnType: DataType.fvbVoid),
       FVBFunction('onLongPress', null, [], returnType: DataType.fvbVoid),
-      FVBFunction('onHover', null,
-          [FVBArgument('value', dataType: DataType.fvbBool, nullable: false)],
+      FVBFunction('onHover', null, [FVBArgument('value', dataType: DataType.fvbBool, nullable: false)],
           returnType: DataType.fvbVoid),
     ]);
   }
@@ -1695,8 +1702,7 @@ class ComponentSize {
   final Size size;
   final EdgeInsets margin;
 
-  const ComponentSize(
-    this.size, {
+  const ComponentSize(this.size, {
     this.margin = EdgeInsets.zero,
   });
 
@@ -1715,7 +1721,6 @@ class ComponentSize {
 
   Size childSize(Size boundary) {
     final total = totalSize(boundary);
-    return Size(
-        total.width - margin.horizontal, total.height - margin.vertical);
+    return Size(total.width - margin.horizontal, total.height - margin.vertical);
   }
 }

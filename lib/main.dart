@@ -9,10 +9,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// For web
-
-// import 'package:flutter_web_plugins/flutter_web_plugins.dart';
-
+import 'ai/llm_integration/llm_integration.dart';
+import 'ai/prompt_generator.dart';
+import 'web_plugin/web_plugin_stub.dart' if (dart.library.html) 'web_plugin/web_plugin.dart';
 import 'package:fvb_processor/compiler/code_processor.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:loader_overlay/loader_overlay.dart';
@@ -29,7 +28,6 @@ import 'bloc/paint_obj/paint_obj_bloc.dart';
 import 'bloc/state_management/state_management_bloc.dart';
 import 'bloc/theme/theme_bloc.dart';
 import 'common/extension_util.dart';
-import 'common/responsive/responsive_dimens.dart';
 import 'common/web/html_lib.dart' as html;
 import 'common/web/io_lib.dart';
 import 'constant/color_assets.dart';
@@ -55,17 +53,28 @@ import 'widgets/common_circular_loading.dart';
 GlobalKey<NavigatorState> rootNavigator = GlobalKey();
 
 void main(List<String> arguments) async {
+
+  final PromptGenerator generator = PromptGenerator();
+  final message = generator.generatePromptLite();
+  print('###################  PROMPT  #####################');
+  print('##################################################');
+  print(message);
+  print('##################################################');
+  print('################# TOKEN: ${simpleTokenCount(message)} ######################');
+
+  // print('##################################################');
+  // print('ICONS');
+  // print(await IOOperations.fetchMaterialIcons());
+  // print('##################################################');
+
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
-    // setUrlStrategy(PathUrlStrategy());
+    setURLStrategy();
   }
   if (Platform.isWindows) {
     registerProtocol('fvb');
   }
-  await Future.wait([
-    initInjector(),
-    dotenv.load(fileName: '.env'),
-  ]);
+  await Future.wait([initInjector(), loadEnv()]);
   // await initDB();
   // if (Platform.isWindows) {
   // await KeyboardEvent.init();
@@ -87,6 +96,15 @@ void main(List<String> arguments) async {
     runZonedGuarded(() => runApp(const MyApp()), (error, stack) {
       print('RUN ZONE CACHED ERROR ${stack.toString()}');
     });
+  }
+}
+
+Future<void> loadEnv() async {
+  try {
+    await dotenv.load(fileName: '.env');
+  }
+  on FileNotFoundError catch(e){
+    print('ENV FileNotFoundError Exception: ${e.toString()}');
   }
 }
 
@@ -214,41 +232,8 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-
     rootNavigator = GlobalKey();
     _handleIncomingLinks();
-  }
-
-  void onLinkReceived(Map<String, String> query) {
-    print('LINK GOT $query');
-    if (query.containsKey('code')) {
-      _userDetailsConfig.onFigmaCodeReceived(query['code']!);
-    }
-  }
-
-  void _handleIncomingLinks() {
-    if (!kIsWeb) {
-      if (Platform.isWindows) {
-        uriLinkStream.listen((event) {
-          if (event != null) {
-            onLinkReceived(event.queryParameters);
-          }
-        });
-      } else if (Platform.isMacOS) {
-        final _appLinks = AppLinks();
-        _appLinks.getInitialLink().then((value) {
-          if (value != null) onLinkReceived(value.queryParameters);
-        });
-        _appLinks.uriLinkStream.listen((value) {
-          onLinkReceived(value.queryParameters);
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    initScreenUtils(context);
 
     if (kIsWeb) {
       html.document.addEventListener('contextmenu', (event) => event.preventDefault());
@@ -281,6 +266,38 @@ class _MyAppState extends State<MyApp> {
         }
       };
     }
+  }
+
+  void onLinkReceived(Map<String, String> query) {
+    print('LINK GOT $query');
+    if (query.containsKey('code')) {
+      _userDetailsConfig.onFigmaCodeReceived(query['code']!);
+    }
+  }
+
+  void _handleIncomingLinks() {
+    if (!kIsWeb) {
+      if (Platform.isWindows) {
+        uriLinkStream.listen((event) {
+          if (event != null) {
+            onLinkReceived(event.queryParameters);
+          }
+        });
+      } else if (Platform.isMacOS) {
+        final _appLinks = AppLinks();
+        _appLinks.getInitialLink().then((value) {
+          if (value != null) onLinkReceived(value.queryParameters);
+        });
+        _appLinks.uriLinkStream.listen((value) {
+          onLinkReceived(value.queryParameters);
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    initScreenUtils(context);
     return ProviderScope(
       child: ScreenUtilInit(
         builder: (BuildContext context, Widget? child) {
@@ -344,14 +361,13 @@ class _MyAppState extends State<MyApp> {
                   initialRoute: '/login',
                   navigatorKey: rootNavigator,
                   builder: (context, child) {
-                    ScreenUtil.init(context,
-                        designSize:
-                            res(context, const Size(1920, 1000), const Size(764, 1024), MediaQuery.of(context).size));
+                    // ScreenUtil.init(context,
+                    //     designSize:
+                    //         res(context, const Size(1920, 1000), const Size(764, 1024), MediaQuery.of(context).size));
                     return LoaderOverlay(
                       overlayWidth: 100,
                       overlayHeight: 100,
                       overlayColor: Colors.transparent,
-                      useDefaultLoading: false,
                       overlayWidgetBuilder: (_) => Stack(
                         children: [
                           BackdropFilter(
@@ -387,10 +403,10 @@ class _MyAppState extends State<MyApp> {
                     return [_generateRoute(RouteSettings(name: route))!];
                   },
                   theme: ThemeData(
-                      useMaterial3: false,
+                      useMaterial3: true,
                       visualDensity: VisualDensity.standard,
                       primaryColor: ColorAssets.theme,
-                      focusColor: ColorAssets.theme.withOpacity(0.2),
+                      focusColor: ColorAssets.theme.withValues(alpha:0.2),
                       textButtonTheme: TextButtonThemeData(
                         style: TextButton.styleFrom(
                             foregroundColor: ColorAssets.theme, surfaceTintColor: ColorAssets.theme),
@@ -410,7 +426,7 @@ class _MyAppState extends State<MyApp> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                           side: BorderSide(
-                            color: ColorAssets.theme.withOpacity(0.7),
+                            color: ColorAssets.theme.withValues(alpha:0.7),
                             width: 1.5,
                           ),
                         ),

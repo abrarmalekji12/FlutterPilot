@@ -4,7 +4,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -59,11 +58,9 @@ class _AuthNavigationState extends State<AuthNavigation> {
             TextInput.finishAutofillContext();
             if (_pref.containsKey(PrefKey.projectId)) {
               final projectId = _pref.getString(PrefKey.projectId);
-              Navigator.pushReplacementNamed(context, '/projects',
-                  arguments: [state.userId, projectId]);
+              Navigator.pushReplacementNamed(context, '/projects', arguments: [state.userId, projectId]);
             } else {
-              Navigator.pushReplacementNamed(context, '/projects',
-                  arguments: state.userId);
+              Navigator.pushReplacementNamed(context, '/projects', arguments: state.userId);
             }
           }
         },
@@ -84,61 +81,44 @@ class _AuthNavigationState extends State<AuthNavigation> {
                         child: FlutterPilotLogo(),
                       ),
                       20.hBox,
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 500),
-                        alignment: Alignment.topCenter,
-                        child: SizedBox(
-                          width: Responsive.isMobile(context) ? null : 400,
-                          child: ValueListenableBuilder(
-                              valueListenable: loginVisible,
-                              child: IntrinsicHeight(
-                                child: Container(
-                                  width:
-                                      Responsive.isMobile(context) ? null : 400,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                        color: ColorAssets.colorD0D5EF),
-                                  ),
-                                  child: Navigator(
-                                    onGenerateRoute: (settings) {
-                                      if (settings.name == '/login') {
-                                        return getRoute(
-                                            (context) => const LoginPage(),
-                                            '/login',
-                                            anim: false);
-                                      } else if (settings.name == '/register') {
-                                        return getRoute(
-                                            (_) => const RegisterPage(),
-                                            '/register',
-                                            anim: false);
-                                      } else if (settings.name ==
-                                          '/reset-password') {
-                                        return getRoute(
-                                            (context) =>
-                                                const ResetPasswordPage(),
-                                            '/reset-password',
-                                            anim: false);
-                                      }
-                                      return null;
-                                    },
-                                    initialRoute: '/login',
-                                    restorationScopeId: 'auth',
-                                  ),
+                      SizedBox(
+                        width: Responsive.isMobile(context) ? null : 400,
+                        child: ValueListenableBuilder(
+                            valueListenable: loginVisible,
+                            child: IntrinsicHeight(
+                              child: Container(
+                                width: Responsive.isMobile(context) ? null : 400,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: ColorAssets.colorD0D5EF),
+                                ),
+                                child: Navigator(
+                                  onGenerateRoute: (settings) {
+                                    if (settings.name == '/login') {
+                                      return getRoute((context) => const LoginPage(), '/login', anim: false);
+                                    } else if (settings.name == '/register') {
+                                      return getRoute((_) => const RegisterPage(), '/register', anim: false);
+                                    } else if (settings.name == '/reset-password') {
+                                      return getRoute((context) => const ResetPasswordPage(), '/reset-password',
+                                          anim: false);
+                                    }
+                                    return null;
+                                  },
+                                  initialRoute: '/login',
+                                  restorationScopeId: 'auth',
                                 ),
                               ),
-                              builder: (context, value, child) {
-                                return Visibility(
-                                  child: child?.animate().fadeIn() ??
-                                      const Offstage(),
-                                  replacement: const SizedBox.shrink(),
-                                  visible: value,
-                                );
-                              }),
-                        ),
+                            ),
+                            builder: (context, value, child) {
+                              return Visibility(
+                                child: child ?? const Offstage(),
+                                replacement: const SizedBox.shrink(),
+                                visible: value,
+                              );
+                            }),
                       ),
                     ],
-                  ).animate().saturate(),
+                  ),
                 ),
               ),
             ],
@@ -161,8 +141,7 @@ List<Offset>? _pointsList;
 List<Offset>? _travelledDistances;
 List<Offset>? _oldPointsList;
 
-class _BackgroundNetAnimationState extends State<BackgroundNetAnimation>
-    with SingleTickerProviderStateMixin {
+class _BackgroundNetAnimationState extends State<BackgroundNetAnimation> with SingleTickerProviderStateMixin {
   final random = Random.secure();
   AnimationController? _controller;
   final List<int> hoverPoints = [];
@@ -172,8 +151,7 @@ class _BackgroundNetAnimationState extends State<BackgroundNetAnimation>
 
   @override
   void initState() {
-    _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 2));
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2));
 
     super.initState();
   }
@@ -204,23 +182,19 @@ class _BackgroundNetAnimationState extends State<BackgroundNetAnimation>
       final width = MediaQuery.of(context).size.width;
       final height = MediaQuery.of(context).size.height;
       _pointsList = List.generate(_points + 1, (index) {
-        return Offset(
-            random.nextDouble() * width, random.nextDouble() * height);
+        return Offset(random.nextDouble() * width, random.nextDouble() * height);
       });
       _travelledDistances = List.generate(
         _points,
-        (index) => Offset(
-            20 * (random.nextDouble() - 0.5), 20 * (random.nextDouble() - 0.5)),
+        (index) => Offset(20 * (random.nextDouble() - 0.5), 20 * (random.nextDouble() - 0.5)),
       );
     } else {
       _pointsList = List.generate(
         _points,
         (index) {
           final distance = Offset(
-              (-_travelledDistances![index].dx * 0.2) +
-                  (20 * cos((random.nextDouble() - 0.5) * 2 * pi)),
-              ((-_travelledDistances![index].dy * 0.2) +
-                  (20 * sin((random.nextDouble() - 0.5) * 2 * pi))));
+              (-_travelledDistances![index].dx * 0.2) + (20 * cos((random.nextDouble() - 0.5) * 2 * pi)),
+              ((-_travelledDistances![index].dy * 0.2) + (20 * sin((random.nextDouble() - 0.5) * 2 * pi))));
           _travelledDistances![index] += distance;
           return _pointsList![index] + distance;
         },
@@ -252,8 +226,7 @@ class _BackgroundNetAnimationState extends State<BackgroundNetAnimation>
           builder: (context, _) {
             return CustomPaint(
               size: Size.infinite,
-              painter: AuthBackPainter(_pointsList!, _oldPointsList,
-                  _controller!.value, hoverPoints),
+              painter: AuthBackPainter(_pointsList!, _oldPointsList, _controller!.value, hoverPoints),
             );
           }),
     );
@@ -281,11 +254,7 @@ class AuthBackPainter extends CustomPainter {
       //     ..color = ColorAssets.colorD0D5EF.withOpacity(0.3),
       // );
     } else {
-      final pointList = list
-          .asMap()
-          .entries
-          .map((e) => lerpOffset(oldList![e.key], e.value, value))
-          .toList();
+      final pointList = list.asMap().entries.map((e) => lerpOffset(oldList![e.key], e.value, value)).toList();
       final paint = Paint();
       final paintLine = Paint();
       paintLine.strokeWidth = 0.5;
@@ -332,8 +301,8 @@ class AuthBackPainter extends CustomPainter {
     }
   }
 
-  Offset lerpOffset(Offset o1, Offset o2, double value) => Offset(
-      lerpDouble(o1.dx, o2.dx, value)!, lerpDouble(o1.dy, o2.dy, value)!);
+  Offset lerpOffset(Offset o1, Offset o2, double value) =>
+      Offset(lerpDouble(o1.dx, o2.dx, value)!, lerpDouble(o1.dy, o2.dy, value)!);
 
   @override
   bool shouldRepaint(AuthBackPainter oldDelegate) => true;

@@ -9,6 +9,7 @@ import 'package:get_it/get_it.dart';
 // import 'package:keyboard_event/keyboard_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'ai/component_generator.dart';
 import 'bloc/action_code/action_code_bloc.dart';
 import 'bloc/api_bloc/api_bloc.dart';
 import 'bloc/component_drag/component_drag_bloc.dart';
@@ -48,6 +49,8 @@ final theme = ThemeBloc();
 late final FvbNavigationBloc fvbNavigationBloc;
 late final Processor systemProcessor;
 final collection = UserProjectCollection();
+
+final componentGenerator=ComponentGenerator();
 final Map<String, ui.Image> uiImageCache = {};
 
 enum PlatformType { desktop, tablet, phone }

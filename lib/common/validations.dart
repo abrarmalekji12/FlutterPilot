@@ -25,7 +25,7 @@ class Validations {
         }
 
         if (value.length > 25) {
-          return 'Name should be more than 25 characters.';
+          return 'Name should be less than 25 characters.';
         }
         if (value is String &&
             (value[0].codeUnits.first >= zeroCodeUnit) &&
@@ -50,6 +50,30 @@ class Validations {
                 .firstWhereOrNull((e) => e.name == value) !=
             null) {
           return 'This is one of the custom-widget name, try different';
+        }
+        return null;
+      };
+
+  static FormFieldValidator projectNameValidator() => (value) {
+        if (value.isEmpty) {
+          return 'Please enter valid name.';
+        }
+        if (value.length <= 3) {
+          return 'Name should be more than 3 characters.';
+        }
+
+        if (value.length > 25) {
+          return 'Name should be less than 25 characters.';
+        }
+        if (value is String &&
+            (value[0].codeUnits.first >= zeroCodeUnit) &&
+            (value[0].codeUnits.first <= nineCodeUnit)) {
+          return 'First character cann\'t be a digit.';
+        }
+
+
+        if (collection.project?.name == value) {
+          return 'This name is project name, please try different name';
         }
         return null;
       };
