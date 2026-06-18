@@ -110,6 +110,7 @@ dependencies:
     sdk: flutter
 dependency_overrides:
   intl: 0.17.0
+  analyzer: '>=6.7.0 <13.0.0'
 #  http: 1.1.0
 
 
