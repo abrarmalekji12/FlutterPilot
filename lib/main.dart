@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uni_links/uni_links.dart';
 import 'package:uni_links_desktop/uni_links_desktop.dart';
 
+import 'services/push_notification_service.dart';
 import 'bloc/action_code/action_code_bloc.dart';
 import 'bloc/component_drag/component_drag_bloc.dart';
 import 'bloc/error/error_bloc.dart';
@@ -234,6 +235,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     rootNavigator = GlobalKey();
     _handleIncomingLinks();
+    PushNotificationService.initialize();
 
     if (kIsWeb) {
       html.document.addEventListener('contextmenu', (event) => event.preventDefault());
