@@ -337,7 +337,7 @@ class _GeneralSettingsPageState extends State<GeneralSettingsPage> {
                       ],
                       30.hBox,
                       Text(
-                        'Project Settings',
+                        'Project Configuration',
                         style: AppFontStyle.lato(16, color: theme.titleColor, fontWeight: FontWeight.w900),
                       ),
                       const Divider(
