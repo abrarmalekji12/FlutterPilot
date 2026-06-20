@@ -109,7 +109,10 @@ class FirebaseDataBridge extends DataBridge {
               projectId: 'flutter-visual-builder-staging',
               storageBucket: 'flutter-visual-builder-staging.appspot.com',
               messagingSenderId: '585919568929',
-              appId: '1:585919568929:web:20c22834346fe6ad98d760'));
+              appId: '1:585919568929:web:20c22834346fe6ad98d760',
+              // TODO: Replace with the GA4 web measurement id (G-XXXXXXXXXX)
+              // from the Firebase console to enable web Analytics.
+              measurementId: 'G-XXXXXXXXXX'));
     }
     else {
       await Firebase.initializeApp(

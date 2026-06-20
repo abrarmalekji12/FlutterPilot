@@ -27,6 +27,7 @@ import 'bloc/key_fire/key_fire_bloc.dart';
 import 'bloc/paint_obj/paint_obj_bloc.dart';
 import 'bloc/state_management/state_management_bloc.dart';
 import 'bloc/theme/theme_bloc.dart';
+import 'common/analytics/analytics_service.dart';
 import 'common/extension_util.dart';
 import 'common/web/html_lib.dart' as html;
 import 'common/web/io_lib.dart';
@@ -360,6 +361,7 @@ class _MyAppState extends State<MyApp> {
                   // scrollBehavior: MyCustomScrollBehavior(),
                   initialRoute: '/login',
                   navigatorKey: rootNavigator,
+                  navigatorObservers: [sl<AnalyticsService>().routeObserver],
                   builder: (context, child) {
                     // ScreenUtil.init(context,
                     //     designSize:

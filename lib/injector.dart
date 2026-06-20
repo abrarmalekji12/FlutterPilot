@@ -20,6 +20,7 @@ import 'bloc/state_management/state_management_bloc.dart';
 import 'bloc/theme/theme_bloc.dart';
 import 'code_snippets/common_snippets.dart';
 import 'collections/project_info_collection.dart';
+import 'common/analytics/analytics_service.dart';
 import 'common/analyzer/package_analyzer.dart';
 import 'common/responsive/responsive_widget.dart';
 import 'components/component_list.dart';
@@ -104,6 +105,10 @@ Future<void> initInjector() async {
   sl.registerSingleton<SharedPreferences>(
       await SharedPreferences.getInstance());
   await dataBridge.init();
+  // Firebase is ready at this point, so analytics can safely initialize.
+  final analytics = AnalyticsService(sl<SharedPreferences>());
+  sl.registerSingleton<AnalyticsService>(analytics);
+  await analytics.init();
   sl.registerSingleton<StateManagementBloc>(StateManagementBloc());
   sl.registerSingleton(UserSession());
   sl.registerFactory<CommonSnippets>(() => CommonSnippets());

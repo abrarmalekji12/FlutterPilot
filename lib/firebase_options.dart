@@ -50,6 +50,10 @@ class DefaultFirebaseOptions {
     projectId: 'flutter-visual-builder-staging',
     authDomain: 'flutter-visual-builder-staging.firebaseapp.com',
     storageBucket: 'flutter-visual-builder-staging.appspot.com',
+    // TODO: Replace with the GA4 web measurement id from the Firebase console
+    // (Project settings > Your apps > Web > measurementId). Required for
+    // Google Analytics to report on the web build.
+    measurementId: 'G-XXXXXXXXXX',
   );
 
   static const FirebaseOptions android = FirebaseOptions(

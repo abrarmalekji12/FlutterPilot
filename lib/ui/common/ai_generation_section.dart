@@ -4,6 +4,9 @@ import 'package:fvb_processor/compiler/fvb_file.dart';
 import 'package:fvb_processor/compiler/processor_component.dart';
 import 'package:json_view/json_view.dart';
 
+import '../../common/analytics/analytics_keys.dart';
+import '../../common/analytics/analytics_service.dart';
+import '../../common/analytics/screen_time_mixin.dart';
 import '../../common/app_button.dart';
 import '../../common/app_loader.dart';
 import '../../common/extension_util.dart';
@@ -31,7 +34,11 @@ class AIGenerationSection extends StatefulWidget {
   State<AIGenerationSection> createState() => _AIGenerationSectionState();
 }
 
-class _AIGenerationSectionState extends State<AIGenerationSection> {
+class _AIGenerationSectionState extends State<AIGenerationSection>
+    with ScreenTimeTracker<AIGenerationSection> {
+  @override
+  String get screenName => AnalyticsKeys.screenAiAssistant;
+
   final _userSession = sl<UserSession>();
   final TextEditingController _prompt = TextEditingController(text: kDebugMode ? 'Simple profile page UI' : ''); //
 
@@ -69,13 +76,27 @@ class _AIGenerationSectionState extends State<AIGenerationSection> {
                   AppLoader.show(context);
                   generatedOutput = null;
                   setState(() {});
+                  final promptLength = _prompt.text.length;
+                  final stopwatch = Stopwatch()..start();
                   componentGenerator.generate(_prompt.text).then((value) {
                     AppLoader.hide(context);
+                    stopwatch.stop();
                     generatedOutput = value;
-
+                    sl<AnalyticsService>().logAiGeneration(
+                      promptLength: promptLength,
+                      success: true,
+                      componentCount: value.$1.length,
+                      durationMs: stopwatch.elapsedMilliseconds,
+                    );
                     setState(() {});
                   }).onError((error, stackTrace) {
                     AppLoader.hide(context);
+                    stopwatch.stop();
+                    sl<AnalyticsService>().logAiGeneration(
+                      promptLength: promptLength,
+                      success: false,
+                      durationMs: stopwatch.elapsedMilliseconds,
+                    );
                     print('ERROR: ${error}');
                     print('TRACE: ${stackTrace}');
                   });
