@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
+
 class RevertWork {
   final List<Work> _stack = [];
+  final ValueNotifier<int> operationCount = ValueNotifier(0);
 
   RevertWork();
 
@@ -17,12 +20,14 @@ class RevertWork {
 
   void clear() {
     _stack.clear();
+    operationCount.value = 0;
   }
 
   void add(
       dynamic oldValue, void Function() work, void Function(dynamic) workUndo) {
     _stack.add(Work(oldValue, work, workUndo));
     work.call();
+    operationCount.value = _stack.length;
   }
 
   void revert() {
@@ -30,12 +35,14 @@ class RevertWork {
       final Work work = _stack.removeAt(_stack.length - 1);
       work.undoWork.call(work.oldValue);
     }
+    operationCount.value = 0;
   }
 
   void undo() {
     if (totalOperations > 0) {
       final work = _stack.removeAt(_stack.length - 1);
       work.undoWork.call(work.oldValue);
+      operationCount.value = _stack.length;
     }
   }
 }

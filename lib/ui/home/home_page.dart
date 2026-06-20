@@ -586,6 +586,29 @@ class _ToolbarButtonsState extends State<ToolbarButtons> {
               showPopupText(context, 'Refreshed!', long: false);
             },
           ),
+          10.wBox,
+          ValueListenableBuilder<int>(
+            valueListenable:
+                context.read<OperationCubit>().revertWork.operationCount,
+            builder: (context, count, _) {
+              final hasHistory = count > 0;
+              return Badge(
+                label: Text('$count'),
+                isLabelVisible: hasHistory,
+                backgroundColor: ColorAssets.theme,
+                child: AppIconButton(
+                  icon: Icons.history,
+                  iconColor: hasHistory
+                      ? ColorAssets.theme
+                      : ColorAssets.color72788AGrey,
+                  background: theme.background1,
+                  onPressed: () {
+                    context.read<OperationCubit>().revertWork.undo();
+                  },
+                ),
+              );
+            },
+          ),
           const VerticalDivider(
             width: 30,
           ),
