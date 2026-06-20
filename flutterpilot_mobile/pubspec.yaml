@@ -40,6 +40,7 @@ dependencies:
   sliding_up_panel: ^2.0.0+1
   flutter_builder:
     path: ../../flutter_builder
+  in_app_update_flutter: ^2.0.3
 
 dev_dependencies:
   flutter_test:
