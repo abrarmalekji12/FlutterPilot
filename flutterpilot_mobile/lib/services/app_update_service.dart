@@ -5,7 +5,7 @@ import 'package:in_app_update_flutter/in_app_update_flutter.dart';
 
 // Replace with the numeric App Store ID from your App Store URL.
 // e.g. https://apps.apple.com/app/id1234567890 → '1234567890'
-const String _kAppStoreId = 'YOUR_APP_STORE_ID';
+const String _kAppStoreId = '6759552936';
 
 class AppUpdateService {
   AppUpdateService._();
