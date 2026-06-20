@@ -36,7 +36,6 @@ class _AIGenerationSectionState extends State<AIGenerationSection> {
   final TextEditingController _prompt = TextEditingController(text: kDebugMode ? 'Simple profile page UI' : ''); //
 
   (List<Component>, List<Map<String, dynamic>>)? generatedOutput;
-  final List<(List<Component>, List<Map<String, dynamic>>)> _history = [];
 
   @override
   Widget build(BuildContext context) {
@@ -54,58 +53,34 @@ class _AIGenerationSectionState extends State<AIGenerationSection> {
           const SizedBox(
             height: 10,
           ),
-          Row(
-            children: [
-              FilledButtonWidget(
-                  width: 230,
-                  height: 45,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.auto_awesome, color: Colors.white),
-                      15.wBox,
-                      const Text('Generate using AI'),
-                    ],
-                  ),
-                  onTap: () {
-                    if (_prompt.text.isNotEmpty) {
-                      AppLoader.show(context);
-                      if (generatedOutput != null) {
-                        _history.add(generatedOutput!);
-                      }
-                      generatedOutput = null;
-                      setState(() {});
-                      componentGenerator.generate(_prompt.text).then((value) {
-                        AppLoader.hide(context);
-                        generatedOutput = value;
-                        setState(() {});
-                      }).onError((error, stackTrace) {
-                        AppLoader.hide(context);
-                        print('ERROR: ${error}');
-                        print('TRACE: ${stackTrace}');
-                      });
-                    }
-                  }),
-              const SizedBox(width: 12),
-              Badge(
-                label: Text('${_history.length}'),
-                isLabelVisible: _history.isNotEmpty,
-                backgroundColor: ColorAssets.theme,
-                child: AppIconButton(
-                  icon: Icons.history,
-                  iconColor: _history.isNotEmpty
-                      ? ColorAssets.theme
-                      : ColorAssets.color72788AGrey,
-                  onPressed: () {
-                    if (_history.isNotEmpty) {
-                      generatedOutput = _history.removeLast();
-                      setState(() {});
-                    }
-                  },
-                ),
+          FilledButtonWidget(
+              width: 230,
+              height: 45,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.auto_awesome,color: Colors.white,),
+                  15.wBox,
+                  const Text('Generate using AI'),
+                ],
               ),
-            ],
-          ),
+              onTap: () {
+                if (_prompt.text.isNotEmpty) {
+                  AppLoader.show(context);
+                  generatedOutput = null;
+                  setState(() {});
+                  componentGenerator.generate(_prompt.text).then((value) {
+                    AppLoader.hide(context);
+                    generatedOutput = value;
+
+                    setState(() {});
+                  }).onError((error, stackTrace) {
+                    AppLoader.hide(context);
+                    print('ERROR: ${error}');
+                    print('TRACE: ${stackTrace}');
+                  });
+                }
+              }),
         ] else
           Container(
             decoration: BoxDecoration(
