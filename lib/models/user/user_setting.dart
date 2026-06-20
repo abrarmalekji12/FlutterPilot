@@ -12,6 +12,7 @@ class UserSettingModel {
   String iDETheme = 'idea';
   String? figmaCode;
   String? figmaAccessToken;
+  String? figmaRefreshToken;
   String? openAISecretToken;
   String? geminiSecretToken;
   ThemeType generalTheme = ThemeType.light;
@@ -25,6 +26,7 @@ class UserSettingModel {
       'theme': iDETheme,
       'figmaCode': figmaCode,
       'figmaAccessToken': figmaAccessToken,
+      'figmaRefreshToken': figmaRefreshToken,
       'openAISecretToken': openAISecretToken,
       'geminiSecretToken': geminiSecretToken,
       'generalTheme': generalTheme.index,
@@ -39,6 +41,7 @@ class UserSettingModel {
       ..openAISecretToken=json['openAISecretToken']
       ..geminiSecretToken=json['geminiSecretToken']
       ..figmaAccessToken = json['figmaAccessToken']
+      ..figmaRefreshToken = json['figmaRefreshToken']
       ..generalTheme = ThemeType.values[json['generalTheme'] ?? 0]
       ..otherSettings = json['otherSettings'] != null
           ? FVBOtherSettings.fromJson(json['otherSettings'])
