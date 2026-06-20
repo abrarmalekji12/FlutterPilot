@@ -220,8 +220,15 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
       await dataBridge.createProject(_userSession.user.userId!, project);
       sl<AnalyticsService>().logProjectCreated(
         projectName: project.name,
-        template: template?.name,
+        templateId: template?.id,
+        templateName: template?.name,
       );
+      if (template != null) {
+        sl<AnalyticsService>().logTemplateUsed(
+          templateId: template.id,
+          templateName: template.name,
+        );
+      }
       AppLoader.update(0.9);
       _userSession.settingModel!.projects.insert(0, project);
       emit(FlutterProjectLoadedState(project, created: true));

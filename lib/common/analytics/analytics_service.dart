@@ -142,12 +142,27 @@ class AnalyticsService {
   /// A user created a new project.
   Future<void> logProjectCreated({
     String? projectName,
-    String? template,
+    String? templateId,
+    String? templateName,
   }) =>
       logEvent(AnalyticsKeys.projectCreated, {
         if (projectName != null) 'project_name': projectName,
-        'from_template': template != null,
-        if (template != null) 'template': template,
+        'from_template': templateId != null,
+        if (templateId != null) 'template_id': templateId,
+        if (templateName != null) 'template_name': templateName,
+      });
+
+  /// A user started a project from a specific template. Logged separately from
+  /// [logProjectCreated] so per-template usage counts are unambiguous: in GA4,
+  /// break the `template_used` event down by the `template_name` (or
+  /// `template_id`) parameter to see how many times each template was used.
+  Future<void> logTemplateUsed({
+    required String templateId,
+    required String templateName,
+  }) =>
+      logEvent(AnalyticsKeys.templateUsed, {
+        'template_id': templateId,
+        'template_name': templateName,
       });
 
   /// A user generated UI through the AI assistant. The prompt text itself is

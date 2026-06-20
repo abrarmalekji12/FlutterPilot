@@ -38,6 +38,7 @@ class AnalyticsKeys {
   static const String screenTime = 'screen_time';
   static const String apkExport = 'apk_export';
   static const String projectCreated = 'project_created';
+  static const String templateUsed = 'template_used';
   static const String aiGeneration = 'ai_generation';
 
   // ---------------------------------------------------------------------------
