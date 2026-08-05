@@ -18,7 +18,6 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: 3.22.2
 
       - name: Create .env file
         run: echo "FIGMA_SECRET_KEY=${{ secrets.FIGMA_SECRET_KEY }}" > .env
@@ -59,11 +58,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: 3.22.2
 
       - name: Create .env file
         run: echo "FIGMA_SECRET_KEY=${{ secrets.FIGMA_SECRET_KEY }}" > .env
-        
+
       - name: 📦 Install Dependencies
         run: |
           flutter pub get
