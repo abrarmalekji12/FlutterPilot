@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app_config.dart';
 import '../../bloc/error/error_bloc.dart';
+import '../../common/analytics/analytics_service.dart';
 import '../../common/app_loader.dart';
 import '../../common/utils/load_time_checker.dart';
 import '../../common/web/html_lib.dart' as html;
@@ -217,6 +218,17 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
             deletable: false, value: 900, uiAttached: true, description: 'maximum width phone can have')
       });
       await dataBridge.createProject(_userSession.user.userId!, project);
+      sl<AnalyticsService>().logProjectCreated(
+        projectName: project.name,
+        templateId: template?.id,
+        templateName: template?.name,
+      );
+      if (template != null) {
+        sl<AnalyticsService>().logTemplateUsed(
+          templateId: template.id,
+          templateName: template.name,
+        );
+      }
       AppLoader.update(0.9);
       _userSession.settingModel!.projects.insert(0, project);
       emit(FlutterProjectLoadedState(project, created: true));

@@ -22,6 +22,8 @@ import '../../bloc/right_side/right_side_bloc.dart';
 import '../../bloc/state_management/state_management_bloc.dart';
 import '../../bloc/theme/theme_bloc.dart';
 import '../../collections/project_info_collection.dart';
+import '../../common/analytics/analytics_keys.dart';
+import '../../common/analytics/screen_time_mixin.dart';
 import '../../common/analyzer/analyzer.dart';
 import '../../common/app_button.dart';
 import '../../common/app_loader.dart';
@@ -107,7 +109,11 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with ScreenTimeTracker<HomePage> {
+  @override
+  String get screenName => AnalyticsKeys.screenHome;
+
   static StreamSubscription? _streamSubscription;
   final ScrollController propertyScrollController = ScrollController();
   late CreationCubit creationCubit;

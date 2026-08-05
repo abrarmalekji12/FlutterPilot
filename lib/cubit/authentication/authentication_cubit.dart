@@ -4,8 +4,10 @@ import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../common/analytics/analytics_service.dart';
 import '../../constant/preference_key.dart';
 import '../../data/remote/firestore/firebase_bridge.dart';
+import '../../injector.dart';
 import '../../user_session.dart';
 import '../../view_model/auth_viewmodel.dart';
 
@@ -27,6 +29,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         _userSession.settingModel =
             await dataBridge.loadUserDetails(_userSession.user.userId!);
 
+        sl<AnalyticsService>().setUser(response.userId);
         emit(AuthLoginSuccessState(response.userId!));
       }
       emit(AuthenticationInitial());
@@ -46,6 +49,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     if (response.user != null) {
       _userSession.user = response.user!;
       await _pref.setString(PrefKey.UID, response.user!.userId!);
+      sl<AnalyticsService>().setUser(response.user!.userId);
       emit(AuthLoginSuccessState(response.user!.userId!));
       emit(AuthenticationInitial());
     } else {
@@ -60,6 +64,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       await _pref.clear();
       _userSession.user = FVBUser();
       _userSession.settingModel = null;
+      sl<AnalyticsService>().setUser(null);
       emit(AuthLogoutSuccessState());
     } on Exception catch (error) {
       final errorMsg = error.toString();
@@ -94,6 +99,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         _pref.setString(PrefKey.UID, model.userId!);
         final userData = model.toJson(includePass: true);
         _pref.setString(PrefKey.userData, jsonEncode(userData));
+        sl<AnalyticsService>().setUser(response.user!.userId);
         emit(AuthLoginSuccessState(response.user!.userId!));
         emit(AuthenticationInitial());
       } else {

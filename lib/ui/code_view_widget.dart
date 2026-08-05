@@ -22,6 +22,7 @@ import '../common/app_button.dart';
 import '../common/app_loader.dart';
 import '../common/code_box/custom_code_controller.dart';
 import '../common/code_box/custom_code_field.dart';
+import '../common/analytics/analytics_service.dart';
 import '../common/common_methods.dart';
 import '../common/custom_extension_tile.dart';
 import '../common/download_utils.dart';
@@ -614,9 +615,15 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
 
   void downloadApk() async {
     final generatedCode = generateCode();
+    final projectName = widget.componentOperationCubit.project!.name;
     if (Platform.isWindows || Platform.isMacOS) {
       final path = await DownloadUtils.downloadWithoutZip(
           generatedCode, widget.componentOperationCubit.project!.packageName);
+      sl<AnalyticsService>().logApkExport(
+        buildPlatform: Platform.operatingSystem,
+        success: path != null,
+        projectName: projectName,
+      );
       if (path != null) {
         AnimatedDialog.show(
           context,
@@ -639,6 +646,11 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
           body: jsonEncode(generatedCode))
           .then((response) {
         AppLoader.hide(context);
+        sl<AnalyticsService>().logApkExport(
+          buildPlatform: kIsWeb ? 'web' : Platform.operatingSystem,
+          success: response.statusCode == 200,
+          projectName: projectName,
+        );
 
         if (response.statusCode == 200) {
           showConfirmDialog(
@@ -671,6 +683,11 @@ class _ProjectFileWidgetState extends State<ProjectFileWidget> {
         }
       }).catchError((error) {
         AppLoader.hide(context);
+        sl<AnalyticsService>().logApkExport(
+          buildPlatform: kIsWeb ? 'web' : Platform.operatingSystem,
+          success: false,
+          projectName: projectName,
+        );
         showConfirmDialog(
             context: context,
             title: 'Error building',
