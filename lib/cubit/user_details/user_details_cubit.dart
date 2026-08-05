@@ -82,8 +82,39 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
 
   Future<void> disconnectFigmaAccount() async {
     _userSession.settingModel?.figmaAccessToken = null;
-    await operationCubit.updateUserSetting('figmaAccessToken', null);
+    _userSession.settingModel?.figmaRefreshToken = null;
+    await Future.wait([
+      operationCubit.updateUserSetting('figmaAccessToken', null),
+      operationCubit.updateUserSetting('figmaRefreshToken', null),
+    ]);
     emit(UserDetailsFigmaTokenUpdatedState());
+  }
+
+  Future<bool> refreshFigmaToken() async {
+    final refreshToken = _userSession.settingModel?.figmaRefreshToken;
+    if (refreshToken == null) return false;
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'https://www.figma.com/api/oauth/token?client_id=${appConfig.figmaClientId}&client_secret=${appConfig.figmaClientSecret}&refresh_token=$refreshToken&grant_type=refresh_token'),
+      );
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        final json = Map<String, dynamic>.from(jsonDecode(response.body));
+        if (json.containsKey('access_token')) {
+          _userSession.settingModel?.figmaAccessToken = json['access_token'];
+          await operationCubit.updateUserSetting('figmaAccessToken', json['access_token']);
+          if (json.containsKey('refresh_token')) {
+            _userSession.settingModel?.figmaRefreshToken = json['refresh_token'];
+            await operationCubit.updateUserSetting('figmaRefreshToken', json['refresh_token']);
+          }
+          emit(UserDetailsFigmaTokenUpdatedState());
+          return true;
+        }
+      }
+    } on Exception catch (e) {
+      emit(UserDetailsErrorState(message: 'Failed to refresh Figma token: ${e.toString()}'));
+    }
+    return false;
   }
 
   String get _redirectURI {
@@ -114,6 +145,10 @@ class UserDetailsCubit extends Cubit<UserDetailsState> {
         if (json.containsKey('access_token')) {
           _userSession.settingModel?.figmaAccessToken = json['access_token'];
           await operationCubit.updateUserSetting('figmaAccessToken', json['access_token']);
+          if (json.containsKey('refresh_token')) {
+            _userSession.settingModel?.figmaRefreshToken = json['refresh_token'];
+            await operationCubit.updateUserSetting('figmaRefreshToken', json['refresh_token']);
+          }
           emit(UserDetailsFigmaTokenUpdatedState());
         }
       }

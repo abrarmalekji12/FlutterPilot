@@ -1,13 +1,17 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fvb_processor/compiler/code_processor.dart';
 import 'package:fvb_processor/compiler/processor_component.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
+import '../../app_config.dart';
 import '../../bloc/state_management/state_management_bloc.dart';
 import '../../code_operations.dart';
 import '../../collections/project_info_collection.dart';
@@ -658,7 +662,8 @@ class OperationCubit extends Cubit<OperationState> {
   FigmaDocumentMeta? figmaDocumentMeta;
 
   Future<bool> addScreensFromFigma(
-      final String figmaToken, String figmaLink) async {
+      final String figmaToken, String figmaLink,
+      {bool isRetry = false}) async {
     try {
       if (response != null && figmaDocumentMeta != null) {
         emit(ComponentOperationLoadingFigmaScreensState());
@@ -707,10 +712,49 @@ class OperationCubit extends Cubit<OperationState> {
         }
       }
       emit(ComponentOperationInitial());
+    } on DioException catch (e) {
+      if (!isRetry &&
+          (e.response?.statusCode == 401 ||
+              e.response?.statusCode == 403)) {
+        final newToken = await _refreshFigmaToken();
+        if (newToken != null) {
+          return addScreensFromFigma(newToken, figmaLink, isRetry: true);
+        }
+        emit(ComponentOperationErrorState(
+            'Figma token expired. Please reconnect your Figma account in Settings.'));
+      } else {
+        emit(ComponentOperationErrorState(e.toString()));
+      }
     } on Exception catch (e) {
       emit(ComponentOperationErrorState(e.toString()));
     }
     return false;
+  }
+
+  Future<String?> _refreshFigmaToken() async {
+    final refreshToken = _userSession.settingModel?.figmaRefreshToken;
+    if (refreshToken == null) return null;
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'https://www.figma.com/api/oauth/token?client_id=${appConfig.figmaClientId}&client_secret=${appConfig.figmaClientSecret}&refresh_token=$refreshToken&grant_type=refresh_token'),
+      );
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        final json = Map<String, dynamic>.from(jsonDecode(response.body));
+        if (json.containsKey('access_token')) {
+          final newAccessToken = json['access_token'] as String;
+          _userSession.settingModel?.figmaAccessToken = newAccessToken;
+          await updateUserSetting('figmaAccessToken', newAccessToken);
+          if (json.containsKey('refresh_token')) {
+            final newRefreshToken = json['refresh_token'] as String;
+            _userSession.settingModel?.figmaRefreshToken = newRefreshToken;
+            await updateUserSetting('figmaRefreshToken', newRefreshToken);
+          }
+          return newAccessToken;
+        }
+      }
+    } on Exception catch (_) {}
+    return null;
   }
 
   Future<bool> addScreen(final Screen screen) async {
